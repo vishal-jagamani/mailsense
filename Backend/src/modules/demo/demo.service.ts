@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { config } from '../../config/config';
+import { config } from '../../config/config.js';
 
 export class DemoService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

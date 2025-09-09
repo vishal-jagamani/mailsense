@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { validate } from '../../middlewares/validator';
-import { handleRequest } from '../../utils/request.handler';
-import { DemoController } from './demo.controller';
-import { catFactQuerySchema } from './demo.schema';
+import { validate } from '../../middlewares/validator.js';
+import { handleRequest } from '../../utils/request.handler.js';
+import { DemoController } from './demo.controller.js';
+import { catFactQuerySchema } from './demo.schema.js';
 
 const router = Router();
 const demoController = new DemoController();
