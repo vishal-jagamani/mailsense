@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { createApiError } from '../../utils/api.error';
-import { DemoService } from './demo.service';
+import { createApiError } from '../../utils/api.error.js';
+import { DemoService } from './demo.service.js';
 
 export class DemoController {
     private demoService: DemoService;

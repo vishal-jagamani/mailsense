@@ -1,4 +1,4 @@
-import { ENV } from './env';
+import { ENV } from './env.js';
 
 export const PORT: number = ENV.PORT;
 
@@ -8,5 +8,3 @@ export const config = {
     url: 'https://catfact.ninja',
     nodeEnv: ENV.NODE_ENV,
 };
-
-console.log(PORT, ENABLE_AUTH, config);
