@@ -1,24 +1,26 @@
-# Use the latest Node.js version
-FROM node:latest
+# Use a specific Node.js version (Alpine for smaller size)
+FROM node:20-alpine
 
-# Create app directory
+# Install pnpm globally
+RUN npm install -g pnpm
+
+# Set working directory
 WORKDIR /usr/src/app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
+# Copy dependency files first
 COPY package*.json ./
 
-RUN pnpm install
-# If you are building your code for production
-# RUN npm install --only=production
+# Install dependencies
+RUN pnpm install --frozen-lockfile
 
-# Bundle app source
+# Copy rest of the app
 COPY . .
 
-# Build the TypeScript code
+# Build TypeScript code
 RUN pnpm run build
 
+# Expose app port
 EXPOSE 8080
 
+# Start app
 CMD ["pnpm", "run", "start"]
