@@ -1,5 +1,6 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { config } from '../../config/config.js';
+import { logger } from '../../utils/logger.js';
 
 export class DemoService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -12,7 +13,8 @@ export class DemoService {
             const { data } = await axios(options);
             return data;
         } catch (err) {
-            console.error('Error in DemoService.getCatFact: ', err);
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in DemoService.getCatFact: ${errorMessage}`, { error: err });
             throw err;
         }
     }

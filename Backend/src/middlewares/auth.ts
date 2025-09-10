@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ENABLE_AUTH } from '../config/config.js';
+import { logger } from '../utils/logger.js';
 
 class AuthMiddleware {
     private noAuth(req: Request, res: Response, next: NextFunction) {
@@ -18,7 +19,7 @@ class AuthMiddleware {
             // TODO: Implement token verification (JWT, OAuth, etc.)
             next();
         } catch (err) {
-            console.error('Error in AuthMiddleware.auth: ', err);
+            logger.error('Error in AuthMiddleware.auth: ', { error: err });
             res.status(401).json({ error: 'Unauthorized' });
         }
     }
