@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { logger } from '../utils/logger.js';
 
 interface ExtendedError extends Error {
     status?: number;
@@ -48,8 +49,8 @@ export const errorHandler = (err: ExtendedError, req: Request, res: Response, ne
 
 // 🔍 Logging utility (replace with Winston or Pino in production)
 const logError = (req: Request, statusCode: number, err: Error) => {
-    console.error(`[${req.method}] ${req.url} -> ${statusCode} :: ${err.message}`);
+    logger.error(`[${req.method}] ${req.url} -> ${statusCode} :: ${err.message}`);
     if (process.env.NODE_ENV === 'development') {
-        console.error(err.stack);
+        logger.error(`Stack trace:`, { stack: err.stack });
     }
 };

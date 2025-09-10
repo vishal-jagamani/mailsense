@@ -53,3 +53,4 @@ src/**/*.js.map
 # Optional: Lockfiles (choose one and track it, usually it's good to include `package-lock.json`)
 # yarn.lock
 # pnpm-lock.yaml
+deploy.sh
