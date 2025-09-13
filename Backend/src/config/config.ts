@@ -8,9 +8,25 @@ export const ENABLE_AUTH: boolean = ENV.ENABLE_AUTH;
 
 export const LOG_LEVEL = ENV.LOG_LEVEL;
 
+export const ENCRYPTION_KEY = ENV.ENCRYPTION_KEY;
+
 export const MONGODB_URI = ENV.MONGODB_URI;
+
+export const DATABASE = ENV.DATABASE;
 
 export const config = {
     url: 'https://catfact.ninja',
     nodeEnv: ENV.NODE_ENV,
+};
+
+export const GMAIL_SECRETS = {
+    client_id: ENV.GMAIL_CLIENT_ID,
+    client_secret: ENV.GMAIL_CLIENT_SECRET,
+    redirect_uri: ENV.GMAIL_REDIRECT_URI,
+};
+
+export const OUTLOOK_SECRETS = {
+    client_id: ENV.OUTLOOK_CLIENT_ID,
+    client_secret: ENV.OUTLOOK_CLIENT_SECRET,
+    redirect_uri: ENV.OUTLOOK_REDIRECT_URI,
 };

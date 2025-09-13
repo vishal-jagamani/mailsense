@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
-import { ENABLE_AUTH } from '../config/config.js';
-import { logger } from '../utils/logger.js';
+import { ENABLE_AUTH } from '@config/config.js';
+import { logger } from '@utils/logger.js';
 
 class AuthMiddleware {
     private noAuth(req: Request, res: Response, next: NextFunction) {

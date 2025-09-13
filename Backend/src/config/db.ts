@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
-import { MONGODB_URI } from './config.js';
-import { logger } from '../utils/logger.js';
+import { logger } from '@utils/logger.js';
+import { DATABASE, MONGODB_URI } from './config.js';
 
-export const connectDB = async () => {
+export const connectDB = async (): Promise<void> => {
     try {
-        await mongoose.connect(MONGODB_URI, { maxPoolSize: 10 });
+        await mongoose.connect(MONGODB_URI, { dbName: DATABASE, maxPoolSize: 10 });
         logger.info('✅ MongoDB connected successfully');
     } catch (err) {
         const errorMessage = err instanceof Error ? err.message : String(err);
@@ -13,7 +13,7 @@ export const connectDB = async () => {
     }
 };
 
-export async function disconnectDB() {
+export const disconnectDB = async (): Promise<void> => {
     await mongoose.disconnect();
     logger.info('🔌 MongoDB disconnected');
-}
+};

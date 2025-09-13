@@ -1,4 +1,4 @@
-import log from '../config/logger.js';
+import log from '@config/logger.js';
 
 type LogMeta = Record<string, unknown>;
 
