@@ -2,8 +2,8 @@ import cors from 'cors';
 import express, { Application, NextFunction, Request, Response } from 'express';
 import path from 'path';
 
-import { apiErrorHandler, errorHandler } from './middlewares/error.handler.js';
-import indexRoutes from './routes/index.routes.js';
+import { apiErrorHandler, errorHandler } from '@middlewares/error.handler.js';
+import indexRoutes from '@routes/index.routes.js';
 
 export class App {
     public expressApp: Application;

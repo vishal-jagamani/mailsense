@@ -8,7 +8,7 @@ import { ZodError, z } from 'zod';
  * @param source - Request source: body, query, or params
  */
 export const validate = (schema: z.ZodSchema, source: 'body' | 'query' | 'params') => (req: Request, res: Response, next: NextFunction) => {
-    const result = z.safeParse(req[source], schema);
+    const result = schema.safeParse(req[source]);
 
     if (!result.success) {
         const error: ZodError = result.error;
