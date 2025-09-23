@@ -21,8 +21,10 @@ class EnvConfig {
 
     constructor() {
         dotenv?.config();
-        const envFilePath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV || 'local'}`);
-        dotenv.config({ path: envFilePath });
+        if (process.env.NODE_ENV === 'local') {
+            const envFilePath = path.resolve(process.cwd(), `.env.local`);
+            dotenv.config({ path: envFilePath });
+        }
 
         const schema = z.object({
             PORT: z.coerce.number().default(8020),
