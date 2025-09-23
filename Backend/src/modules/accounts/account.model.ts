@@ -14,12 +14,11 @@ export interface AccountAttributes {
     syncEnabled: boolean;
     syncInterval: number;
     lastSyncedAt: number;
-    createdAt: number;
-    updatedAt: number;
 }
 
 // ✅ Input type (plain object you pass into create)
 export type AccountInput = Omit<AccountAttributes, 'createdAt' | 'updatedAt'>;
+// export type AccountInput = AccountAttributes;
 
 // ✅ Document type (what comes back from Mongo)
 export type AccountDocument = Document & AccountAttributes;
@@ -29,7 +28,7 @@ const AccountSchema = new Schema<AccountDocument>(
         id: { type: Number, required: true, unique: true },
         userId: { type: String, required: true },
         provider: { type: String, required: true },
-        emailAddress: { type: String, required: true },
+        emailAddress: { type: String, required: true, unique: true },
         accessToken: { type: String, required: true },
         refreshToken: { type: String, required: true },
         accessTokenExpiry: { type: Number, required: true },
@@ -39,7 +38,7 @@ const AccountSchema = new Schema<AccountDocument>(
         syncInterval: { type: Number, required: true },
         lastSyncedAt: { type: Number, required: true },
     },
-    { timestamps: true },
+    { timestamps: true, versionKey: false },
 );
 
 // ✅ Pre-save hook

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { DemoController } from '../demo.controller';
+import { DemoController } from '../demo.controller.js';
 
 describe('DemoController', () => {
     let controller: DemoController;

@@ -1,12 +1,14 @@
 import { GmailService } from '@providers/gmail/gmail.service.js';
-import { buildGmailOAuthConsentURL } from '@providers/gmail/gmail.utils.js';
+import * as GmailUtils from '@providers/gmail/gmail.utils.js';
 import { OutlookService } from '@providers/outlook/outlook.service.js';
-import { buildOutlookOAuthConsentURL } from '@providers/outlook/outlook.utils.js';
-import { encrypt } from '@utils/crypto.js';
+import * as OutlookUtils from '@providers/outlook/outlook.utils.js';
+import { decrypt, encrypt } from '@utils/crypto.js';
 import { logger } from '@utils/logger.js';
-import { AccountProvider, OutlookOAuthAccessTokenResponse } from 'types/account.types';
+import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { AccountInput } from './account.model.js';
 import * as AccountRepository from './account.repository.js';
+import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
+import { MAILSENSE_BASE_URL } from '@config/config.js';
 
 export class AccountsService {
     private gmailService: GmailService;
@@ -17,12 +19,33 @@ export class AccountsService {
         this.outlookService = new OutlookService();
     }
 
-    async connect(provider: string): Promise<string> {
+    /**
+     * Fetches all accounts from the database.
+     * @returns A promise that resolves to an array of account providers.
+     */
+    async getAccountProviders(): Promise<AccountProviderType[]> {
+        try {
+            return ACCOUNT_PROVIDERS;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.getAccountProviders: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    /**
+     * Generates an OAuth consent URL for the given provider.
+     * @param provider The provider for which to generate the consent URL.
+     * @returns A promise that resolves to the consent URL & redirects to it.
+     */
+    async connect(provider: string): Promise<{ url: string }> {
         try {
             if (provider === AccountProvider.GMAIL) {
-                return buildGmailOAuthConsentURL();
+                const url = await GmailUtils.buildGmailOAuthConsentURL();
+                return { url };
             } else if (provider === AccountProvider.OUTLOOK) {
-                return buildOutlookOAuthConsentURL();
+                const url = await OutlookUtils.buildOutlookOAuthConsentURL();
+                return { url };
             } else {
                 throw new Error('Invalid provider');
             }
@@ -33,19 +56,35 @@ export class AccountsService {
         }
     }
 
+    /**
+     * Handles the callback from the OAuth provider.
+     * @param provider The provider for which the callback is being handled.
+     * @param params The query parameters from the callback.
+     * @returns A promise that resolves when the callback is handled and redirects to the home page.
+     */
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async callback(provider: string, params: any): Promise<void> {
+    async callback(provider: string, params: any): Promise<string> {
         try {
+            const { code, state } = params;
+            let userDetails;
+            try {
+                const decryptedState = decrypt(state);
+                userDetails = JSON.parse(decryptedState);
+            } catch (err) {
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                logger.error(`Error in AccountsService.callback: ${errorMessage}`, { error: err });
+                throw err;
+            }
             if (provider === AccountProvider.GMAIL) {
-                const { code } = params;
                 const accessTokenResponse = await this.gmailService.getAccessTokenFromCode(code);
                 const { access_token, refresh_token, expires_in, scope } = accessTokenResponse;
+                const userProfile = await this.gmailService.getUserProfileFromAccessToken(access_token);
                 // Save in db
                 const account: AccountInput = {
                     id: Date.now(),
-                    userId: '1',
+                    userId: userDetails?.id,
                     provider: AccountProvider.GMAIL,
-                    emailAddress: 'vishaljagamani20@gmail.com',
+                    emailAddress: userProfile?.emailAddress,
                     accessToken: encrypt(access_token),
                     refreshToken: encrypt(refresh_token),
                     accessTokenExpiry: expires_in,
@@ -55,18 +94,17 @@ export class AccountsService {
                     syncInterval: 60,
                     lastSyncedAt: Date.now(),
                 };
-                const savedAccount = await AccountRepository.createAccount(account);
-                logger.info('response', { accessTokenResponse, savedAccount });
+                await AccountRepository.upsertAccount(account);
+                return MAILSENSE_BASE_URL;
             } else if (provider === AccountProvider.OUTLOOK) {
-                const { code } = params;
                 const response: OutlookOAuthAccessTokenResponse = await this.outlookService.getAccessTokenFromCode(code);
                 const { access_token, refresh_token, expires_in, scope } = response;
                 // Save in db
                 const account: AccountInput = {
                     id: Date.now(),
-                    userId: '1',
+                    userId: userDetails?.id,
                     provider: AccountProvider.OUTLOOK,
-                    emailAddress: 'vishaljagamani20@gmail.com',
+                    emailAddress: userDetails?.email,
                     accessToken: encrypt(access_token),
                     refreshToken: encrypt(refresh_token),
                     accessTokenExpiry: expires_in,
@@ -76,8 +114,8 @@ export class AccountsService {
                     syncInterval: 60,
                     lastSyncedAt: Date.now(),
                 };
-                const savedAccount = await AccountRepository.createAccount(account);
-                logger.info('response', { response, savedAccount });
+                await AccountRepository.upsertAccount(account);
+                return MAILSENSE_BASE_URL;
             } else {
                 throw new Error('Invalid provider');
             }

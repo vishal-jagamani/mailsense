@@ -3,7 +3,9 @@ import { OAUTH_ACCESS_TOKEN_URI } from '@constants/index.js';
 import { apiRequest } from '@utils/axios.js';
 import { logger } from '@utils/logger.js';
 import { AxiosRequestConfig } from 'axios';
-import { GmailOAuthAccessTokenResponse } from 'types/account.types';
+import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
+import { GMAIL_API_BASE_URL, GMAIL_APIs } from './gmail.constants.js';
+import { GmailUserProfile } from './gmail.types.js';
 
 export class GmailService {
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -27,6 +29,24 @@ export class GmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.getAccessTokenFromCode: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async getUserProfileFromAccessToken(accessToken: string): Promise<GmailUserProfile> {
+        try {
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.PROFILE}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response: GmailUserProfile = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.getUserProfileFromAccessToken: ${errorMessage}`, { error: err });
             throw err;
         }
     }
