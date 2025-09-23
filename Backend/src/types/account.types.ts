@@ -4,6 +4,12 @@ export enum AccountProvider {
     OUTLOOK = 'outlook',
 }
 
+export interface AccountProviderType {
+    id: number;
+    name: string;
+    displayName: string;
+}
+
 export interface GmailOAuthCallbackParams {
     code: string;
 }

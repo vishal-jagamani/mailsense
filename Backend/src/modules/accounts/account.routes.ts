@@ -8,6 +8,8 @@ const router = Router();
 
 const accountsController = new AccountsController();
 
+router.get('/providers', handleRequest(accountsController.getAccountProviders));
+
 router.get('/connect/:provider', validate(connectAccountSchema, 'params'), handleRequest(accountsController.connect));
 
 router.get('/callback/:provider', validate(connectAccountSchema, 'params'), handleRequest(accountsController.callback));

@@ -1,7 +1,7 @@
 import { AxiosRequestConfig } from 'axios';
 import { OUTLOOK_SECRETS } from '@config/config.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/index.js';
-import { OutlookOAuthAccessTokenResponse } from 'types/account.types';
+import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { apiRequest } from '@utils/axios.js';
 import { logger } from '@utils/logger.js';
 

@@ -11,5 +11,5 @@ export const buildGmailOAuthConsentURL = async () => {
         prompt: 'consent',
         scope: OAUTH_SCOPES.GMAIL,
     });
-    return `${OAUTH_ACCESS_REDIRECT_URI}?${params?.toString()}`;
+    return `${OAUTH_ACCESS_REDIRECT_URI?.GMAIL}?${params?.toString()}`;
 };

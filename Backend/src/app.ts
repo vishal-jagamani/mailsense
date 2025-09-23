@@ -21,7 +21,7 @@ export class App {
 
     private setupMiddleware(): void {
         // Enable cors for all routes
-        this.expressApp.use(cors());
+        this.expressApp.use(cors({ origin: 'http://localhost:3000', credentials: true }));
 
         // Parse JSON and URL encoded request body
         this.expressApp.use(express.json());
