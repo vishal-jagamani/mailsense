@@ -4,6 +4,7 @@ import path from 'path';
 
 import { apiErrorHandler, errorHandler } from '@middlewares/error.handler.js';
 import indexRoutes from '@routes/index.routes.js';
+import { MAILSENSE_BASE_URL } from '@config/config.js';
 
 export class App {
     public expressApp: Application;
@@ -21,7 +22,7 @@ export class App {
 
     private setupMiddleware(): void {
         // Enable cors for all routes
-        this.expressApp.use(cors({ origin: 'http://localhost:3000', credentials: true }));
+        this.expressApp.use(cors({ origin: ['http://localhost:3000', MAILSENSE_BASE_URL], credentials: true }));
 
         // Parse JSON and URL encoded request body
         this.expressApp.use(express.json());
