@@ -6,7 +6,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node dist/server.js",
-    "build": "eslint src/**/*.ts --ext .ts && tsc && tsc-alias",
+    "build": "tsc && tsc-alias",
     "dev": "tsx src/server.ts",
     "lint": "eslint src/**/*.ts --ext .ts",
     "test": "jest --runInBand",
