@@ -18,6 +18,10 @@ class EnvConfig {
     public readonly OUTLOOK_CLIENT_ID: string;
     public readonly OUTLOOK_CLIENT_SECRET: string;
     public readonly OUTLOOK_REDIRECT_URI: string;
+    // Jobs/Queues secrets
+    public readonly REDIS_HOST: string;
+    public readonly REDIS_PORT: number;
+    public readonly REDIS_PASSWORD: string;
 
     constructor() {
         dotenv?.config();
@@ -42,6 +46,10 @@ class EnvConfig {
             OUTLOOK_CLIENT_ID: z.string(),
             OUTLOOK_CLIENT_SECRET: z.string(),
             OUTLOOK_REDIRECT_URI: z.string(),
+            // Jobs/Queues secrets
+            REDIS_HOST: z.string(),
+            REDIS_PORT: z.coerce.number().default(6379),
+            REDIS_PASSWORD: z.string(),
         });
 
         const result = schema.safeParse(process.env);
@@ -66,6 +74,10 @@ class EnvConfig {
         this.OUTLOOK_CLIENT_ID = data.OUTLOOK_CLIENT_ID;
         this.OUTLOOK_CLIENT_SECRET = data.OUTLOOK_CLIENT_SECRET;
         this.OUTLOOK_REDIRECT_URI = data.OUTLOOK_REDIRECT_URI;
+        // Jobs/Queues secrets
+        this.REDIS_HOST = data.REDIS_HOST;
+        this.REDIS_PORT = data.REDIS_PORT;
+        this.REDIS_PASSWORD = data.REDIS_PASSWORD;
     }
 }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { AppSidebar } from '@/shared/components/sidebar/app-sidebar';
-import { useAuthStore } from '@/shared/store';
+import { useAuthStore } from '@/store';
 import { SidebarProvider, SidebarTrigger } from '@/shared/ui/sidebar';
 
 export default function HomeLayout({ children }: { children: React.ReactNode }) {
@@ -12,11 +12,13 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
     return (
         <>
             <SidebarProvider>
-                <AppSidebar />
-                <main className="flex-1">
-                    <SidebarTrigger />
-                    {children}
-                </main>
+                <div className="flex h-screen w-screen overflow-hidden">
+                    <AppSidebar />
+                    <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                        <SidebarTrigger className='absolute mt-1'/>
+                        {children}
+                    </main>
+                </div>
             </SidebarProvider>
         </>
     );

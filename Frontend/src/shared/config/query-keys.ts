@@ -4,3 +4,5 @@ export const QUERY_KEYS = {
     ACCOUNT_PROVIDERS: 'account-providers',
     ACCOUNT_DETAILS: 'account-details',
 };
+
+export const EMAILS = 'emails';
