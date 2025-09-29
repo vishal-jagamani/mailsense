@@ -62,7 +62,7 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
                                 <User />
                                 Profile
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => router.push('/accounts')}>
+                            <DropdownMenuItem onSelect={() => router.push('/accounts')}>
                                 <CircleUser />
                                 Connected Accounts
                             </DropdownMenuItem>

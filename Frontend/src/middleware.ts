@@ -2,20 +2,18 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { auth0 } from './lib/auth0';
 
 export async function middleware(request: NextRequest) {
-    // Get the current session
+    const res = await auth0.middleware(request);
+
     const session = await auth0.getSession(request);
 
-    // Define public routes (accessible without login)
     const publicPaths = ['/login', '/get_started', '/auth'];
     const isPublicPath = publicPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
-    // If no session and not on a public path → redirect to /get_started
     if (!session?.user && !isPublicPath) {
-        return NextResponse.redirect(new URL('/get_started', request.url));
+        const loginURL = new URL('/get_started', request.url);
+        return NextResponse.redirect(loginURL);
     }
-
-    // Run Auth0’s built-in middleware (for token refresh, etc.)
-    return auth0.middleware(request);
+    return res;
 }
 
 export const config = {
