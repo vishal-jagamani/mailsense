@@ -15,11 +15,9 @@ import {
 } from '@shared/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@shared/ui/sidebar';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 export function NavUser({ user }: { user: { name: string; email: string; avatar: string } }) {
     const { isMobile } = useSidebar();
-    const router = useRouter();
 
     return (
         <SidebarMenu>
@@ -62,9 +60,11 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
                                 <User />
                                 Profile
                             </DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => router.push('/accounts')}>
-                                <CircleUser />
-                                Connected Accounts
+                            <DropdownMenuItem asChild>
+                                <Link href="/accounts" className="flex items-center gap-2">
+                                    <CircleUser />
+                                    <span>Connected Accounts</span>
+                                </Link>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
