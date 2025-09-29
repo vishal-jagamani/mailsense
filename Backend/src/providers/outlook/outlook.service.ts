@@ -4,6 +4,8 @@ import { OAUTH_ACCESS_TOKEN_URI } from '@constants/index.js';
 import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { apiRequest } from '@utils/axios.js';
 import { logger } from '@utils/logger.js';
+import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs } from './outlook.constants.js';
+import { OutlookUserProfile } from './outlook.types.js';
 
 export class OutlookService {
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
@@ -27,6 +29,24 @@ export class OutlookService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.getAccessTokenFromCode: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async getUserProfileFromAccessToken(accessToken: string): Promise<OutlookUserProfile> {
+        try {
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response: OutlookUserProfile = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.getUserProfileFromAccessToken: ${errorMessage}`, { error: err });
             throw err;
         }
     }

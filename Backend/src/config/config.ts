@@ -32,3 +32,9 @@ export const OUTLOOK_SECRETS = {
     client_secret: ENV.OUTLOOK_CLIENT_SECRET,
     redirect_uri: ENV.OUTLOOK_REDIRECT_URI,
 };
+
+export const REDIS_CONFIG = {
+    host: ENV.REDIS_HOST,
+    port: ENV.REDIS_PORT,
+    password: ENV.REDIS_PASSWORD,
+};

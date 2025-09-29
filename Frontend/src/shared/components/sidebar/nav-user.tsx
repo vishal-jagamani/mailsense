@@ -15,9 +15,11 @@ import {
 } from '@shared/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@shared/ui/sidebar';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export function NavUser({ user }: { user: { name: string; email: string; avatar: string } }) {
     const { isMobile } = useSidebar();
+    const router = useRouter();
 
     return (
         <SidebarMenu>
@@ -60,7 +62,7 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
                                 <User />
                                 Profile
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => router.push('/accounts')}>
                                 <CircleUser />
                                 Connected Accounts
                             </DropdownMenuItem>

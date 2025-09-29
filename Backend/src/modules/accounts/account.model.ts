@@ -1,3 +1,5 @@
+import { GmailUserProfile } from '@providers/gmail/gmail.types.js';
+import { OutlookUserProfile } from '@providers/outlook/outlook.types.js';
 import { model, Schema } from 'mongoose';
 import validator from 'validator';
 
@@ -6,6 +8,7 @@ export interface AccountAttributes {
     userId: string;
     provider: string;
     emailAddress: string;
+    userProfileDetails: GmailUserProfile | OutlookUserProfile;
     accessToken: string;
     refreshToken: string;
     accessTokenExpiry: number;
@@ -29,6 +32,7 @@ const AccountSchema = new Schema<AccountDocument>(
         userId: { type: String, required: true },
         provider: { type: String, required: true },
         emailAddress: { type: String, required: true, unique: true },
+        userProfileDetails: { type: Object, required: true },
         accessToken: { type: String, required: true },
         refreshToken: { type: String, required: true },
         accessTokenExpiry: { type: Number, required: true },

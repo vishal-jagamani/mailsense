@@ -1,0 +1,91 @@
+import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { logger } from '@utils/logger.js';
+import { GMAIL_API_BASE_URL, GMAIL_APIs } from './gmail.constants.js';
+import { AxiosRequestConfig } from 'axios';
+import { apiRequest } from '@utils/axios.js';
+import { decrypt, encrypt } from '@utils/crypto.js';
+import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
+import { GMAIL_SECRETS } from '@config/config.js';
+import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
+import { GmailMessageObjectFull, GmailMessages } from './gmail.types.js';
+
+export class GmailApi {
+    // Function to fetch access token from DB
+    public async fetchAccessToken(accountId: string) {
+        try {
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) throw new Error('Account not found');
+            return account.accessTokenExpiry < Date.now() ? await this.refreshAccessToken(accountId) : decrypt(account.accessToken);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.fetchAccessToken: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    // Function to refresh the access token if it is expired
+    private async refreshAccessToken(accountId: string) {
+        try {
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) throw new Error('Account not found');
+            const options: AxiosRequestConfig = {
+                url: OAUTH_ACCESS_TOKEN_URI.GMAIL,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                data: {
+                    refresh_token: decrypt(account.refreshToken),
+                    client_id: GMAIL_SECRETS.client_id,
+                    client_secret: GMAIL_SECRETS.client_secret,
+                    grant_type: 'refresh_token',
+                },
+            };
+            const response: GmailOAuthAccessTokenResponse = await apiRequest(options);
+            await AccountRepository.updateAccountAccessToken(accountId, encrypt(response?.access_token), Date.now() + response?.expires_in * 1000);
+            return response?.access_token;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.refreshAccessToken: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    // Function to fetch emails from account
+    public async fetchEmails(accessToken: string): Promise<GmailMessages> {
+        try {
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response: GmailMessages = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.fetchEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async fetchEmailById(messageId: string, accessToken: string): Promise<GmailMessageObjectFull> {
+        try {
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${messageId}?format=full`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response: GmailMessageObjectFull = await apiRequest(options);
+            logger.info(`Fetched email ${messageId}`, { response });
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.fetchEmailById: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+}

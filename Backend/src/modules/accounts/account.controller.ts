@@ -8,6 +8,17 @@ export class AccountsController {
         this.accountsService = new AccountsService();
     }
 
+    public getAccounts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userId = req.params.userId;
+            if (!userId) throw new Error('User ID is required');
+            const accounts = await this.accountsService.getAccounts(userId);
+            res.send(accounts);
+        } catch (error) {
+            next(error);
+        }
+    };
+
     public getAccountProviders = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountProviders = await this.accountsService.getAccountProviders();
@@ -31,6 +42,26 @@ export class AccountsController {
             const provider = req.params.provider;
             const redirectURL = await this.accountsService.callback(provider, req.query);
             res.redirect(redirectURL);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public fetchEmails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const accountId = req.params.accountId;
+            const emails = await this.accountsService.fetchEmails(accountId);
+            res.send(emails);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public syncAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const accountId = req.params.accountId;
+            const emails = await this.accountsService.syncAccount(accountId);
+            res.send(emails);
         } catch (error) {
             next(error);
         }

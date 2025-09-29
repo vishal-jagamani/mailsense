@@ -1,6 +1,6 @@
 export const OAUTH_SCOPES = {
-    GMAIL: 'https://mail.google.com/',
-    OUTLOOK: 'Mail.Read Mail.ReadWrite Mail.Send offline_access',
+    GMAIL: ['https://mail.google.com/', 'openid', 'email', 'profile'].join(' '),
+    OUTLOOK: ['Mail.Read', 'Mail.ReadWrite', 'Mail.Send', 'offline_access', 'User.Read', 'openid', 'profile', 'email'].join(' '),
 };
 
 export const OAUTH_ACCESS_REDIRECT_URI = {

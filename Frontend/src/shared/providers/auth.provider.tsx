@@ -1,7 +1,7 @@
 'use client';
 
 import { useUser } from '@auth0/nextjs-auth0';
-import { useAuthStore } from '../store';
+import { useAuthStore } from '../../store';
 import { useEffect } from 'react';
 
 const AuthProvider = ({ children }: { children: React.ReactNode }) => {

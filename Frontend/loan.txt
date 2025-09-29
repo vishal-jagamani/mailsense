@@ -1,0 +1,49 @@
+Loan Details
+
+1. HDFC Credit Card Insta Loan 
+- Loan Amount: ₹50000
+- Interest Rate: 10%
+- Loan Term: 1 year (Jan 2025 - Dec 2025)
+- EMI: ₹4,440
+- Repayment Amount: ₹54,400
+
+- If I preclose this loan now, total amount to pay: ₹13,539.56
+    - Outstanding Principal: ₹13,057
+    - Pro-rata interest from last statement date: ₹17.24
+    - 3% Pre-closure charges: ₹391.71
+    - 18% GST: ₹73.61
+    - Total: ₹13,539.56
+    
+
+-------------------------------------------------------------------
+2. HDFC Consumer Loan - Macbook Pro M4 Pro 14 inch
+- Laptop Price: ₹1,85,900
+- Down Payment: ₹35,495
+- Loan Amount: ₹150,405
+- Interest Rate: 0%
+- Loan Term: 20 months (April 2025 - Dec 2026)
+- EMI: ₹7,747
+- Repayment Amount: ₹1,54,940
+
+
+-------------------------------------------------------------------
+3. Axis Bank Insta Personal Loan
+- Loan Amount: ₹85,000
+- Actual Disbursal: ₹81,394
+- Processing Fee: ₹2,006 + Stamp Duty: ₹1,600
+- Interest Rate: 9.15 + 5.24 = 14.39%
+- Loan Term: 15 months (July 2025 - Sept 2026)
+- EMI: ₹6,225, last EMI: ₹5,749
+- Repayment Amount: ₹92,899
+
+
+
+
+4. HDFC Consumer Loan - iPhone 16
+- Phone Price: ₹84,899
+- Down Payment: ₹8,566
+- Loan Amount: ₹74,475
+- Interest Rate: 0%
+- Loan Term: 9 months (Sept 2025 - May 2026)
+- EMI: ₹8,878
+- Repayment Amount: ₹79,902
