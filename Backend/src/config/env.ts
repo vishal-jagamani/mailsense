@@ -11,6 +11,9 @@ class EnvConfig {
     public readonly LOG_LEVEL: string;
     public readonly ENCRYPTION_KEY: string;
     public readonly MAILSENSE_BASE_URL: string;
+    // Auth0 secrets
+    public readonly AUTH0_AUDIENCE: string;
+    public readonly AUTH0_ISSUER_BASE_URL: string;
     // OAuth secrets
     public readonly GMAIL_CLIENT_ID: string;
     public readonly GMAIL_CLIENT_SECRET: string;
@@ -39,6 +42,9 @@ class EnvConfig {
             LOG_LEVEL: z.string().default('info'),
             ENCRYPTION_KEY: z.string(),
             MAILSENSE_BASE_URL: z.string(),
+            // Auth0 secrets
+            AUTH0_AUDIENCE: z.string(),
+            AUTH0_ISSUER_BASE_URL: z.string(),
             // OAuth secrets
             GMAIL_CLIENT_ID: z.string(),
             GMAIL_CLIENT_SECRET: z.string(),
@@ -67,6 +73,9 @@ class EnvConfig {
         this.LOG_LEVEL = data.LOG_LEVEL;
         this.ENCRYPTION_KEY = data.ENCRYPTION_KEY;
         this.MAILSENSE_BASE_URL = data.MAILSENSE_BASE_URL;
+        // Auth0 secrets
+        this.AUTH0_AUDIENCE = data.AUTH0_AUDIENCE;
+        this.AUTH0_ISSUER_BASE_URL = data.AUTH0_ISSUER_BASE_URL;
         // OAuth secrets
         this.GMAIL_CLIENT_ID = data.GMAIL_CLIENT_ID;
         this.GMAIL_CLIENT_SECRET = data.GMAIL_CLIENT_SECRET;

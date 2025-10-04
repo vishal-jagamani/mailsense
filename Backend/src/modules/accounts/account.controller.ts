@@ -8,6 +8,17 @@ export class AccountsController {
         this.accountsService = new AccountsService();
     }
 
+    public deleteAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const accountId = req.params.accountId;
+            if (!accountId) throw new Error('Account ID is required');
+            await this.accountsService.deleteAccount(accountId);
+            res.send({ message: 'Account deleted successfully' });
+        } catch (error) {
+            next(error);
+        }
+    };
+
     public getAccounts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const userId = req.params.userId;
@@ -51,6 +62,15 @@ export class AccountsController {
         try {
             const accountId = req.params.accountId;
             const emails = await this.accountsService.fetchEmails(accountId);
+            res.send(emails);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public syncAccounts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const emails = await this.accountsService.syncAccounts();
             res.send(emails);
         } catch (error) {
             next(error);

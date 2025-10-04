@@ -26,4 +26,8 @@ export class AccountRepository {
     public static async updateAccountAccessToken(id: string, accessToken: string, accessTokenExpiry: number) {
         return await Account.findByIdAndUpdate(id, { accessToken, accessTokenExpiry }, { new: true });
     }
+
+    public static async deleteAccount(id: string) {
+        return await Account.findByIdAndDelete(id);
+    }
 }

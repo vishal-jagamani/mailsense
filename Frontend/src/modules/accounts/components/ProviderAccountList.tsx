@@ -47,7 +47,7 @@ const ProviderAccountList: React.FC = () => {
                                 />
                                 <p className="text-lg font-semibold">{provider.displayName}</p>
                             </div>
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-4">
                                 {accounts &&
                                     accounts.length > 0 &&
                                     accounts
@@ -57,13 +57,13 @@ const ProviderAccountList: React.FC = () => {
                                         })
                                         .concat(
                                             <Card
-                                                className="hover:bg-muted bg-background cursor-pointer border-2 border-dashed py-4"
+                                                className="hover:bg-muted bg-background h-16 cursor-pointer border-2 border-dashed py-4"
                                                 key="add-account"
                                                 onClick={() => setProvider(provider.name)}
                                             >
-                                                <CardContent className="flex items-center gap-2">
-                                                    <Plus size={14} />
-                                                    <p>Add Account</p>
+                                                <CardContent className="flex h-full items-center gap-1">
+                                                    <Plus size={18} />
+                                                    <p className="text-sm font-semibold">Add Account</p>
                                                 </CardContent>
                                             </Card>,
                                         )}

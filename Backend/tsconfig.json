@@ -22,6 +22,6 @@
             "@utils/*": ["utils/*"]
         }
     },
-    "include": ["src/**/*.ts", "src/config/config.ts"],
+    "include": ["src/**/*.ts", "src/config/config.ts", "src/types/express.d.ts"],
     "exclude": ["node_modules"]
 }
