@@ -1,13 +1,16 @@
+import { getAccessToken } from '@auth0/nextjs-auth0';
 import { API_BASE_URL } from '@config/config';
 import axios from 'axios';
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
-    withCredentials: true,
+    // withCredentials: true,
 });
 
-apiClient.interceptors.request.use((config) => {
-    config.headers.Authorization = `Bearer token`;
+apiClient.interceptors.request.use(async (config) => {
+    const accessToken = await getAccessToken();
+    console.log('accessToken', accessToken);
+    config.headers.Authorization = `Bearer ${accessToken}`;
     return config;
 });
 

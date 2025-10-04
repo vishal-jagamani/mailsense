@@ -23,8 +23,8 @@ export type EmailDocument = Document & Email;
 
 const EmailSchema = new Schema<EmailDocument>(
     {
-        accountId: { type: String, required: true },
-        providerMessageId: { type: String, required: true },
+        accountId: { type: String, required: true, index: true },
+        providerMessageId: { type: String, required: true, index: true },
         threadId: { type: String, required: true },
         from: { type: String, required: true },
         to: { type: [String], required: true },

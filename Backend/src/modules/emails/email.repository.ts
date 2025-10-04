@@ -1,5 +1,5 @@
-import { AnyBulkWriteOperation } from 'mongoose';
-import { Email, EmailInput } from './email.model.js';
+import { AnyBulkWriteOperation, ProjectionType } from 'mongoose';
+import { Email, EmailDocument, EmailInput } from './email.model.js';
 
 export class EmailRepository {
     public static async upsertEmailsInBulk(emails: EmailInput[]) {
@@ -17,8 +17,8 @@ export class EmailRepository {
         return Email.bulkWrite(ops, { ordered: false });
     }
 
-    public static async getEmails(accountId: string, size: number, page: number) {
-        return Email.find({ accountId })
+    public static async getEmails(accountId: string, size: number, page: number, fields: ProjectionType<EmailDocument>) {
+        return Email.find({ accountId }, fields)
             .skip((page - 1) * size)
             .limit(size)
             .lean();
@@ -26,5 +26,9 @@ export class EmailRepository {
 
     public static async countDocuments(accountId: string) {
         return Email.countDocuments({ accountId });
+    }
+
+    public static async deleteEmailsByAccountId(accountId: string) {
+        return Email.deleteMany({ accountId });
     }
 }

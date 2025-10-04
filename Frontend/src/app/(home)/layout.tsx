@@ -15,7 +15,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
                 <div className="flex h-screen w-screen overflow-hidden">
                     <AppSidebar />
                     <main className="flex-1 overflow-x-hidden overflow-y-auto">
-                        <SidebarTrigger className='absolute mt-1'/>
+                        <SidebarTrigger className="absolute z-100 mt-1" />
                         {children}
                     </main>
                 </div>

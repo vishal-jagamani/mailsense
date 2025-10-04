@@ -10,19 +10,48 @@ import { AccountRepository } from './account.repository.js';
 import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
 import { MAILSENSE_BASE_URL } from '@config/config.js';
 import { GmailApi } from '@providers/gmail/gmail.api.js';
-import { MailSyncService } from 'services/mail/mailSync.service.js';
+import { EmailRepository } from '@modules/emails/email.repository.js';
+// import { MailSyncService } from 'services/mail/mailSync.service.js';
 
 export class AccountsService {
     private gmailService: GmailService;
     private outlookService: OutlookService;
     private gmailApi: GmailApi;
-    private emailSyncService: MailSyncService;
+    // private emailSyncService: MailSyncService;
 
     constructor() {
         this.gmailService = new GmailService();
         this.outlookService = new OutlookService();
         this.gmailApi = new GmailApi();
-        this.emailSyncService = new MailSyncService();
+        // this.emailSyncService = new MailSyncService();
+    }
+
+    /**
+     * Deletes an account from the database.
+     * @param accountId The ID of the account to delete.
+     * @returns A promise that resolves when the account is deleted.
+     */
+    async deleteAccount(accountId: string): Promise<void> {
+        try {
+            await this.initiateAccountDeletion(accountId);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.deleteAccount: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async initiateAccountDeletion(accountId: string): Promise<void> {
+        try {
+            // Delete account from db
+            await AccountRepository.deleteAccount(accountId);
+            // Delete emails related to this account
+            await EmailRepository.deleteEmailsByAccountId(accountId);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.initiateAccountDeletion: ${errorMessage}`, { error: err });
+            throw err;
+        }
     }
 
     /**
@@ -162,13 +191,24 @@ export class AccountsService {
         }
     };
 
-    public syncAccount = async (accountId: string): Promise<void> => {
+    async syncAccounts(): Promise<void> {
         try {
-            await this.emailSyncService.syncAccount('123', accountId);
+            // await this.emailSyncService.syncAccounts();
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.syncAccounts: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async syncAccount(accountId: string): Promise<void> {
+        try {
+            // await this.emailSyncService.syncAccount('123', accountId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });
             throw err;
         }
-    };
+    }
 }

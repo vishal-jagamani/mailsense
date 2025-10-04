@@ -1,21 +1,48 @@
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { logger } from '@utils/logger.js';
-import { GMAIL_API_BASE_URL, GMAIL_APIs } from './gmail.constants.js';
+import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
 import { AxiosRequestConfig } from 'axios';
 import { apiRequest } from '@utils/axios.js';
 import { decrypt, encrypt } from '@utils/crypto.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
 import { GMAIL_SECRETS } from '@config/config.js';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
-import { GmailMessageObjectFull, GmailMessages } from './gmail.types.js';
+import { GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
 
 export class GmailApi {
+    public async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
+        try {
+            const options: AxiosRequestConfig = {
+                url: OAUTH_ACCESS_TOKEN_URI.GMAIL,
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                data: {
+                    code,
+                    client_id: GMAIL_SECRETS.client_id,
+                    client_secret: GMAIL_SECRETS.client_secret,
+                    redirect_uri: GMAIL_SECRETS.redirect_uri,
+                    grant_type: 'authorization_code',
+                },
+            };
+            const response: GmailOAuthAccessTokenResponse = await apiRequest(options);
+            return response;
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error(`Error in GmailApi.getAccessTokenFromCode: ${errorMessage}`, { error });
+            throw error;
+        }
+    }
+
     // Function to fetch access token from DB
     public async fetchAccessToken(accountId: string) {
         try {
             const account = await AccountRepository.getAccountById(accountId);
             if (!account) throw new Error('Account not found');
-            return account.accessTokenExpiry < Date.now() ? await this.refreshAccessToken(accountId) : decrypt(account.accessToken);
+            return account.accessTokenExpiry < Date.now()
+                ? await this.refreshAccessToken(accountId, decrypt(account.refreshToken))
+                : decrypt(account.accessToken);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.fetchAccessToken: ${errorMessage}`, { error: err });
@@ -24,10 +51,8 @@ export class GmailApi {
     }
 
     // Function to refresh the access token if it is expired
-    private async refreshAccessToken(accountId: string) {
+    private async refreshAccessToken(accountId: string, refreshToken: string) {
         try {
-            const account = await AccountRepository.getAccountById(accountId);
-            if (!account) throw new Error('Account not found');
             const options: AxiosRequestConfig = {
                 url: OAUTH_ACCESS_TOKEN_URI.GMAIL,
                 method: 'POST',
@@ -35,7 +60,7 @@ export class GmailApi {
                     'Content-Type': 'application/x-www-form-urlencoded',
                 },
                 data: {
-                    refresh_token: decrypt(account.refreshToken),
+                    refresh_token: refreshToken,
                     client_id: GMAIL_SECRETS.client_id,
                     client_secret: GMAIL_SECRETS.client_secret,
                     grant_type: 'refresh_token',
@@ -47,6 +72,25 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.refreshAccessToken: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    // Function to get user profile from access token
+    public async getUserProfileFromAccessToken(accessToken: string): Promise<GmailUserProfile> {
+        try {
+            const options: AxiosRequestConfig = {
+                url: GMAIL_USER_INFO,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response: GmailUserProfile = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.getUserProfileFromAccessToken: ${errorMessage}`, { error: err });
             throw err;
         }
     }

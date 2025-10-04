@@ -1,3 +1,4 @@
+// User profile interface
 export interface GmailUserProfile {
     sub: string;
     name: string;
@@ -9,6 +10,7 @@ export interface GmailUserProfile {
     locale: string;
 }
 
+// Messages interfaces
 export interface GmailMessages {
     messages: { id: string; threadId: string }[];
     nextPageToken: string;

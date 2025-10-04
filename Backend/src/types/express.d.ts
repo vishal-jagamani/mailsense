@@ -5,3 +5,16 @@ declare module 'express-serve-static-core' {
         validated?: unknown;
     }
 }
+
+declare global {
+    namespace Express {
+        interface Auth0JwtPayload extends JwtPayload {
+            sub: string;
+            email?: string;
+            name?: string;
+        }
+        interface Request {
+            user?: Auth0JwtPayload;
+        }
+    }
+}

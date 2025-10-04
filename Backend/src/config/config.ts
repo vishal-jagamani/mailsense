@@ -21,6 +21,11 @@ export const config = {
     nodeEnv: ENV.NODE_ENV,
 };
 
+export const AUTH0_SECRETS = {
+    audience: ENV.AUTH0_AUDIENCE,
+    issuerBaseURL: ENV.AUTH0_ISSUER_BASE_URL,
+};
+
 export const GMAIL_SECRETS = {
     client_id: ENV.GMAIL_CLIENT_ID,
     client_secret: ENV.GMAIL_CLIENT_SECRET,

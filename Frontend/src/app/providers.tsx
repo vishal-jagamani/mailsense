@@ -14,7 +14,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 <AuthProvider>
                     <QueryClientProvider client={queryClient}>
                         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-                            <div className="flex h-screen w-screen">{children}</div>
+                            {/* <div className="flex h-screen w-screen">{children}</div> */}
+                            {children}
                         </ThemeProvider>
                     </QueryClientProvider>
                 </AuthProvider>

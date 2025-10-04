@@ -2,17 +2,18 @@ import { EmailRepository } from '@modules/emails/email.repository.js';
 import { decompressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import { GetEmailsResponse } from 'types/email.types.js';
+import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 
 export class EmailService {
     public async getEmails(accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
         try {
-            const emails = await EmailRepository.getEmails(accountId, size, page);
+            const emails = await EmailRepository.getEmails(accountId, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             const total = await EmailRepository.countDocuments(accountId);
             const data = emails.map((email) => ({
                 ...email,
-                body: email.body ? decompressString(email.body) : '',
-                bodyHtml: email.bodyHtml ? decompressString(email.bodyHtml) : '',
-                bodyPlain: email.bodyPlain ? decompressString(email.bodyPlain) : '',
+                ...(email.body && { body: decompressString(email.body) }),
+                ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
+                ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
             }));
             return { data, size, page, total };
         } catch (err) {
