@@ -3,11 +3,26 @@ import { decompressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
+import { EmailDocument } from './email.model.js';
+import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AccountProvider } from 'types/account.types.js';
+import { GmailService } from '@providers/gmail/gmail.service.js';
 
 export class EmailService {
+    private gmailService: GmailService;
+
+    constructor() {
+        this.gmailService = new GmailService();
+    }
     public async getEmails(accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
         try {
-            const emails = await EmailRepository.getEmails(accountId, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            const emails = await EmailRepository.getEmailsByAccountId(
+                accountId,
+                size,
+                page,
+                EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection,
+                EMAIL_LIST_DB_FIELD_MAPPING.SORT.sort,
+            );
             const total = await EmailRepository.countDocuments(accountId);
             const data = emails.map((email) => ({
                 ...email,
@@ -19,6 +34,49 @@ export class EmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async getEmail(emailId: string): Promise<EmailDocument | null> {
+        try {
+            const email = await EmailRepository.getEmail(emailId);
+            return email;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async deleteEmail(emailIds: string[], trash?: boolean): Promise<void> {
+        try {
+            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds);
+            if (!emails.length) {
+                throw new Error('Email not found');
+            }
+            const groupedEmails = Object.groupBy(emails, (item) => item.accountId);
+            for (const [accountId, emails] of Object.entries(groupedEmails)) {
+                const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
+                if (!account || !emails) continue;
+                if (account.provider === AccountProvider.GMAIL) {
+                    await this.gmailService.deleteEmails(
+                        emails.map((email) => email.providerMessageId),
+                        accountId,
+                        trash,
+                    );
+                } else if (account.provider === AccountProvider.OUTLOOK) {
+                    // Outlook provider deletion
+                    // await this.outlookService.deleteEmails(
+                    //     emails.map((email) => email.providerMessageId),
+                    //     accountId,
+                    //     trash,
+                    // );
+                }
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
             throw err;
         }
     }

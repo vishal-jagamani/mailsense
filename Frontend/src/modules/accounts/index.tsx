@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store';
 import { ChevronRight } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import ProviderAccountList from './components/ProviderAccountList';
-import { useAccountProviderQuery, useAccountQuery } from './services/useAccountQuery';
+import { useAccountProviderQuery, useAccountQuery } from './services/useAccountApi';
 
 const AccountsPage: React.FC = () => {
     const [provider, setProvider] = useState<string>('');

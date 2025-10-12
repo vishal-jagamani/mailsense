@@ -80,8 +80,8 @@ export class AccountsController {
     public syncAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
-            const emails = await this.accountsService.syncAccount(accountId);
-            res.send(emails);
+            this.accountsService.syncAccount(accountId);
+            res.send(true);
         } catch (error) {
             next(error);
         }

@@ -1,13 +1,14 @@
 'use client';
 
+import Loader from '@/shared/components/loader';
 import { AppSidebar } from '@/shared/components/sidebar/app-sidebar';
-import { useAuthStore } from '@/store';
 import { SidebarProvider, SidebarTrigger } from '@/shared/ui/sidebar';
+import { useAuthStore } from '@/store';
 
 export default function HomeLayout({ children }: { children: React.ReactNode }) {
     const { isLoading } = useAuthStore();
 
-    if (isLoading) return <div>Loading...</div>;
+    if (isLoading) return <Loader />;
 
     return (
         <>

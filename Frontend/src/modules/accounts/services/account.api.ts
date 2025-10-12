@@ -15,3 +15,8 @@ export async function connectAccount(provider: string) {
     const { data } = await axiosClient.get(`/accounts/connect/${provider}`);
     return data;
 }
+
+export async function removeAccount(accountId: string) {
+    const { data } = await axiosClient.delete(`/accounts/${accountId}`);
+    return data;
+}

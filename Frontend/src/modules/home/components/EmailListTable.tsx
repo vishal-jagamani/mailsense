@@ -4,7 +4,9 @@ import { Email } from '@/shared/types/email.types';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import { formatDateToMonthDateString } from '@/shared/utils/formatter';
+import { Trash } from 'lucide-react';
 import React, { useState } from 'react';
+import { useDeleteEmail } from '../services/useHomeApi';
 
 interface EmailListTableProps {
     data: Email[];
@@ -12,6 +14,13 @@ interface EmailListTableProps {
 
 const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+    const { mutateAsync } = useDeleteEmail();
+
+    const handleTrashIconClick = async (email: Email) => {
+        const response = await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
+        console.log('response', response);
+    };
+
     return (
         <>
             <Table>
@@ -34,6 +43,7 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
                         <TableHead>From</TableHead>
                         <TableHead>Subject</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead></TableHead>
                     </TableRow>
                 </TableHeader>
                 {data.map((email) => (
@@ -61,6 +71,9 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
                             {email.subject} - <span className="text-muted-foreground">{email.bodyPlain}</span>
                         </TableCell>
                         <TableCell className="w-28 whitespace-nowrap">{formatDateToMonthDateString(email.receivedAt)}</TableCell>
+                        <TableCell className="w-10 whitespace-nowrap">
+                            <Trash className="text-red-500" size={16} onClick={() => handleTrashIconClick(email)} />
+                        </TableCell>
                     </TableRow>
                 ))}
             </Table>

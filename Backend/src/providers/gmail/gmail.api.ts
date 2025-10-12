@@ -10,7 +10,7 @@ import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
 import { GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
 
 export class GmailApi {
-    public async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
+    static async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
         try {
             const options: AxiosRequestConfig = {
                 url: OAUTH_ACCESS_TOKEN_URI.GMAIL,
@@ -36,7 +36,7 @@ export class GmailApi {
     }
 
     // Function to fetch access token from DB
-    public async fetchAccessToken(accountId: string) {
+    static async fetchAccessToken(accountId: string) {
         try {
             const account = await AccountRepository.getAccountById(accountId);
             if (!account) throw new Error('Account not found');
@@ -51,7 +51,7 @@ export class GmailApi {
     }
 
     // Function to refresh the access token if it is expired
-    private async refreshAccessToken(accountId: string, refreshToken: string) {
+    static async refreshAccessToken(accountId: string, refreshToken: string) {
         try {
             const options: AxiosRequestConfig = {
                 url: OAUTH_ACCESS_TOKEN_URI.GMAIL,
@@ -77,7 +77,7 @@ export class GmailApi {
     }
 
     // Function to get user profile from access token
-    public async getUserProfileFromAccessToken(accessToken: string): Promise<GmailUserProfile> {
+    static async getUserProfileFromAccessToken(accessToken: string): Promise<GmailUserProfile> {
         try {
             const options: AxiosRequestConfig = {
                 url: GMAIL_USER_INFO,
@@ -96,7 +96,7 @@ export class GmailApi {
     }
 
     // Function to fetch emails from account
-    public async fetchEmails(accessToken: string): Promise<GmailMessages> {
+    static async fetchEmails(accessToken: string): Promise<GmailMessages> {
         try {
             const options: AxiosRequestConfig = {
                 url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}`,
@@ -114,7 +114,7 @@ export class GmailApi {
         }
     }
 
-    public async fetchEmailById(messageId: string, accessToken: string): Promise<GmailMessageObjectFull> {
+    static async fetchEmailById(messageId: string, accessToken: string): Promise<GmailMessageObjectFull> {
         try {
             const options: AxiosRequestConfig = {
                 url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${messageId}?format=full`,
@@ -129,6 +129,48 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.fetchEmailById: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async trashEmail(emailId: string, accountId: string): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${emailId}/trash`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response: GmailMessageObjectFull = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static async permanentlyDeleteEmails(emailIds: string[], accountId: string): Promise<any> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.BATCH_DELETE}`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    ids: emailIds,
+                },
+            };
+            const response: GmailMessages = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }

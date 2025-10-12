@@ -1,10 +1,15 @@
 'use client';
 
+import Loader from '@/shared/components/loader';
 import EmailListTable from './components/EmailListTable';
 import { useFetchEmails } from './services/useHomeApi';
 
 const HomePage = () => {
-    const { data: emails } = useFetchEmails();
+    const { data: emails, isLoading } = useFetchEmails();
+
+    if (isLoading) {
+        return <Loader />;
+    }
 
     return (
         <div className="flex items-center justify-center gap-4 px-4 py-2">

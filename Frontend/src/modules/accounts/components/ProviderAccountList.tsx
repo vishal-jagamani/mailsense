@@ -8,7 +8,7 @@ import outlookIcon from '@assets/icons/outlook/icons8-outlook-240.svg';
 import { Plus } from 'lucide-react';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
-import { useAccountProviderQuery, useAccountQuery, useGetAccountsQuery } from '../services/useAccountQuery';
+import { useAccountProviderQuery, useAccountQuery, useGetAccountsQuery } from '../services/useAccountApi';
 import AccountCard from './AccountCard';
 
 const iconMapping = [
@@ -36,7 +36,8 @@ const ProviderAccountList: React.FC = () => {
         <>
             <div className="flex flex-col gap-10 select-none">
                 {accountProvidersData?.map((provider) => {
-                    return (
+                    const filteredAccounts = accounts?.filter((account) => account.provider === provider.name);
+                    return filteredAccounts && filteredAccounts?.length > 0 ? (
                         <div key={provider.id} className="flex flex-col gap-2">
                             <div className="flex items-center gap-1">
                                 <Image
@@ -48,10 +49,9 @@ const ProviderAccountList: React.FC = () => {
                                 <p className="text-lg font-semibold">{provider.displayName}</p>
                             </div>
                             <div className="flex flex-wrap items-center gap-4">
-                                {accounts &&
-                                    accounts.length > 0 &&
-                                    accounts
-                                        .filter((account) => account.provider === provider.name)
+                                {filteredAccounts &&
+                                    filteredAccounts.length > 0 &&
+                                    filteredAccounts
                                         .map((account) => {
                                             return <AccountCard key={account.id} account={account} />;
                                         })
@@ -69,7 +69,7 @@ const ProviderAccountList: React.FC = () => {
                                         )}
                             </div>
                         </div>
-                    );
+                    ) : null;
                 })}
             </div>
         </>

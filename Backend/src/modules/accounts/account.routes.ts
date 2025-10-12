@@ -2,13 +2,13 @@ import { validate } from '@middlewares/validator.js';
 import { handleRequest } from '@utils/request.handler.js';
 import { Router } from 'express';
 import { AccountsController } from './account.controller.js';
-import { connectAccountSchema, getAccountSchema } from './account.schema.js';
+import { connectAccountSchema, deleteAccountSchema, getAccountSchema } from './account.schema.js';
 
 const router = Router();
 
 const accountsController = new AccountsController();
 
-router.delete('/:accountId', validate(getAccountSchema, 'params'), handleRequest(accountsController.deleteAccount));
+router.delete('/:accountId', validate(deleteAccountSchema, 'params'), handleRequest(accountsController.deleteAccount));
 
 router.get('/list/:userId', validate(getAccountSchema, 'params'), handleRequest(accountsController.getAccounts));
 

@@ -11,6 +11,7 @@ import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
 import { MAILSENSE_BASE_URL } from '@config/config.js';
 import { GmailApi } from '@providers/gmail/gmail.api.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { EmailInput } from '@modules/emails/email.model.js';
 // import { MailSyncService } from 'services/mail/mailSync.service.js';
 
 export class AccountsService {
@@ -181,7 +182,7 @@ export class AccountsService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public fetchEmails = async (accountId: string): Promise<any> => {
         try {
-            const emails = await this.gmailApi.fetchEmails(accountId);
+            const emails = await this.gmailService.getMessages(accountId);
             // parse the emails and return only the required fields
             return emails;
         } catch (err) {
@@ -201,10 +202,22 @@ export class AccountsService {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async syncAccount(accountId: string): Promise<void> {
         try {
             // await this.emailSyncService.syncAccount('123', accountId);
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) throw new Error('Account not found');
+            let emails: EmailInput[] = [];
+            if (account.provider === AccountProvider.GMAIL) {
+                emails = await this.gmailService.getMessages(accountId);
+            } else if (account.provider === AccountProvider.OUTLOOK) {
+                // emails = await this.outlookService.getMessages(accountId);
+            }
+            await EmailRepository.upsertEmailsInBulk(emails);
+            const updateAccountSyncDetails: Partial<AccountInput> = {
+                lastSyncedAt: Date.now(),
+            };
+            await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });

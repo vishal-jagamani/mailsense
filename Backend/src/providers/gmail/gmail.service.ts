@@ -5,16 +5,15 @@ import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
 import { GmailApi } from './gmail.api.js';
 import { GmailMessages, GmailUserProfile } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
+import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { decrypt } from '@utils/crypto.js';
+import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/account.constants.js';
+import { EmailRepository } from '@modules/emails/email.repository.js';
 
 export class GmailService {
-    private gmailApi: GmailApi;
-    constructor() {
-        this.gmailApi = new GmailApi();
-    }
-
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
         try {
-            const response = await this.gmailApi.getAccessTokenFromCode(code);
+            const response = await GmailApi.getAccessTokenFromCode(code);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -25,7 +24,7 @@ export class GmailService {
 
     async getUserProfileFromAccessToken(accessToken: string): Promise<GmailUserProfile> {
         try {
-            const response = await this.gmailApi.getUserProfileFromAccessToken(accessToken);
+            const response = await GmailApi.getUserProfileFromAccessToken(accessToken);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -34,10 +33,15 @@ export class GmailService {
         }
     }
 
-    async getMessages(accountId: string, accessToken: string): Promise<EmailInput[]> {
+    async getMessages(accountId: string): Promise<EmailInput[]> {
         try {
-            const emails = await this.gmailApi.fetchEmails(accessToken);
-            const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails, accessToken);
+            const account = await AccountRepository.getAccountById(
+                accountId,
+                ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING.FETCH_ACCESS_TOKEN.projection,
+            );
+            if (!account) throw new Error('Account not found');
+            const emails = await GmailApi.fetchEmails(decrypt(account.accessToken));
+            const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails, decrypt(account.accessToken));
             return parsedEmails;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -49,10 +53,10 @@ export class GmailService {
     async parseEmailsIntoPlainObjects(accountId: string, emails: GmailMessages, accessToken: string): Promise<EmailInput[]> {
         try {
             const parsedEmails = emails.messages.map(async (email: { id: string; threadId: string }) => {
-                const emailDetails = await this.gmailApi.fetchEmailById(email.id, accessToken);
+                const emailDetails = await GmailApi.fetchEmailById(email.id, accessToken);
                 const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(emailDetails);
                 const emailObject: EmailInput = {
-                    accountId: accountId,
+                    accountId,
                     providerMessageId: emailDetails.id,
                     threadId: emailDetails.threadId,
                     from: emailDetails.payload.headers.find((val) => val.name === 'From')?.value || '',
@@ -74,6 +78,25 @@ export class GmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async deleteEmails(emailIds: string[], accountId: string, trash?: boolean) {
+        try {
+            if (trash) {
+                for (const emailId of emailIds) {
+                    const email = await GmailApi.trashEmail(emailId, accountId);
+                    await EmailRepository.updateEmail(email.id, email);
+                }
+                return;
+            } else {
+                const response = await GmailApi.permanentlyDeleteEmails(emailIds, accountId);
+                return response;
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.deleteEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }

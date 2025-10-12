@@ -16,6 +16,7 @@ interface GmailUserProfile {
 }
 
 export interface AccountAttributes {
+    _id: string;
     id: number;
     userId: string;
     provider: string;

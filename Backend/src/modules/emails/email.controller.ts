@@ -22,4 +22,30 @@ export class EmailController {
             next(error);
         }
     };
+
+    public getEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailId } = req.params;
+            if (!emailId) {
+                throw new Error('Email ID is required');
+            }
+            const email = await this.emailService.getEmail(emailId);
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public deleteEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailIds, trash } = req.body;
+            if (!emailIds) {
+                throw new Error('Email ID is required');
+            }
+            const email = await this.emailService.deleteEmail(emailIds, Boolean(trash));
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
 }

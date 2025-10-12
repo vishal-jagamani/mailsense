@@ -19,6 +19,7 @@ import outlookIcon from '@assets/icons/outlook/icons8-outlook-240.svg';
 import { CircleMinus, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState } from 'react';
+import { useRemoveAccountQuery } from '../services/useAccountApi';
 
 interface AccountCardProps {
     account: AccountAttributes;
@@ -31,6 +32,13 @@ const iconMapping = [
 
 const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
     const [syncing, setSyncing] = useState<boolean>(false);
+
+    const { mutateAsync: removeAccount } = useRemoveAccountQuery();
+
+    const handleRemoveAccount = async () => {
+        const response = await removeAccount(account._id);
+        console.log('response', response);
+    };
 
     return (
         <>
@@ -156,7 +164,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel className="cursor-pointer font-semibold">Cancel</AlertDialogCancel>
                                                     <AlertDialogAction
-                                                        onClick={() => console.log('click')}
+                                                        onClick={() => handleRemoveAccount()}
                                                         className="text-primary cursor-pointer bg-red-600 font-semibold hover:bg-red-500"
                                                     >
                                                         Remove Account
