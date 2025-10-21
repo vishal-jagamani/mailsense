@@ -9,6 +9,10 @@ export const connectAccountSchema = z.object({
     provider: z.enum(AccountProvider),
 });
 
+export const getAccountDetailsSchema = z.object({
+    accountId: z.string(),
+});
+
 export const deleteAccountSchema = z.object({
     accountId: z.string(),
 });

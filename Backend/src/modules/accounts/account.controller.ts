@@ -8,6 +8,18 @@ export class AccountsController {
         this.accountsService = new AccountsService();
     }
 
+    public getAccountDetails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const accountId = req.params.accountId;
+            if (!accountId) throw new Error('Account ID is required');
+            const account = await this.accountsService.getAccountDetails(accountId);
+            if (!account) res.status(404).send({ message: 'Account not found' });
+            res.send(account);
+        } catch (error) {
+            next(error);
+        }
+    };
+
     public deleteAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;

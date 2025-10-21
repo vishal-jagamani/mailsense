@@ -1,6 +1,6 @@
 import { QUERY_KEYS } from '@shared/config/query-keys';
 import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
-import { connectAccount, getAccountProvider, getAccounts, removeAccount } from './account.api';
+import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount } from './account.api';
 import { AccountAttributes, AccountProviders } from '@/shared/types/account.types';
 
 type ConnectAccountResult = Awaited<ReturnType<typeof connectAccount>>;
@@ -9,6 +9,10 @@ type Options = Omit<UseQueryOptions<ConnectAccountResult, Error, ConnectAccountR
 
 export const useGetAccountsQuery = (userId: string, options?: Options): UseQueryResult<AccountAttributes[]> => {
     return useQuery({ queryKey: [QUERY_KEYS.ACCOUNTS, userId], queryFn: () => getAccounts(userId), ...options });
+};
+
+export const useGetAccountDetailsQuery = (accountId: string, options?: Options): UseQueryResult<AccountAttributes> => {
+    return useQuery({ queryKey: [QUERY_KEYS.ACCOUNTS, accountId], queryFn: () => getAccountDetails(accountId), ...options });
 };
 
 export const useAccountQuery = (provider: string, options?: Options) => {

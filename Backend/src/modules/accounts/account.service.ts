@@ -5,7 +5,7 @@ import * as OutlookUtils from '@providers/outlook/outlook.utils.js';
 import { decrypt, encrypt } from '@utils/crypto.js';
 import { logger } from '@utils/logger.js';
 import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
-import { AccountInput } from './account.model.js';
+import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
 import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
 import { MAILSENSE_BASE_URL } from '@config/config.js';
@@ -25,6 +25,23 @@ export class AccountsService {
         this.outlookService = new OutlookService();
         this.gmailApi = new GmailApi();
         // this.emailSyncService = new MailSyncService();
+    }
+
+    /**
+     * Fetches an account from the database.
+     * @param accountId The ID of the account to fetch.
+     * @returns A promise that resolves to the account.
+     */
+    async getAccountDetails(accountId: string): Promise<AccountDocument | null> {
+        try {
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) return null;
+            return account;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.getAccountDetails: ${errorMessage}`, { error: err });
+            throw err;
+        }
     }
 
     /**
