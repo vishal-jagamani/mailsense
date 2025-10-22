@@ -1,4 +1,4 @@
-import { AnyBulkWriteOperation, ProjectionType, SortOrder } from 'mongoose';
+import { AnyBulkWriteOperation, FlattenMaps, ProjectionType, SortOrder } from 'mongoose';
 import { Email, EmailDocument, EmailInput } from './email.model.js';
 
 export class EmailRepository {
@@ -23,7 +23,7 @@ export class EmailRepository {
         page: number,
         fields: ProjectionType<EmailDocument>,
         sort: Record<string, SortOrder>,
-    ) {
+    ): Promise<FlattenMaps<EmailDocument>[]> {
         return Email.find({ accountId }, fields)
             .skip((page - 1) * size)
             .limit(size)
@@ -37,7 +37,7 @@ export class EmailRepository {
         page: number,
         fields: ProjectionType<EmailDocument>,
         sort: Record<string, SortOrder>,
-    ) {
+    ): Promise<FlattenMaps<EmailDocument>[]> {
         return Email.find({ accountId: { $in: accountIds } }, fields)
             .skip((page - 1) * size)
             .limit(size)

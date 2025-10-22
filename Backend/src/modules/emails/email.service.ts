@@ -30,7 +30,11 @@ export class EmailService {
             );
             const total = await EmailRepository.countDocuments(accounts.map((account) => account.id));
             const data = emails.map((email) => ({
-                ...email,
+                _id: email._id.toString(),
+                subject: email.subject,
+                from: email.from,
+                receivedAt: email.receivedAt,
+                isRead: email.isRead,
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -54,7 +58,11 @@ export class EmailService {
             );
             const total = await EmailRepository.countDocuments([accountId]);
             const data = emails.map((email) => ({
-                ...email,
+                _id: email._id.toString(),
+                subject: email.subject,
+                from: email.from,
+                receivedAt: email.receivedAt,
+                isRead: email.isRead,
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
