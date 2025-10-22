@@ -23,8 +23,8 @@ export type EmailDocument = Document & Email;
 
 const EmailSchema = new Schema<EmailDocument>(
     {
-        accountId: { type: String, required: true, index: true },
-        providerMessageId: { type: String, required: true, index: true },
+        accountId: { type: String, required: true },
+        providerMessageId: { type: String, required: true },
         threadId: { type: String, required: true },
         from: { type: String, required: true },
         to: { type: [String], required: true },
@@ -43,5 +43,7 @@ const EmailSchema = new Schema<EmailDocument>(
 
 // Indexes
 EmailSchema.index({ accountId: 1, providerMessageId: 1 }, { unique: true });
+EmailSchema.index({ accountId: 1, receivedAt: -1 });
+EmailSchema.index({ accountId: 1, folder: 1, receivedAt: -1 });
 
 export const Email = model<EmailDocument>('Email', EmailSchema);

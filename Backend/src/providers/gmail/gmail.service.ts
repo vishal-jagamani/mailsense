@@ -1,14 +1,13 @@
+import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/account.constants.js';
+import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailRepository } from '@modules/emails/email.repository.js';
 import { compressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
 import { GmailApi } from './gmail.api.js';
 import { GmailMessages, GmailUserProfile } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { decrypt } from '@utils/crypto.js';
-import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/account.constants.js';
-import { EmailRepository } from '@modules/emails/email.repository.js';
 
 export class GmailService {
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -40,8 +39,8 @@ export class GmailService {
                 ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING.FETCH_ACCESS_TOKEN.projection,
             );
             if (!account) throw new Error('Account not found');
-            const emails = await GmailApi.fetchEmails(decrypt(account.accessToken));
-            const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails, decrypt(account.accessToken));
+            const emails = await GmailApi.fetchEmails(accountId);
+            const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails);
             return parsedEmails;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -50,10 +49,10 @@ export class GmailService {
         }
     }
 
-    async parseEmailsIntoPlainObjects(accountId: string, emails: GmailMessages, accessToken: string): Promise<EmailInput[]> {
+    async parseEmailsIntoPlainObjects(accountId: string, emails: GmailMessages): Promise<EmailInput[]> {
         try {
             const parsedEmails = emails.messages.map(async (email: { id: string; threadId: string }) => {
-                const emailDetails = await GmailApi.fetchEmailById(email.id, accessToken);
+                const emailDetails = await GmailApi.fetchEmailById(email.id, accountId);
                 const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(emailDetails);
                 const emailObject: EmailInput = {
                     accountId,

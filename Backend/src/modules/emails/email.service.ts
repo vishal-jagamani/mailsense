@@ -1,12 +1,12 @@
+import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { GmailService } from '@providers/gmail/gmail.service.js';
 import { decompressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
+import { AccountProvider } from 'types/account.types.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument } from './email.model.js';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { AccountProvider } from 'types/account.types.js';
-import { GmailService } from '@providers/gmail/gmail.service.js';
 
 export class EmailService {
     private gmailService: GmailService;
@@ -14,6 +14,35 @@ export class EmailService {
     constructor() {
         this.gmailService = new GmailService();
     }
+
+    public async getAllEmails(userId: string, size: number, page: number): Promise<GetEmailsResponse> {
+        try {
+            const accounts = await AccountRepository.getAccounts(userId);
+            if (!accounts.length) {
+                return { data: [], size: 0, page: 0, total: 0 };
+            }
+            const emails = await EmailRepository.getEmailsByAccountIds(
+                accounts.map((account) => String(account._id)),
+                size,
+                page,
+                EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection,
+                EMAIL_LIST_DB_FIELD_MAPPING.SORT.sort,
+            );
+            const total = await EmailRepository.countDocuments(accounts.map((account) => account.id));
+            const data = emails.map((email) => ({
+                ...email,
+                ...(email.body && { body: decompressString(email.body) }),
+                ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
+                ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
+            }));
+            return { data, size, page, total };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getAllEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
     public async getEmails(accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
         try {
             const emails = await EmailRepository.getEmailsByAccountId(
@@ -23,7 +52,7 @@ export class EmailService {
                 EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection,
                 EMAIL_LIST_DB_FIELD_MAPPING.SORT.sort,
             );
-            const total = await EmailRepository.countDocuments(accountId);
+            const total = await EmailRepository.countDocuments([accountId]);
             const data = emails.map((email) => ({
                 ...email,
                 ...(email.body && { body: decompressString(email.body) }),

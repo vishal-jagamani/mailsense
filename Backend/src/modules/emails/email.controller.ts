@@ -7,6 +7,23 @@ export class EmailController {
     constructor() {
         this.emailService = new EmailService();
     }
+
+    public getAllEmails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { userid } = req.headers;
+            const { size, page } = req.query;
+            if (!userid) {
+                throw new Error('User ID is required');
+            }
+            const sizeValue = size ? Number(size) : 10;
+            const pageValue = page ? Number(page) : 1;
+            const emails = await this.emailService.getAllEmails(String(userid), sizeValue, pageValue);
+            res.send(emails);
+        } catch (error) {
+            next(error);
+        }
+    };
+
     public getEmails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { accountId } = req.params;

@@ -1,10 +1,11 @@
 import AccountInboxPage from '@/modules/inbox/accountInbox';
 import React from 'react';
 
-const page: React.FC<{ params: { account: string } }> = ({ params }) => {
+const page = async ({ params }: { params: { account: string } }) => {
+    const { account } = await params;
     return (
         <>
-            <AccountInboxPage account={params.account} />
+            <AccountInboxPage account={account} />
         </>
     );
 };

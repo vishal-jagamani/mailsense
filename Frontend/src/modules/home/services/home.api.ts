@@ -1,8 +1,8 @@
 import { axiosClient } from '@/shared/config/axios';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 
-export async function fetchEmails() {
-    const { data } = await axiosClient.get<GetEmailsResponse>('/emails/list/68eba47a4d3d1354140b2b65');
+export async function fetchEmails(userId: string) {
+    const { data } = await axiosClient.get<GetEmailsResponse>(`/emails/list-all`, { headers: { userid: userId } });
     return data;
 }
 

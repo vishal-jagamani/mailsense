@@ -5,9 +5,9 @@ import { ZodError, z } from 'zod';
  * Middleware to validate incoming requests using Zod schemas.
  *
  * @param schema - Zod schema to validate against
- * @param source - Request source: body, query, or params
+ * @param source - Request source: body, query, params or headers
  */
-export const validate = (schema: z.ZodSchema, source: 'body' | 'query' | 'params') => (req: Request, res: Response, next: NextFunction) => {
+export const validate = (schema: z.ZodSchema, source: 'body' | 'query' | 'params' | 'headers') => (req: Request, res: Response, next: NextFunction) => {
     const result = schema.safeParse(req[source]);
 
     if (!result.success) {

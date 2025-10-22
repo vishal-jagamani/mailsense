@@ -1,10 +1,10 @@
 import { EMAILS } from '@/shared/config/query-keys';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { deleteEmail, fetchEmails } from './home.api';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 
-export const useFetchEmails = () => {
-    return useQuery<GetEmailsResponse>({ queryKey: [EMAILS], queryFn: fetchEmails, staleTime: 1000 * 60 * 5 });
+export const useFetchEmails = (userId: string, enabled: boolean) => {
+    return useQuery<GetEmailsResponse>({ queryKey: [EMAILS], queryFn: () => fetchEmails(userId), staleTime: 1000 * 60 * 5, enabled });
 };
 
 export const useDeleteEmail = () => {

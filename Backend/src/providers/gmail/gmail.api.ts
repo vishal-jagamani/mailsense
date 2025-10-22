@@ -96,8 +96,9 @@ export class GmailApi {
     }
 
     // Function to fetch emails from account
-    static async fetchEmails(accessToken: string): Promise<GmailMessages> {
+    static async fetchEmails(accountId: string): Promise<GmailMessages> {
         try {
+            const accessToken = await this.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}`,
                 method: 'GET',
@@ -114,8 +115,9 @@ export class GmailApi {
         }
     }
 
-    static async fetchEmailById(messageId: string, accessToken: string): Promise<GmailMessageObjectFull> {
+    static async fetchEmailById(messageId: string, accountId: string): Promise<GmailMessageObjectFull> {
         try {
+            const accessToken = await this.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${messageId}?format=full`,
                 method: 'GET',
