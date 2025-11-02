@@ -131,7 +131,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 navMain: prev.navMain.map((item) => (item.title === 'Inbox' ? { ...item, items: inboxItems } : item)),
             }));
         }
-    }, [accounts, sidebarData]);
+    }, [accounts]);
 
     const userData = {
         name: user?.name ?? '',
