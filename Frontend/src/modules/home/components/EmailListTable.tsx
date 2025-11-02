@@ -4,14 +4,30 @@ import { Email } from '@/shared/types/email.types';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import { formatDateToMonthDateString } from '@/shared/utils/formatter';
+import { Trash } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
+import { useDeleteEmail } from '../services/useHomeApi';
 
 interface EmailListTableProps {
     data: Email[];
 }
 
 const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
+    const router = useRouter();
+
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+    const { mutateAsync } = useDeleteEmail();
+
+    console.log('selectedEmails', selectedEmails);
+
+    const handleTrashIconClick = async (email: Email) => {
+        if (selectedEmails.length === 0) {
+            const response = await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
+            console.log('response', response);
+        }
+    };
+
     return (
         <>
             <Table>
@@ -34,14 +50,18 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
                         <TableHead>From</TableHead>
                         <TableHead>Subject</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead></TableHead>
                     </TableRow>
                 </TableHeader>
                 {data.map((email) => (
                     <TableRow
                         key={email._id}
                         className={`cursor-pointer ${selectedEmails.includes(email._id) ? 'bg-blue-800 hover:bg-blue-800' : ''} ${email.isRead && selectedEmails.includes(email._id) ? 'bg-blue-800 hover:bg-blue-800' : email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
+                        onClick={() => {
+                            router.push(`/inbox/${email.accountId}/email/${email._id}`);
+                        }}
                     >
-                        <TableCell className="w-10">
+                        <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                                 id={email._id}
                                 checked={selectedEmails.includes(email._id)}
@@ -61,6 +81,16 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
                             {email.subject} - <span className="text-muted-foreground">{email.bodyPlain}</span>
                         </TableCell>
                         <TableCell className="w-28 whitespace-nowrap">{formatDateToMonthDateString(email.receivedAt)}</TableCell>
+                        <TableCell className="w-10 whitespace-nowrap">
+                            <Trash
+                                className="text-red-500"
+                                size={16}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTrashIconClick(email);
+                                }}
+                            />
+                        </TableCell>
                     </TableRow>
                 ))}
             </Table>

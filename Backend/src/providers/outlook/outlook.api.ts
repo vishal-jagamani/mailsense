@@ -7,7 +7,7 @@ import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { apiRequest } from '@utils/axios.js';
 import { logger } from '@utils/logger.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
-import { OutlookUserProfile } from './outlook.types.js';
+import { OutlookMessage, OutlookUserProfile } from './outlook.types.js';
 
 export class OutlookApi {
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
@@ -89,6 +89,25 @@ export class OutlookApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookApi.getUserProfileFromAccessToken: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async getMessages(accountId: string) {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response: OutlookMessage[] = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.getMessages: ${errorMessage}`, { error: err });
             throw err;
         }
     }

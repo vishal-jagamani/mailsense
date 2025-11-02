@@ -5,12 +5,13 @@ import * as OutlookUtils from '@providers/outlook/outlook.utils.js';
 import { decrypt, encrypt } from '@utils/crypto.js';
 import { logger } from '@utils/logger.js';
 import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
-import { AccountInput } from './account.model.js';
+import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
 import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
 import { MAILSENSE_BASE_URL } from '@config/config.js';
 import { GmailApi } from '@providers/gmail/gmail.api.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { EmailInput } from '@modules/emails/email.model.js';
 // import { MailSyncService } from 'services/mail/mailSync.service.js';
 
 export class AccountsService {
@@ -24,6 +25,23 @@ export class AccountsService {
         this.outlookService = new OutlookService();
         this.gmailApi = new GmailApi();
         // this.emailSyncService = new MailSyncService();
+    }
+
+    /**
+     * Fetches an account from the database.
+     * @param accountId The ID of the account to fetch.
+     * @returns A promise that resolves to the account.
+     */
+    async getAccountDetails(accountId: string): Promise<AccountDocument | null> {
+        try {
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) return null;
+            return account;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.getAccountDetails: ${errorMessage}`, { error: err });
+            throw err;
+        }
     }
 
     /**
@@ -181,7 +199,7 @@ export class AccountsService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public fetchEmails = async (accountId: string): Promise<any> => {
         try {
-            const emails = await this.gmailApi.fetchEmails(accountId);
+            const emails = await this.gmailService.getMessages(accountId);
             // parse the emails and return only the required fields
             return emails;
         } catch (err) {
@@ -201,10 +219,22 @@ export class AccountsService {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async syncAccount(accountId: string): Promise<void> {
         try {
             // await this.emailSyncService.syncAccount('123', accountId);
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) throw new Error('Account not found');
+            let emails: EmailInput[] = [];
+            if (account.provider === AccountProvider.GMAIL) {
+                emails = await this.gmailService.getMessages(accountId);
+            } else if (account.provider === AccountProvider.OUTLOOK) {
+                // emails = await this.outlookService.getMessages(accountId);
+            }
+            await EmailRepository.upsertEmailsInBulk(emails);
+            const updateAccountSyncDetails: Partial<AccountInput> = {
+                lastSyncedAt: Date.now(),
+            };
+            await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });

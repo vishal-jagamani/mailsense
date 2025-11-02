@@ -1,12 +1,12 @@
 'use client';
 
 import PageHeader from '@/shared/components/header/PageHeader';
+import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { encrypt } from '@/shared/utils/crypto';
 import { useAuthStore } from '@/store';
-import { ChevronRight } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import ProviderAccountList from './components/ProviderAccountList';
-import { useAccountProviderQuery, useAccountQuery } from './services/useAccountQuery';
+import { useAccountProviderQuery, useAccountQuery } from './services/useAccountApi';
 
 const AccountsPage: React.FC = () => {
     const [provider, setProvider] = useState<string>('');
@@ -14,6 +14,10 @@ const AccountsPage: React.FC = () => {
     const { user: currentUser } = useAuthStore();
     const { data: accountProvidersData } = useAccountProviderQuery();
     const { data: accountData } = useAccountQuery(provider, { enabled: !!provider });
+
+    useEffect(() => {
+        useBreadcrumbStore.setState({ items: [{ title: 'Accounts', url: '/accounts' }] });
+    }, []);
 
     useEffect(() => {
         if (provider && accountData) {
@@ -25,11 +29,7 @@ const AccountsPage: React.FC = () => {
 
     return (
         <>
-            <div className="relative flex w-full flex-col items-center justify-center">
-                <div className="flex w-full items-center py-2 pl-6">
-                    <ChevronRight size={18} className="self-center" />
-                    <span className="text-sm font-semibold">Accounts</span>
-                </div>
+            <div className="relative mt-6 flex w-full flex-col items-center justify-center">
                 <PageHeader
                     title="Connected Accounts"
                     button={true}

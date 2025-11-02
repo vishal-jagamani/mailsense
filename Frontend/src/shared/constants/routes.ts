@@ -8,5 +8,6 @@ export const ROUTES = {
 
 export const HOME_ROUTES = {
     UNIFIED_INBOX: '/inbox',
-    EMAIL_DETAIL: (id: string) => `/inbox/${id}`,
+    ACCOUNT_INBOX: (id: string) => `/inbox/${id}`,
+    EMAIL: (accountId: string, emailId: string) => `/inbox/${accountId}/email/${emailId}`,
 };

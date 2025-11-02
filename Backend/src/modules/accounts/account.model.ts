@@ -19,19 +19,30 @@ export interface AccountAttributes {
     lastSyncedAt: number;
 }
 
+export interface AccountMetricsAttributes {
+    accountId: string;
+    totalEmails: number;
+    totalThreads: number;
+    totalLabels: number;
+    totalFolders: number;
+    totalContacts: number;
+    date: Date;
+}
+
 // ✅ Input type (plain object you pass into create)
 export type AccountInput = Omit<AccountAttributes, 'createdAt' | 'updatedAt'>;
-// export type AccountInput = AccountAttributes;
+export type AccountMetricsInput = Omit<AccountMetricsAttributes, 'createdAt' | 'updatedAt'>;
 
 // ✅ Document type (what comes back from Mongo)
 export type AccountDocument = Document & AccountAttributes;
+export type AccountMetricsDocument = Document & AccountMetricsAttributes;
 
 const AccountSchema = new Schema<AccountDocument>(
     {
         id: { type: Number, required: true, unique: true },
         userId: { type: String, required: true },
         provider: { type: String, required: true },
-        emailAddress: { type: String, required: true, unique: true },
+        emailAddress: { type: String, required: true },
         userProfileDetails: { type: Object, required: true },
         accessToken: { type: String, required: true },
         refreshToken: { type: String, required: true },
@@ -45,6 +56,9 @@ const AccountSchema = new Schema<AccountDocument>(
     { timestamps: true, versionKey: false },
 );
 
+// Indexes
+AccountSchema.index({ emailAddress: 1 }, { unique: true });
+
 // ✅ Pre-save hook
 AccountSchema.pre('save', function (next) {
     if (this.emailAddress) {
@@ -57,3 +71,21 @@ AccountSchema.pre('save', function (next) {
 });
 
 export const Account = model<AccountDocument>('Account', AccountSchema);
+
+const AccountMetricsSchema = new Schema<AccountMetricsDocument>(
+    {
+        accountId: { type: String, required: true },
+        totalEmails: { type: Number, required: true },
+        totalThreads: { type: Number, required: true },
+        totalLabels: { type: Number, required: true },
+        totalFolders: { type: Number, required: true },
+        totalContacts: { type: Number, required: true },
+        date: { type: Date, required: true },
+    },
+    { timestamps: true, versionKey: false },
+);
+
+// Indexes
+AccountMetricsSchema.index({ accountId: 1 }, { unique: true });
+
+export const AccountMetrics = model<AccountMetricsDocument>('AccountMetrics', AccountMetricsSchema);

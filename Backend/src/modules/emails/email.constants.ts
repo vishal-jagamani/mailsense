@@ -13,4 +13,9 @@ export const EMAIL_LIST_DB_FIELD_MAPPING: EmailListDBFieldMapping = {
             accountId: 1,
         },
     },
+    SORT: {
+        sort: {
+            receivedAt: -1,
+        },
+    },
 };

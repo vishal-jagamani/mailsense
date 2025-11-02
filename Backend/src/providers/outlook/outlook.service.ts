@@ -29,4 +29,15 @@ export class OutlookService {
             throw err;
         }
     }
+
+    async getMessages(accountId: string) {
+        try {
+            const response = await this.outlookApi.getMessages(accountId);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.getMessages: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
 }

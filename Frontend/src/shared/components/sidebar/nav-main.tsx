@@ -29,6 +29,10 @@ export function NavMain({
         }[];
     }[];
 }) {
+    // {
+    //             title: account.emailAddress,
+    //             url: HOME_ROUTES.ACCOUNT_INBOX(account._id),
+    //         }
     return (
         <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>

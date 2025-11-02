@@ -1,4 +1,4 @@
-import { AnyBulkWriteOperation, ProjectionType } from 'mongoose';
+import { AnyBulkWriteOperation, FlattenMaps, ProjectionType, SortOrder } from 'mongoose';
 import { Email, EmailDocument, EmailInput } from './email.model.js';
 
 export class EmailRepository {
@@ -17,15 +17,52 @@ export class EmailRepository {
         return Email.bulkWrite(ops, { ordered: false });
     }
 
-    public static async getEmails(accountId: string, size: number, page: number, fields: ProjectionType<EmailDocument>) {
+    public static async getEmailsByAccountId(
+        accountId: string,
+        size: number,
+        page: number,
+        fields: ProjectionType<EmailDocument>,
+        sort: Record<string, SortOrder>,
+    ): Promise<FlattenMaps<EmailDocument>[]> {
         return Email.find({ accountId }, fields)
             .skip((page - 1) * size)
             .limit(size)
+            .sort(sort)
             .lean();
     }
 
-    public static async countDocuments(accountId: string) {
-        return Email.countDocuments({ accountId });
+    public static async getEmailsByAccountIds(
+        accountIds: string[],
+        size: number,
+        page: number,
+        fields: ProjectionType<EmailDocument>,
+        sort: Record<string, SortOrder>,
+    ): Promise<FlattenMaps<EmailDocument>[]> {
+        return Email.find({ accountId: { $in: accountIds } }, fields)
+            .skip((page - 1) * size)
+            .limit(size)
+            .sort(sort)
+            .lean();
+    }
+
+    public static async getEmail(emailId: string) {
+        return Email.findById(emailId);
+    }
+
+    public static async getEmailsByProviderMessageIds(emailIds: string[]) {
+        return Email.find({ providerMessageId: { $in: emailIds } });
+    }
+
+    public static async updateEmail(emailId: string, data: Partial<EmailInput>) {
+        return Email.findByIdAndUpdate(emailId, data, { new: true });
+    }
+
+    public static async deleteEmail(emailId: string) {
+        return Email.findByIdAndDelete(emailId);
+    }
+
+    public static async countDocuments(accountIds: string[]) {
+        return Email.countDocuments({ accountId: { $in: accountIds } });
     }
 
     public static async deleteEmailsByAccountId(accountId: string) {

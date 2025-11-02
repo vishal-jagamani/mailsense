@@ -5,3 +5,14 @@ export interface OutlookUserProfile {
     surname: string;
     mail: string;
 }
+
+export interface OutlookMessage {
+    id: string;
+    subject: string;
+    sender: {
+        emailAddress: {
+            name: string;
+            address: string;
+        };
+    };
+}
