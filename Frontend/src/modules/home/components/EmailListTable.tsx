@@ -5,6 +5,7 @@ import { Checkbox } from '@/shared/ui/checkbox';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import { formatDateToMonthDateString } from '@/shared/utils/formatter';
 import { Trash } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { useDeleteEmail } from '../services/useHomeApi';
 
@@ -13,6 +14,8 @@ interface EmailListTableProps {
 }
 
 const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
+    const router = useRouter();
+
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
     const { mutateAsync } = useDeleteEmail();
 
@@ -54,8 +57,11 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
                     <TableRow
                         key={email._id}
                         className={`cursor-pointer ${selectedEmails.includes(email._id) ? 'bg-blue-800 hover:bg-blue-800' : ''} ${email.isRead && selectedEmails.includes(email._id) ? 'bg-blue-800 hover:bg-blue-800' : email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
+                        onClick={() => {
+                            router.push(`/inbox/${email.accountId}/email/${email._id}`);
+                        }}
                     >
-                        <TableCell className="w-10">
+                        <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                                 id={email._id}
                                 checked={selectedEmails.includes(email._id)}
@@ -76,7 +82,14 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
                         </TableCell>
                         <TableCell className="w-28 whitespace-nowrap">{formatDateToMonthDateString(email.receivedAt)}</TableCell>
                         <TableCell className="w-10 whitespace-nowrap">
-                            <Trash className="text-red-500" size={16} onClick={() => handleTrashIconClick(email)} />
+                            <Trash
+                                className="text-red-500"
+                                size={16}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTrashIconClick(email);
+                                }}
+                            />
                         </TableCell>
                     </TableRow>
                 ))}

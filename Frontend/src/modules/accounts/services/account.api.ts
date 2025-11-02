@@ -1,12 +1,12 @@
 import { AccountAttributes, AccountProviders } from '@/shared/types/account.types';
 import { axiosClient } from '@shared/config/axios';
 
-export async function getAccountProvider() {
+export async function getAccountProvider(): Promise<AccountProviders[]> {
     const { data } = await axiosClient.get<AccountProviders[]>(`/accounts/providers/list`);
     return data;
 }
 
-export async function getAccountDetails(accountId: string) {
+export async function getAccountDetails(accountId: string): Promise<AccountAttributes> {
     const { data } = await axiosClient.get<AccountAttributes>(`/accounts/${accountId}`);
     return data;
 }

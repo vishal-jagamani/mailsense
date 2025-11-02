@@ -39,7 +39,7 @@ export class GmailService {
                 ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING.FETCH_ACCESS_TOKEN.projection,
             );
             if (!account) throw new Error('Account not found');
-            const emails = await GmailApi.fetchEmails(accountId);
+            const emails = await GmailApi.fetchEmails(accountId, 500);
             const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails);
             return parsedEmails;
         } catch (err) {

@@ -9,7 +9,7 @@ const BreadcrumbComponent: React.FC = () => {
     const { items: breadcrumbItems } = useBreadcrumbStore();
     return (
         <>
-            <div className="mt-2 ml-7">
+            <div className="bg-background fixed ml-8 flex w-[80%] p-1.5 pl-0">
                 <Breadcrumb>
                     <BreadcrumbList>
                         {breadcrumbItems.map((item, index) => (

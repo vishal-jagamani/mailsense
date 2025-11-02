@@ -35,6 +35,8 @@ export class EmailService {
                 from: email.from,
                 receivedAt: email.receivedAt,
                 isRead: email.isRead,
+                providerMessageId: email.providerMessageId,
+                accountId: email.accountId,
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -78,6 +80,10 @@ export class EmailService {
     public async getEmail(emailId: string): Promise<EmailDocument | null> {
         try {
             const email = await EmailRepository.getEmail(emailId);
+            if (!email) throw new Error('Email not found');
+            email.bodyHtml = decompressString(email.bodyHtml);
+            email.bodyPlain = decompressString(email.bodyPlain);
+            // email.body = decompressString(email.body);
             return email;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);

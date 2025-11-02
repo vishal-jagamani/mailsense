@@ -1,14 +1,11 @@
 'use client';
 
 import Loader from '@/shared/components/loader';
+import { useAuthStore } from '@/store';
 import EmailListTable from './components/EmailListTable';
 import { useFetchEmails } from './services/useHomeApi';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/store';
 
 const HomePage = () => {
-    const router = useRouter();
     const { user } = useAuthStore();
     const { data: emails, isLoading } = useFetchEmails(user?.id || '', !!user);
 

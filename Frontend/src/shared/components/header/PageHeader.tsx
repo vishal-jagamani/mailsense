@@ -31,7 +31,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
                 {button && (
                     <>
                         <div className="flex items-center gap-4">
-                            <Button variant="outline" className="cursor-pointer">Sync All Accounts</Button>
+                            <Button variant="outline" className="cursor-pointer">
+                                Sync All Accounts
+                            </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger className="mr-4 border-0 select-none" asChild>
                                     <Button className="bg-primary text-md cursor-pointer font-semibold">Connect Account</Button>

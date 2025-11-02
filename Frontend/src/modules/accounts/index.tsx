@@ -1,13 +1,12 @@
 'use client';
 
 import PageHeader from '@/shared/components/header/PageHeader';
+import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { encrypt } from '@/shared/utils/crypto';
 import { useAuthStore } from '@/store';
-import { ChevronRight } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import ProviderAccountList from './components/ProviderAccountList';
 import { useAccountProviderQuery, useAccountQuery } from './services/useAccountApi';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 
 const AccountsPage: React.FC = () => {
     const [provider, setProvider] = useState<string>('');
@@ -30,7 +29,7 @@ const AccountsPage: React.FC = () => {
 
     return (
         <>
-            <div className="relative flex w-full flex-col items-center justify-center">
+            <div className="relative mt-6 flex w-full flex-col items-center justify-center">
                 <PageHeader
                     title="Connected Accounts"
                     button={true}

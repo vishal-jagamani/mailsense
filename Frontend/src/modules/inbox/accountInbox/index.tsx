@@ -4,7 +4,7 @@ import { useGetAccountDetailsQuery } from '@/modules/accounts/services/useAccoun
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { useEffect } from 'react';
 
-const AccountInboxPage = ({ account }: { account: string }) => {
+const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     const { data: accountData } = useGetAccountDetailsQuery(account);
 
     useEffect(() => {

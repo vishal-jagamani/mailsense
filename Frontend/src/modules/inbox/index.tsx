@@ -1,13 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import EmailListTable from '../home/components/EmailListTable';
 import { useFetchEmails } from '../home/services/useHomeApi';
 import { useAuthStore } from '@/store';
+import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 
 const InboxPage: React.FC = () => {
     const { user } = useAuthStore();
     const { data: emails } = useFetchEmails(user?.id || '', !!user);
+
+    useEffect(() => {
+        useBreadcrumbStore.setState({ items: [{ title: 'Inbox', url: '/inbox' }] });
+    }, []);
 
     return (
         <>

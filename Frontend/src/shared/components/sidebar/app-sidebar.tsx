@@ -1,17 +1,17 @@
 'use client';
 
-import { AudioWaveform, Bot, ChartLine, Command, Folder, Inbox, Mail, Search, Settings, Star } from 'lucide-react';
+import { Bot, ChartLine, Folder, Inbox, Search, Settings, Star } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
 import { HOME_ROUTES } from '@/shared/constants';
+import { useAuthStore } from '@/store';
 import { useUser } from '@auth0/nextjs-auth0';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@shared/ui/sidebar';
 import { NavMain } from './nav-main';
 import { NavProjects } from './nav-projects';
 import { NavUser } from './nav-user';
 import { TeamSwitcher } from './team-switcher';
-import { useAccountQuery, useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
-import { useAuthStore } from '@/store';
 
 // This is sample data.
 const data = {
@@ -131,7 +131,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 navMain: prev.navMain.map((item) => (item.title === 'Inbox' ? { ...item, items: inboxItems } : item)),
             }));
         }
-    }, [accounts]);
+    }, [accounts, sidebarData]);
 
     const userData = {
         name: user?.name ?? '',

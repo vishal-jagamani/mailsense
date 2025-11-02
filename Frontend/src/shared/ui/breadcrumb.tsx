@@ -71,4 +71,3 @@ function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<'span'
 }
 
 export { Breadcrumb, BreadcrumbEllipsis, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator };
-

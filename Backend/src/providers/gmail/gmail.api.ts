@@ -96,7 +96,7 @@ export class GmailApi {
     }
 
     // Function to fetch emails from account
-    static async fetchEmails(accountId: string): Promise<GmailMessages> {
+    static async fetchEmails(accountId: string, maxResults: number): Promise<GmailMessages> {
         try {
             const accessToken = await this.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
@@ -105,6 +105,9 @@ export class GmailApi {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
                 },
+                params: {
+                    maxResults, 
+                }
             };
             const response: GmailMessages = await apiRequest(options);
             return response;
