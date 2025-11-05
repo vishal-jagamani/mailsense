@@ -19,12 +19,9 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
     const { mutateAsync } = useDeleteEmail();
 
-    console.log('selectedEmails', selectedEmails);
-
     const handleTrashIconClick = async (email: Email) => {
         if (selectedEmails.length === 0) {
             const response = await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
-            console.log('response', response);
         }
     };
 

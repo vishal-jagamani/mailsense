@@ -28,7 +28,7 @@ export class EmailService {
                 EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection,
                 EMAIL_LIST_DB_FIELD_MAPPING.SORT.sort,
             );
-            const total = await EmailRepository.countDocuments(accounts.map((account) => account.id));
+            const total = await EmailRepository.countDocuments(accounts.map((account) => String(account._id)));
             const data = emails.map((email) => ({
                 _id: email._id.toString(),
                 subject: email.subject,
