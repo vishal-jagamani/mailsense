@@ -18,6 +18,7 @@ const HomePage = () => {
             <div className="flex h-full w-full flex-col items-center justify-center gap-6 rounded-xl">
                 <p>Emails</p>
                 <EmailListTable data={emails?.data || []} />
+                
             </div>
         </div>
     );

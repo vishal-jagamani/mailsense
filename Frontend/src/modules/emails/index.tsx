@@ -7,6 +7,7 @@ import { useGetAccountDetailsQuery } from '../accounts/services/useAccountApi';
 import EmailBodyPreview from './components/EmailBodyPreview';
 import { useGetEmailDetailsQuery } from './services/useEmailApi';
 import EmailMenuBarOptions from './components/EmailMenuBarOptions';
+import Loader from '@/shared/components/loader';
 
 interface EmailPageProps {
     account: string;
@@ -14,8 +15,8 @@ interface EmailPageProps {
 }
 
 const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
-    const { data: accountData } = useGetAccountDetailsQuery(account, { enabled: !!account });
-    const { data: emailData } = useGetEmailDetailsQuery(email, { enabled: !!email });
+    const { data: accountData, isLoading: isLoadingAccount } = useGetAccountDetailsQuery(account, { enabled: !!account });
+    const { data: emailData, isLoading: isLoadingEmail } = useGetEmailDetailsQuery(email, { enabled: !!email });
 
     useEffect(() => {
         if (emailData && accountData) {
@@ -29,14 +30,18 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
         }
     }, [emailData, accountData]);
 
+    if (isLoadingAccount || isLoadingEmail) {
+        return <Loader />;
+    }
+
     return (
         <>
             {/* <div>x`
                 Account: {account}, {accountData?.emailAddress}
             </div>
             <div>Email: {email}</div> */}
-            <div className="mt-8 flex px-4 py-2">
-                <div className="flex flex-col rounded-t-md bg-neutral-900">
+            <div className="mt-8 flex px-4 py-2 pb-4">
+                <div className="flex flex-col rounded-md bg-neutral-900">
                     <EmailMenuBarOptions accountId={account} emailId={email} />
                     <EmailBodyPreview html={emailData?.bodyHtml} plain={emailData?.bodyPlain} />
                 </div>

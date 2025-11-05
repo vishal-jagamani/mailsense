@@ -37,7 +37,6 @@ const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
 
     const handleRemoveAccount = async () => {
         const response = await removeAccount(account._id);
-        console.log('response', response);
     };
 
     return (
