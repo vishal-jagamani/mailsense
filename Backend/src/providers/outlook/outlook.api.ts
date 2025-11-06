@@ -1,13 +1,13 @@
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { AxiosRequestConfig } from 'axios';
-import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
-import { decrypt, encrypt } from '@utils/crypto.js';
 import { OUTLOOK_SECRETS } from '@config/config.js';
-import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
-import { apiRequest } from '@utils/axios.js';
-import { logger } from '@utils/logger.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
-import { OutlookMessage, OutlookUserProfile } from './outlook.types.js';
+import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { apiRequest } from '@utils/axios.js';
+import { decrypt, encrypt } from '@utils/crypto.js';
+import { logger } from '@utils/logger.js';
+import { AxiosRequestConfig } from 'axios';
+import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
+import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
+import { OutlookMessagesResponse, OutlookUserProfile } from './outlook.types.js';
 
 export class OutlookApi {
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
@@ -35,7 +35,7 @@ export class OutlookApi {
         }
     }
     // Function to fetch access token from DB
-    private async fetchAccessToken(accountId: string) {
+    static async fetchAccessToken(accountId: string) {
         try {
             const account = await AccountRepository.getAccountById(accountId);
             if (!account) throw new Error('Account not found');
@@ -48,7 +48,7 @@ export class OutlookApi {
     }
 
     // Function to refresh the access token if it is expired
-    private async refreshAccessToken(accountId: string) {
+    static async refreshAccessToken(accountId: string) {
         try {
             const account = await AccountRepository.getAccountById(accountId);
             if (!account) throw new Error('Account not found');
@@ -93,7 +93,7 @@ export class OutlookApi {
         }
     }
 
-    async getMessages(accountId: string) {
+    static async getMessages(accountId: string) {
         try {
             const accessToken = await this.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
@@ -103,7 +103,7 @@ export class OutlookApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
             };
-            const response: OutlookMessage[] = await apiRequest(options);
+            const response: OutlookMessagesResponse = await apiRequest(options);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);

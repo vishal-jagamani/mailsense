@@ -228,7 +228,7 @@ export class AccountsService {
             if (account.provider === AccountProvider.GMAIL) {
                 emails = await this.gmailService.getMessages(accountId);
             } else if (account.provider === AccountProvider.OUTLOOK) {
-                // emails = await this.outlookService.getMessages(accountId);
+                emails = await this.outlookService.getMessages(accountId);
             }
             await EmailRepository.upsertEmailsInBulk(emails);
             const updateAccountSyncDetails: Partial<AccountInput> = {
