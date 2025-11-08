@@ -6,8 +6,8 @@ import { htmlToText } from 'html-to-text';
 // Build gmail oauth access consent url
 export const buildGmailOAuthConsentURL = async () => {
     const params = new URLSearchParams({
-        client_id: GMAIL_SECRETS.client_id,
-        redirect_uri: GMAIL_SECRETS.redirect_uri,
+        client_id: GMAIL_SECRETS.clientId,
+        redirect_uri: GMAIL_SECRETS.redirectUri,
         response_type: 'code',
         access_type: 'offline',
         prompt: 'consent',
