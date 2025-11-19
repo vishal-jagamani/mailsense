@@ -4,7 +4,7 @@ import { Bot, ChartLine, Folder, Inbox, Search, Settings, Star } from 'lucide-re
 import React, { useEffect, useState } from 'react';
 
 import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
-import { HOME_ROUTES } from '@/shared/constants';
+import { HOME_ROUTES, ROUTES } from '@/shared/constants';
 import { useAuthStore } from '@/store';
 import { useUser } from '@auth0/nextjs-auth0';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@shared/ui/sidebar';
@@ -104,7 +104,7 @@ const data = {
         },
         {
             name: 'Settings',
-            url: '#',
+            url: ROUTES.SETTINGS,
             icon: Settings,
         },
     ],
@@ -138,10 +138,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         email: user?.email ?? '',
         avatar: user?.picture ?? '',
     };
-
-    // if (!accounts) {
-    //     return null;
-    // }
 
     return (
         <Sidebar collapsible="icon" {...props}>

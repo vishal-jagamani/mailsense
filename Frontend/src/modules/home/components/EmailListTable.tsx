@@ -21,7 +21,7 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
 
     const handleTrashIconClick = async (email: Email) => {
         if (selectedEmails.length === 0) {
-            const response = await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
+            await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
         }
     };
 

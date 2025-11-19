@@ -4,9 +4,6 @@ export interface User {
     auth0UserId: string;
     name: string;
     email: string;
-    userMetaData: {
-        [key: string]: string;
-    };
 }
 
 export type UserInput = Omit<User, 'createdAt' | 'updatedAt'>;
@@ -18,7 +15,6 @@ const UserSchema = new Schema<UserDocument>(
         auth0UserId: { type: String, required: true },
         name: { type: String, required: true },
         email: { type: String, required: true },
-        userMetaData: { type: Object, required: true },
     },
     { timestamps: true, versionKey: false },
 );
