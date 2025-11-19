@@ -20,9 +20,9 @@ export class GmailApi {
                 },
                 data: {
                     code,
-                    client_id: GMAIL_SECRETS.client_id,
-                    client_secret: GMAIL_SECRETS.client_secret,
-                    redirect_uri: GMAIL_SECRETS.redirect_uri,
+                    client_id: GMAIL_SECRETS.clientId,
+                    client_secret: GMAIL_SECRETS.clientSecret,
+                    redirect_uri: GMAIL_SECRETS.redirectUri,
                     grant_type: 'authorization_code',
                 },
             };
@@ -61,8 +61,8 @@ export class GmailApi {
                 },
                 data: {
                     refresh_token: refreshToken,
-                    client_id: GMAIL_SECRETS.client_id,
-                    client_secret: GMAIL_SECRETS.client_secret,
+                    client_id: GMAIL_SECRETS.clientId,
+                    client_secret: GMAIL_SECRETS.clientSecret,
                     grant_type: 'refresh_token',
                 },
             };
@@ -106,8 +106,8 @@ export class GmailApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 params: {
-                    maxResults, 
-                }
+                    maxResults,
+                },
             };
             const response: GmailMessages = await apiRequest(options);
             return response;

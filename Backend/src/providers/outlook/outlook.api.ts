@@ -20,9 +20,9 @@ export class OutlookApi {
                 },
                 data: {
                     code,
-                    client_id: OUTLOOK_SECRETS.client_id,
-                    client_secret: OUTLOOK_SECRETS.client_secret,
-                    redirect_uri: OUTLOOK_SECRETS.redirect_uri,
+                    client_id: OUTLOOK_SECRETS.clientId,
+                    client_secret: OUTLOOK_SECRETS.clientSecret,
+                    redirect_uri: OUTLOOK_SECRETS.redirectUri,
                     grant_type: 'authorization_code',
                 },
             };
@@ -60,8 +60,8 @@ export class OutlookApi {
                 },
                 data: {
                     refresh_token: decrypt(account.refreshToken),
-                    client_id: OUTLOOK_SECRETS.client_id,
-                    client_secret: OUTLOOK_SECRETS.client_secret,
+                    client_id: OUTLOOK_SECRETS.clientId,
+                    client_secret: OUTLOOK_SECRETS.clientSecret,
                     grant_type: 'refresh_token',
                 },
             };

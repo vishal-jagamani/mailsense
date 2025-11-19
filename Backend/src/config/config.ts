@@ -26,16 +26,22 @@ export const AUTH0_SECRETS = {
     issuerBaseURL: ENV.AUTH0_ISSUER_BASE_URL,
 };
 
+export const AUTH0_API_SECRETS = {
+    clientId: ENV.AUTH0_API_CLIENT_ID,
+    clientSecret: ENV.AUTH0_API_CLIENT_SECRET,
+    baseUrl: ENV.AUTH0_API_BASE_URL,
+};
+
 export const GMAIL_SECRETS = {
-    client_id: ENV.GMAIL_CLIENT_ID,
-    client_secret: ENV.GMAIL_CLIENT_SECRET,
-    redirect_uri: ENV.GMAIL_REDIRECT_URI,
+    clientId: ENV.GMAIL_CLIENT_ID,
+    clientSecret: ENV.GMAIL_CLIENT_SECRET,
+    redirectUri: ENV.GMAIL_REDIRECT_URI,
 };
 
 export const OUTLOOK_SECRETS = {
-    client_id: ENV.OUTLOOK_CLIENT_ID,
-    client_secret: ENV.OUTLOOK_CLIENT_SECRET,
-    redirect_uri: ENV.OUTLOOK_REDIRECT_URI,
+    clientId: ENV.OUTLOOK_CLIENT_ID,
+    clientSecret: ENV.OUTLOOK_CLIENT_SECRET,
+    redirectUri: ENV.OUTLOOK_REDIRECT_URI,
 };
 
 export const REDIS_CONFIG = {

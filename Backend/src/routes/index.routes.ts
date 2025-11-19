@@ -1,7 +1,9 @@
 import accountsRoutes from '@modules/accounts/account.routes.js';
 import demoRoutes from '@modules/demo/demo.routes.js';
 import emailsRoutes from '@modules/emails/email.routes.js';
+import usersRoutes from '@modules/user/user.routes.js';
 import utilsRoutes from '@modules/utils/index.js';
+
 import { Router } from 'express';
 
 const router = Router();
@@ -11,6 +13,8 @@ router.get('/', (req, res) => {
 });
 
 router.use('/demo', demoRoutes);
+
+router.use('/users', usersRoutes);
 
 router.use('/accounts', accountsRoutes);
 

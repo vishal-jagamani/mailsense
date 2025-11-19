@@ -25,6 +25,10 @@ class EnvConfig {
     public readonly REDIS_HOST: string;
     public readonly REDIS_PORT: number;
     public readonly REDIS_PASSWORD: string;
+    // Auth0 API Secrets
+    public readonly AUTH0_API_CLIENT_ID: string;
+    public readonly AUTH0_API_CLIENT_SECRET: string;
+    public readonly AUTH0_API_BASE_URL: string;
 
     constructor() {
         dotenv?.config();
@@ -56,6 +60,10 @@ class EnvConfig {
             REDIS_HOST: z.string(),
             REDIS_PORT: z.coerce.number().default(6379),
             REDIS_PASSWORD: z.string(),
+            // Auth0 API Secrets
+            AUTH0_API_CLIENT_ID: z.string(),
+            AUTH0_API_CLIENT_SECRET: z.string(),
+            AUTH0_API_BASE_URL: z.string(),
         });
 
         const result = schema.safeParse(process.env);
@@ -87,6 +95,10 @@ class EnvConfig {
         this.REDIS_HOST = data.REDIS_HOST;
         this.REDIS_PORT = data.REDIS_PORT;
         this.REDIS_PASSWORD = data.REDIS_PASSWORD;
+        // Auth0 API secrets
+        this.AUTH0_API_CLIENT_ID = data.AUTH0_API_CLIENT_ID;
+        this.AUTH0_API_CLIENT_SECRET = data.AUTH0_API_CLIENT_SECRET;
+        this.AUTH0_API_BASE_URL = data.AUTH0_API_BASE_URL;
     }
 }
 
