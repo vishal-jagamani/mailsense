@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { EmailService } from './email.service.js';
+import { ArchiveEmailBody } from './email.schema.js';
 
 export class EmailController {
     private emailService: EmailService;
@@ -60,6 +61,19 @@ export class EmailController {
                 throw new Error('Email ID is required');
             }
             const email = await this.emailService.deleteEmail(emailIds, Boolean(trash));
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public archiveEmails = async (req: Request<object, object, ArchiveEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailIds, archive } = req.body;
+            if (!emailIds) {
+                throw new Error('Email ID is required');
+            }
+            const email = await this.emailService.archiveEmails(emailIds, Boolean(archive));
             res.send(email);
         } catch (error) {
             next(error);

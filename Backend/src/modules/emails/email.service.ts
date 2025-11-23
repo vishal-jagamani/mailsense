@@ -7,6 +7,7 @@ import { AccountProvider } from 'types/account.types.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument } from './email.model.js';
+import { UpdateAPIResponse } from 'types/api.types.js';
 
 export class EmailService {
     private gmailService: GmailService;
@@ -64,6 +65,8 @@ export class EmailService {
                 subject: email.subject,
                 from: email.from,
                 receivedAt: email.receivedAt,
+                providerMessageId: email.providerMessageId,
+                accountId: email.accountId,
                 isRead: email.isRead,
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
@@ -94,7 +97,7 @@ export class EmailService {
 
     public async deleteEmail(emailIds: string[], trash?: boolean): Promise<void> {
         try {
-            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds);
+            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             if (!emails.length) {
                 throw new Error('Email not found');
             }
@@ -117,6 +120,39 @@ export class EmailService {
                     // );
                 }
             }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async archiveEmails(emailIds: string[], archive: boolean): Promise<UpdateAPIResponse> {
+        try {
+            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emails.length) {
+                throw new Error('Email not found');
+            }
+            const groupedEmails = Object.groupBy(emails, (item) => item.accountId);
+            for (const [accountId, emails] of Object.entries(groupedEmails)) {
+                const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
+                if (!account || !emails) continue;
+                if (account.provider === AccountProvider.GMAIL) {
+                    await this.gmailService.archiveEmails(
+                        emails.map((email) => email.providerMessageId),
+                        accountId,
+                        archive,
+                    );
+                } else if (account.provider === AccountProvider.OUTLOOK) {
+                    // Outlook provider deletion
+                    // await this.outlookService.deleteEmails(
+                    //     emails.map((email) => email.providerMessageId),
+                    //     accountId,
+                    //     trash,
+                    // );
+                }
+            }
+            return { status: true, message: 'Emails archived successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });

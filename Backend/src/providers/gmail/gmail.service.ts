@@ -99,4 +99,24 @@ export class GmailService {
             throw err;
         }
     }
+
+    async archiveEmails(emailIds: string[], accountId: string, archive: boolean) {
+        try {
+            for (const emailId of emailIds) {
+                const email = await GmailApi.archiveEmail(emailId, accountId, archive);
+                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
+                await EmailRepository.updateEmail(email.id, {
+                    ...email,
+                    body: plainTextBody,
+                    bodyHtml: compressString(htmlBody || ''),
+                    bodyPlain: compressString(plainTextBody),
+                });
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.archiveEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
 }

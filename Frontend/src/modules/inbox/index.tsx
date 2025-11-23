@@ -5,14 +5,25 @@ import { useAuthStore } from '@/store';
 import React, { useEffect } from 'react';
 import EmailListTable from '../home/components/EmailListTable';
 import { useFetchEmails } from '../home/services/useHomeApi';
+import Loader from '@/shared/components/loader';
 
 const InboxPage: React.FC = () => {
     const { user } = useAuthStore();
-    const { data: emails } = useFetchEmails(user?.id || '', !!user);
+    const { data: emails, refetch: refetchEmails, isLoading: isLoadingEmails } = useFetchEmails(user?.id || '', !!user);
+
+    useEffect(() => {
+        if (user) {
+            refetchEmails();
+        }
+    }, [user, refetchEmails]);
 
     useEffect(() => {
         useBreadcrumbStore.setState({ items: [{ title: 'Inbox', url: '/inbox' }] });
     }, []);
+
+    if (isLoadingEmails) {
+        return <Loader />;
+    }
 
     return (
         <>
