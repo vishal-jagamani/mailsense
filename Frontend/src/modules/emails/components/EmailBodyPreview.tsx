@@ -31,7 +31,7 @@ const EmailBodyPreview: React.FC<EmailBodyPreviewProps> = ({ html, plain }) => {
     }
 
     return (
-        <div className="max-w-none font-sans text-sm leading-relaxed text-gray-800 dark:text-gray-100">
+        <div className="max-w-none overflow-y-auto font-sans text-sm leading-relaxed text-gray-800 dark:text-gray-100">
             {!showImages && (
                 <div className="m-4">
                     <button

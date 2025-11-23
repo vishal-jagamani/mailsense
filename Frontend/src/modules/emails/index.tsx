@@ -8,6 +8,8 @@ import EmailBodyPreview from './components/EmailBodyPreview';
 import { useGetEmailDetailsQuery } from './services/useEmailApi';
 import EmailMenuBarOptions from './components/EmailMenuBarOptions';
 import Loader from '@/shared/components/loader';
+import EmailHeader from './components/EmailHeader';
+import { Separator } from '@/shared/ui/separator';
 
 interface EmailPageProps {
     account: string;
@@ -36,13 +38,11 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
 
     return (
         <>
-            {/* <div>x`
-                Account: {account}, {accountData?.emailAddress}
-            </div>
-            <div>Email: {email}</div> */}
-            <div className="mt-8 flex px-4 py-2 pb-4">
-                <div className="flex flex-col rounded-md bg-neutral-900">
+            <div className="flex h-full w-full px-4 py-2 pb-12">
+                <div className="bg-sidebar relative flex h-full w-full flex-col overflow-hidden rounded-md">
                     <EmailMenuBarOptions accountId={account} emailId={email} />
+                    <Separator orientation="horizontal" />
+                    <EmailHeader accountId={account} email={emailData} />
                     <EmailBodyPreview html={emailData?.bodyHtml} plain={emailData?.bodyPlain} />
                 </div>
             </div>

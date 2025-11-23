@@ -26,7 +26,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
         if (account) {
             refetchEmails();
         }
-    }, [account]);
+    }, [account, refetchEmails]);
 
     if (isLoadingEmails) {
         return <Loader />;
