@@ -179,4 +179,26 @@ export class GmailApi {
             throw err;
         }
     }
+
+    static async archiveEmail(emailId: string, accountId: string, archive: boolean): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${emailId}/modify`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    ...(archive ? { removeLabelIds: ['INBOX'] } : { addLabelIds: ['INBOX'] }),
+                },
+            };
+            const response = await apiRequest<GmailMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
 }

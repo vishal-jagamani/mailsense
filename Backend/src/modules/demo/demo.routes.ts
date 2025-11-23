@@ -7,6 +7,6 @@ import { catFactQuerySchema } from './demo.schema.js';
 const router = Router();
 const demoController = new DemoController();
 
-router.get('/catFact', validate(catFactQuerySchema, 'query'), handleRequest(demoController.getCatFact));
+router.get('/catFact', validate({ query: catFactQuerySchema }), handleRequest(demoController.getCatFact));
 
 export default router;

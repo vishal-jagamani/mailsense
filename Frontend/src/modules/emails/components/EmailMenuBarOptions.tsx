@@ -3,18 +3,54 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { Archive, ArrowLeft, EllipsisVertical, Forward, MailX, Reply, Star, Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import DeleteModal from './DeleteModal';
+import { useArchiveEmailMutation } from '../services/useEmailApi';
+import { toast } from 'sonner';
+import APILoader from '@/shared/components/apiLoader';
 
 interface EmailMenuBarOptionsProps {
     accountId: string;
     emailId: string;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ accountId, emailId }) => {
+const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) => {
     const router = useRouter();
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+
+    const [showToast, setShowToast] = useState<boolean>(false);
+    const [toastType, setToastType] = useState<string>('');
+    const [toastMessage, setToastMessage] = useState<string>('');
+
+    const { mutate: archiveEmail, isPending: archiveEmailLoading, data: archiveEmailSuccess, error: archiveEmailError } = useArchiveEmailMutation();
+
+    useEffect(() => {
+        if (archiveEmailSuccess) {
+            setShowToast(true);
+            setToastType('success');
+            setToastMessage('Email archived successfully');
+        }
+        if (archiveEmailError) {
+            setShowToast(true);
+            setToastType('error');
+            setToastMessage('Error archiving email');
+        }
+    }, [archiveEmailSuccess, archiveEmailError]);
+
+    useEffect(() => {
+        if (toastType) {
+            if (toastType === 'success') {
+                toast.success(toastMessage, {
+                    duration: 3000,
+                });
+            }
+            if (toastType === 'error') {
+                toast.error(toastMessage, {
+                    duration: 3000,
+                });
+            }
+        }
+    }, [showToast, toastType, toastMessage]);
 
     const options = [
         {
@@ -45,7 +81,7 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ accountId, em
             id: 5,
             label: 'Archive',
             icon: Archive,
-            action: () => console.log('Archive'),
+            action: () => archiveEmail({ emailIds: [emailId], archive: true }),
         },
         {
             id: 6,
@@ -62,6 +98,10 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ accountId, em
         },
     ];
 
+    if (archiveEmailLoading) {
+        return <APILoader show size="small" />;
+    }
+
     return (
         <>
             <div className="bg-sidebar sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md px-4">
@@ -71,7 +111,7 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ accountId, em
                         <div key={option.id} className="flex items-center">
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <option.icon size={18} onClick={option.action} className={`cursor-pointer ${option.iconColor || ''}`} />
+                                    <option.icon size={18} onClick={option.action} className={`cursor-pointer ${option.iconColor ?? ''}`} />
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p className="text-md font-semibold">{option.label}</p>
@@ -80,7 +120,6 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ accountId, em
                         </div>
                     ))}
                     <DeleteModal open={showDeleteModal} onOpenChange={setShowDeleteModal} />
-                    {/* <Separator orientation="vertical" className="w-10" /> */}
                 </div>
             </div>
         </>

@@ -2,6 +2,7 @@ import { QUERY_KEYS } from '@shared/config/query-keys';
 import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount } from './account.api';
 import { AccountAttributes, AccountProviders } from '@/shared/types/account.types';
+import { UpdateAPIResponse } from '@/shared/types/api.types';
 
 type ConnectAccountResult = Awaited<ReturnType<typeof connectAccount>>;
 
@@ -30,8 +31,7 @@ export const useAccountProviderQuery = (): UseQueryResult<AccountProviders[]> =>
 
 export const useRemoveAccountQuery = () => {
     const queryClient = useQueryClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return useMutation<any, any, string>({
+    return useMutation<UpdateAPIResponse, Error, string>({
         mutationFn: (accountId) => removeAccount(accountId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });

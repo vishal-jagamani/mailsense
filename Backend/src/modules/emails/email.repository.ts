@@ -49,8 +49,8 @@ export class EmailRepository {
         return Email.findById(emailId);
     }
 
-    public static async getEmailsByProviderMessageIds(emailIds: string[]) {
-        return Email.find({ providerMessageId: { $in: emailIds } });
+    public static async getEmailsByProviderMessageIds(emailIds: string[], fields: ProjectionType<EmailDocument>) {
+        return Email.find({ providerMessageId: { $in: emailIds } }, fields).lean();
     }
 
     public static async updateEmail(emailId: string, data: Partial<EmailInput>) {
