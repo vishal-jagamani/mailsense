@@ -16,7 +16,7 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
             <SidebarProvider>
                 <div className="flex h-screen w-screen overflow-hidden">
                     <AppSidebar />
-                    <main className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <main className="flex-1 overflow-x-hidden overflow-hidden">
                         <SidebarTrigger className="bg-background absolute z-100 rounded-none p-4 pt-4" />
                         <BreadcrumbComponent />
                         {children}
