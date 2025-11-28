@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { EmailService } from './email.service.js';
-import { ArchiveEmailBody } from './email.schema.js';
+import { ArchiveEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
 
 export class EmailController {
     private emailService: EmailService;
@@ -74,6 +74,32 @@ export class EmailController {
                 throw new Error('Email ID is required');
             }
             const email = await this.emailService.archiveEmails(emailIds, Boolean(archive));
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public starEmails = async (req: Request<object, object, StarEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailIds, star } = req.body;
+            if (!emailIds) {
+                throw new Error('Email ID is required');
+            }
+            const email = await this.emailService.starEmails(emailIds, Boolean(star));
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public unreadEmails = async (req: Request<object, object, UnreadEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailIds } = req.body;
+            if (!emailIds) {
+                throw new Error('Email ID is required');
+            }
+            const email = await this.emailService.unreadEmails(emailIds);
             res.send(email);
         } catch (error) {
             next(error);

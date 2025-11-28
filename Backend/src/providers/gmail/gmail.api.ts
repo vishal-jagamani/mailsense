@@ -201,4 +201,49 @@ export class GmailApi {
             throw err;
         }
     }
+
+    static async starEmail(emailId: string, accountId: string, star: boolean): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${emailId}/modify`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    ...(star ? { addLabelIds: ['STARRED'] } : { removeLabelIds: ['STARRED'] }),
+                },
+            };
+            const response = await apiRequest<GmailMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async unreadEmail(emailId: string, accountId: string): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${emailId}/modify`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    addLabelIds: ['UNREAD'],
+                    removeLabelIds: ['READ'],
+                },
+            };
+            const response = await apiRequest<GmailMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
 }

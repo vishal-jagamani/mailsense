@@ -23,8 +23,19 @@ export const archiveEmailSchema = z.object({
     archive: z.boolean().optional().default(false),
 });
 
+export const starEmailSchema = z.object({
+    emailIds: z.array(z.string().min(1, 'Invalid email id')).nonempty('At least one email id is required'),
+    star: z.boolean().optional().default(false),
+});
+
+export const unreadEmailSchema = z.object({
+    emailIds: z.array(z.string().min(1, 'Invalid email id')).nonempty('At least one email id is required'),
+});
+
 export type GetAllEmailsSchema = z.infer<typeof getAllEmailsSchema>;
 export type GetEmailsSchema = z.infer<typeof getEmailsSchema>;
 export type GetEmailSchema = z.infer<typeof getEmailSchema>;
 export type DeleteEmailSchema = z.infer<typeof deleteEmailSchema>;
 export type ArchiveEmailBody = z.infer<typeof archiveEmailSchema>;
+export type StarEmailBody = z.infer<typeof starEmailSchema>;
+export type UnreadEmailBody = z.infer<typeof unreadEmailSchema>;
