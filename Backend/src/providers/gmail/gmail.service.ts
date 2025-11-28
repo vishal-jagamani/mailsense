@@ -119,4 +119,44 @@ export class GmailService {
             throw err;
         }
     }
+
+    async starEmails(emailIds: string[], accountId: string, star: boolean) {
+        try {
+            for (const emailId of emailIds) {
+                const email = await GmailApi.starEmail(emailId, accountId, star);
+                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
+                await EmailRepository.updateEmail(email.id, {
+                    ...email,
+                    body: plainTextBody,
+                    bodyHtml: compressString(htmlBody || ''),
+                    bodyPlain: compressString(plainTextBody),
+                });
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.starEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async unreadEmails(emailIds: string[], accountId: string) {
+        try {
+            for (const emailId of emailIds) {
+                const email = await GmailApi.unreadEmail(emailId, accountId);
+                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
+                await EmailRepository.updateEmail(email.id, {
+                    ...email,
+                    body: plainTextBody,
+                    bodyHtml: compressString(htmlBody || ''),
+                    bodyPlain: compressString(plainTextBody),
+                });
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.unreadEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
 }

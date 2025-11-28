@@ -1,9 +1,9 @@
+import { authMiddleware } from '@middlewares/auth.js';
+import { validate } from '@middlewares/validator.js';
 import { handleRequest } from '@utils/request.handler.js';
 import { Router } from 'express';
 import { EmailController } from './email.controller.js';
-import { validate } from '@middlewares/validator.js';
-import { archiveEmailSchema, deleteEmailSchema, getAllEmailsSchema, getEmailSchema, getEmailsSchema } from './email.schema.js';
-import { authMiddleware } from '@middlewares/auth.js';
+import { archiveEmailSchema, deleteEmailSchema, getAllEmailsSchema, getEmailSchema, starEmailSchema, unreadEmailSchema } from './email.schema.js';
 
 const router = Router();
 
@@ -20,5 +20,9 @@ router.get('/details/:emailId', validate({ params: getEmailSchema }), handleRequ
 router.delete('/', validate({ body: deleteEmailSchema }), handleRequest(emailController.deleteEmail));
 
 router.post('/archive', validate({ body: archiveEmailSchema }), handleRequest(emailController.archiveEmails));
+
+router.post('/star', validate({ body: starEmailSchema }), handleRequest(emailController.starEmails));
+
+router.post('/unread', validate({ body: unreadEmailSchema }), handleRequest(emailController.unreadEmails));
 
 export default router;

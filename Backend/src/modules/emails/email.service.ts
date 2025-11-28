@@ -159,4 +159,69 @@ export class EmailService {
             throw err;
         }
     }
+
+    public async starEmails(emailIds: string[], star: boolean): Promise<UpdateAPIResponse> {
+        try {
+            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emails.length) {
+                throw new Error('Email not found');
+            }
+            const groupedEmails = Object.groupBy(emails, (item) => item.accountId);
+            for (const [accountId, emails] of Object.entries(groupedEmails)) {
+                const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
+                if (!account || !emails) continue;
+                if (account.provider === AccountProvider.GMAIL) {
+                    await this.gmailService.starEmails(
+                        emails.map((email) => email.providerMessageId),
+                        accountId,
+                        star,
+                    );
+                } else if (account.provider === AccountProvider.OUTLOOK) {
+                    // Outlook provider deletion
+                    // await this.outlookService.deleteEmails(
+                    //     emails.map((email) => email.providerMessageId),
+                    //     accountId,
+                    //     trash,
+                    // );
+                }
+            }
+            return { status: true, message: `${star ? 'Starred' : 'Unstarred'} emails successfully` };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async unreadEmails(emailIds: string[]): Promise<UpdateAPIResponse> {
+        try {
+            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emails.length) {
+                throw new Error('Email not found');
+            }
+            const groupedEmails = Object.groupBy(emails, (item) => item.accountId);
+            for (const [accountId, emails] of Object.entries(groupedEmails)) {
+                const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
+                if (!account || !emails) continue;
+                if (account.provider === AccountProvider.GMAIL) {
+                    await this.gmailService.unreadEmails(
+                        emails.map((email) => email.providerMessageId),
+                        accountId,
+                    );
+                } else if (account.provider === AccountProvider.OUTLOOK) {
+                    // Outlook provider deletion
+                    // await this.outlookService.deleteEmails(
+                    //     emails.map((email) => email.providerMessageId),
+                    //     accountId,
+                    //     trash,
+                    // );
+                }
+            }
+            return { status: true, message: 'Unread emails successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
 }
