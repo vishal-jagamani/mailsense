@@ -5,7 +5,7 @@ import { Archive, ArrowLeft, EllipsisVertical, Forward, MailX, Reply, Star, Tras
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import DeleteModal from './DeleteModal';
-import { useArchiveEmailMutation } from '../services/useEmailApi';
+import { useArchiveEmailMutation, useStarEmailMutation, useUnreadEmailMutation } from '../services/useEmailApi';
 import { toast } from 'sonner';
 import APILoader from '@/shared/components/apiLoader';
 
@@ -19,45 +19,57 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) =>
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
     const [showToast, setShowToast] = useState<boolean>(false);
-    const [toastType, setToastType] = useState<string>('');
-    const [toastMessage, setToastMessage] = useState<string>('');
 
     const { mutate: archiveEmail, isPending: archiveEmailLoading, data: archiveEmailSuccess, error: archiveEmailError } = useArchiveEmailMutation();
+    const { mutate: starEmail, isPending: starEmailLoading, data: starEmailSuccess, error: starEmailError } = useStarEmailMutation();
+    const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess, error: unreadEmailError } = useUnreadEmailMutation();
+
+    const mutationStates = [
+        {
+            success: archiveEmailSuccess,
+            error: archiveEmailError,
+            successMsg: 'Email archived successfully',
+            errorMsg: 'Error archiving email',
+        },
+        {
+            success: starEmailSuccess,
+            error: starEmailError,
+            successMsg: 'Email starred successfully',
+            errorMsg: 'Error starring email',
+        },
+        {
+            success: unreadEmailSuccess,
+            error: unreadEmailError,
+            successMsg: 'Email marked unread successfully',
+            errorMsg: 'Error marking email unread',
+        },
+    ];
 
     useEffect(() => {
-        if (archiveEmailSuccess) {
-            setShowToast(true);
-            setToastType('success');
-            setToastMessage('Email archived successfully');
-        }
-        if (archiveEmailError) {
-            setShowToast(true);
-            setToastType('error');
-            setToastMessage('Error archiving email');
-        }
-    }, [archiveEmailSuccess, archiveEmailError]);
+        mutationStates.forEach((m) => {
+            if (m.success) {
+                toast.success(m.successMsg, { duration: 3000 });
+            }
+            if (m.error) {
+                toast.error(m.errorMsg, { duration: 3000 });
+            }
+        });
+    }, [archiveEmailSuccess, archiveEmailError, starEmailSuccess, starEmailError, unreadEmailSuccess, unreadEmailError]);
 
     useEffect(() => {
-        if (toastType) {
-            if (toastType === 'success') {
-                toast.success(toastMessage, {
-                    duration: 3000,
-                });
-            }
-            if (toastType === 'error') {
-                toast.error(toastMessage, {
-                    duration: 3000,
-                });
-            }
+        if (showToast) {
+            setTimeout(() => {
+                setShowToast(false);
+            }, 1000);
         }
-    }, [showToast, toastType, toastMessage]);
+    }, [showToast]);
 
     const options = [
         {
             id: 1,
             label: 'Mark as Unread',
             icon: MailX,
-            action: () => console.log('Mark as Unread'),
+            action: () => unreadEmail({ emailIds: [emailId] }),
         },
         {
             id: 2,
@@ -75,7 +87,7 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) =>
             id: 4,
             label: 'Star',
             icon: Star,
-            action: () => console.log('Star'),
+            action: () => starEmail({ emailIds: [emailId], star: true }),
         },
         {
             id: 5,
@@ -98,7 +110,7 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) =>
         },
     ];
 
-    if (archiveEmailLoading) {
+    if (archiveEmailLoading || starEmailLoading || unreadEmailLoading) {
         return <APILoader show size="small" />;
     }
 
