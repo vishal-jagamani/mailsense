@@ -11,3 +11,13 @@ export async function archiveEmail(emailIds: string[], archive: boolean): Promis
     const { data } = await axiosClient.post(`/emails/archive`, { emailIds, archive });
     return data;
 }
+
+export async function starEmail(emailIds: string[], star: boolean): Promise<UpdateAPIResponse> {
+    const { data } = await axiosClient.post(`/emails/star`, { emailIds, star });
+    return data;
+}
+
+export async function unreadEmail(emailIds: string[]): Promise<UpdateAPIResponse> {
+    const { data } = await axiosClient.post(`/emails/unread`, { emailIds });
+    return data;
+}
