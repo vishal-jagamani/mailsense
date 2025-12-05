@@ -1,17 +1,18 @@
+import { MAILSENSE_BASE_URL } from '@config/config.js';
+import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
+import { EmailRepository } from '@modules/emails/email.repository.js';
+import { GmailApi } from '@providers/gmail/gmail.api.js';
 import { GmailService } from '@providers/gmail/gmail.service.js';
+import { GetGmailMessagesResponse } from '@providers/gmail/gmail.types.js';
 import * as GmailUtils from '@providers/gmail/gmail.utils.js';
 import { OutlookService } from '@providers/outlook/outlook.service.js';
+import { GetOutlookMessagesResponse } from '@providers/outlook/outlook.types.js';
 import * as OutlookUtils from '@providers/outlook/outlook.utils.js';
 import { decrypt, encrypt } from '@utils/crypto.js';
 import { logger } from '@utils/logger.js';
 import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
-import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
-import { MAILSENSE_BASE_URL } from '@config/config.js';
-import { GmailApi } from '@providers/gmail/gmail.api.js';
-import { EmailRepository } from '@modules/emails/email.repository.js';
-import { EmailInput } from '@modules/emails/email.model.js';
 // import { MailSyncService } from 'services/mail/mailSync.service.js';
 
 export class AccountsService {
@@ -147,7 +148,7 @@ export class AccountsService {
                 const { access_token, refresh_token, expires_in, scope } = accessTokenResponse;
                 const userProfile = await this.gmailService.getUserProfileFromAccessToken(access_token);
                 // Save in db
-                const account: AccountInput = {
+                const account: Partial<AccountInput> = {
                     id: Date.now(),
                     userId: userDetails?.id,
                     provider: AccountProvider.GMAIL,
@@ -162,14 +163,16 @@ export class AccountsService {
                     syncInterval: 60,
                     lastSyncedAt: Date.now(),
                 };
-                await AccountRepository.upsertAccount(account);
+
+                const savedAccount = await AccountRepository.upsertAccount(account);
+                this.syncAccount(String(savedAccount.id));
                 return MAILSENSE_BASE_URL;
             } else if (provider === AccountProvider.OUTLOOK) {
                 const response: OutlookOAuthAccessTokenResponse = await this.outlookService.getAccessTokenFromCode(code);
                 const { access_token, refresh_token, expires_in, scope } = response;
                 const userProfile = await this.outlookService.getUserProfileFromAccessToken(access_token);
                 // Save in db
-                const account: AccountInput = {
+                const account: Partial<AccountInput> = {
                     id: Date.now(),
                     userId: userDetails?.id,
                     provider: AccountProvider.OUTLOOK,
@@ -184,7 +187,8 @@ export class AccountsService {
                     syncInterval: 60,
                     lastSyncedAt: Date.now(),
                 };
-                await AccountRepository.upsertAccount(account);
+                const savedAccount = await AccountRepository.upsertAccount(account);
+                this.syncAccount(String(savedAccount.id));
                 return MAILSENSE_BASE_URL;
             } else {
                 throw new Error('Invalid provider');
@@ -221,18 +225,18 @@ export class AccountsService {
 
     async syncAccount(accountId: string): Promise<void> {
         try {
-            // await this.emailSyncService.syncAccount('123', accountId);
             const account = await AccountRepository.getAccountById(accountId);
             if (!account) throw new Error('Account not found');
-            let emails: EmailInput[] = [];
+            let emails: GetGmailMessagesResponse | GetOutlookMessagesResponse = { emails: [], lastSyncCursor: '' };
             if (account.provider === AccountProvider.GMAIL) {
                 emails = await this.gmailService.getMessages(accountId);
             } else if (account.provider === AccountProvider.OUTLOOK) {
                 emails = await this.outlookService.getMessages(accountId);
             }
-            await EmailRepository.upsertEmailsInBulk(emails);
+            await EmailRepository.upsertEmailsInBulk(emails.emails);
             const updateAccountSyncDetails: Partial<AccountInput> = {
                 lastSyncedAt: Date.now(),
+                lastSyncCursor: emails.lastSyncCursor,
             };
             await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
         } catch (err) {

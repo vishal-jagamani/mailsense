@@ -2,7 +2,7 @@ import { EmailInput } from '@modules/emails/email.model.js';
 import { logger } from '@utils/logger.js';
 import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { OutlookApi } from './outlook.api.js';
-import { OutlookMessagesResponse, OutlookUserProfile } from './outlook.types.js';
+import { GetOutlookMessagesResponse, OutlookMessagesResponse, OutlookUserProfile } from './outlook.types.js';
 import { compressString } from '@utils/compression.js';
 
 export class OutlookService {
@@ -32,11 +32,12 @@ export class OutlookService {
         }
     }
 
-    async getMessages(accountId: string): Promise<EmailInput[]> {
+    async getMessages(accountId: string): Promise<GetOutlookMessagesResponse> {
         try {
             const response = await OutlookApi.getMessages(accountId);
             const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, response);
-            return parsedEmails;
+            // TODO: Get last sync cursor for outlook
+            return { emails: parsedEmails, lastSyncCursor: '' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.getMessages: ${errorMessage}`, { error: err });

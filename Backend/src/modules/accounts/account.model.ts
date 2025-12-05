@@ -17,6 +17,7 @@ export interface AccountAttributes {
     syncEnabled: boolean;
     syncInterval: number;
     lastSyncedAt: number;
+    lastSyncCursor: string;
 }
 
 export interface AccountMetricsAttributes {
@@ -52,6 +53,7 @@ const AccountSchema = new Schema<AccountDocument>(
         syncEnabled: { type: Boolean, required: true },
         syncInterval: { type: Number, required: true },
         lastSyncedAt: { type: Number, required: true },
+        lastSyncCursor: { type: String, required: false },
     },
     { timestamps: true, versionKey: false },
 );

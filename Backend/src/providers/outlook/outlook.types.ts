@@ -1,3 +1,5 @@
+import { EmailInput } from '@modules/emails/email.model.js';
+
 export interface OutlookUserProfile {
     id: string;
     displayName: string;
@@ -40,4 +42,9 @@ export interface OutlookMessagesResponse {
     '@odata.context': string;
     value: OutlookMessageObjectFull[];
     '@odata.nextLink': string;
+}
+
+export interface GetOutlookMessagesResponse {
+    emails: EmailInput[];
+    lastSyncCursor: string;
 }
