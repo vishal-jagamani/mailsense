@@ -6,7 +6,7 @@ import { compressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
 import { GmailApi } from './gmail.api.js';
-import { GmailMessages, GmailUserProfile } from './gmail.types.js';
+import { GetGmailMessagesResponse, GmailMessages, GmailUserProfile } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
 
 export class GmailService {
@@ -32,7 +32,7 @@ export class GmailService {
         }
     }
 
-    async getMessages(accountId: string): Promise<EmailInput[]> {
+    async getMessages(accountId: string): Promise<GetGmailMessagesResponse> {
         try {
             const account = await AccountRepository.getAccountById(
                 accountId,
@@ -41,7 +41,7 @@ export class GmailService {
             if (!account) throw new Error('Account not found');
             const emails = await GmailApi.fetchEmails(accountId, 500);
             const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails);
-            return parsedEmails;
+            return { emails: parsedEmails.emails, lastSyncCursor: parsedEmails.lastSyncCursor };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.getMessages: ${errorMessage}`, { error: err });
@@ -49,10 +49,12 @@ export class GmailService {
         }
     }
 
-    async parseEmailsIntoPlainObjects(accountId: string, emails: GmailMessages): Promise<EmailInput[]> {
+    async parseEmailsIntoPlainObjects(accountId: string, emails: GmailMessages): Promise<GetGmailMessagesResponse> {
         try {
+            let lastSyncCursor: string = '';
             const parsedEmails = emails.messages.map(async (email: { id: string; threadId: string }) => {
                 const emailDetails = await GmailApi.fetchEmailById(email.id, accountId);
+                lastSyncCursor = emailDetails.historyId;
                 const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(emailDetails);
                 const emailObject: EmailInput = {
                     accountId,
@@ -73,7 +75,7 @@ export class GmailService {
                 return emailObject;
             });
             const parsedEmailsArray = await Promise.all(parsedEmails);
-            return parsedEmailsArray;
+            return { emails: parsedEmailsArray, lastSyncCursor };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });

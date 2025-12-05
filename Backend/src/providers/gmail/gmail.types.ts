@@ -1,3 +1,5 @@
+import { EmailInput } from '@modules/emails/email.model.js';
+
 // User profile interface
 export interface GmailUserProfile {
     sub: string;
@@ -46,4 +48,9 @@ export interface GmailMessageObjectFull {
     sizeEstimate: number;
     historyId: string;
     internalDate: string;
+}
+
+export interface GetGmailMessagesResponse {
+    emails: EmailInput[];
+    lastSyncCursor: string;
 }
