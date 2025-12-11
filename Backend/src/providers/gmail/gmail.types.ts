@@ -54,3 +54,37 @@ export interface GetGmailMessagesResponse {
     emails: EmailInput[];
     lastSyncCursor: string;
 }
+
+export interface GmailMessage {
+    id: string;
+    threadId: string;
+}
+
+export interface MessageAdded {
+    message: GmailMessage;
+}
+export interface MessageDeleted {
+    message?: GmailMessage;
+    messageId?: string;
+    id?: string;
+}
+
+export interface GmailHistoryRecord {
+    id: string;
+    messages?: GmailMessageObjectFull[];
+    messagesAdded?: MessageAdded[];
+    messagesDeleted?: MessageDeleted[];
+    labelsAdded?: string[];
+    labelsRemoved?: string[];
+}
+export interface GmailHistoryResponse {
+    history: GmailHistoryRecord[];
+    nextPageToken?: string;
+    historyId: string;
+}
+
+export interface MessagesAfterLastHistoryResponse {
+    addedMessages: EmailInput[];
+    deletedMessages: string[];
+    newHistoryId: string;
+}

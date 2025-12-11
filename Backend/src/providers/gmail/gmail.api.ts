@@ -7,7 +7,7 @@ import { decrypt, encrypt } from '@utils/crypto.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
 import { GMAIL_SECRETS } from '@config/config.js';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
-import { GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
+import { GmailHistoryResponse, GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
 
 export class GmailApi {
     static async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -91,6 +91,26 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.getUserProfileFromAccessToken: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    // Function to fetch history details by history id
+    static async getHistory(accountId: string, historyId: string): Promise<GmailHistoryResponse> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.HISTORY}/${historyId}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<GmailHistoryResponse>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.getHistory: ${errorMessage}`, { error: err });
             throw err;
         }
     }

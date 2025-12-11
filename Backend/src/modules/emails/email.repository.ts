@@ -61,6 +61,10 @@ export class EmailRepository {
         return Email.findByIdAndDelete(emailId);
     }
 
+    public static async deleteManyEmails(emailIds: string[]) {
+        return Email.deleteMany({ providerMessageId: { $in: emailIds } });
+    }
+
     public static async countDocuments(accountIds: string[]) {
         return Email.countDocuments({ accountId: { $in: accountIds } });
     }
