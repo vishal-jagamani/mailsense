@@ -1,6 +1,6 @@
 import { GmailUserProfile } from '@providers/gmail/gmail.types.js';
 import { OutlookUserProfile } from '@providers/outlook/outlook.types.js';
-import { model, Schema } from 'mongoose';
+import { model, Schema, Document } from 'mongoose';
 import validator from 'validator';
 
 export interface AccountAttributes {

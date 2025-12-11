@@ -63,7 +63,10 @@ export class AccountsController {
     public callback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
             const provider = req.params.provider;
-            const redirectURL = await this.accountsService.callback(provider, req.query);
+            const { code, state } = req.query;
+            const parsedCode = String(code);
+            const parsedState = String(state);
+            const redirectURL = await this.accountsService.callback(provider, { code: parsedCode, state: parsedState });
             res.redirect(redirectURL);
         } catch (error) {
             next(error);
