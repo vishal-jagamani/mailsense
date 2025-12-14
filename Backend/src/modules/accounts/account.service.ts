@@ -129,7 +129,6 @@ export class AccountsService {
      * @param params The query parameters from the callback.
      * @returns A promise that resolves when the callback is handled and redirects to the home page.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     async callback(provider: string, params: { code: string; state: string }): Promise<string> {
         try {
             const { code, state } = params;
@@ -264,6 +263,7 @@ export class AccountsService {
                 const emails = await this.gmailService.getMessages(accountId);
                 newEmails = emails.emails;
                 newHistoryId = emails.lastSyncCursor;
+                await EmailRepository.deleteEmailsByAccountId(accountId);
             }
             await EmailRepository.upsertEmailsInBulk(newEmails);
             const updateAccountSyncDetails: Partial<AccountInput> = {

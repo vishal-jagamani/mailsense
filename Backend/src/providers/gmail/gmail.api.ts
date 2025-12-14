@@ -100,10 +100,13 @@ export class GmailApi {
         try {
             const accessToken = await this.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
-                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.HISTORY}/${historyId}`,
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.HISTORY}`,
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
+                },
+                params: {
+                    startHistoryId: historyId,
                 },
             };
             const response = await apiRequest<GmailHistoryResponse>(options);
