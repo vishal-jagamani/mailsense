@@ -88,3 +88,9 @@ export interface MessagesAfterLastHistoryResponse {
     deletedMessages: string[];
     newHistoryId: string;
 }
+
+export interface GmailParsedEmailResult {
+    emailObject: EmailInput,
+    historyId: string,
+    receivedAt: Date
+}
