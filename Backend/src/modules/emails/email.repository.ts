@@ -1,4 +1,4 @@
-import { AnyBulkWriteOperation, FlattenMaps, ProjectionType, SortOrder } from 'mongoose';
+import { AnyBulkWriteOperation, FilterQuery, FlattenMaps, ProjectionType, SortOrder } from 'mongoose';
 import { Email, EmailDocument, EmailInput } from './email.model.js';
 
 export class EmailRepository {
@@ -47,6 +47,10 @@ export class EmailRepository {
 
     public static async getEmail(emailId: string) {
         return Email.findById(emailId);
+    }
+
+    public static async searchEmails(searchQuery: FilterQuery<EmailDocument>, fields: ProjectionType<EmailDocument>) {
+        return Email.find(searchQuery, fields);
     }
 
     public static async getEmailsByProviderMessageIds(emailIds: string[], fields: ProjectionType<EmailDocument>) {

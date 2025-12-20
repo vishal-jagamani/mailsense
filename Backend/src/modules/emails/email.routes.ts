@@ -3,7 +3,7 @@ import { validate } from '@middlewares/validator.js';
 import { handleRequest } from '@utils/request.handler.js';
 import { Router } from 'express';
 import { EmailController } from './email.controller.js';
-import { archiveEmailSchema, deleteEmailSchema, getAllEmailsSchema, getEmailSchema, starEmailSchema, unreadEmailSchema } from './email.schema.js';
+import { archiveEmailSchema, deleteEmailSchema, getAllEmailsSchema, getEmailSchema, searchEmailSchema, starEmailSchema, unreadEmailSchema } from './email.schema.js';
 
 const router = Router();
 
@@ -24,5 +24,7 @@ router.post('/archive', validate({ body: archiveEmailSchema }), handleRequest(em
 router.post('/star', validate({ body: starEmailSchema }), handleRequest(emailController.starEmails));
 
 router.post('/unread', validate({ body: unreadEmailSchema }), handleRequest(emailController.unreadEmails));
+
+router.post('/search', validate({ body: searchEmailSchema }), handleRequest(emailController.searchEmails));
 
 export default router;

@@ -1,25 +1,9 @@
 import { Document, model, Schema } from 'mongoose';
+import { EmailAttributes } from './email.types.js';
 
-export interface Email {
-    accountId: string;
-    providerMessageId: string;
-    threadId: string;
-    from: string;
-    to: string[] | string;
-    cc: string[] | string;
-    bcc: string[] | string;
-    subject: string;
-    body: string;
-    bodyHtml: string;
-    bodyPlain: string;
-    receivedAt: Date;
-    isRead: boolean;
-    folder: string;
-}
+export type EmailInput = Omit<EmailAttributes, 'createdAt' | 'updatedAt'>;
 
-export type EmailInput = Omit<Email, 'createdAt' | 'updatedAt'>;
-
-export type EmailDocument = Document & Email;
+export type EmailDocument = Document & EmailAttributes;
 
 const EmailSchema = new Schema<EmailDocument>(
     {
