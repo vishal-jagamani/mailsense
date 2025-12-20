@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { EmailService } from './email.service.js';
-import { ArchiveEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
+import { ArchiveEmailBody, SearchEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
 
 export class EmailController {
     private emailService: EmailService;
@@ -49,6 +49,20 @@ export class EmailController {
             }
             const email = await this.emailService.getEmail(emailId);
             res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public searchEmails = async (req: Request<object, object, SearchEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { searchText } = req.body;
+            const { userid } = req.headers;
+            if (!userid) {
+                res.status(400).send('User ID is required');
+            }
+            const response = await this.emailService.searchEmails(String(userid), searchText);
+            res.status(200).send(response);
         } catch (error) {
             next(error);
         }

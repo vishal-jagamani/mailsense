@@ -8,6 +8,7 @@ import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument } from './email.model.js';
 import { UpdateAPIResponse } from 'types/api.types.js';
+import { FilterQuery } from 'mongoose';
 
 export class EmailService {
     private gmailService: GmailService;
@@ -91,6 +92,25 @@ export class EmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async searchEmails(userId: string, searchText: string) {
+        try {
+            const accounts = await AccountRepository.getAccounts(userId);
+            if (!accounts.length) {
+                return { data: [], size: 0, page: 0, total: 0 };
+            }
+            const searchQuery: FilterQuery<EmailDocument> = {
+                accountId: { $in: accounts.map((account) => account._id) },
+                $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }],
+            };
+            const emails = await EmailRepository.searchEmails(searchQuery, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            return { data: emails, size: emails.length, page: 1, total: emails.length };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.searchEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }
