@@ -186,7 +186,7 @@ export class GmailService {
             if (trash) {
                 for (const emailId of emailIds) {
                     const email = await GmailApi.trashEmail(emailId, accountId);
-                    await EmailRepository.updateEmail(email.id, email);
+                    await EmailRepository.updateEmailByProviderMessageId(email.id, email);
                 }
                 return;
             } else {

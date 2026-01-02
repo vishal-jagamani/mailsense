@@ -61,6 +61,10 @@ export class EmailRepository {
         return Email.findByIdAndUpdate(emailId, data, { new: true });
     }
 
+    public static async updateEmailByProviderMessageId(providerMessageId: string, data: Partial<EmailInput>) {
+        return Email.updateOne({ providerMessageId }, { $set: data });
+    }
+
     public static async deleteEmail(emailId: string) {
         return Email.findByIdAndDelete(emailId);
     }
