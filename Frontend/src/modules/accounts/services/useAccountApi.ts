@@ -1,6 +1,6 @@
 import { QUERY_KEYS } from '@shared/config/query-keys';
 import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
-import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount } from './account.api';
+import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount, syncAccount } from './account.api';
 import { AccountAttributes, AccountProviders } from '@/shared/types/account.types';
 import { UpdateAPIResponse } from '@/shared/types/api.types';
 
@@ -27,6 +27,17 @@ export const useAccountQuery = (provider: string, options?: Options) => {
 
 export const useAccountProviderQuery = (): UseQueryResult<AccountProviders[]> => {
     return useQuery({ queryKey: [QUERY_KEYS.ACCOUNT_PROVIDERS], queryFn: () => getAccountProvider(), staleTime: 5 * 60 * 1000 });
+};
+
+export const useSyncAccountQuery = () => {
+    const queryClient = useQueryClient();
+    return useMutation<UpdateAPIResponse, Error, string>({
+        mutationFn: (accountId) => syncAccount(accountId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNT_PROVIDERS] });
+        },
+    });
 };
 
 export const useRemoveAccountQuery = () => {

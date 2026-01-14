@@ -3,12 +3,12 @@ import { EmailRepository } from '@modules/emails/email.repository.js';
 import { GmailService } from '@providers/gmail/gmail.service.js';
 import { decompressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
+import { FilterQuery } from 'mongoose';
 import { AccountProvider } from 'types/account.types.js';
+import { UpdateAPIResponse } from 'types/api.types.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument } from './email.model.js';
-import { UpdateAPIResponse } from 'types/api.types.js';
-import { FilterQuery } from 'mongoose';
 
 export class EmailService {
     private gmailService: GmailService;

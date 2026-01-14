@@ -1,8 +1,8 @@
 import { validate } from '@middlewares/validator.js';
-import { Router } from 'express';
-import { changePasswordSchema, getUserSchema, updateUserSchema } from './user.schema.js';
 import { handleRequest } from '@utils/request.handler.js';
+import { Router } from 'express';
 import { UserController } from './user.controller.js';
+import { changePasswordSchema, getUserSchema, updateUserSchema } from './user.schema.js';
 
 const router = Router();
 

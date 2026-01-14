@@ -250,7 +250,7 @@ export class AccountsService {
         }
     }
 
-    async syncGmailAccount(accountId: string, account: AccountDocument): Promise<UpdateAPIResponse> {
+    private async syncGmailAccount(accountId: string, account: AccountDocument): Promise<UpdateAPIResponse> {
         try {
             const historyDetails = await this.gmailService.getMessagesAfterLastHistory(accountId, account.lastSyncCursor);
             let newEmails: EmailInput[] = [];
@@ -265,7 +265,9 @@ export class AccountsService {
                 newHistoryId = emails.lastSyncCursor;
                 await EmailRepository.deleteEmailsByAccountId(accountId);
             }
-            await EmailRepository.upsertEmailsInBulk(newEmails);
+            if (newEmails.length) {
+                await EmailRepository.upsertEmailsInBulk(newEmails);
+            }
             const updateAccountSyncDetails: Partial<AccountInput> = {
                 lastSyncedAt: Date.now(),
                 lastSyncCursor: newHistoryId,

@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { ChangePasswordSchema, GetUserSchema, UpdateUserSchema } from './user.schema.js';
 import { UserService } from './user.service.js';
 
 export class UserController {
@@ -8,7 +9,7 @@ export class UserController {
         this.userService = new UserService();
     }
 
-    public getUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getUser = async (req: Request<{ id: string }, object, GetUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             const user = await this.userService.getUser(id);
@@ -18,7 +19,7 @@ export class UserController {
         }
     };
 
-    public updateUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public updateUser = async (req: Request<{ id: string }, object, UpdateUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             if (!id) {
@@ -31,7 +32,7 @@ export class UserController {
         }
     };
 
-    public getUserProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getUserProfile = async (req: Request<{ id: string }, object, GetUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             if (!id) {
@@ -44,7 +45,7 @@ export class UserController {
         }
     };
 
-    public updateUserProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public updateUserProfile = async (req: Request<{ id: string }, object, UpdateUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             if (!id) {
@@ -57,7 +58,7 @@ export class UserController {
         }
     };
 
-    public changePassword = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public changePassword = async (req: Request<{ id: string }, object, ChangePasswordSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             if (!id) {
