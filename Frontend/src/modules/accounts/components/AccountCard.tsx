@@ -19,7 +19,7 @@ import outlookIcon from '@assets/icons/outlook/icons8-outlook-240.svg';
 import { CircleMinus, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
 import React, { useState } from 'react';
-import { useRemoveAccountQuery } from '../services/useAccountApi';
+import { useRemoveAccountQuery, useSyncAccountQuery } from '../services/useAccountApi';
 
 interface AccountCardProps {
     account: AccountAttributes;
@@ -31,12 +31,15 @@ const iconMapping = [
 ];
 
 const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
-    const [syncing, setSyncing] = useState<boolean>(false);
-
     const { mutateAsync: removeAccount } = useRemoveAccountQuery();
+    const { mutateAsync: syncAccount, isPending: syncingAccount } = useSyncAccountQuery();
 
     const handleRemoveAccount = async () => {
         await removeAccount(account._id);
+    };
+
+    const handleSyncAccount = async () => {
+        await syncAccount(account._id);
     };
 
     return (
@@ -57,7 +60,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
                         </div>
                         <div className="relative flex w-full items-center justify-between text-nowrap">
                             <p className="text-muted-foreground text-xs font-semibold">
-                                {syncing ? (
+                                {syncingAccount ? (
                                     <span className="animate-pulse text-green-500 delay-100">Syncing...</span>
                                 ) : (
                                     `Last synced ${formatEpochTimeToString(account.lastSyncedAt)} ago`
@@ -68,12 +71,12 @@ const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
                                     <TooltipTrigger>
                                         <RefreshCw
                                             size={16}
-                                            className={syncing ? 'animate-spin hover:cursor-pointer' : 'hover:cursor-pointer'}
-                                            onClick={() => setSyncing(!syncing)}
+                                            className={syncingAccount ? 'animate-spin hover:cursor-pointer' : 'hover:cursor-pointer'}
+                                            onClick={handleSyncAccount}
                                         />
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p className="text-md font-semibold">{syncing ? 'Syncing' : 'Sync'}</p>
+                                        <p className="text-md font-semibold">{syncingAccount ? 'Syncing' : 'Sync'}</p>
                                     </TooltipContent>
                                 </Tooltip>
                                 <Tooltip>

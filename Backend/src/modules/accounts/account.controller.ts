@@ -8,7 +8,7 @@ export class AccountsController {
         this.accountsService = new AccountsService();
     }
 
-    public getAccountDetails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getAccountDetails = async (req: Request<{ accountId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
             if (!accountId) throw new Error('Account ID is required');
@@ -20,7 +20,7 @@ export class AccountsController {
         }
     };
 
-    public deleteAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public deleteAccount = async (req: Request<{ accountId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
             if (!accountId) throw new Error('Account ID is required');
@@ -31,7 +31,7 @@ export class AccountsController {
         }
     };
 
-    public getAccounts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getAccounts = async (req: Request<{ userId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const userId = req.params.userId;
             if (!userId) throw new Error('User ID is required');
@@ -42,7 +42,7 @@ export class AccountsController {
         }
     };
 
-    public getAccountProviders = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getAccountProviders = async (req: Request<object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountProviders = await this.accountsService.getAccountProviders();
             res.send(accountProviders);
@@ -51,7 +51,7 @@ export class AccountsController {
         }
     };
 
-    public connect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public connect = async (req: Request<{ provider: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const redirectURL = await this.accountsService.connect(req.params.provider);
             res.send(redirectURL);
@@ -60,7 +60,11 @@ export class AccountsController {
         }
     };
 
-    public callback = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public callback = async (
+        req: Request<{ provider: string }, object, object, { code: string; state: string }>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
         try {
             const provider = req.params.provider;
             const { code, state } = req.query;
@@ -73,7 +77,7 @@ export class AccountsController {
         }
     };
 
-    public fetchEmails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public fetchEmails = async (req: Request<{ accountId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
             const emails = await this.accountsService.fetchEmails(accountId);
@@ -92,7 +96,7 @@ export class AccountsController {
         }
     };
 
-    public syncAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public syncAccount = async (req: Request<{ accountId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
             this.accountsService.syncAccount(accountId);

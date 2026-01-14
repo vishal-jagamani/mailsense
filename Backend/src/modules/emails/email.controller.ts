@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
+import { ArchiveEmailBody, DeleteEmailSchema, SearchEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
 import { EmailService } from './email.service.js';
-import { ArchiveEmailBody, SearchEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
 
 export class EmailController {
     private emailService: EmailService;
@@ -9,7 +9,11 @@ export class EmailController {
         this.emailService = new EmailService();
     }
 
-    public getAllEmails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getAllEmails = async (
+        req: Request<object, object, object, { size: string; page: string }>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
         try {
             const { userid } = req.headers;
             const { size, page } = req.query;
@@ -25,7 +29,11 @@ export class EmailController {
         }
     };
 
-    public getEmails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getEmails = async (
+        req: Request<{ accountId: string }, object, object, { size: string; page: string }>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
         try {
             const { accountId } = req.params;
             const { size, page } = req.query;
@@ -41,7 +49,7 @@ export class EmailController {
         }
     };
 
-    public getEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getEmail = async (req: Request<{ emailId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { emailId } = req.params;
             if (!emailId) {
@@ -68,7 +76,7 @@ export class EmailController {
         }
     };
 
-    public deleteEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public deleteEmail = async (req: Request<object, object, DeleteEmailSchema, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { emailIds, trash } = req.body;
             if (!emailIds) {

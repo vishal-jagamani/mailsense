@@ -5,6 +5,7 @@ import { logger } from '@utils/logger.js';
 import { AxiosRequestConfig } from 'axios';
 import { AUTH0_API_AUDIENCE, AUTH0_API_TOKEN_URI, AUTH0_APIs } from './auth0.constants.js';
 import { Auth0AccessTokenResponse, Auth0UserDetailsResponse } from './auth0.types.js';
+import { UpdateUserSchema } from '@modules/user/user.schema.js';
 
 export class Auth0Api {
     private async fetchAccessToken(): Promise<Auth0AccessTokenResponse> {
@@ -50,7 +51,7 @@ export class Auth0Api {
         }
     }
 
-    public async updateUserDetails(auth0UserId: string, user: UserDetailsObject): Promise<UserDetailsObject> {
+    public async updateUserDetails(auth0UserId: string, user: UpdateUserSchema): Promise<UserDetailsObject> {
         try {
             const accessToken = await this.fetchAccessToken();
             const options: AxiosRequestConfig = {

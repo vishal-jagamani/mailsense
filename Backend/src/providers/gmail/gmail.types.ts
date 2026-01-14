@@ -83,6 +83,11 @@ export interface GmailHistoryResponse {
     historyId: string;
 }
 
+export interface ExtractMessageChangesResponse {
+    addedMessageIds: string[];
+    deletedMessageIds: string[];
+}
+
 export interface MessagesAfterLastHistoryResponse {
     addedMessages: EmailInput[];
     deletedMessages: string[];

@@ -4,9 +4,11 @@ import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { compressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
+import axios from 'axios';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
 import { GmailApi } from './gmail.api.js';
 import {
+    ExtractMessageChangesResponse,
     GetGmailMessagesResponse,
     GmailHistoryResponse,
     GmailMessageObjectFull,
@@ -16,7 +18,6 @@ import {
     MessagesAfterLastHistoryResponse,
 } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
-import axios from 'axios';
 
 export class GmailService {
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -100,7 +101,10 @@ export class GmailService {
         }
     }
 
-    private extractMessageChanges(history: GmailHistoryResponse) {
+    private extractMessageChanges(history: GmailHistoryResponse): ExtractMessageChangesResponse {
+        if (!history || !history.history || !Array.isArray(history.history) || history.history.length === 0) {
+            return { addedMessageIds: [], deletedMessageIds: [] };
+        }
         const addedMessages = history.history
             .flatMap((item) => item.messagesAdded ?? [])
             .map((item) => item.message.id)
