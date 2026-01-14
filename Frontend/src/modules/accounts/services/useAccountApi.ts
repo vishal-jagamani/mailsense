@@ -1,7 +1,8 @@
 import { QUERY_KEYS } from '@shared/config/query-keys';
 import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
-import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount } from './account.api';
+import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount, syncAccount } from './account.api';
 import { AccountAttributes, AccountProviders } from '@/shared/types/account.types';
+import { UpdateAPIResponse } from '@/shared/types/api.types';
 
 type ConnectAccountResult = Awaited<ReturnType<typeof connectAccount>>;
 
@@ -28,10 +29,20 @@ export const useAccountProviderQuery = (): UseQueryResult<AccountProviders[]> =>
     return useQuery({ queryKey: [QUERY_KEYS.ACCOUNT_PROVIDERS], queryFn: () => getAccountProvider(), staleTime: 5 * 60 * 1000 });
 };
 
+export const useSyncAccountQuery = () => {
+    const queryClient = useQueryClient();
+    return useMutation<UpdateAPIResponse, Error, string>({
+        mutationFn: (accountId) => syncAccount(accountId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNT_PROVIDERS] });
+        },
+    });
+};
+
 export const useRemoveAccountQuery = () => {
     const queryClient = useQueryClient();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return useMutation<any, any, string>({
+    return useMutation<UpdateAPIResponse, Error, string>({
         mutationFn: (accountId) => removeAccount(accountId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });

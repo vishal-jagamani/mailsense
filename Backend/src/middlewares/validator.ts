@@ -1,25 +1,40 @@
 import { NextFunction, Request, Response } from 'express';
 import { ZodError, z } from 'zod';
 
+type SchemaMap = {
+    headers?: z.ZodSchema;
+    params?: z.ZodSchema;
+    query?: z.ZodSchema;
+    body?: z.ZodSchema;
+};
+
 /**
  * Middleware to validate incoming requests using Zod schemas.
  *
- * @param schema - Zod schema to validate against
- * @param source - Request source: body, query, params or headers
+ * @param schemas - Zod schemas to validate against
  */
-export const validate = (schema: z.ZodSchema, source: 'body' | 'query' | 'params' | 'headers') => (req: Request, res: Response, next: NextFunction) => {
-    const result = schema.safeParse(req[source]);
-
-    if (!result.success) {
-        const error: ZodError = result.error;
-        return res.status(400).json({
-            error: {
-                code: 400,
-                message: 'Validation Error',
-                details: z.flattenError(error),
-            },
-        });
+export const validate = (schemas: SchemaMap) => (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const sources: (keyof SchemaMap)[] = ['headers', 'params', 'query', 'body'];
+        for (const source of sources) {
+            const schema = schemas[source];
+            if (!schema) continue;
+            const result = schema.safeParse(req[source]);
+            if (!result.success) {
+                const error: ZodError = result.error;
+                return res.status(400).json({
+                    error: {
+                        code: 400,
+                        message: 'Validation Error',
+                        source,
+                        details: error.flatten(),
+                    },
+                });
+            }
+            req[source] = result.data;
+        }
+        next();
+    } catch (err) {
+        next(err);
     }
-
-    next();
 };

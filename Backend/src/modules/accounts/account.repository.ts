@@ -14,7 +14,7 @@ export class AccountRepository {
         return Account.create(data);
     }
 
-    public static async upsertAccount(data: AccountInput): Promise<AccountDocument> {
+    public static async upsertAccount(data: Partial<AccountInput>): Promise<AccountDocument> {
         const filter = { emailAddress: data.emailAddress };
         const update = { ...data, updatedAt: Date.now() };
         return Account.findOneAndUpdate(filter, update, { upsert: true, new: true });

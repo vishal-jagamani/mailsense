@@ -1,4 +1,5 @@
 import { axiosClient } from '@/shared/config/axios';
+import { UpdateAPIResponse } from '@/shared/types/api.types';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 
 export async function fetchEmails(userId: string) {
@@ -12,7 +13,6 @@ export async function fetchEmailsByAccount(accountId: string) {
 }
 
 export async function deleteEmail(emailIds: string[], trash: boolean) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await axiosClient.delete<any, any>('/emails', { data: { emailIds, trash } });
+    const { data } = await axiosClient.delete<UpdateAPIResponse>('/emails', { data: { emailIds, trash } });
     return data;
 }

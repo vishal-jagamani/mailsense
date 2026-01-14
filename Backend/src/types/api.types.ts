@@ -4,6 +4,11 @@ export interface APIResponse<T> {
     data: T;
 }
 
+export interface SuccessAPIResponse {
+    status: boolean;
+    message: string;
+}
+
 export interface UpdateAPIResponse {
     status: boolean;
     message: string;

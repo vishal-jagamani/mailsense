@@ -2,6 +2,7 @@ import { UserDetailsObject } from '@modules/user/user.types.js';
 import { logger } from '@utils/logger.js';
 import { Auth0Api } from './auth0.api.js';
 import { Auth0UserDetailsResponse } from './auth0.types.js';
+import { UpdateUserSchema } from '@modules/user/user.schema.js';
 
 export class Auth0Service {
     private auth0Api: Auth0Api;
@@ -21,7 +22,7 @@ export class Auth0Service {
         }
     }
 
-    async updateUserDetails(auth0UserId: string, user: UserDetailsObject): Promise<UserDetailsObject> {
+    async updateUserDetails(auth0UserId: string, user: UpdateUserSchema): Promise<UserDetailsObject> {
         try {
             const response = await this.auth0Api.updateUserDetails(auth0UserId, user);
             return response;

@@ -1,11 +1,11 @@
 import { Auth0Service } from '@providers/auth0/auth0.service.js';
 import { Auth0UserDetailsResponse } from '@providers/auth0/auth0.types.js';
+import { decrypt } from '@utils/crypto.js';
 import { APIResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { UserDocument, UserInput } from './user.model.js';
 import { UserRepository } from './user.repository.js';
-import { ChangePasswordSchema } from './user.schema.js';
+import { ChangePasswordSchema, UpdateUserSchema } from './user.schema.js';
 import { UserDetailsObject } from './user.types.js';
-import { decrypt } from '@utils/crypto.js';
 
 export class UserService {
     private auth0Service: Auth0Service;
@@ -19,7 +19,7 @@ export class UserService {
         return { status: true, message: 'User fetched successfully', data: user };
     }
 
-    public async updateUser(auth0UserId: string, user: UserDetailsObject): Promise<APIResponse<UserDocument | null>> {
+    public async updateUser(auth0UserId: string, user: UpdateUserSchema): Promise<APIResponse<UserDocument | null>> {
         const updateUser = await this.auth0Service.updateUserDetails(auth0UserId, user);
         const userInput: UserInput = {
             auth0UserId,

@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
+import { ArchiveEmailBody, DeleteEmailSchema, SearchEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
 import { EmailService } from './email.service.js';
 
 export class EmailController {
@@ -8,7 +9,11 @@ export class EmailController {
         this.emailService = new EmailService();
     }
 
-    public getAllEmails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getAllEmails = async (
+        req: Request<object, object, object, { size: string; page: string }>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
         try {
             const { userid } = req.headers;
             const { size, page } = req.query;
@@ -24,7 +29,11 @@ export class EmailController {
         }
     };
 
-    public getEmails = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getEmails = async (
+        req: Request<{ accountId: string }, object, object, { size: string; page: string }>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
         try {
             const { accountId } = req.params;
             const { size, page } = req.query;
@@ -40,7 +49,7 @@ export class EmailController {
         }
     };
 
-    public getEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public getEmail = async (req: Request<{ emailId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { emailId } = req.params;
             if (!emailId) {
@@ -53,13 +62,66 @@ export class EmailController {
         }
     };
 
-    public deleteEmail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public searchEmails = async (req: Request<object, object, SearchEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { searchText } = req.body;
+            const { userid } = req.headers;
+            if (!userid) {
+                res.status(400).send('User ID is required');
+            }
+            const response = await this.emailService.searchEmails(String(userid), searchText);
+            res.status(200).send(response);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public deleteEmail = async (req: Request<object, object, DeleteEmailSchema, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { emailIds, trash } = req.body;
             if (!emailIds) {
                 throw new Error('Email ID is required');
             }
             const email = await this.emailService.deleteEmail(emailIds, Boolean(trash));
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public archiveEmails = async (req: Request<object, object, ArchiveEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailIds, archive } = req.body;
+            if (!emailIds) {
+                throw new Error('Email ID is required');
+            }
+            const email = await this.emailService.archiveEmails(emailIds, Boolean(archive));
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public starEmails = async (req: Request<object, object, StarEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailIds, star } = req.body;
+            if (!emailIds) {
+                throw new Error('Email ID is required');
+            }
+            const email = await this.emailService.starEmails(emailIds, Boolean(star));
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public unreadEmails = async (req: Request<object, object, UnreadEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailIds } = req.body;
+            if (!emailIds) {
+                throw new Error('Email ID is required');
+            }
+            const email = await this.emailService.unreadEmails(emailIds);
             res.send(email);
         } catch (error) {
             next(error);

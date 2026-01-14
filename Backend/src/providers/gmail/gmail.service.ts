@@ -4,9 +4,19 @@ import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { compressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
+import axios from 'axios';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
 import { GmailApi } from './gmail.api.js';
-import { GmailMessages, GmailUserProfile } from './gmail.types.js';
+import {
+    ExtractMessageChangesResponse,
+    GetGmailMessagesResponse,
+    GmailHistoryResponse,
+    GmailMessageObjectFull,
+    GmailMessages,
+    GmailParsedEmailResult,
+    GmailUserProfile,
+    MessagesAfterLastHistoryResponse,
+} from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
 
 export class GmailService {
@@ -32,7 +42,7 @@ export class GmailService {
         }
     }
 
-    async getMessages(accountId: string): Promise<EmailInput[]> {
+    async getMessages(accountId: string): Promise<GetGmailMessagesResponse> {
         try {
             const account = await AccountRepository.getAccountById(
                 accountId,
@@ -41,7 +51,7 @@ export class GmailService {
             if (!account) throw new Error('Account not found');
             const emails = await GmailApi.fetchEmails(accountId, 500);
             const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails);
-            return parsedEmails;
+            return { emails: parsedEmails.emails, lastSyncCursor: parsedEmails.lastSyncCursor };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.getMessages: ${errorMessage}`, { error: err });
@@ -49,31 +59,97 @@ export class GmailService {
         }
     }
 
-    async parseEmailsIntoPlainObjects(accountId: string, emails: GmailMessages): Promise<EmailInput[]> {
+    async getMessagesByMessagesId(accountId: string, messagesIds: string[]): Promise<EmailInput[]> {
         try {
-            const parsedEmails = emails.messages.map(async (email: { id: string; threadId: string }) => {
-                const emailDetails = await GmailApi.fetchEmailById(email.id, accountId);
-                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(emailDetails);
-                const emailObject: EmailInput = {
-                    accountId,
-                    providerMessageId: emailDetails.id,
-                    threadId: emailDetails.threadId,
-                    from: emailDetails.payload.headers.find((val) => val.name === 'From')?.value || '',
-                    to: emailDetails.payload.headers.find((val) => val.name === 'To')?.value || '',
-                    cc: emailDetails.payload.headers.find((val) => val.name === 'Cc')?.value || '',
-                    bcc: emailDetails.payload.headers.find((val) => val.name === 'Bcc')?.value || '',
-                    subject: emailDetails.payload.headers.find((val) => val.name === 'Subject')?.value || '',
-                    body: emailDetails.payload.body.data || '',
-                    bodyHtml: compressString(htmlBody || ''),
-                    bodyPlain: compressString(plainTextBody),
-                    receivedAt: new Date(emailDetails.payload.headers.find((val) => val.name === 'Date')?.value || ''),
-                    isRead: !emailDetails.labelIds.includes('UNREAD'),
-                    folder: emailDetails.labelIds.includes('INBOX') ? 'inbox' : 'sent',
-                };
-                return emailObject;
-            });
-            const parsedEmailsArray = await Promise.all(parsedEmails);
-            return parsedEmailsArray;
+            const emails: EmailInput[] = [];
+            for (const messageId of messagesIds) {
+                const emailDetails = await GmailApi.fetchEmailById(messageId, accountId);
+                const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+                emails.push(emailObject);
+            }
+            return emails;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.getMessagesByMessagesId: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async getMessagesAfterLastHistory(accountId: string, historyId: string): Promise<MessagesAfterLastHistoryResponse | null> {
+        try {
+            if (!historyId) return null;
+            const historyDetails = await GmailApi.getHistory(accountId, historyId);
+            if (!historyDetails) return null;
+            const { addedMessageIds, deletedMessageIds } = this.extractMessageChanges(historyDetails);
+            const addedMessages: EmailInput[] = [];
+            if (addedMessageIds.length) {
+                for (const messageId of addedMessageIds) {
+                    const emailDetails = await GmailApi.fetchEmailById(messageId, accountId);
+                    const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+                    addedMessages.push(emailObject);
+                }
+            }
+            return { addedMessages, deletedMessages: deletedMessageIds, newHistoryId: historyDetails.historyId };
+        } catch (err) {
+            if (axios.isAxiosError(err) && err?.response?.status === 404) {
+                return null;
+            } else {
+                const errorMessage = err instanceof Error ? err.message : String(err);
+                logger.error(`Error in GmailService.getMessagesAfterLastHistory: ${errorMessage}`, { error: err });
+                throw err;
+            }
+        }
+    }
+
+    private extractMessageChanges(history: GmailHistoryResponse): ExtractMessageChangesResponse {
+        if (!history || !history.history || !Array.isArray(history.history) || history.history.length === 0) {
+            return { addedMessageIds: [], deletedMessageIds: [] };
+        }
+        const addedMessages = history.history
+            .flatMap((item) => item.messagesAdded ?? [])
+            .map((item) => item.message.id)
+            .filter(Boolean);
+        const deletedMessages = history.history
+            .flatMap((item) => item.messagesDeleted ?? [])
+            .map((item) => item?.message?.id ?? item?.messageId ?? item?.id)
+            .filter(Boolean);
+        const genericMessages = history.history
+            .flatMap((item) => item.messages ?? [])
+            .map((item) => item?.id)
+            .filter(Boolean);
+        const allAdded = [...new Set([...addedMessages, ...genericMessages])];
+        const addedMessageIds = allAdded.filter((id) => !deletedMessages.includes(id))?.map((id) => id);
+        const deletedMessageIds = [...new Set(deletedMessages)] as string[];
+        return { addedMessageIds, deletedMessageIds };
+    }
+
+    async parseEmailsIntoPlainObjects(accountId: string, emails: GmailMessages): Promise<GetGmailMessagesResponse> {
+        try {
+            const parsedEmailsResults = await Promise.allSettled(
+                emails.messages.map(async (email: { id: string; threadId: string }): Promise<GmailParsedEmailResult | null> => {
+                    try {
+                        const emailDetails = await GmailApi.fetchEmailById(email.id, accountId);
+                        const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+                        return {
+                            emailObject,
+                            historyId: emailDetails.historyId,
+                            receivedAt: emailObject.receivedAt,
+                        };
+                    } catch (err) {
+                        logger.error(`Error in GmailService.parseEmailsIntoPlainObjects: ${err}`, { error: err });
+                        return null;
+                    }
+                }),
+            );
+            const parsedEmails = parsedEmailsResults
+                .filter((result): result is PromiseFulfilledResult<GmailParsedEmailResult> => result.status === 'fulfilled')
+                .map((result) => result.value);
+            if (parsedEmails.length === 0) {
+                return { emails: [], lastSyncCursor: '' };
+            }
+            parsedEmails.sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime());
+            const lastSyncCursor = parsedEmails[0].historyId;
+            return { emails: parsedEmails.map((email) => email.emailObject), lastSyncCursor };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });
@@ -81,12 +157,40 @@ export class GmailService {
         }
     }
 
+    private transformGmailMessageToEmailInput(emailDetails: GmailMessageObjectFull, accountId: string): EmailInput {
+        const headers = emailDetails.payload.headers.reduce(
+            (acc, header) => {
+                acc[header.name.toLowerCase()] = header.value;
+                return acc;
+            },
+            {} as Record<string, string>,
+        );
+        const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(emailDetails);
+        const receivedAt = new Date(headers.date || '');
+        return {
+            accountId,
+            providerMessageId: emailDetails.id,
+            threadId: emailDetails.threadId,
+            from: headers.from || '',
+            to: headers.to || '',
+            cc: headers.cc || '',
+            bcc: headers.bcc || '',
+            subject: headers.subject || '',
+            body: emailDetails.payload.body.data || '',
+            bodyHtml: compressString(htmlBody || ''),
+            bodyPlain: compressString(plainTextBody),
+            receivedAt,
+            isRead: !emailDetails.labelIds.includes('UNREAD'),
+            folder: emailDetails.labelIds.includes('INBOX') ? 'inbox' : 'sent',
+        };
+    }
+
     async deleteEmails(emailIds: string[], accountId: string, trash?: boolean) {
         try {
             if (trash) {
                 for (const emailId of emailIds) {
                     const email = await GmailApi.trashEmail(emailId, accountId);
-                    await EmailRepository.updateEmail(email.id, email);
+                    await EmailRepository.updateEmailByProviderMessageId(email.id, email);
                 }
                 return;
             } else {
@@ -96,6 +200,66 @@ export class GmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async archiveEmails(emailIds: string[], accountId: string, archive: boolean) {
+        try {
+            for (const emailId of emailIds) {
+                const email = await GmailApi.archiveEmail(emailId, accountId, archive);
+                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
+                await EmailRepository.updateEmail(email.id, {
+                    ...email,
+                    body: plainTextBody,
+                    bodyHtml: compressString(htmlBody || ''),
+                    bodyPlain: compressString(plainTextBody),
+                });
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.archiveEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async starEmails(emailIds: string[], accountId: string, star: boolean) {
+        try {
+            for (const emailId of emailIds) {
+                const email = await GmailApi.starEmail(emailId, accountId, star);
+                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
+                await EmailRepository.updateEmail(email.id, {
+                    ...email,
+                    body: plainTextBody,
+                    bodyHtml: compressString(htmlBody || ''),
+                    bodyPlain: compressString(plainTextBody),
+                });
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.starEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async unreadEmails(emailIds: string[], accountId: string) {
+        try {
+            for (const emailId of emailIds) {
+                const email = await GmailApi.unreadEmail(emailId, accountId);
+                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
+                await EmailRepository.updateEmail(email.id, {
+                    ...email,
+                    body: plainTextBody,
+                    bodyHtml: compressString(htmlBody || ''),
+                    bodyPlain: compressString(plainTextBody),
+                });
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.unreadEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }

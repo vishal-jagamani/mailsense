@@ -1,33 +1,6 @@
-import { GmailUserProfile } from '@providers/gmail/gmail.types.js';
-import { OutlookUserProfile } from '@providers/outlook/outlook.types.js';
-import { model, Schema } from 'mongoose';
+import { Document, model, Schema } from 'mongoose';
 import validator from 'validator';
-
-export interface AccountAttributes {
-    id: number;
-    userId: string;
-    provider: string;
-    emailAddress: string;
-    userProfileDetails: GmailUserProfile | OutlookUserProfile;
-    accessToken: string;
-    refreshToken: string;
-    accessTokenExpiry: number;
-    refreshTokenExpiry: number;
-    scope: string;
-    syncEnabled: boolean;
-    syncInterval: number;
-    lastSyncedAt: number;
-}
-
-export interface AccountMetricsAttributes {
-    accountId: string;
-    totalEmails: number;
-    totalThreads: number;
-    totalLabels: number;
-    totalFolders: number;
-    totalContacts: number;
-    date: Date;
-}
+import { AccountAttributes, AccountMetricsAttributes } from './account.types.js';
 
 // ✅ Input type (plain object you pass into create)
 export type AccountInput = Omit<AccountAttributes, 'createdAt' | 'updatedAt'>;
@@ -52,6 +25,7 @@ const AccountSchema = new Schema<AccountDocument>(
         syncEnabled: { type: Boolean, required: true },
         syncInterval: { type: Number, required: true },
         lastSyncedAt: { type: Number, required: true },
+        lastSyncCursor: { type: String, required: false },
     },
     { timestamps: true, versionKey: false },
 );

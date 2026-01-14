@@ -1,21 +1,21 @@
 import { validate } from '@middlewares/validator.js';
-import { Router } from 'express';
-import { changePasswordSchema, getUserSchema, updateUserSchema } from './user.schema.js';
 import { handleRequest } from '@utils/request.handler.js';
+import { Router } from 'express';
 import { UserController } from './user.controller.js';
+import { changePasswordSchema, getUserSchema, updateUserSchema } from './user.schema.js';
 
 const router = Router();
 
 const userController = new UserController();
 
-router.get('/:id', validate(getUserSchema, 'params'), handleRequest(userController.getUser));
+router.get('/:id', validate({ params: getUserSchema }), handleRequest(userController.getUser));
 
-router.put('/:id', validate(updateUserSchema, 'body'), handleRequest(userController.updateUser));
+router.put('/:id', validate({ body: updateUserSchema }), handleRequest(userController.updateUser));
 
-router.get('/:id/profile', validate(getUserSchema, 'params'), handleRequest(userController.getUserProfile));
+router.get('/:id/profile', validate({ params: getUserSchema }), handleRequest(userController.getUserProfile));
 
-router.put('/:id/profile', validate(updateUserSchema, 'body'), handleRequest(userController.updateUserProfile));
+router.put('/:id/profile', validate({ body: updateUserSchema }), handleRequest(userController.updateUserProfile));
 
-router.patch('/:id/change-password', validate(changePasswordSchema, 'body'), handleRequest(userController.changePassword));
+router.patch('/:id/change-password', validate({ body: changePasswordSchema }), handleRequest(userController.changePassword));
 
 export default router;

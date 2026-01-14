@@ -24,12 +24,7 @@ const ChangePassword: React.FC<ChangePasswordProps> = ({ show, setShow, setShowT
     const [confirmPassword, setConfirmPassword] = useState<string>('');
     const [passwordIsSame, setPasswordIsSame] = useState<boolean>(false);
 
-    const {
-        mutate: changeUserPassword,
-        data: changeUserPasswordData,
-        isPending: changeUserPasswordLoading,
-        error: changeUserPasswordError,
-    } = useChangeUserPassword();
+    const { mutate: changeUserPassword, data: changeUserPasswordData, isPending: changeUserPasswordLoading } = useChangeUserPassword();
 
     const handleChangePasswordButtonClick = () => {
         if (!userId) {
@@ -52,7 +47,7 @@ const ChangePassword: React.FC<ChangePasswordProps> = ({ show, setShow, setShowT
             setShowToast(true);
             setToastType('password');
         }
-    }, [changeUserPasswordData]);
+    }, [changeUserPasswordData, setShow, setShowToast, setToastType]);
 
     return (
         <Dialog open={show} onOpenChange={setShow}>

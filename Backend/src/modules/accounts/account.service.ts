@@ -1,3 +1,7 @@
+import { MAILSENSE_BASE_URL } from '@config/config.js';
+import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
+import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailRepository } from '@modules/emails/email.repository.js';
 import { GmailService } from '@providers/gmail/gmail.service.js';
 import * as GmailUtils from '@providers/gmail/gmail.utils.js';
 import { OutlookService } from '@providers/outlook/outlook.service.js';
@@ -5,25 +9,21 @@ import * as OutlookUtils from '@providers/outlook/outlook.utils.js';
 import { decrypt, encrypt } from '@utils/crypto.js';
 import { logger } from '@utils/logger.js';
 import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
+import { SuccessAPIResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
-import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
-import { MAILSENSE_BASE_URL } from '@config/config.js';
-import { GmailApi } from '@providers/gmail/gmail.api.js';
-import { EmailRepository } from '@modules/emails/email.repository.js';
-import { EmailInput } from '@modules/emails/email.model.js';
 // import { MailSyncService } from 'services/mail/mailSync.service.js';
 
 export class AccountsService {
     private gmailService: GmailService;
     private outlookService: OutlookService;
-    private gmailApi: GmailApi;
+    // private gmailApi: GmailApi;
     // private emailSyncService: MailSyncService;
 
     constructor() {
         this.gmailService = new GmailService();
         this.outlookService = new OutlookService();
-        this.gmailApi = new GmailApi();
+        // this.gmailApi = new GmailApi();
         // this.emailSyncService = new MailSyncService();
     }
 
@@ -129,8 +129,7 @@ export class AccountsService {
      * @param params The query parameters from the callback.
      * @returns A promise that resolves when the callback is handled and redirects to the home page.
      */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async callback(provider: string, params: any): Promise<string> {
+    async callback(provider: string, params: { code: string; state: string }): Promise<string> {
         try {
             const { code, state } = params;
             let userDetails;
@@ -147,7 +146,7 @@ export class AccountsService {
                 const { access_token, refresh_token, expires_in, scope } = accessTokenResponse;
                 const userProfile = await this.gmailService.getUserProfileFromAccessToken(access_token);
                 // Save in db
-                const account: AccountInput = {
+                const account: Partial<AccountInput> = {
                     id: Date.now(),
                     userId: userDetails?.id,
                     provider: AccountProvider.GMAIL,
@@ -162,14 +161,16 @@ export class AccountsService {
                     syncInterval: 60,
                     lastSyncedAt: Date.now(),
                 };
-                await AccountRepository.upsertAccount(account);
+
+                const savedAccount = await AccountRepository.upsertAccount(account);
+                this.syncAccount(String(savedAccount.id));
                 return MAILSENSE_BASE_URL;
             } else if (provider === AccountProvider.OUTLOOK) {
                 const response: OutlookOAuthAccessTokenResponse = await this.outlookService.getAccessTokenFromCode(code);
                 const { access_token, refresh_token, expires_in, scope } = response;
                 const userProfile = await this.outlookService.getUserProfileFromAccessToken(access_token);
                 // Save in db
-                const account: AccountInput = {
+                const account: Partial<AccountInput> = {
                     id: Date.now(),
                     userId: userDetails?.id,
                     provider: AccountProvider.OUTLOOK,
@@ -184,7 +185,8 @@ export class AccountsService {
                     syncInterval: 60,
                     lastSyncedAt: Date.now(),
                 };
-                await AccountRepository.upsertAccount(account);
+                const savedAccount = await AccountRepository.upsertAccount(account);
+                this.syncAccount(String(savedAccount.id));
                 return MAILSENSE_BASE_URL;
             } else {
                 throw new Error('Invalid provider');
@@ -219,25 +221,62 @@ export class AccountsService {
         }
     }
 
-    async syncAccount(accountId: string): Promise<void> {
+    async syncAccount(accountId: string): Promise<SuccessAPIResponse> {
         try {
-            // await this.emailSyncService.syncAccount('123', accountId);
+            logger.info('Account Syncing Started', { accountId });
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account) throw new Error('Account not found');
-            let emails: EmailInput[] = [];
+            // if (!account) throw new Error('Account not found');
+            if (!account)
+                throw Object.assign(new Error('Account not found'), {
+                    status: 404,
+                    isOperational: true,
+                    description: 'Given account ID does not exist',
+                    suggestedAction: 'Please check the account ID',
+                });
             if (account.provider === AccountProvider.GMAIL) {
-                emails = await this.gmailService.getMessages(accountId);
+                // emails = await this.gmailService.getMessages(accountId);
+                const response = await this.syncGmailAccount(accountId, account);
+                return response;
             } else if (account.provider === AccountProvider.OUTLOOK) {
-                emails = await this.outlookService.getMessages(accountId);
+                // const response = await this.syncOutlookAccount(accountId, account);
+                return { status: true, message: 'Account synced successfully' };
+            } else {
+                throw new Error('Invalid provider');
             }
-            await EmailRepository.upsertEmailsInBulk(emails);
-            const updateAccountSyncDetails: Partial<AccountInput> = {
-                lastSyncedAt: Date.now(),
-            };
-            await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async syncGmailAccount(accountId: string, account: AccountDocument): Promise<UpdateAPIResponse> {
+        try {
+            const historyDetails = await this.gmailService.getMessagesAfterLastHistory(accountId, account.lastSyncCursor);
+            let newEmails: EmailInput[] = [];
+            let newHistoryId: string = '';
+            if (historyDetails) {
+                newEmails = historyDetails.addedMessages;
+                newHistoryId = historyDetails.newHistoryId;
+                await EmailRepository.deleteManyEmails(historyDetails.deletedMessages);
+            } else {
+                const emails = await this.gmailService.getMessages(accountId);
+                newEmails = emails.emails;
+                newHistoryId = emails.lastSyncCursor;
+                await EmailRepository.deleteEmailsByAccountId(accountId);
+            }
+            if (newEmails.length) {
+                await EmailRepository.upsertEmailsInBulk(newEmails);
+            }
+            const updateAccountSyncDetails: Partial<AccountInput> = {
+                lastSyncedAt: Date.now(),
+                lastSyncCursor: newHistoryId,
+            };
+            await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
+            return { status: true, message: 'Account synced successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.getAccountEmailsForSyncingAccount: ${errorMessage}`, { error: err });
             throw err;
         }
     }

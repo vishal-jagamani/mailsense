@@ -1,9 +1,11 @@
 'use client';
 
-import { ROUTES } from '@/shared/constants';
+import { ROUTES, SETTINGS_OPTIONS } from '@/shared/constants';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import React, { useEffect } from 'react';
 import ProfileSettings from './components/profile/ProfileSettings';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import AccountSettings from './components/account/AccountSettings';
 
 interface SettingsPageProps {
     setting: string;
@@ -15,6 +17,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ setting }) => {
             items: [{ title: 'Settings', url: ROUTES.SETTINGS }],
         });
     }, [setting]);
+
     return (
         <>
             {/* <Tabs defaultValue="profile">

@@ -8,19 +8,19 @@ const router = Router();
 
 const accountsController = new AccountsController();
 
-router.get('/:accountId', validate(getAccountDetailsSchema, 'params'), handleRequest(accountsController.getAccountDetails));
+router.get('/:accountId', validate({ params: getAccountDetailsSchema }), handleRequest(accountsController.getAccountDetails));
 
-router.delete('/:accountId', validate(deleteAccountSchema, 'params'), handleRequest(accountsController.deleteAccount));
+router.delete('/:accountId', validate({ params: deleteAccountSchema }), handleRequest(accountsController.deleteAccount));
 
-router.get('/list/:userId', validate(getAccountSchema, 'params'), handleRequest(accountsController.getAccounts));
+router.get('/list/:userId', validate({ params: getAccountSchema }), handleRequest(accountsController.getAccounts));
 
 router.get('/providers/list', handleRequest(accountsController.getAccountProviders));
 
-router.get('/connect/:provider', validate(connectAccountSchema, 'params'), handleRequest(accountsController.connect));
+router.get('/connect/:provider', validate({ params: connectAccountSchema }), handleRequest(accountsController.connect));
 
-router.get('/callback/:provider', validate(connectAccountSchema, 'params'), handleRequest(accountsController.callback));
+router.get('/callback/:provider', validate({ params: connectAccountSchema }), handleRequest(accountsController.callback));
 
-router.get('/emails/:accountId', handleRequest(accountsController.fetchEmails));
+router.get('/emails/:accountId', validate({ params: getAccountDetailsSchema }), handleRequest(accountsController.fetchEmails));
 
 router.get('/sync', handleRequest(accountsController.syncAccounts));
 

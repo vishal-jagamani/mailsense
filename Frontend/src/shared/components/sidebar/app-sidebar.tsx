@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, ChartLine, Folder, Inbox, Search, Settings, Star } from 'lucide-react';
+import { ChartLine, Folder, Inbox, Search, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
@@ -33,48 +33,48 @@ const data = {
                 },
             ],
         },
-        {
-            title: 'AI Views',
-            url: '#',
-            icon: Bot,
-            items: [
-                {
-                    title: 'Priority',
-                    url: '#',
-                },
-                {
-                    title: 'Categories',
-                    url: '#',
-                },
-                {
-                    title: 'Summarized',
-                    url: '#',
-                },
-            ],
-        },
-        {
-            title: 'Starred',
-            url: '#',
-            icon: Star,
-            items: [
-                // {
-                //     title: 'Introduction',
-                //     url: '#',
-                // },
-                // {
-                //     title: 'Get Started',
-                //     url: '#',
-                // },
-                // {
-                //     title: 'Tutorials',
-                //     url: '#',
-                // },
-                // {
-                //     title: 'Changelog',
-                //     url: '#',
-                // },
-            ],
-        },
+        // {
+        //     title: 'AI Views',
+        //     url: '#',
+        //     icon: Bot,
+        //     items: [
+        //         {
+        //             title: 'Priority',
+        //             url: '#',
+        //         },
+        //         {
+        //             title: 'Categories',
+        //             url: '#',
+        //         },
+        //         {
+        //             title: 'Summarized',
+        //             url: '#',
+        //         },
+        //     ],
+        // },
+        // {
+        //     title: 'Starred',
+        //     url: '#',
+        //     icon: Star,
+        //     items: [
+        // {
+        //     title: 'Introduction',
+        //     url: '#',
+        // },
+        // {
+        //     title: 'Get Started',
+        //     url: '#',
+        // },
+        // {
+        //     title: 'Tutorials',
+        //     url: '#',
+        // },
+        // {
+        //     title: 'Changelog',
+        //     url: '#',
+        // },
+        //     ],
+        // },
         {
             title: 'Folders',
             url: '#',

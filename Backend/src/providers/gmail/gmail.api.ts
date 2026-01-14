@@ -7,7 +7,7 @@ import { decrypt, encrypt } from '@utils/crypto.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
 import { GMAIL_SECRETS } from '@config/config.js';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
-import { GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
+import { GmailHistoryResponse, GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
 
 export class GmailApi {
     static async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -95,6 +95,29 @@ export class GmailApi {
         }
     }
 
+    // Function to fetch history details by history id
+    static async getHistory(accountId: string, historyId: string): Promise<GmailHistoryResponse> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.HISTORY}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                params: {
+                    startHistoryId: historyId,
+                },
+            };
+            const response = await apiRequest<GmailHistoryResponse>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.getHistory: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
     // Function to fetch emails from account
     static async fetchEmails(accountId: string, maxResults: number): Promise<GmailMessages> {
         try {
@@ -172,6 +195,73 @@ export class GmailApi {
                 },
             };
             const response: GmailMessages = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async archiveEmail(emailId: string, accountId: string, archive: boolean): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${emailId}/modify`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    ...(archive ? { removeLabelIds: ['INBOX'] } : { addLabelIds: ['INBOX'] }),
+                },
+            };
+            const response = await apiRequest<GmailMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async starEmail(emailId: string, accountId: string, star: boolean): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${emailId}/modify`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    ...(star ? { addLabelIds: ['STARRED'] } : { removeLabelIds: ['STARRED'] }),
+                },
+            };
+            const response = await apiRequest<GmailMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async unreadEmail(emailId: string, accountId: string): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${emailId}/modify`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    addLabelIds: ['UNREAD'],
+                    removeLabelIds: ['READ'],
+                },
+            };
+            const response = await apiRequest<GmailMessageObjectFull>(options);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
