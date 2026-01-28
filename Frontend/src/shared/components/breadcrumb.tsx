@@ -13,14 +13,14 @@ const BreadcrumbComponent: React.FC = () => {
                 <Breadcrumb>
                     <BreadcrumbList>
                         {breadcrumbItems.map((item, index) => (
-                            <>
-                                <BreadcrumbItem key={index}>
+                            <React.Fragment key={index}>
+                                <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
                                         <Link href={item.url}>{item.title}</Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 {index < breadcrumbItems.length - 1 && <BreadcrumbSeparator />}
-                            </>
+                            </React.Fragment>
                         ))}
                         {/* <BreadcrumbEllipsis /> */}
                     </BreadcrumbList>

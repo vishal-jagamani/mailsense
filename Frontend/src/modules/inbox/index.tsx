@@ -1,27 +1,31 @@
 'use client';
 
+import APILoader from '@/shared/components/apiLoader';
 import SearchHeader from '@/shared/components/inputs/SearchHeader';
 import Loader from '@/shared/components/loader';
+import { EMAILS_PAGE_SIZE } from '@/shared/constants';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
+import { Email } from '@/shared/types/email.types';
 import { useAuthStore } from '@/store';
 import React, { useEffect, useState } from 'react';
 import EmailListTable from '../home/components/EmailListTable';
 import { useFetchEmails } from '../home/services/useHomeApi';
 import { useSearchEmails } from './services/useInboxApi';
-import APILoader from '@/shared/components/apiLoader';
-import { Email } from '@/shared/types/email.types';
 
 const InboxPage: React.FC = () => {
+    const [page, setPage] = useState(1);
     const { user } = useAuthStore();
-    const { data: emails, refetch: refetchEmails, isLoading: isLoadingEmails } = useFetchEmails(user?.id || '', !!user);
+    const {
+        data: emails,
+        refetch: refetchEmails,
+        isLoading: isLoadingEmails,
+    } = useFetchEmails(user?.id || '', !!user, { page, size: EMAILS_PAGE_SIZE });
     const { mutate: searchEmails, isPending: isLoadingSearchEmails, data: searchedEmails, error: searchError } = useSearchEmails();
 
     const [searchValue, setSearchValue] = useState('');
     const [searchedEmailsData, setSearchedEmailsData] = useState<Email[]>([]);
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
-
-    console.log('searchValue', searchValue, debouncedSearchValue);
 
     useEffect(() => {
         if (user) {
@@ -54,11 +58,14 @@ const InboxPage: React.FC = () => {
     return (
         <>
             <div className="flex items-center justify-center gap-4 px-4 py-2">
-                <div className="flex h-full w-full flex-col items-center justify-center gap-6 rounded-xl">
-                    {/* <p>Emails</p> */}
+                <div className="flex h-full w-full flex-col items-center justify-center gap-4">
                     <APILoader show={isLoadingSearchEmails} />
-                    <SearchHeader value={searchValue} onChange={setSearchValue} />
-                    <EmailListTable data={searchedEmailsData.length > 0 ? searchedEmailsData : emails?.data || []} />
+                    <div className="w-full">
+                        <SearchHeader value={searchValue} onChange={setSearchValue} placeholder="Search emails..." />
+                    </div>
+                    <div className="flex h-[calc(110vh-200px)] w-full">
+                        <EmailListTable data={searchedEmailsData.length > 0 ? searchedEmailsData : emails?.data || []} />
+                    </div>
                 </div>
             </div>
         </>

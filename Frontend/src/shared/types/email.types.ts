@@ -1,3 +1,8 @@
+export interface FetchEmailRequestOptions {
+    size: number;
+    page: number;
+}
+
 export interface Email {
     _id: string;
     accountId: string;
