@@ -163,7 +163,7 @@ export class AccountsService {
                 };
 
                 const savedAccount = await AccountRepository.upsertAccount(account);
-                this.syncAccount(String(savedAccount.id));
+                this.syncAccount(String(savedAccount._id));
                 return MAILSENSE_BASE_URL;
             } else if (provider === AccountProvider.OUTLOOK) {
                 const response: OutlookOAuthAccessTokenResponse = await this.outlookService.getAccessTokenFromCode(code);
@@ -186,7 +186,7 @@ export class AccountsService {
                     lastSyncedAt: Date.now(),
                 };
                 const savedAccount = await AccountRepository.upsertAccount(account);
-                this.syncAccount(String(savedAccount.id));
+                this.syncAccount(String(savedAccount._id));
                 return MAILSENSE_BASE_URL;
             } else {
                 throw new Error('Invalid provider');

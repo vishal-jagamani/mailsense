@@ -4,6 +4,13 @@ export interface APIResponse<T> {
     data: T;
 }
 
+export interface PaginatedDataResponse<T> {
+    data: T;
+    size: number;
+    page: number;
+    total: number;
+}
+
 export interface SuccessAPIResponse {
     status: boolean;
     message: string;

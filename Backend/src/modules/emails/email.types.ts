@@ -24,3 +24,11 @@ export interface EmailListDBFieldMapping {
     LIST: { projection: ProjectionType<EmailDocument> };
     SORT: { sort: Record<string, SortOrder> };
 }
+
+// Function types
+export interface SearchEmailsParams {
+    userId: string;
+    searchText: string;
+    size: number;
+    page: number;
+}

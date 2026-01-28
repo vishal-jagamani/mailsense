@@ -64,12 +64,18 @@ export class EmailController {
 
     public searchEmails = async (req: Request<object, object, SearchEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { searchText } = req.body;
+            const { searchText, size, page } = req.body;
             const { userid } = req.headers;
             if (!userid) {
                 res.status(400).send('User ID is required');
             }
-            const response = await this.emailService.searchEmails(String(userid), searchText);
+            const params = {
+                userId: String(userid),
+                searchText,
+                size: size ? Number(size) : 10,
+                page: page ? Number(page) : 1,
+            };
+            const response = await this.emailService.searchEmails(params);
             res.status(200).send(response);
         } catch (error) {
             next(error);
