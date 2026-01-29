@@ -12,30 +12,27 @@ import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse }
 import { SuccessAPIResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
-// import { MailSyncService } from 'services/mail/mailSync.service.js';
 
 export class AccountsService {
     private gmailService: GmailService;
     private outlookService: OutlookService;
-    // private gmailApi: GmailApi;
-    // private emailSyncService: MailSyncService;
 
     constructor() {
         this.gmailService = new GmailService();
         this.outlookService = new OutlookService();
-        // this.gmailApi = new GmailApi();
-        // this.emailSyncService = new MailSyncService();
     }
 
     /**
-     * Fetches an account from the database.
+     * Fetches an account from the database by ID.
      * @param accountId The ID of the account to fetch.
-     * @returns A promise that resolves to the account.
+     * @returns A promise that resolves to the account document.
+     * @throws {Error} When the account is not found in the database.
+     * @throws {Error} When there's a database connection error.
      */
-    async getAccountDetails(accountId: string): Promise<AccountDocument | null> {
+    async getAccountDetails(accountId: string): Promise<AccountDocument> {
         try {
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account) return null;
+            if (!account) throw new Error('Account not found');
             return account;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -163,7 +160,7 @@ export class AccountsService {
                 };
 
                 const savedAccount = await AccountRepository.upsertAccount(account);
-                this.syncAccount(String(savedAccount.id));
+                this.syncAccount(String(savedAccount._id));
                 return MAILSENSE_BASE_URL;
             } else if (provider === AccountProvider.OUTLOOK) {
                 const response: OutlookOAuthAccessTokenResponse = await this.outlookService.getAccessTokenFromCode(code);
@@ -186,7 +183,7 @@ export class AccountsService {
                     lastSyncedAt: Date.now(),
                 };
                 const savedAccount = await AccountRepository.upsertAccount(account);
-                this.syncAccount(String(savedAccount.id));
+                this.syncAccount(String(savedAccount._id));
                 return MAILSENSE_BASE_URL;
             } else {
                 throw new Error('Invalid provider');
@@ -198,22 +195,15 @@ export class AccountsService {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public fetchEmails = async (accountId: string): Promise<any> => {
-        try {
-            const emails = await this.gmailService.getMessages(accountId);
-            // parse the emails and return only the required fields
-            return emails;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.fetchEmails: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    };
-
-    async syncAccounts(): Promise<void> {
+    async syncAccounts(userId: string): Promise<SuccessAPIResponse> {
         try {
             // await this.emailSyncService.syncAccounts();
+            const accounts = await AccountRepository.getAccounts(userId);
+            if (!accounts.length) return { status: true, message: 'Accounts not found' };
+            for (const account of accounts) {
+                await this.syncAccount(String(account._id));
+            }
+            return { status: true, message: 'Accounts synced successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccounts: ${errorMessage}`, { error: err });
@@ -225,7 +215,6 @@ export class AccountsService {
         try {
             logger.info('Account Syncing Started', { accountId });
             const account = await AccountRepository.getAccountById(accountId);
-            // if (!account) throw new Error('Account not found');
             if (!account)
                 throw Object.assign(new Error('Account not found'), {
                     status: 404,

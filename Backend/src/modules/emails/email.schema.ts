@@ -2,6 +2,8 @@ import z from 'zod';
 
 export const getAllEmailsSchema = z.object({
     userid: z.string(),
+    size: z.string().optional(),
+    page: z.string().optional()
 });
 
 export const getEmailsSchema = z.object({
@@ -34,6 +36,8 @@ export const unreadEmailSchema = z.object({
 
 export const searchEmailSchema = z.object({
     searchText: z.string().min(3, 'Search query must be at least 3 characters long'),
+    size: z.string().optional(),
+    page: z.string().optional(),
 });
 
 export type GetAllEmailsSchema = z.infer<typeof getAllEmailsSchema>;

@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { AccountsService } from './account.service.js';
+import { ConnectAccountSchema, DeleteAccountSchema, GetAccountDetailsSchema, GetAccountsSchema } from './account.schema.js';
 
 export class AccountsController {
     private accountsService: AccountsService;
@@ -8,7 +9,7 @@ export class AccountsController {
         this.accountsService = new AccountsService();
     }
 
-    public getAccountDetails = async (req: Request<{ accountId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public getAccountDetails = async (req: Request<GetAccountDetailsSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
             if (!accountId) throw new Error('Account ID is required');
@@ -20,7 +21,7 @@ export class AccountsController {
         }
     };
 
-    public deleteAccount = async (req: Request<{ accountId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public deleteAccount = async (req: Request<DeleteAccountSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
             if (!accountId) throw new Error('Account ID is required');
@@ -31,7 +32,7 @@ export class AccountsController {
         }
     };
 
-    public getAccounts = async (req: Request<{ userId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public getAccounts = async (req: Request<GetAccountsSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const userId = req.params.userId;
             if (!userId) throw new Error('User ID is required');
@@ -51,7 +52,7 @@ export class AccountsController {
         }
     };
 
-    public connect = async (req: Request<{ provider: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public connect = async (req: Request<ConnectAccountSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const redirectURL = await this.accountsService.connect(req.params.provider);
             res.send(redirectURL);
@@ -61,7 +62,7 @@ export class AccountsController {
     };
 
     public callback = async (
-        req: Request<{ provider: string }, object, object, { code: string; state: string }>,
+        req: Request<ConnectAccountSchema, object, object, { code: string; state: string }>,
         res: Response,
         next: NextFunction,
     ): Promise<void> => {
@@ -77,26 +78,18 @@ export class AccountsController {
         }
     };
 
-    public fetchEmails = async (req: Request<{ accountId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public syncAccounts = async (req: Request<object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const accountId = req.params.accountId;
-            const emails = await this.accountsService.fetchEmails(accountId);
+            const userId = req.headers.userid;
+            if (!userId) throw new Error('User ID is required');
+            const emails = await this.accountsService.syncAccounts(String(userId));
             res.send(emails);
         } catch (error) {
             next(error);
         }
     };
 
-    public syncAccounts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const emails = await this.accountsService.syncAccounts();
-            res.send(emails);
-        } catch (error) {
-            next(error);
-        }
-    };
-
-    public syncAccount = async (req: Request<{ accountId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public syncAccount = async (req: Request<GetAccountDetailsSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
             this.accountsService.syncAccount(accountId);

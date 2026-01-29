@@ -32,6 +32,9 @@ export class UserService {
 
     public async getUserProfile(auth0UserId: string): Promise<APIResponse<UserDetailsObject | null>> {
         const user = await this.auth0Service.getUserProfileDetails(auth0UserId);
+        if (!user) {
+            return { status: false, message: 'User not found', data: null };
+        }
         return { status: true, message: 'User profile fetched successfully', data: user };
     }
 

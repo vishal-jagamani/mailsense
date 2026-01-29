@@ -49,8 +49,17 @@ export class EmailRepository {
         return Email.findById(emailId);
     }
 
-    public static async searchEmails(searchQuery: FilterQuery<EmailDocument>, fields: ProjectionType<EmailDocument>) {
-        return Email.find(searchQuery, fields);
+    public static async searchEmails(
+        searchQuery: FilterQuery<EmailDocument>,
+        fields: ProjectionType<EmailDocument>,
+        size: number,
+        page: number,
+        sort: Record<string, SortOrder>,
+    ) {
+        return Email.find(searchQuery, fields)
+            .skip((page - 1) * size)
+            .limit(size)
+            .sort(sort);
     }
 
     public static async getEmailsByProviderMessageIds(emailIds: string[], fields: ProjectionType<EmailDocument>) {

@@ -5,10 +5,11 @@ import { decompressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import { FilterQuery } from 'mongoose';
 import { AccountProvider } from 'types/account.types.js';
-import { UpdateAPIResponse } from 'types/api.types.js';
+import { PaginatedDataResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument } from './email.model.js';
+import { SearchEmailsParams } from './email.types.js';
 
 export class EmailService {
     private gmailService: GmailService;
@@ -96,8 +97,9 @@ export class EmailService {
         }
     }
 
-    public async searchEmails(userId: string, searchText: string) {
+    public async searchEmails(params: SearchEmailsParams): Promise<PaginatedDataResponse<EmailDocument[]>> {
         try {
+            const { userId, searchText, size, page } = params;
             const accounts = await AccountRepository.getAccounts(userId);
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
@@ -106,8 +108,10 @@ export class EmailService {
                 accountId: { $in: accounts.map((account) => account._id) },
                 $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }],
             };
-            const emails = await EmailRepository.searchEmails(searchQuery, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            return { data: emails, size: emails.length, page: 1, total: emails.length };
+            const emails = await EmailRepository.searchEmails(searchQuery, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection, size, page, {
+                receivedAt: -1,
+            });
+            return { data: emails, size, page, total: emails.length };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.searchEmails: ${errorMessage}`, { error: err });
