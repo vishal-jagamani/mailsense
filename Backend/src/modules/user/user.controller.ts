@@ -9,7 +9,7 @@ export class UserController {
         this.userService = new UserService();
     }
 
-    public getUser = async (req: Request<{ id: string }, object, GetUserSchema>, res: Response, next: NextFunction): Promise<void> => {
+    public getUser = async (req: Request<GetUserSchema, object, GetUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             const user = await this.userService.getUser(id);
@@ -19,7 +19,7 @@ export class UserController {
         }
     };
 
-    public updateUser = async (req: Request<{ id: string }, object, UpdateUserSchema>, res: Response, next: NextFunction): Promise<void> => {
+    public updateUser = async (req: Request<GetUserSchema, object, UpdateUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             if (!id) {
@@ -32,7 +32,7 @@ export class UserController {
         }
     };
 
-    public getUserProfile = async (req: Request<{ id: string }, object, GetUserSchema>, res: Response, next: NextFunction): Promise<void> => {
+    public getUserProfile = async (req: Request<GetUserSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             if (!id) {
@@ -45,7 +45,7 @@ export class UserController {
         }
     };
 
-    public updateUserProfile = async (req: Request<{ id: string }, object, UpdateUserSchema>, res: Response, next: NextFunction): Promise<void> => {
+    public updateUserProfile = async (req: Request<GetUserSchema, object, UpdateUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             if (!id) {
@@ -58,7 +58,7 @@ export class UserController {
         }
     };
 
-    public changePassword = async (req: Request<{ id: string }, object, ChangePasswordSchema>, res: Response, next: NextFunction): Promise<void> => {
+    public changePassword = async (req: Request<GetUserSchema, object, ChangePasswordSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { id } = req.params;
             if (!id) {
