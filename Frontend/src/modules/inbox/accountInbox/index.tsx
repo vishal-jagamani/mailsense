@@ -64,7 +64,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
 
     useEffect(() => {
         toast.error('Error searching emails', { duration: 3000 });
-    }, [true]);
+    }, [searchError]);
 
     if (isLoadingEmails) {
         return <Loader />;
