@@ -11,9 +11,10 @@ import { useDeleteEmail } from '../services/useHomeApi';
 
 interface EmailListTableProps {
     data: Email[];
+    page: number;
 }
 
-const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
+const EmailListTable: React.FC<EmailListTableProps> = ({ data, page }) => {
     const router = useRouter();
 
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
@@ -65,7 +66,7 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data }) => {
                                     key={email._id}
                                     className={`cursor-pointer ${selectedEmails.includes(email._id) ? 'bg-blue-800 hover:bg-blue-800' : ''} ${email.isRead && selectedEmails.includes(email._id) ? 'bg-blue-800 hover:bg-blue-800' : email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
                                     onClick={() => {
-                                        router.push(`/inbox/${email.accountId}/email/${email._id}`);
+                                        router.push(`/inbox/${email.accountId}/email/${email._id}?page=${page}`);
                                     }}
                                 >
                                     <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>

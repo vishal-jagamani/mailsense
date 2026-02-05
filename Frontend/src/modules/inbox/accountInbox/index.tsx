@@ -10,15 +10,23 @@ import { EMAILS_PAGE_SIZE } from '@/shared/constants';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { Email } from '@/shared/types/email.types';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchEmails } from '../services/useInboxApi';
 import { useAuthStore } from '@/store';
 import { toast } from 'sonner';
+import PaginationComponent from '@/shared/components/table/Pagination';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const { user } = useAuthStore();
 
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(() => {
+        const pageParam = searchParams.get('page');
+        return pageParam ? parseInt(pageParam) : 1;
+    });
+    const [pageSize, setPageSize] = useState(EMAILS_PAGE_SIZE);
     const [searchValue, setSearchValue] = useState('');
     const [searchedEmailsData, setSearchedEmailsData] = useState<Email[]>([]);
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
@@ -46,7 +54,13 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
         if (account) {
             refetchEmails();
         }
-    }, [account, refetchEmails]);
+    }, [account, refetchEmails, page, pageSize]);
+
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('page', page.toString());
+        router.replace(`/inbox?${params.toString()}`);
+    }, [page]);
 
     useEffect(() => {
         if (debouncedSearchValue) {
@@ -66,6 +80,11 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
         toast.error('Error searching emails', { duration: 3000 });
     }, [searchError]);
 
+    const handlePageSizeChange = (newSize: number) => {
+        setPage(1);
+        setPageSize(newSize);
+    };
+
     if (isLoadingEmails) {
         return <Loader />;
     }
@@ -79,8 +98,15 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                         <SearchHeader value={searchValue} onChange={setSearchValue} placeholder="Search emails..." />
                     </div>
                     <div className="flex h-[calc(110vh-200px)] w-full flex-col items-center justify-center gap-6 rounded-xl">
-                        <EmailListTable data={searchedEmailsData.length > 0 ? searchedEmailsData : emails?.data || []} />
+                        <EmailListTable data={searchedEmailsData.length > 0 ? searchedEmailsData : emails?.data || []} page={page} />
                     </div>
+                    <PaginationComponent
+                        total={emails?.total || 0}
+                        currentPage={page}
+                        onPageChange={setPage}
+                        onPageSizeChange={handlePageSizeChange}
+                        pageSize={pageSize}
+                    />
                 </div>
             </div>
         </>

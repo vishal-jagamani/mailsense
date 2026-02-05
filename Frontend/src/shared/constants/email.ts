@@ -1,1 +1,1 @@
-export const EMAILS_PAGE_SIZE = 30;
+export const EMAILS_PAGE_SIZE = 20;
