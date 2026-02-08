@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
-import { ArchiveEmailBody, DeleteEmailSchema, SearchEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
+import { ArchiveEmailBody, DeleteEmailSchema, GetAllEmailsSchema, SearchEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
 import { EmailService } from './email.service.js';
+import { GetAllEmailsFilters } from './email.types.js';
 
 export class EmailController {
     private emailService: EmailService;
@@ -9,20 +10,16 @@ export class EmailController {
         this.emailService = new EmailService();
     }
 
-    public getAllEmails = async (
-        req: Request<object, object, object, { size: string; page: string }>,
-        res: Response,
-        next: NextFunction,
-    ): Promise<void> => {
+    public getAllEmails = async (req: Request<object, object, GetAllEmailsSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { userid } = req.headers;
-            const { size, page } = req.query;
-            if (!userid) {
+            const { userId, size, page, filters } = req.body;
+            if (!userId) {
                 throw new Error('User ID is required');
             }
             const sizeValue = size ? Number(size) : 10;
             const pageValue = page ? Number(page) : 1;
-            const emails = await this.emailService.getAllEmails(String(userid), sizeValue, pageValue);
+            const filterValue = (filters || { accountId: undefined, dateRange: undefined }) as GetAllEmailsFilters;
+            const emails = await this.emailService.getAllEmails(userId, sizeValue, pageValue, filterValue);
             res.send(emails);
         } catch (error) {
             next(error);

@@ -32,3 +32,14 @@ export interface SearchEmailsParams {
     size: number;
     page: number;
 }
+
+export interface GetAllEmailsFilters {
+    searchText: string | undefined;
+    accountId: string[] | undefined;
+    dateRange:
+        | {
+              startDate: Date;
+              endDate: Date;
+          }
+        | undefined;
+}

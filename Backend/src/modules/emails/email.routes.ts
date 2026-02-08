@@ -19,7 +19,7 @@ const emailController = new EmailController();
 
 router.use(authMiddleware);
 
-router.get('/list-all', validate({ headers: getAllEmailsSchema }), handleRequest(emailController.getAllEmails));
+router.post('/list-all', validate({ body: getAllEmailsSchema }), handleRequest(emailController.getAllEmails));
 
 router.get('/list/:accountId', handleRequest(emailController.getEmails));
 

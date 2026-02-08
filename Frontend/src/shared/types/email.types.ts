@@ -1,6 +1,15 @@
 export interface FetchEmailRequestOptions {
+    userId: string;
     size: number;
     page: number;
+    filters: {
+        searchText?: string;
+        accountId?: string[];
+        dateRange?: {
+            startDate: number;
+            endDate: number;
+        };
+    };
 }
 
 export interface Email {

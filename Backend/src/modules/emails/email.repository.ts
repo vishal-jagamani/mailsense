@@ -31,6 +31,20 @@ export class EmailRepository {
             .lean();
     }
 
+    public static async getEmails(
+        searchQuery: FilterQuery<EmailDocument>,
+        size: number,
+        page: number,
+        fields: ProjectionType<EmailDocument>,
+        sort: Record<string, SortOrder>,
+    ): Promise<FlattenMaps<EmailDocument>[]> {
+        return Email.find(searchQuery, fields)
+            .skip((page - 1) * size)
+            .limit(size)
+            .sort(sort)
+            .lean();
+    }
+
     public static async getEmailsByAccountIds(
         accountIds: string[],
         size: number,
@@ -82,8 +96,8 @@ export class EmailRepository {
         return Email.deleteMany({ providerMessageId: { $in: emailIds } });
     }
 
-    public static async countDocuments(accountIds: string[]) {
-        return Email.countDocuments({ accountId: { $in: accountIds } });
+    public static async countDocuments(searchQuery: FilterQuery<EmailDocument>) {
+        return Email.countDocuments(searchQuery);
     }
 
     public static async deleteEmailsByAccountId(accountId: string) {

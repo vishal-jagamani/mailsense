@@ -1,15 +1,10 @@
-import { EMAILS } from '@/shared/config/query-keys';
-import { FetchEmailRequestOptions, GetEmailsResponse } from '@/shared/types/email.types';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { deleteEmail, fetchEmails, fetchEmailsByAccount } from './home.api';
 import { UpdateAPIResponse } from '@/shared/types/api.types';
+import { FetchEmailRequestOptions, GetEmailsResponse } from '@/shared/types/email.types';
+import { useMutation } from '@tanstack/react-query';
+import { deleteEmail, fetchEmails } from './home.api';
 
-export const useFetchEmails = (userId: string, enabled: boolean, options: FetchEmailRequestOptions) => {
-    return useQuery<GetEmailsResponse>({ queryKey: [EMAILS], queryFn: () => fetchEmails(userId, options), staleTime: 1000 * 60 * 5, enabled });
-};
-
-export const useFetchEmailsByAccount = (accountId: string, enabled: boolean, options: FetchEmailRequestOptions) => {
-    return useQuery<GetEmailsResponse>({ queryKey: [EMAILS], queryFn: () => fetchEmailsByAccount(accountId, options), staleTime: 1000 * 60 * 5, enabled });
+export const useFetchEmails = () => {
+    return useMutation<GetEmailsResponse, Error, FetchEmailRequestOptions>({ mutationFn: (options) => fetchEmails(options) });
 };
 
 export const useDeleteEmail = () => {

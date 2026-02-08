@@ -1,9 +1,21 @@
 import z from 'zod';
 
 export const getAllEmailsSchema = z.object({
-    userid: z.string(),
-    size: z.string().optional(),
-    page: z.string().optional()
+    userId: z.string(),
+    size: z.number(),
+    page: z.number(),
+    filters: z
+        .object({
+            searchText: z.string().optional(),
+            accountId: z.array(z.string()).optional(),
+            dateRange: z
+                .object({
+                    startDate: z.number(),
+                    endDate: z.number(),
+                })
+                .optional(),
+        })
+        .optional(),
 });
 
 export const getEmailsSchema = z.object({
