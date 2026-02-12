@@ -4,10 +4,10 @@ export const ROUTES = {
     LOGIN: '/login',
     DASHBOARD: '/dashboard',
     SETTINGS: '/settings',
-};
+} as const;
 
 export const HOME_ROUTES = {
     UNIFIED_INBOX: '/inbox',
     ACCOUNT_INBOX: (id: string) => `/inbox/${id}`,
     EMAIL: (accountId: string, emailId: string) => `/inbox/${accountId}/email/${emailId}`,
-};
+} as const;

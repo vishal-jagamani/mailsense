@@ -36,4 +36,4 @@ export const SETTINGS_OPTIONS: { id: number; name: string; title: string; link: 
         link: '/settings/about',
         icon: Info,
     },
-];
+] as const;

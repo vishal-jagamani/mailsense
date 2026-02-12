@@ -18,4 +18,11 @@ export const MESSAGES = {
     // Generic
     ERROR_GENERIC: 'Something went wrong. Please try again later.',
     NETWORK_ERROR: 'Network connection lost. Please check your internet.',
-};
+
+    // Email Loading
+    EMAIL_LOAD_ERROR: 'Error loading emails',
+
+    // Settings
+    PASSWORD_UPDATE_SUCCESS: 'Password updated successfully',
+    PROFILE_UPDATE_SUCCESS: 'Profile updated successfully',
+} as const;

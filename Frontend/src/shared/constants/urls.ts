@@ -7,4 +7,4 @@ export const AUTH0_URLS = {
     LOGOUT: '/auth/logout',
     CALLBACK: '/auth/callback',
     PROFILE: '/auth/profile',
-};
+} as const;

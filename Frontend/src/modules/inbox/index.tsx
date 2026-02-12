@@ -4,7 +4,7 @@ import APILoader from '@/shared/components/apiLoader';
 import SearchHeader from '@/shared/components/inputs/SearchHeader';
 import Loader from '@/shared/components/loader';
 import PaginationComponent from '@/shared/components/table/Pagination';
-import { EMAILS_PAGE_SIZE } from '@/shared/constants';
+import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
@@ -14,6 +14,7 @@ import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import EmailListTable from '../home/components/EmailListTable';
 import { useFetchEmails } from '../home/services/useHomeApi';
+import { UI_CONSTANTS } from '@/shared/constants/ui';
 
 const InboxPageWrapper = () => (
     <Suspense fallback={<Loader />}>
@@ -81,7 +82,7 @@ const InboxPage: React.FC = () => {
 
     useEffect(() => {
         if (isEmailError && !errorShown) {
-            toast.error('Error loading emails', { duration: 3000 });
+            toast.error(MESSAGES.EMAIL_LOAD_ERROR, { duration: 3000 });
             setErrorShown(true);
         } else if (!isEmailError) {
             setErrorShown(false);
@@ -99,7 +100,7 @@ const InboxPage: React.FC = () => {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-4">
                     <APILoader show={isLoadingEmails} />
                     <div className="w-full">
-                        <SearchHeader value={searchValue} onChange={setSearchValue} placeholder="Search emails..." />
+                        <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                     </div>
                     <div className="flex h-[calc(110vh-250px)] w-full flex-col">
                         <EmailListTable data={emailsData?.data || []} page={page} />

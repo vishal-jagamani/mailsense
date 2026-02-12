@@ -13,6 +13,7 @@ import { useGetUserProfileSettings, useUpdateUserProfileSettings } from '../../s
 import { ProfileSettingsDataObject } from '../../settings.types';
 import AccountDeletionModal from './AccountDeletionModal';
 import ChangePassword from './ChangePassword';
+import { MESSAGES } from '@/shared/constants';
 
 const ProfileSettings: React.FC = () => {
     const userId = useAuthStore((state) => state.user?.id);
@@ -62,12 +63,12 @@ const ProfileSettings: React.FC = () => {
     useEffect(() => {
         if (showToast && toastType) {
             if (toastType === 'password') {
-                toast.success('Password updated successfully', {
+                toast.success(MESSAGES.PASSWORD_UPDATE_SUCCESS, {
                     duration: 3000,
                 });
             }
             if (toastType === 'profile') {
-                toast.success('Profile updated successfully', {
+                toast.success(MESSAGES.PROFILE_UPDATE_SUCCESS, {
                     duration: 3000,
                 });
             }

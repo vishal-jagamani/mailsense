@@ -1,7 +1,7 @@
 'use client';
 
 import APILoader from '@/shared/components/apiLoader';
-import { EMAILS_PAGE_SIZE } from '@/shared/constants';
+import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 import { useAuthStore } from '@/store';
@@ -59,7 +59,7 @@ const HomePage = () => {
 
     useEffect(() => {
         if (isEmailError && !errorShown) {
-            toast.error('Error loading emails', { duration: 3000 });
+            toast.error(MESSAGES.EMAIL_LOAD_ERROR, { duration: 3000 });
             setErrorShown(true);
         } else if (!isEmailError) {
             setErrorShown(false);

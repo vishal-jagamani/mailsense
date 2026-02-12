@@ -6,7 +6,8 @@ import { useFetchEmails } from '@/modules/home/services/useHomeApi';
 import APILoader from '@/shared/components/apiLoader';
 import SearchHeader from '@/shared/components/inputs/SearchHeader';
 import PaginationComponent from '@/shared/components/table/Pagination';
-import { EMAILS_PAGE_SIZE } from '@/shared/constants';
+import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
+import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
@@ -82,7 +83,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
 
     useEffect(() => {
         if (isEmailError && !errorShown) {
-            toast.error('Error loading emails', { duration: 3000 });
+            toast.error(MESSAGES.EMAIL_LOAD_ERROR, { duration: 3000 });
             setErrorShown(true);
         } else if (!isEmailError) {
             setErrorShown(false);
@@ -100,7 +101,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-4">
                     <APILoader show={isLoadingEmails} />
                     <div className="w-full">
-                        <SearchHeader value={searchValue} onChange={setSearchValue} placeholder="Search emails..." />
+                        <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                     </div>
                     <div className="flex h-[calc(110vh-200px)] w-full flex-col items-center justify-center gap-6 rounded-xl">
                         <EmailListTable data={emailsData?.data || []} page={page} />
