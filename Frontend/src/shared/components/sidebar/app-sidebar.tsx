@@ -1,6 +1,6 @@
 'use client';
 
-import { ChartLine, Folder, Inbox, Search, Settings } from 'lucide-react';
+import { ChartLine, Folder, Inbox, LucideIcon, Search, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
@@ -13,8 +13,25 @@ import { NavProjects } from './nav-projects';
 import { NavUser } from './nav-user';
 import { TeamSwitcher } from './team-switcher';
 
+type NavMainItem = {
+    title: string;
+    url: string;
+    icon?: LucideIcon;
+    isActive?: boolean;
+    items?: {
+        title: string;
+        url: string;
+    }[];
+};
+
+type SidebarData = {
+    user: { name: string; email: string; avatar: string };
+    navMain: NavMainItem[];
+    projects: { name: string; url: string; icon: LucideIcon }[];
+};
+
 // This is sample data.
-const data = {
+const data: SidebarData = {
     user: {
         name: 'shadcn',
         email: 'm@example.com',
