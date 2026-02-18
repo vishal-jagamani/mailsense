@@ -20,7 +20,7 @@ const EmailSchema = new Schema<EmailDocument>(
         bodyPlain: { type: String, required: true },
         receivedAt: { type: Date, required: true },
         isRead: { type: Boolean, required: true },
-        folder: { type: String, required: true },
+        folders: { type: [String], required: true },
     },
     { timestamps: true, versionKey: false },
 );
@@ -28,6 +28,6 @@ const EmailSchema = new Schema<EmailDocument>(
 // Indexes
 EmailSchema.index({ accountId: 1, providerMessageId: 1 }, { unique: true });
 EmailSchema.index({ accountId: 1, receivedAt: -1 });
-EmailSchema.index({ accountId: 1, folder: 1, receivedAt: -1 });
+EmailSchema.index({ accountId: 1, folders: 1, receivedAt: -1 });
 
 export const Email = model<EmailDocument>('Email', EmailSchema);

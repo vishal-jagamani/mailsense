@@ -25,7 +25,7 @@ router.get('/list/:accountId', handleRequest(emailController.getEmails));
 
 router.get('/details/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getEmail));
 
-router.delete('/', validate({ body: deleteEmailSchema }), handleRequest(emailController.deleteEmail));
+router.post('/delete', validate({ body: deleteEmailSchema }), handleRequest(emailController.deleteEmail));
 
 router.post('/archive', validate({ body: archiveEmailSchema }), handleRequest(emailController.archiveEmails));
 

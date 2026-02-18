@@ -120,11 +120,11 @@ export class EmailController {
 
     public unreadEmails = async (req: Request<object, object, UnreadEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { emailIds } = req.body;
+            const { emailIds, unread } = req.body;
             if (!emailIds) {
                 throw new Error('Email ID is required');
             }
-            const email = await this.emailService.unreadEmails(emailIds);
+            const email = await this.emailService.unreadEmails(emailIds, Boolean(unread));
             res.send(email);
         } catch (error) {
             next(error);

@@ -28,6 +28,7 @@ export class EmailService {
 
             const searchQuery: FilterQuery<EmailDocument> = {
                 accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
+                folders: { $nin: ['TRASH', 'SPAM'] },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
                 ...(dateRange &&
                     dateRange?.startDate &&
@@ -128,7 +129,7 @@ export class EmailService {
         }
     }
 
-    public async deleteEmail(emailIds: string[], trash?: boolean): Promise<void> {
+    public async deleteEmail(emailIds: string[], trash?: boolean): Promise<UpdateAPIResponse> {
         try {
             const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             if (!emails.length) {
@@ -153,6 +154,7 @@ export class EmailService {
                     // );
                 }
             }
+            return { status: true, message: 'Email deleted successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
@@ -205,7 +207,7 @@ export class EmailService {
                 if (!account || !emails) continue;
                 if (account.provider === AccountProvider.GMAIL) {
                     await this.gmailService.starEmails(
-                        emails.map((email) => email.providerMessageId),
+                        emails.map((email) => ({ id: String(email._id), providerMessageId: email.providerMessageId })),
                         accountId,
                         star,
                     );
@@ -226,7 +228,7 @@ export class EmailService {
         }
     }
 
-    public async unreadEmails(emailIds: string[]): Promise<UpdateAPIResponse> {
+    public async unreadEmails(emailIds: string[], unread: boolean): Promise<UpdateAPIResponse> {
         try {
             const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             if (!emails.length) {
@@ -240,6 +242,7 @@ export class EmailService {
                     await this.gmailService.unreadEmails(
                         emails.map((email) => email.providerMessageId),
                         accountId,
+                        unread,
                     );
                 } else if (account.provider === AccountProvider.OUTLOOK) {
                     // Outlook provider deletion

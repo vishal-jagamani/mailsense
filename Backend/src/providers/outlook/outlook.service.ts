@@ -62,7 +62,7 @@ export class OutlookService {
                     bodyHtml: compressString(email.body.content),
                     receivedAt: new Date(email.receivedDateTime),
                     isRead: email.isRead,
-                    folder: email.parentFolderId,
+                    folders: [email.parentFolderId],
                 };
                 return emailObject;
             });

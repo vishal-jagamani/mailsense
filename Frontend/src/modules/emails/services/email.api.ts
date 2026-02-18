@@ -8,17 +8,12 @@ export async function getEmailDetails(emailId: string): Promise<Email> {
     return data;
 }
 
-export async function archiveEmail(emailIds: string[], archive: boolean): Promise<UpdateAPIResponse> {
-    const { data } = await axiosClient.post(EMAIL_API_URLS.ARCHIVE, { emailIds, archive });
-    return data;
-}
-
 export async function starEmail(emailIds: string[], star: boolean): Promise<UpdateAPIResponse> {
     const { data } = await axiosClient.post(EMAIL_API_URLS.STAR, { emailIds, star });
     return data;
 }
 
-export async function unreadEmail(emailIds: string[]): Promise<UpdateAPIResponse> {
-    const { data } = await axiosClient.post(EMAIL_API_URLS.UNREAD, { emailIds });
+export async function unreadEmail(emailIds: string[], unread: boolean): Promise<UpdateAPIResponse> {
+    const { data } = await axiosClient.post(EMAIL_API_URLS.UNREAD, { emailIds, unread });
     return data;
 }

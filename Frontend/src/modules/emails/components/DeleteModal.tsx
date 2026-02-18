@@ -15,9 +15,10 @@ import React from 'react';
 interface DeleteModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
+    onDelete: () => void;
 }
 
-const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange }) => {
+const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange, onDelete }) => {
     return (
         <>
             <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -28,7 +29,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange }) => {
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-orange-800 text-white">Confirm</AlertDialogAction>
+                        <AlertDialogAction className="bg-orange-800 text-white" onClick={onDelete}>Confirm</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

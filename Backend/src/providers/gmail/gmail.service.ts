@@ -181,7 +181,7 @@ export class GmailService {
             bodyPlain: compressString(plainTextBody),
             receivedAt,
             isRead: !emailDetails.labelIds.includes('UNREAD'),
-            folder: emailDetails.labelIds.includes('INBOX') ? 'inbox' : 'sent',
+            folders: emailDetails.labelIds,
         };
     }
 
@@ -190,11 +190,15 @@ export class GmailService {
             if (trash) {
                 for (const emailId of emailIds) {
                     const email = await GmailApi.trashEmail(emailId, accountId);
-                    await EmailRepository.updateEmailByProviderMessageId(email.id, email);
+                    await EmailRepository.updateEmailByProviderMessageId(email.id, {
+                        folders: email?.labelIds || [],
+                    });
+                    await AccountRepository.updateAccount(accountId, { lastSyncCursor: email.historyId });
                 }
                 return;
             } else {
                 const response = await GmailApi.permanentlyDeleteEmails(emailIds, accountId);
+                await EmailRepository.deleteManyEmails(emailIds);
                 return response;
             }
         } catch (err) {
@@ -224,11 +228,11 @@ export class GmailService {
         }
     }
 
-    async starEmails(emailIds: string[], accountId: string, star: boolean) {
+    async starEmails(emails: { id: string; providerMessageId: string }[], accountId: string, star: boolean) {
         try {
-            for (const emailId of emailIds) {
-                const email = await GmailApi.starEmail(emailId, accountId, star);
-                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
+            for (const email of emails) {
+                const updatedEmail = await GmailApi.starEmail(email.providerMessageId, accountId, star);
+                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(updatedEmail);
                 await EmailRepository.updateEmail(email.id, {
                     ...email,
                     body: plainTextBody,
@@ -244,16 +248,14 @@ export class GmailService {
         }
     }
 
-    async unreadEmails(emailIds: string[], accountId: string) {
+    async unreadEmails(emailIds: string[], accountId: string, unread: boolean) {
         try {
             for (const emailId of emailIds) {
-                const email = await GmailApi.unreadEmail(emailId, accountId);
-                const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
-                await EmailRepository.updateEmail(email.id, {
-                    ...email,
-                    body: plainTextBody,
-                    bodyHtml: compressString(htmlBody || ''),
-                    bodyPlain: compressString(plainTextBody),
+                const email = await GmailApi.unreadEmail(emailId, accountId, unread);
+                const isRead = !email.labelIds.includes('UNREAD');
+                await EmailRepository.updateEmailByProviderMessageId(email.id, {
+                    folders: email.labelIds || [],
+                    isRead,
                 });
             }
             return;

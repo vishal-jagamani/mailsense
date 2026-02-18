@@ -9,6 +9,6 @@ export async function fetchEmails(body: FetchEmailRequestOptions) {
 }
 
 export async function deleteEmail(emailIds: string[], trash: boolean) {
-    const { data } = await axiosClient.delete<UpdateAPIResponse>(HOME_API_ENDPOINTS.EMAILS_DELETE, { data: { emailIds, trash } });
+    const { data } = await axiosClient.post<UpdateAPIResponse>(HOME_API_ENDPOINTS.EMAILS_DELETE, { emailIds, trash });
     return data;
 }

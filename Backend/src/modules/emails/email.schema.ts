@@ -44,6 +44,7 @@ export const starEmailSchema = z.object({
 
 export const unreadEmailSchema = z.object({
     emailIds: z.array(z.string().min(1, 'Invalid email id')).nonempty('At least one email id is required'),
+    unread: z.boolean().optional().default(false),
 });
 
 export const searchEmailSchema = z.object({

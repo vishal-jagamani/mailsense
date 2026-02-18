@@ -16,7 +16,7 @@ export interface EmailAttributes {
     bodyPlain: string;
     receivedAt: Date;
     isRead: boolean;
-    folder: string;
+    folders: string[];
 }
 
 // DB Field Mapping

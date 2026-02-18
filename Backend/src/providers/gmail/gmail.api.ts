@@ -175,7 +175,7 @@ export class GmailApi {
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            logger.error(`Error in GmailApi.trashEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }
@@ -247,7 +247,7 @@ export class GmailApi {
         }
     }
 
-    static async unreadEmail(emailId: string, accountId: string): Promise<GmailMessageObjectFull> {
+    static async unreadEmail(emailId: string, accountId: string, unread: boolean): Promise<GmailMessageObjectFull> {
         try {
             const accessToken = await this.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
@@ -257,8 +257,7 @@ export class GmailApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 data: {
-                    addLabelIds: ['UNREAD'],
-                    removeLabelIds: ['READ'],
+                    ...(unread ? { addLabelIds: ['UNREAD'] } : { removeLabelIds: ['UNREAD'] }),
                 },
             };
             const response = await apiRequest<GmailMessageObjectFull>(options);

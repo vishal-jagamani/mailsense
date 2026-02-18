@@ -5,32 +5,29 @@ import { Archive, ArrowLeft, EllipsisVertical, Forward, MailX, Reply, Star, Tras
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import DeleteModal from './DeleteModal';
-import { useArchiveEmailMutation, useStarEmailMutation, useUnreadEmailMutation } from '../services/useEmailApi';
+import { useStarEmailMutation, useUnreadEmailMutation } from '../services/useEmailApi';
 import { toast } from 'sonner';
 import APILoader from '@/shared/components/apiLoader';
+import { useDeleteEmail } from '@/modules/home/services/useHomeApi';
+import { HOME_ROUTES } from '@/shared/constants';
 
 interface EmailMenuBarOptionsProps {
     accountId: string;
     emailId: string;
+    onManualUnreadOperation?: () => void;
 }
 
-const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) => {
+const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onManualUnreadOperation }) => {
     const router = useRouter();
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
     const [showToast, setShowToast] = useState<boolean>(false);
 
-    const { mutate: archiveEmail, isPending: archiveEmailLoading, data: archiveEmailSuccess, error: archiveEmailError } = useArchiveEmailMutation();
     const { mutate: starEmail, isPending: starEmailLoading, data: starEmailSuccess, error: starEmailError } = useStarEmailMutation();
     const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess, error: unreadEmailError } = useUnreadEmailMutation();
+    const { mutate: deleteEmail, isPending: deleteEmailLoading, data: deleteEmailSuccess, error: deleteEmailError } = useDeleteEmail();
 
     const mutationStates = [
-        {
-            success: archiveEmailSuccess,
-            error: archiveEmailError,
-            successMsg: 'Email archived successfully',
-            errorMsg: 'Error archiving email',
-        },
         {
             success: starEmailSuccess,
             error: starEmailError,
@@ -43,6 +40,12 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) =>
             successMsg: 'Email marked unread successfully',
             errorMsg: 'Error marking email unread',
         },
+        {
+            success: deleteEmailSuccess,
+            error: deleteEmailError,
+            successMsg: 'Email deleted successfully',
+            errorMsg: 'Error deleting email',
+        },
     ];
 
     useEffect(() => {
@@ -54,7 +57,13 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) =>
                 toast.error(m.errorMsg, { duration: 3000 });
             }
         });
-    }, [archiveEmailSuccess, archiveEmailError, starEmailSuccess, starEmailError, unreadEmailSuccess, unreadEmailError]);
+    }, [starEmailSuccess, starEmailError, unreadEmailSuccess, unreadEmailError, deleteEmailSuccess, deleteEmailError]);
+
+    useEffect(() => {
+        if (deleteEmailSuccess) {
+            router.push(HOME_ROUTES.UNIFIED_INBOX);
+        }
+    }, [deleteEmailSuccess]);
 
     useEffect(() => {
         if (showToast) {
@@ -69,20 +78,23 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) =>
             id: 1,
             label: 'Mark as Unread',
             icon: MailX,
-            action: () => unreadEmail({ emailIds: [emailId] }),
+            action: () => {
+                onManualUnreadOperation?.();
+                unreadEmail({ emailIds: [emailId], unread: true });
+            },
         },
-        {
-            id: 2,
-            label: 'Reply',
-            icon: Reply,
-            action: () => console.log('Reply'),
-        },
-        {
-            id: 3,
-            label: 'Forward',
-            icon: Forward,
-            action: () => console.log('Forward'),
-        },
+        // {
+        //     id: 2,
+        //     label: 'Reply',
+        //     icon: Reply,
+        //     action: () => console.log('Reply'),
+        // },
+        // {
+        //     id: 3,
+        //     label: 'Forward',
+        //     icon: Forward,
+        //     action: () => console.log('Forward'),
+        // },
         {
             id: 4,
             label: 'Star',
@@ -91,26 +103,14 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) =>
         },
         {
             id: 5,
-            label: 'Archive',
-            icon: Archive,
-            action: () => archiveEmail({ emailIds: [emailId], archive: true }),
-        },
-        {
-            id: 6,
             label: 'Delete',
             icon: Trash,
             iconColor: 'text-red-500',
             action: () => setShowDeleteModal(true),
         },
-        {
-            id: 7,
-            label: 'More',
-            icon: EllipsisVertical,
-            action: () => console.log('More'),
-        },
     ];
 
-    if (archiveEmailLoading || starEmailLoading || unreadEmailLoading) {
+    if (starEmailLoading || unreadEmailLoading || deleteEmailLoading) {
         return <APILoader show size="small" />;
     }
 
@@ -131,7 +131,11 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId }) =>
                             </Tooltip>
                         </div>
                     ))}
-                    <DeleteModal open={showDeleteModal} onOpenChange={setShowDeleteModal} />
+                    <DeleteModal
+                        open={showDeleteModal}
+                        onOpenChange={setShowDeleteModal}
+                        onDelete={() => deleteEmail({ emailIds: [emailId], trash: true })}
+                    />
                 </div>
             </div>
         </>
