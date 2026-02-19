@@ -2,7 +2,7 @@
 
 import ProviderAccountList from '@/modules/accounts/components/ProviderAccountList';
 import { ROUTES } from '@/shared/constants';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
+import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
 import React, { useEffect } from 'react';
 
 const AccountSettings: React.FC = () => {

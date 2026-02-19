@@ -6,6 +6,9 @@ export const MESSAGES = {
     LOGOUT_SUCCESS: 'You have been logged out.',
     AUTH_ERROR: 'Authentication failed. Please try again.',
 
+    // Account
+    ACCOUNTS_LOAD_ERROR: 'Error loading accounts',
+
     // Email
     EMAIL_SYNC_STARTED: 'Syncing your emails...',
     EMAIL_SYNC_SUCCESS: 'Emails synced successfully.',

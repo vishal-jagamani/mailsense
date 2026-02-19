@@ -5,8 +5,9 @@ import SearchHeader from '@/shared/components/inputs/SearchHeader';
 import Loader from '@/shared/components/loader';
 import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
+import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
+import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 import { useAuthStore } from '@/store';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -14,7 +15,9 @@ import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import EmailListTable from '../home/components/EmailListTable';
 import { useFetchEmails } from '../home/services/useHomeApi';
-import { UI_CONSTANTS } from '@/shared/constants/ui';
+import EmailListFilter from './components/EmailListFilter';
+import { useGetAccountsQuery } from '../accounts/services/useAccountApi';
+import { GetAllEmailsFilters } from '@/shared/types/inbox.types';
 
 const InboxPageWrapper = () => (
     <Suspense fallback={<Loader />}>
@@ -38,8 +41,10 @@ const InboxPage: React.FC = () => {
     const [emailsData, setEmailsData] = useState<GetEmailsResponse | null>(null);
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
     const [errorShown, setErrorShown] = useState<boolean>(false);
+    const [getAllEmailsFilters, setGetAllEmailsFilters] = useState<GetAllEmailsFilters | null>(null);
 
     const { data: emails, mutate: refetchEmails, isPending: isLoadingEmails, isError: isEmailError } = useFetchEmails();
+    const { data: accounts, isLoading: accountsLoading, error: accountError } = useGetAccountsQuery(user?.id ?? '');
 
     const fetchEmailsData = useCallback(() => {
         if (!user) return;
@@ -50,9 +55,11 @@ const InboxPage: React.FC = () => {
             page: currentPage,
             filters: {
                 searchText: debouncedSearchValue || undefined,
+                accountId: getAllEmailsFilters?.accountId,
+                dateRange: getAllEmailsFilters?.dateRange,
             },
         });
-    }, [user, page, pageSize, debouncedSearchValue, refetchEmails]);
+    }, [user, page, pageSize, debouncedSearchValue, refetchEmails, getAllEmailsFilters]);
 
     useEffect(() => {
         if (debouncedSearchValue !== undefined && debouncedSearchValue !== '') {
@@ -84,10 +91,13 @@ const InboxPage: React.FC = () => {
         if (isEmailError && !errorShown) {
             toast.error(MESSAGES.EMAIL_LOAD_ERROR, { duration: 3000 });
             setErrorShown(true);
-        } else if (!isEmailError) {
+        } else if (accountError && !errorShown) {
+            toast.error(MESSAGES.ACCOUNTS_LOAD_ERROR, { duration: 3000 });
+            setErrorShown(true);
+        } else if (!isEmailError && !accountError) {
             setErrorShown(false);
         }
-    }, [isEmailError, errorShown]);
+    }, [isEmailError, errorShown, accountError]);
 
     const handlePageSizeChange = (newSize: number) => {
         setPage(1);
@@ -98,10 +108,16 @@ const InboxPage: React.FC = () => {
         <>
             <div className="flex items-center justify-center gap-4 px-4 py-2">
                 <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-                    <APILoader show={isLoadingEmails} />
-                    <div className="w-full">
+                    <APILoader show={isLoadingEmails || accountsLoading} />
+                    <div className="flex w-full gap-2">
+                        <EmailListFilter
+                            accounts={accounts || []}
+                            filter={getAllEmailsFilters}
+                            onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
+                        />
                         <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                     </div>
+                    <div></div>
                     <div className="flex h-[calc(110vh-250px)] w-full flex-col">
                         <EmailListTable data={emailsData?.data || []} page={page} />
                     </div>

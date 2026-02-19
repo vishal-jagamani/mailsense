@@ -1,7 +1,7 @@
 'use client';
 
 import PageHeader from '@/shared/components/header/PageHeader';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
+import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
 import { encrypt } from '@/shared/utils/crypto';
 import { useAuthStore } from '@/store';
 import React, { useEffect, useState } from 'react';

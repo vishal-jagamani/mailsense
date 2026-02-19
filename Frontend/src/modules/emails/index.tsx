@@ -1,17 +1,17 @@
 'use client';
 
+import APILoader from '@/shared/components/apiLoader';
+import Loader from '@/shared/components/loader';
 import { HOME_ROUTES } from '@/shared/constants/routes';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
+import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
+import { Separator } from '@/shared/ui/separator';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { useGetAccountDetailsQuery } from '../accounts/services/useAccountApi';
 import EmailBodyPreview from './components/EmailBodyPreview';
-import { useGetEmailDetailsQuery, useUnreadEmailMutation } from './services/useEmailApi';
-import EmailMenuBarOptions from './components/EmailMenuBarOptions';
-import Loader from '@/shared/components/loader';
 import EmailHeader from './components/EmailHeader';
-import { Separator } from '@/shared/ui/separator';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import APILoader from '@/shared/components/apiLoader';
+import EmailMenuBarOptions from './components/EmailMenuBarOptions';
+import { useGetEmailDetailsQuery, useUnreadEmailMutation } from './services/useEmailApi';
 
 interface EmailPageProps {
     account: string;
@@ -30,7 +30,6 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
     const { data: emailData, isLoading: isLoadingEmail } = useGetEmailDetailsQuery(email, { enabled: !!email });
     const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess, error: unreadEmailError } = useUnreadEmailMutation();
 
-    console.log('emailData', emailData);
     useEffect(() => {
         if (emailData && accountData) {
             useBreadcrumbStore.setState({
@@ -46,7 +45,6 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
     useEffect(() => {
         const updateEmailStatus = async () => {
             if (emailData && accountData && !emailData.isRead && !hasMarkedAsRead) {
-                console.log('calling unread');
                 unreadEmail({ emailIds: [emailData?.providerMessageId], unread: false });
                 setHasMarkedAsRead(true);
             }

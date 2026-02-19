@@ -1,4 +1,5 @@
 import z from 'zod';
+import { DATE_RANGE } from './email.types.js';
 
 export const getAllEmailsSchema = z.object({
     userId: z.string(),
@@ -8,12 +9,7 @@ export const getAllEmailsSchema = z.object({
         .object({
             searchText: z.string().optional(),
             accountId: z.array(z.string()).optional(),
-            dateRange: z
-                .object({
-                    startDate: z.number(),
-                    endDate: z.number(),
-                })
-                .optional(),
+            dateRange: z.enum(Object.values(DATE_RANGE) as [string, ...string[]]).optional(),
         })
         .optional(),
 });

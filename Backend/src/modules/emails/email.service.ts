@@ -9,7 +9,7 @@ import { PaginatedDataResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument } from './email.model.js';
-import { GetAllEmailsFilters, SearchEmailsParams } from './email.types.js';
+import { DATE_RANGE, GetAllEmailsFilters, SearchEmailsParams } from './email.types.js';
 
 export class EmailService {
     private gmailService: GmailService;
@@ -25,14 +25,14 @@ export class EmailService {
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
-
             const searchQuery: FilterQuery<EmailDocument> = {
                 accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
                 folders: { $nin: ['TRASH', 'SPAM'] },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
                 ...(dateRange &&
-                    dateRange?.startDate &&
-                    dateRange?.endDate && { receivedAt: { $gte: dateRange?.startDate, $lte: dateRange?.endDate } }),
+                    this.getDateRange(dateRange) && {
+                        receivedAt: { $gte: this.getDateRange(dateRange).startDate, $lte: this.getDateRange(dateRange).endDate },
+                    }),
             };
             const emails = await EmailRepository.getEmails(
                 searchQuery,
@@ -59,6 +59,37 @@ export class EmailService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getAllEmails: ${errorMessage}`, { error: err });
             throw err;
+        }
+    }
+
+    private getDateRange(dateRange: DATE_RANGE): { startDate: Date; endDate: Date } {
+        const now = new Date();
+        const endDate = new Date(now);
+
+        switch (dateRange) {
+            case DATE_RANGE.TODAY: {
+                const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+                const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+                return { startDate, endDate: endOfDay };
+            }
+            case DATE_RANGE.LAST_WEEK: {
+                const startDate = new Date(now);
+                startDate.setUTCDate(startDate.getUTCDate() - 7);
+                return { startDate, endDate };
+            }
+            case DATE_RANGE.LAST_MONTH: {
+                const startDate = new Date(now);
+                startDate.setUTCMonth(startDate.getUTCMonth() - 1);
+                return { startDate, endDate };
+            }
+            case DATE_RANGE.LAST_3_MONTHS: {
+                const startDate = new Date(now);
+                startDate.setUTCMonth(startDate.getUTCMonth() - 3);
+                return { startDate, endDate };
+            }
+            case DATE_RANGE.ALL_TIME:
+            default:
+                return { startDate: new Date(0), endDate };
         }
     }
 

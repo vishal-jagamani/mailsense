@@ -1,15 +1,10 @@
+import { GetAllEmailsFilters } from './inbox.types';
+
 export interface FetchEmailRequestOptions {
     userId: string;
     size: number;
     page: number;
-    filters: {
-        searchText?: string;
-        accountId?: string[];
-        dateRange?: {
-            startDate: number;
-            endDate: number;
-        };
-    };
+    filters: GetAllEmailsFilters;
 }
 
 export interface Email {
@@ -27,7 +22,7 @@ export interface Email {
     bodyPlain: string;
     receivedAt: Date;
     isRead: boolean;
-    folder: string;
+    folders: string[];
 }
 
 export interface GetEmailsResponse {

@@ -9,7 +9,7 @@ import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
 import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
+import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 import { useAuthStore } from '@/store';
 import { useRouter, useSearchParams } from 'next/navigation';

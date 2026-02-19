@@ -1,7 +1,7 @@
 'use client';
 
 import { ROUTES, SETTINGS_OPTIONS } from '@/shared/constants';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
+import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
 import React, { useEffect } from 'react';
 import ProfileSettings from './components/profile/ProfileSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
