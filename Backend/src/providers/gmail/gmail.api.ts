@@ -7,7 +7,7 @@ import { decrypt, encrypt } from '@utils/crypto.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
 import { GMAIL_SECRETS } from '@config/config.js';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
-import { GmailHistoryResponse, GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
+import { GMAIL_LABELS, GmailHistoryResponse, GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
 
 export class GmailApi {
     static async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -213,7 +213,7 @@ export class GmailApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 data: {
-                    ...(archive ? { removeLabelIds: ['INBOX'] } : { addLabelIds: ['INBOX'] }),
+                    ...(archive ? { removeLabelIds: [GMAIL_LABELS.INBOX] } : { addLabelIds: [GMAIL_LABELS.INBOX] }),
                 },
             };
             const response = await apiRequest<GmailMessageObjectFull>(options);
@@ -235,7 +235,7 @@ export class GmailApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 data: {
-                    ...(star ? { addLabelIds: ['STARRED'] } : { removeLabelIds: ['STARRED'] }),
+                    ...(star ? { addLabelIds: [GMAIL_LABELS.STARRED] } : { removeLabelIds: [GMAIL_LABELS.STARRED] }),
                 },
             };
             const response = await apiRequest<GmailMessageObjectFull>(options);
@@ -257,7 +257,7 @@ export class GmailApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 data: {
-                    ...(unread ? { addLabelIds: ['UNREAD'] } : { removeLabelIds: ['UNREAD'] }),
+                    ...(unread ? { addLabelIds: [GMAIL_LABELS.UNREAD] } : { removeLabelIds: [GMAIL_LABELS.UNREAD] }),
                 },
             };
             const response = await apiRequest<GmailMessageObjectFull>(options);

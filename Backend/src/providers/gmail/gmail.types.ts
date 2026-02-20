@@ -13,6 +13,14 @@ export interface GmailUserProfile {
 }
 
 // Messages interfaces
+export enum GMAIL_LABELS {
+    INBOX = 'INBOX',
+    SPAM = 'SPAM',
+    TRASH = 'TRASH',
+    UNREAD = 'UNREAD',
+    STARRED = 'STARRED',
+    IMPORTANT = 'IMPORTANT',
+}
 export interface GmailMessages {
     messages: { id: string; threadId: string }[];
     nextPageToken: string;
@@ -95,7 +103,7 @@ export interface MessagesAfterLastHistoryResponse {
 }
 
 export interface GmailParsedEmailResult {
-    emailObject: EmailInput,
-    historyId: string,
-    receivedAt: Date
+    emailObject: EmailInput;
+    historyId: string;
+    receivedAt: Date;
 }

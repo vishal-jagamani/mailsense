@@ -10,6 +10,7 @@ import { GmailApi } from './gmail.api.js';
 import {
     ExtractMessageChangesResponse,
     GetGmailMessagesResponse,
+    GMAIL_LABELS,
     GmailHistoryResponse,
     GmailMessageObjectFull,
     GmailMessages,
@@ -180,7 +181,7 @@ export class GmailService {
             bodyHtml: compressString(htmlBody || ''),
             bodyPlain: compressString(plainTextBody),
             receivedAt,
-            isRead: !emailDetails.labelIds.includes('UNREAD'),
+            isRead: !emailDetails.labelIds.includes(GMAIL_LABELS.UNREAD),
             folders: emailDetails.labelIds,
         };
     }
@@ -252,7 +253,7 @@ export class GmailService {
         try {
             for (const emailId of emailIds) {
                 const email = await GmailApi.unreadEmail(emailId, accountId, unread);
-                const isRead = !email.labelIds.includes('UNREAD');
+                const isRead = !email.labelIds.includes(GMAIL_LABELS.UNREAD);
                 await EmailRepository.updateEmailByProviderMessageId(email.id, {
                     folders: email.labelIds || [],
                     isRead,
