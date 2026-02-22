@@ -1,0 +1,27 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "skipLibCheck": true,
+        "sourceMap": true,
+        "allowJs": true,
+        "baseUrl": "src",
+        "paths": {
+            "@config/*": ["config/*"],
+            "@constants/*": ["constants/*"],
+            "@middlewares/*": ["middlewares/*"],
+            "@modules/*": ["modules/*"],
+            "@providers/*": ["providers/*"],
+            "@routes/*": ["routes/*"],
+            "@utils/*": ["utils/*"]
+        }
+    },
+    "include": ["src/**/*.ts", "src/config/config.ts", "src/types/express.d.ts"],
+    "exclude": ["node_modules"]
+}

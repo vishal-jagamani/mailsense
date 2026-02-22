@@ -1,0 +1,56 @@
+# Node modules
+node_modules/
+
+# Output directories
+dist/
+build/
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment variables
+.env
+.env.*.local
+*.local
+
+# Editor/IDE config
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS-generated
+.DS_Store
+Thumbs.db
+
+# ESLint & Prettier caches
+.eslintcache
+.prettiercache
+
+# Optional test outputs
+coverage/
+test-results/
+jest-html-reporters-*
+
+# Ignore compiled JS/Map/Types if in src (in case you build there instead of dist/)
+src/**/*.js
+src/**/*.js.map
+# src/**/*.d.ts
+
+# Optional: Lockfiles (choose one and track it, usually it's good to include `package-lock.json`)
+# yarn.lock
+# pnpm-lock.yaml
+deploy.sh
