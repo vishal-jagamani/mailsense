@@ -1,8 +1,9 @@
-import { QUERY_KEYS } from '@shared/config/query-keys';
-import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
-import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount, syncAccount } from './account.api';
 import { AccountAttributes, AccountProviders } from '@/shared/types/account.types';
 import { UpdateAPIResponse } from '@/shared/types/api.types';
+import { QUERY_KEYS } from '@shared/config/query-keys';
+import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount, syncAccount, syncAllAccounts } from './account.api';
 
 type ConnectAccountResult = Awaited<ReturnType<typeof connectAccount>>;
 
@@ -38,6 +39,24 @@ export const useSyncAccountQuery = () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNT_PROVIDERS] });
         },
     });
+};
+
+export const useSyncAllAccounts = () => {
+    const queryClient = useQueryClient();
+
+    const handleSyncAllAccounts = async (userId: string): Promise<UpdateAPIResponse> => {
+        try {
+            const result = await syncAllAccounts(userId);
+            toast.success(result.message, { duration: 3000 });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });
+            return result;
+        } catch (error) {
+            console.error('Sync all accounts error:', error);
+            throw error;
+        }
+    };
+
+    return { syncAllAccounts: handleSyncAllAccounts };
 };
 
 export const useRemoveAccountQuery = () => {

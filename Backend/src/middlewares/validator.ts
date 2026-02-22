@@ -31,7 +31,7 @@ export const validate = (schemas: SchemaMap) => (req: Request, res: Response, ne
                     },
                 });
             }
-            req[source] = result.data;
+            Object.assign(req[source], result.data);
         }
         next();
     } catch (err) {

@@ -27,6 +27,15 @@ export async function syncAccount(accountId: string) {
     return data;
 }
 
+export async function syncAllAccounts(userId: string) {
+    const { data } = await axiosClient.get(ACCOUNTS_API_ENDPOINTS.SYNC_ALL, {
+        params: {
+            userId,
+        },
+    });
+    return data;
+}
+
 export async function removeAccount(accountId: string) {
     const { data } = await axiosClient.delete(ACCOUNTS_API_ENDPOINTS.DELETE(accountId));
     return data;

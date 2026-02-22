@@ -1,6 +1,6 @@
 'use client';
 
-import { ChartLine, Folder, Inbox, LucideIcon, Search, Settings } from 'lucide-react';
+import { CircleUser, Inbox, LucideIcon, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
@@ -92,32 +92,37 @@ const data: SidebarData = {
         // },
         //     ],
         // },
-        {
-            title: 'Folders',
-            url: '#',
-            icon: Folder,
-            items: [
-                {
-                    title: 'Gmail',
-                    url: '#',
-                },
-                {
-                    title: 'Outlook',
-                    url: '#',
-                },
-            ],
-        },
-        {
-            title: 'Search',
-            url: '#',
-            icon: Search,
-        },
+        // {
+        //     title: 'Folders',
+        //     url: '#',
+        //     icon: Folder,
+        //     items: [
+        //         {
+        //             title: 'Gmail',
+        //             url: '#',
+        //         },
+        //         {
+        //             title: 'Outlook',
+        //             url: '#',
+        //         },
+        //     ],
+        // },
+        // {
+        //     title: 'Search',
+        //     url: '#',
+        //     icon: Search,
+        // },
     ],
     projects: [
+        // {
+        //     name: 'Insights',
+        //     url: '#',
+        //     icon: ChartLine,
+        // },
         {
-            name: 'Insights',
-            url: '#',
-            icon: ChartLine,
+            name: 'Connected Accounts',
+            url: ROUTES.ACCOUNTS,
+            icon: CircleUser,
         },
         {
             name: 'Settings',

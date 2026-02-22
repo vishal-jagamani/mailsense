@@ -1,8 +1,10 @@
 'use client';
 
-import { Bell, Bolt, ChevronsUpDown, CircleUser, LogOut, Palette, User } from 'lucide-react';
+import { ChevronsUpDown, LogOut, Moon, Settings, Sun } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { useRouter } from 'next/navigation';
 
-import { AUTH0_URLS } from '@/shared/constants';
+import { AUTH0_URLS, ROUTES } from '@/shared/constants';
 import { Avatar, AvatarFallback, AvatarImage } from '@shared/ui/avatar';
 import {
     DropdownMenu,
@@ -14,10 +16,11 @@ import {
     DropdownMenuTrigger,
 } from '@shared/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@shared/ui/sidebar';
-import Link from 'next/link';
 
 export function NavUser({ user }: { user: { name: string; email: string; avatar: string } }) {
     const { isMobile } = useSidebar();
+    const { theme, setTheme } = useTheme();
+    const router = useRouter();
 
     return (
         <SidebarMenu>
@@ -55,7 +58,7 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
+                        {/* <DropdownMenuGroup>
                             <DropdownMenuItem>
                                 <User />
                                 Profile
@@ -67,28 +70,32 @@ export function NavUser({ user }: { user: { name: string; email: string; avatar:
                                 </Link>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
+                        <DropdownMenuSeparator /> */}
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>
+                            {/* <DropdownMenuItem>
                                 <Bell />
                                 Notifcations
+                            </DropdownMenuItem> */}
+                            <DropdownMenuItem
+                                className="cursor-pointer"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    setTheme(theme === 'dark' ? 'light' : 'dark');
+                                }}
+                            >
+                                {theme === 'dark' ? <Sun /> : <Moon />}
+                                Toggle Theme
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Palette />
-                                Appearance
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Bolt />
-                                Preferences
+                            <DropdownMenuItem onClick={() => router.push(ROUTES.SETTINGS)} className="cursor-pointer">
+                                <Settings />
+                                Settings
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <Link href={AUTH0_URLS.LOGOUT}>
-                            <DropdownMenuItem className="cursor-pointer">
-                                <LogOut />
-                                Log out
-                            </DropdownMenuItem>
-                        </Link>
+                        <DropdownMenuItem onClick={() => router.push(AUTH0_URLS.LOGOUT)} className="cursor-pointer">
+                            <LogOut />
+                            Log out
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

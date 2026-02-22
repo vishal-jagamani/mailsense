@@ -3,7 +3,7 @@
 import APILoader from '@/shared/components/apiLoader';
 import Loader from '@/shared/components/loader';
 import { HOME_ROUTES } from '@/shared/constants/routes';
-import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
+import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { Separator } from '@/shared/ui/separator';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';

@@ -63,7 +63,7 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                             {data.map((email) => (
                                 <TableRow
                                     key={email._id}
-                                    className={`cursor-pointer ${selectedEmails?.includes(email.providerMessageId) ? 'bg-blue-800 hover:bg-blue-800' : ''} ${!email.isRead && selectedEmails?.includes(email.providerMessageId) ? 'bg-blue-800 hover:bg-blue-800' : !email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
+                                    className={`cursor-pointer ${selectedEmails?.includes(email.providerMessageId) ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800' : ''} ${!email.isRead && selectedEmails?.includes(email.providerMessageId) ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800' : !email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
                                     onClick={() => {
                                         router.push(`/inbox/${email.accountId}/email/${email._id}?page=${page}`);
                                     }}

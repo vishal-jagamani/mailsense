@@ -197,16 +197,25 @@ export class AccountsService {
 
     async syncAccounts(userId: string): Promise<SuccessAPIResponse> {
         try {
-            // await this.emailSyncService.syncAccounts();
             const accounts = await AccountRepository.getAccounts(userId);
             if (!accounts.length) return { status: true, message: 'Accounts not found' };
-            for (const account of accounts) {
-                await this.syncAccount(String(account._id));
-            }
-            return { status: true, message: 'Accounts synced successfully' };
+            this.syncAllAccounts(accounts);
+            return { status: true, message: 'Accounts sync started!' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccounts: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async syncAllAccounts(accounts: AccountDocument[]) {
+        try {
+            for (const account of accounts) {
+                await this.syncAccount(String(account._id));
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.syncAllAccounts: ${errorMessage}`, { error: err });
             throw err;
         }
     }

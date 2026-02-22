@@ -8,6 +8,10 @@ const router = Router();
 
 const accountsController = new AccountsController();
 
+router.get('/sync-all', validate({ query: getAccountsSchema }), handleRequest(accountsController.syncAccounts));
+
+router.get('/sync/:accountId', handleRequest(accountsController.syncAccount));
+
 router.get('/:accountId', validate({ params: getAccountDetailsSchema }), handleRequest(accountsController.getAccountDetails));
 
 router.delete('/:accountId', validate({ params: deleteAccountSchema }), handleRequest(accountsController.deleteAccount));
@@ -19,9 +23,5 @@ router.get('/providers/list', handleRequest(accountsController.getAccountProvide
 router.get('/connect/:provider', validate({ params: connectAccountSchema }), handleRequest(accountsController.connect));
 
 router.get('/callback/:provider', validate({ params: connectAccountSchema }), handleRequest(accountsController.callback));
-
-router.get('/sync', validate({ headers: getAccountsSchema }), handleRequest(accountsController.syncAccounts));
-
-router.get('/sync/:accountId', handleRequest(accountsController.syncAccount));
 
 export default router;

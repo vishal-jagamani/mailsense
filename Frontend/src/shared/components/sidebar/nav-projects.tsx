@@ -1,10 +1,13 @@
 'use client';
 
 import { type LucideIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@shared/ui/sidebar';
 
 export function NavProjects({ projects }: { projects: { name: string; url: string; icon: LucideIcon }[] }) {
+    const router = useRouter();
+
     return (
         <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>Account</SidebarGroupLabel>
@@ -12,10 +15,13 @@ export function NavProjects({ projects }: { projects: { name: string; url: strin
                 {projects.map((item) => (
                     <SidebarMenuItem key={item.name}>
                         <SidebarMenuButton asChild>
-                            <a href={item.url}>
+                            <button
+                                onClick={() => router.push(item.url)}
+                                className="hover:bg-sidebar-accent hover:text-sidebar-accent-foreground w-full text-left"
+                            >
                                 <item.icon />
                                 <span>{item.name}</span>
-                            </a>
+                            </button>
                         </SidebarMenuButton>
                         {/* <DropdownMenu>
                             <DropdownMenuTrigger asChild>

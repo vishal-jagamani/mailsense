@@ -1,12 +1,13 @@
 'use client';
 
 import PageHeader from '@/shared/components/header/PageHeader';
-import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
+import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { encrypt } from '@/shared/utils/crypto';
 import { useAuthStore } from '@/store';
 import React, { useEffect, useState } from 'react';
 import ProviderAccountList from './components/ProviderAccountList';
 import { useAccountProviderQuery, useAccountQuery } from './services/useAccountApi';
+import MoreAccountProviderComingSoon from './components/MoreAccountProviderComingSoon';
 
 const AccountsPage: React.FC = () => {
     const [provider, setProvider] = useState<string>('');
@@ -29,7 +30,7 @@ const AccountsPage: React.FC = () => {
 
     return (
         <>
-            <div className="relative mt-6 flex w-full flex-col items-center justify-center">
+            <div className="mt-6 flex w-full flex-col items-center justify-center">
                 <PageHeader
                     title="Connected Accounts"
                     button={true}
@@ -38,6 +39,9 @@ const AccountsPage: React.FC = () => {
                 />
                 <div className="mt-2 flex h-full w-[98%] flex-col justify-center gap-6 rounded-xl">
                     <ProviderAccountList />
+                </div>
+                <div className="mt-36 md:mt-48 px-4">
+                    <MoreAccountProviderComingSoon />
                 </div>
             </div>
         </>

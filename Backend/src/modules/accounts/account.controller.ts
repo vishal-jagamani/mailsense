@@ -80,7 +80,7 @@ export class AccountsController {
 
     public syncAccounts = async (req: Request<object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const userId = req.headers.userid;
+            const userId = req.query.userId;
             if (!userId) throw new Error('User ID is required');
             const emails = await this.accountsService.syncAccounts(String(userId));
             res.send(emails);

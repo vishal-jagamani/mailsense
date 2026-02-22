@@ -1,9 +1,10 @@
 'use client';
 
-import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/shared/ui/breadcrumb';
 import Link from 'next/link';
 import React from 'react';
+
+import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/shared/ui/breadcrumb';
 
 const BreadcrumbComponent: React.FC = () => {
     const { items: breadcrumbItems } = useBreadcrumbStore();

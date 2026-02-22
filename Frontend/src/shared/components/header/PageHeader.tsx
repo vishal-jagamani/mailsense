@@ -1,11 +1,14 @@
 'use client';
 
+import Image from 'next/image';
+import React, { useState } from 'react';
+
+import { useSyncAllAccounts } from '@/modules/accounts/services/useAccountApi';
 import { Button } from '@/shared/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/ui/dropdown-menu';
+import { useAuthStore } from '@/store';
 import GmailIcon from '@assets/icons/gmail/icons8-gmail-144.png';
 import OutlookIcon from '@assets/icons/outlook/icons8-outlook-144.svg';
-import Image from 'next/image';
-import React from 'react';
 
 interface PageHeaderProps {
     title: string;
@@ -24,6 +27,23 @@ const iconMapping = [
 ];
 
 const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions, dropdownMenuItemClick }) => {
+    const { user: currentUser } = useAuthStore();
+    const { syncAllAccounts } = useSyncAllAccounts();
+    const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+    const handleSyncAllAccounts = async () => {
+        if (currentUser?.id) {
+            setIsSyncing(true);
+            try {
+                await syncAllAccounts(currentUser.id);
+            } catch (error) {
+                // Error is handled in the hook
+            } finally {
+                setIsSyncing(false);
+            }
+        }
+    };
+
     return (
         <>
             <div className="border-muted flex w-full items-center justify-between border-b-2 pb-2">
@@ -31,16 +51,19 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
                 {button && (
                     <>
                         <div className="flex items-center gap-4">
-                            <Button variant="outline" className="cursor-pointer">
-                                Sync All Accounts
+                            <Button variant="outline" className="cursor-pointer" onClick={handleSyncAllAccounts} disabled={isSyncing}>
+                                {isSyncing ? 'Syncing...' : 'Sync All Accounts'}
                             </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger className="mr-4 border-0 select-none" asChild>
                                     <Button className="bg-primary text-md cursor-pointer font-semibold">Connect Account</Button>
-                                    {/* Connect Account */}
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-40">
                                     {dropdownOptions?.map((option) => {
+                                        // TODO: Don't show outlook option, need to change this post outlook connector release
+                                        if (option.name === 'outlook') {
+                                            return null;
+                                        }
                                         return (
                                             <DropdownMenuItem
                                                 key={option.name}

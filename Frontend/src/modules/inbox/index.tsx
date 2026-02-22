@@ -9,9 +9,9 @@ import SearchHeader from '@/shared/components/inputs/SearchHeader';
 import Loader from '@/shared/components/loader';
 import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
-import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
 import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
+import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 import { GetAllEmailsFilters } from '@/shared/types/inbox.types';
 import { useAuthStore } from '@/store';
@@ -117,7 +117,7 @@ const InboxPage: React.FC = () => {
             <div className="flex items-center justify-center gap-4 px-4 py-2">
                 <div className="flex h-full w-full flex-col items-center justify-center gap-4">
                     <APILoader show={isLoadingEmails || accountsLoading} />
-                    <div className="flex w-full gap-2">
+                    <div className="flex w-full items-center gap-2">
                         <EmailListFilter
                             accounts={accounts || []}
                             filter={getAllEmailsFilters}

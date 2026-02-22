@@ -1,3 +1,7 @@
+export enum ACCOUNT_PROVIDER {
+    GMAIL = 'gmail',
+    OUTLOOK = 'outlook',
+}
 export interface AccountProviders {
     id: number;
     name: string;

@@ -4,6 +4,7 @@ export const ROUTES = {
     LOGIN: '/login',
     DASHBOARD: '/dashboard',
     SETTINGS: '/settings',
+    ACCOUNTS: '/accounts',
 } as const;
 
 export const HOME_ROUTES = {
