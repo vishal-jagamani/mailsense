@@ -28,7 +28,7 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
 
     const { data: accountData, isLoading: isLoadingAccount } = useGetAccountDetailsQuery(account, { enabled: !!account });
     const { data: emailData, isLoading: isLoadingEmail } = useGetEmailDetailsQuery(email, { enabled: !!email });
-    const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess, error: unreadEmailError } = useUnreadEmailMutation();
+    const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess } = useUnreadEmailMutation();
 
     useEffect(() => {
         if (emailData && accountData) {

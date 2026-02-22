@@ -18,7 +18,7 @@ import gmailIcon from '@assets/icons/gmail/icons8-gmail-240.png';
 import outlookIcon from '@assets/icons/outlook/icons8-outlook-240.svg';
 import { CircleMinus, RefreshCw } from 'lucide-react';
 import Image from 'next/image';
-import React, { useState } from 'react';
+import React from 'react';
 import { useRemoveAccountQuery, useSyncAccountQuery } from '../services/useAccountApi';
 
 interface AccountCardProps {

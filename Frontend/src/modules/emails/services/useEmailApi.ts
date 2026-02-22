@@ -25,11 +25,7 @@ export const useStarEmailMutation = () => {
 };
 
 export const useUnreadEmailMutation = () => {
-    const queryClient = useQueryClient();
     return useMutation<UpdateAPIResponse, Error, { emailIds: string[]; unread: boolean }>({
         mutationFn: ({ emailIds, unread }) => unreadEmail(emailIds, unread),
-        // onSuccess: () => {
-        //     queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMAIL] });
-        // },
     });
 };

@@ -23,10 +23,11 @@ const HomePage = () => {
     const [pageSize, setPageSize] = useState(EMAILS_PAGE_SIZE);
     const [searchValue, setSearchValue] = useState('');
     const [emailsData, setEmailsData] = useState<GetEmailsResponse | null>(null);
+    const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
     const [errorShown, setErrorShown] = useState<boolean>(false);
 
-    const { mutate: refetchEmails, isPending: isLoadingEmails, isError: isEmailError } = useFetchEmails();
+    const { mutate: refetchEmails, isPending: isLoadingEmails, isError: isEmailError, data: emails } = useFetchEmails();
 
     const fetchEmailsData = useCallback(() => {
         if (!user) return;
@@ -52,10 +53,15 @@ const HomePage = () => {
     }, [fetchEmailsData]);
 
     useEffect(() => {
-        if (emailsData) {
-            setEmailsData(emailsData);
+        if (emails) {
+            setEmailsData(emails);
+            setSelectedEmails([]); // Reset selection when email list changes
         }
-    }, [emailsData]);
+    }, [emails]);
+
+    const handleEmailSelect = (emailIds: string[]) => {
+        setSelectedEmails(emailIds);
+    };
 
     useEffect(() => {
         if (isEmailError && !errorShown) {
@@ -76,7 +82,7 @@ const HomePage = () => {
             <div className="flex h-full w-full flex-col items-center justify-center gap-6 rounded-xl">
                 <APILoader show={isLoadingEmails} />
                 <p>Emails</p>
-                <EmailListTable data={emailsData?.data || []} page={page} />
+                <EmailListTable data={emailsData?.data || []} page={page} selectedEmails={selectedEmails} onEmailSelect={handleEmailSelect} />
                 <PaginationComponent
                     total={emailsData?.total || 0}
                     currentPage={page}

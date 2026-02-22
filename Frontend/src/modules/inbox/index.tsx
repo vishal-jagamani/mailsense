@@ -1,23 +1,25 @@
 'use client';
 
+import { useRouter, useSearchParams } from 'next/navigation';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+
 import APILoader from '@/shared/components/apiLoader';
 import SearchHeader from '@/shared/components/inputs/SearchHeader';
 import Loader from '@/shared/components/loader';
 import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
+import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
 import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
-import { useBreadcrumbStore } from '@/shared/constants/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
+import { GetAllEmailsFilters } from '@/shared/types/inbox.types';
 import { useAuthStore } from '@/store';
-import { useRouter, useSearchParams } from 'next/navigation';
-import React, { Suspense, useCallback, useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useGetAccountsQuery } from '../accounts/services/useAccountApi';
 import EmailListTable from '../home/components/EmailListTable';
 import { useFetchEmails } from '../home/services/useHomeApi';
 import EmailListFilter from './components/EmailListFilter';
-import { useGetAccountsQuery } from '../accounts/services/useAccountApi';
-import { GetAllEmailsFilters } from '@/shared/types/inbox.types';
+import EmailMenuBarOptions from './components/EmailMenuBarOptions';
 
 const InboxPageWrapper = () => (
     <Suspense fallback={<Loader />}>
@@ -42,6 +44,7 @@ const InboxPage: React.FC = () => {
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
     const [errorShown, setErrorShown] = useState<boolean>(false);
     const [getAllEmailsFilters, setGetAllEmailsFilters] = useState<GetAllEmailsFilters | null>(null);
+    const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 
     const { data: emails, mutate: refetchEmails, isPending: isLoadingEmails, isError: isEmailError } = useFetchEmails();
     const { data: accounts, isLoading: accountsLoading, error: accountError } = useGetAccountsQuery(user?.id ?? '');
@@ -74,6 +77,7 @@ const InboxPage: React.FC = () => {
     useEffect(() => {
         if (emails) {
             setEmailsData(emails);
+            setSelectedEmails([]); // Reset selection when email list changes
         }
     }, [emails]);
 
@@ -104,6 +108,10 @@ const InboxPage: React.FC = () => {
         setPageSize(newSize);
     };
 
+    const handleEmailSelect = (emailIds: string[]) => {
+        setSelectedEmails(emailIds);
+    };
+
     return (
         <>
             <div className="flex items-center justify-center gap-4 px-4 py-2">
@@ -116,10 +124,11 @@ const InboxPage: React.FC = () => {
                             onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
                         />
                         <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
+                        <EmailMenuBarOptions emailIds={selectedEmails} />
                     </div>
                     <div></div>
                     <div className="flex h-[calc(110vh-250px)] w-full flex-col">
-                        <EmailListTable data={emailsData?.data || []} page={page} />
+                        <EmailListTable data={emailsData?.data || []} page={page} selectedEmails={selectedEmails} onEmailSelect={handleEmailSelect} />
                     </div>
                     <PaginationComponent
                         total={emailsData?.total || 0}

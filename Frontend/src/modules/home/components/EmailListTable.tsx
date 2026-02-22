@@ -6,24 +6,23 @@ import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/
 import { formatDateToMonthDateString } from '@/shared/utils/formatter';
 import { Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React from 'react';
 import { useDeleteEmail } from '../services/useHomeApi';
 
 interface EmailListTableProps {
     data: Email[];
     page: number;
+    selectedEmails?: string[];
+    onEmailSelect?: (emailIds: string[]) => void;
 }
 
-const EmailListTable: React.FC<EmailListTableProps> = ({ data, page }) => {
+const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEmails, onEmailSelect }) => {
     const router = useRouter();
 
-    const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
     const { mutateAsync } = useDeleteEmail();
 
     const handleTrashIconClick = async (email: Email) => {
-        if (selectedEmails.length === 0) {
-            await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
-        }
+        await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
     };
 
     return (
@@ -39,10 +38,10 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page }) => {
                                         id="select-all"
                                         aria-label="Select all"
                                         onClick={() => {
-                                            if (selectedEmails.length === data.length) {
-                                                setSelectedEmails([]);
+                                            if ((selectedEmails || []).length === data.length) {
+                                                onEmailSelect?.([]);
                                             } else {
-                                                setSelectedEmails(data.map((email) => email._id));
+                                                onEmailSelect?.(data.map((email) => email.providerMessageId));
                                             }
                                         }}
                                         className="cursor-pointer"
@@ -64,20 +63,20 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page }) => {
                             {data.map((email) => (
                                 <TableRow
                                     key={email._id}
-                                    className={`cursor-pointer ${selectedEmails.includes(email._id) ? 'bg-blue-800 hover:bg-blue-800' : ''} ${!email.isRead && selectedEmails.includes(email._id) ? 'bg-blue-800 hover:bg-blue-800' : !email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
+                                    className={`cursor-pointer ${selectedEmails?.includes(email.providerMessageId) ? 'bg-blue-800 hover:bg-blue-800' : ''} ${!email.isRead && selectedEmails?.includes(email.providerMessageId) ? 'bg-blue-800 hover:bg-blue-800' : !email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
                                     onClick={() => {
                                         router.push(`/inbox/${email.accountId}/email/${email._id}?page=${page}`);
                                     }}
                                 >
                                     <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                                         <Checkbox
-                                            id={email._id}
-                                            checked={selectedEmails.includes(email._id)}
+                                            id={email.providerMessageId}
+                                            checked={selectedEmails?.includes(email.providerMessageId)}
                                             onCheckedChange={(checked) => {
                                                 if (checked) {
-                                                    setSelectedEmails([...selectedEmails, email._id]);
+                                                    onEmailSelect?.([...(selectedEmails || []), email.providerMessageId]);
                                                 } else {
-                                                    setSelectedEmails(selectedEmails.filter((id) => id !== email._id));
+                                                    onEmailSelect?.((selectedEmails || []).filter((id) => id !== email.providerMessageId));
                                                 }
                                             }}
                                             className="cursor-pointer"
@@ -90,11 +89,13 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page }) => {
                                     <TableCell className="w-28 whitespace-nowrap">{formatDateToMonthDateString(email.receivedAt)}</TableCell>
                                     <TableCell className="w-10 whitespace-nowrap">
                                         <Trash
-                                            className="text-red-500"
+                                            className={`text-red-500 ${(selectedEmails || []).length > 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                                             size={16}
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                handleTrashIconClick(email);
+                                                if ((selectedEmails || []).length === 0) {
+                                                    handleTrashIconClick(email);
+                                                }
                                             }}
                                         />
                                     </TableCell>

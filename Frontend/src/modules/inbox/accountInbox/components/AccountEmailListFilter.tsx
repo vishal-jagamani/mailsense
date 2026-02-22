@@ -1,30 +1,20 @@
 'use client';
 
-import { ListFilter } from 'lucide-react';
-import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
-
-import { AccountAttributes } from '@/shared/types/account.types';
 import { DATE_RANGE, GetAllEmailsFilters } from '@/shared/types/inbox.types';
 import { Button } from '@/shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
-import gmailIcon from '@assets/icons/gmail/icons8-gmail-96.png';
-import outlookIcon from '@assets/icons/outlook/icons8-outlook-96.svg';
-import { DATE_RANGE_DROPDOWN_OPTIONS } from '../constants/api.constants';
+import { ListFilter } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
-const iconMapping = [
-    { name: 'outlook', icon: outlookIcon },
-    { name: 'gmail', icon: gmailIcon },
-];
+import { DATE_RANGE_DROPDOWN_OPTIONS } from '../../constants/api.constants';
 
-interface EmailListFilterProps {
-    accounts: AccountAttributes[];
+interface AccountEmailListFilterProps {
     filter: GetAllEmailsFilters | null;
     onFilterChange: (filter: GetAllEmailsFilters) => void;
 }
 
-const EmailListFilter: React.FC<EmailListFilterProps> = ({ accounts, filter, onFilterChange }) => {
+const AccountEmailListFilter: React.FC<AccountEmailListFilterProps> = ({ filter, onFilterChange }) => {
     const [localFilterObject, setLocalFilterObject] = useState<GetAllEmailsFilters | null>(filter || null);
     const [isOpen, setIsOpen] = useState(false);
 
@@ -34,7 +24,7 @@ const EmailListFilter: React.FC<EmailListFilterProps> = ({ accounts, filter, onF
 
     const handleApplyButtonClick = () => {
         onFilterChange?.(localFilterObject as GetAllEmailsFilters);
-        setIsOpen(false); // Close the popover
+        setIsOpen(false);
     };
 
     return (
@@ -47,33 +37,6 @@ const EmailListFilter: React.FC<EmailListFilterProps> = ({ accounts, filter, onF
                 </PopoverTrigger>
                 <PopoverContent align="start" className="w-80">
                     <div className="flex w-full flex-col gap-2">
-                        <div className="flex w-full flex-col">
-                            <p className="p-1 text-sm">Account</p>
-                            <Select
-                                value={localFilterObject?.accountId?.[0] || ''}
-                                onValueChange={(value) => setLocalFilterObject({ ...localFilterObject, accountId: [value] })}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Select account" />
-                                </SelectTrigger>
-                                <SelectContent position="popper">
-                                    {accounts &&
-                                        accounts?.map((item, index) => {
-                                            return (
-                                                <SelectItem key={index + 1} value={item?._id} className="text-xs">
-                                                    <Image
-                                                        draggable={false}
-                                                        src={iconMapping?.find((val) => val.name === item.provider)?.icon}
-                                                        alt={item.provider}
-                                                        className="size-4"
-                                                    />
-                                                    {item?.emailAddress}
-                                                </SelectItem>
-                                            );
-                                        })}
-                                </SelectContent>
-                            </Select>
-                        </div>
                         <div className="flex w-full flex-col">
                             <p className="p-1 text-sm">Date</p>
                             <Select
@@ -109,4 +72,4 @@ const EmailListFilter: React.FC<EmailListFilterProps> = ({ accounts, filter, onF
     );
 };
 
-export default EmailListFilter;
+export default AccountEmailListFilter;

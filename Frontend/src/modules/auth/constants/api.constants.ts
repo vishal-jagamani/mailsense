@@ -1,4 +1,3 @@
 export const AUTH_API_ENDPOINTS = {
     PROFILE: '/profile',
-};
-3
+} as const;

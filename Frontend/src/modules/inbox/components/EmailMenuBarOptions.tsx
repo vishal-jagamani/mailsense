@@ -1,28 +1,21 @@
 'use client';
 
-import { ArrowLeft, MailX, Star, Trash } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { MailCheck, Star, Trash } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import DeleteModal from '@/modules/emails/components/DeleteModal';
+import { useStarEmailMutation, useUnreadEmailMutation } from '@/modules/emails/services/useEmailApi';
 import { useDeleteEmail } from '@/modules/home/services/useHomeApi';
 import APILoader from '@/shared/components/apiLoader';
-import { HOME_ROUTES } from '@/shared/constants';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
-import { useStarEmailMutation, useUnreadEmailMutation } from '../services/useEmailApi';
-import DeleteModal from './DeleteModal';
 
 interface EmailMenuBarOptionsProps {
-    accountId: string;
-    emailId: string;
-    onManualUnreadOperation?: () => void;
+    emailIds: string[];
 }
 
-const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onManualUnreadOperation }) => {
-    const router = useRouter();
+const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds }) => {
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
-
-    const [showToast, setShowToast] = useState<boolean>(false);
 
     const { mutate: starEmail, isPending: starEmailLoading, data: starEmailSuccess, error: starEmailError } = useStarEmailMutation();
     const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess, error: unreadEmailError } = useUnreadEmailMutation();
@@ -60,50 +53,32 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onMa
         });
     }, [starEmailSuccess, starEmailError, unreadEmailSuccess, unreadEmailError, deleteEmailSuccess, deleteEmailError]);
 
-    useEffect(() => {
-        if (deleteEmailSuccess) {
-            router.push(HOME_ROUTES.UNIFIED_INBOX);
-        }
-    }, [deleteEmailSuccess]);
-
-    useEffect(() => {
-        if (showToast) {
-            setTimeout(() => {
-                setShowToast(false);
-            }, 1000);
-        }
-    }, [showToast]);
-
     const options = [
         {
             id: 1,
+            label: 'Star',
+            icon: Star,
+            iconColor: 'text-yellow-500',
+            action: () => starEmail({ emailIds, star: true }),
+        },
+        {
+            id: 2,
             label: 'Mark as Unread',
-            icon: MailX,
+            icon: MailCheck,
+            iconColor: 'text-blue-500',
             action: () => {
-                onManualUnreadOperation?.();
-                unreadEmail({ emailIds: [emailId], unread: true });
+                unreadEmail({ emailIds, unread: true });
             },
         },
         // {
         //     id: 2,
-        //     label: 'Reply',
-        //     icon: Reply,
-        //     action: () => console.log('Reply'),
-        // },
-        // {
-        //     id: 3,
         //     label: 'Forward',
         //     icon: Forward,
         //     action: () => console.log('Forward'),
         // },
+
         {
-            id: 4,
-            label: 'Star',
-            icon: Star,
-            action: () => starEmail({ emailIds: [emailId], star: true }),
-        },
-        {
-            id: 5,
+            id: 3,
             label: 'Delete',
             icon: Trash,
             iconColor: 'text-red-500',
@@ -117,26 +92,25 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onMa
 
     return (
         <>
-            <div className="bg-sidebar sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md px-4">
-                <ArrowLeft size={18} onClick={() => router.back()} className="cursor-pointer" />
+            <div className="sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md px-4">
                 <div className="flex items-center gap-6">
                     {options.map((option) => (
                         <div key={option.id} className="flex items-center">
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <option.icon size={18} onClick={option.action} className={`cursor-pointer ${option.iconColor ?? ''}`} />
+                                    <option.icon
+                                        size={18}
+                                        onClick={emailIds.length > 0 ? option.action : undefined}
+                                        className={`${option.iconColor ?? ''} ${emailIds.length > 0 ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                                    />
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                    <p className="text-md font-semibold">{option.label}</p>
+                                    <p className={`text-md font-semibold ${emailIds.length > 0 ? '' : 'opacity-50'}`}>{option.label}</p>
                                 </TooltipContent>
                             </Tooltip>
                         </div>
                     ))}
-                    <DeleteModal
-                        open={showDeleteModal}
-                        onOpenChange={setShowDeleteModal}
-                        onDelete={() => deleteEmail({ emailIds: [emailId], trash: true })}
-                    />
+                    <DeleteModal open={showDeleteModal} onOpenChange={setShowDeleteModal} onDelete={() => deleteEmail({ emailIds, trash: true })} />
                 </div>
             </div>
         </>
