@@ -20,6 +20,7 @@ lerna-debug.log*
 # Environment variables
 .env
 .env.*.local
+.env.prod
 *.local
 
 # Editor/IDE config
