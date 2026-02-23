@@ -32,7 +32,10 @@ class EnvConfig {
 
     constructor() {
         dotenv?.config();
-        if (process.env.NODE_ENV === 'local') {
+        if (process.env.NODE_ENV) {
+            const envFilePath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
+            dotenv.config({ path: envFilePath });
+        } else {
             const envFilePath = path.resolve(process.cwd(), `.env.local`);
             dotenv.config({ path: envFilePath });
         }
