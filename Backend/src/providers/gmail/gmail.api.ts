@@ -152,7 +152,6 @@ export class GmailApi {
                 },
             };
             const response: GmailMessageObjectFull = await apiRequest(options);
-            logger.info(`Fetched email ${messageId}`, { response });
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
