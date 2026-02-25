@@ -80,7 +80,7 @@ export class GmailService {
 
     async getMessagesAfterLastHistory(accountId: string, historyId: string): Promise<MessagesAfterLastHistoryResponse | null> {
         try {
-            if (historyId) return null;
+            if (!historyId) return null;
             const historyDetails = await GmailApi.getHistory(accountId, historyId);
             if (!historyDetails) return null;
             const { addedMessageIds, deletedMessageIds } = this.extractMessageChanges(historyDetails);
