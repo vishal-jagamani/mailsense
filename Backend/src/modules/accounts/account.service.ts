@@ -232,12 +232,19 @@ export class AccountsService {
                     suggestedAction: 'Please check the account ID',
                 });
             if (account.provider === AccountProvider.GMAIL) {
-                // emails = await this.gmailService.getMessages(accountId);
-                const response = await this.syncGmailAccount(accountId, account);
-                return response;
+                this.syncGmailAccount(accountId, account)
+                    .then(() => {
+                        logger.info('Account Syncing Completed', { accountId });
+                    })
+                    .catch((err) => {
+                        const errorMessage = err instanceof Error ? err.message : String(err);
+                        logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });
+                        throw err;
+                    });
+                return { status: true, message: 'Account sync started!' };
             } else if (account.provider === AccountProvider.OUTLOOK) {
                 // const response = await this.syncOutlookAccount(accountId, account);
-                return { status: true, message: 'Account synced successfully' };
+                return { status: true, message: 'Account sync started!' };
             } else {
                 throw new Error('Invalid provider');
             }

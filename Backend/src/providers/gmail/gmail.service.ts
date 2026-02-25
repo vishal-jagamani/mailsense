@@ -2,6 +2,7 @@ import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/a
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { BatchProcessor } from '@utils/batchProcessor.js';
 import { compressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import axios from 'axios';
@@ -12,6 +13,7 @@ import {
     GetGmailMessagesResponse,
     GMAIL_LABELS,
     GmailHistoryResponse,
+    GmailMessage,
     GmailMessageObjectFull,
     GmailMessages,
     GmailParsedEmailResult,
@@ -78,7 +80,7 @@ export class GmailService {
 
     async getMessagesAfterLastHistory(accountId: string, historyId: string): Promise<MessagesAfterLastHistoryResponse | null> {
         try {
-            if (!historyId) return null;
+            if (historyId) return null;
             const historyDetails = await GmailApi.getHistory(accountId, historyId);
             if (!historyDetails) return null;
             const { addedMessageIds, deletedMessageIds } = this.extractMessageChanges(historyDetails);
@@ -126,31 +128,31 @@ export class GmailService {
 
     async parseEmailsIntoPlainObjects(accountId: string, emails: GmailMessages): Promise<GetGmailMessagesResponse> {
         try {
-            const parsedEmailsResults = await Promise.allSettled(
-                emails.messages.map(async (email: { id: string; threadId: string }): Promise<GmailParsedEmailResult | null> => {
-                    try {
-                        const emailDetails = await GmailApi.fetchEmailById(email.id, accountId);
-                        const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
-                        return {
-                            emailObject,
-                            historyId: emailDetails.historyId,
-                            receivedAt: emailObject.receivedAt,
-                        };
-                    } catch (err) {
-                        logger.error(`Error in GmailService.parseEmailsIntoPlainObjects: ${err}`, { error: err });
-                        return null;
-                    }
-                }),
-            );
-            const parsedEmails = parsedEmailsResults
-                .filter((result): result is PromiseFulfilledResult<GmailParsedEmailResult> => result.status === 'fulfilled')
-                .map((result) => result.value);
-            if (parsedEmails.length === 0) {
+            const batchProcessor = new BatchProcessor<GmailMessage, GmailParsedEmailResult | null>(5, 100);
+
+            const parsedEmails = await batchProcessor.processBatches(emails.messages, async (email: { id: string; threadId: string }) => {
+                try {
+                    const emailDetails = await GmailApi.fetchEmailById(email.id, accountId);
+                    const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+                    return {
+                        emailObject,
+                        historyId: emailDetails.historyId,
+                        receivedAt: emailObject.receivedAt,
+                    };
+                } catch (err) {
+                    logger.error(`Error processing email ${email.id}: ${err}`, { error: err });
+                    return null;
+                }
+            });
+            const validEmails = parsedEmails.filter((email) => email !== null);
+            if (validEmails.length === 0) {
                 return { emails: [], lastSyncCursor: '' };
             }
-            parsedEmails.sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime());
-            const lastSyncCursor = parsedEmails[0].historyId;
-            return { emails: parsedEmails.map((email) => email.emailObject), lastSyncCursor };
+
+            validEmails.sort((a, b) => b.receivedAt.getTime() - a.receivedAt.getTime());
+            const lastSyncCursor = validEmails[0].historyId;
+
+            return { emails: validEmails.map((email) => email.emailObject), lastSyncCursor };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });
