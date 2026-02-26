@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express, { Application, NextFunction, Request, Response } from 'express';
 import path from 'path';
+import * as Sentry from '@sentry/node';
 
 import { apiErrorHandler, errorHandler } from '@middlewares/error.handler.js';
 import indexRoutes from '@routes/index.routes.js';
@@ -30,6 +31,12 @@ export class App {
 
         // Serve static files
         this.expressApp.use(express.static(path.join(this.__dirname, '/')));
+
+        // Initialize Sentry
+        Sentry.init({
+            dsn: 'https://6369063c1ff884a0abe7533328c7e90f@o4507134103846912.ingest.de.sentry.io/4510950679183440',
+            sendDefaultPii: true,
+        });
     }
 
     private setupRoutes(): void {
@@ -57,6 +64,7 @@ export class App {
     }
 
     private setupErrorHandler(): void {
+        Sentry.setupExpressErrorHandler(this.expressApp);
         // Centralized error handler
         this.expressApp.use(apiErrorHandler);
         this.expressApp.use(errorHandler);
