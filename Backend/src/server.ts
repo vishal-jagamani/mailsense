@@ -2,6 +2,7 @@ import { App } from './app.js';
 import { PORT } from './config/config.js';
 import { connectDB } from './config/db.js';
 import { logger } from './utils/logger.js';
+import './instruction.mjs';
 
 // Create app instance
 const appInstance = new App();

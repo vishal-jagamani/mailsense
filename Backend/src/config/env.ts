@@ -29,6 +29,7 @@ class EnvConfig {
     public readonly AUTH0_API_CLIENT_ID: string;
     public readonly AUTH0_API_CLIENT_SECRET: string;
     public readonly AUTH0_API_BASE_URL: string;
+    public readonly SENTRY_DSN: string;
 
     constructor() {
         dotenv?.config();
@@ -67,6 +68,7 @@ class EnvConfig {
             AUTH0_API_CLIENT_ID: z.string(),
             AUTH0_API_CLIENT_SECRET: z.string(),
             AUTH0_API_BASE_URL: z.string(),
+            SENTRY_DSN: z.string(),
         });
 
         const result = schema.safeParse(process.env);
@@ -102,6 +104,7 @@ class EnvConfig {
         this.AUTH0_API_CLIENT_ID = data.AUTH0_API_CLIENT_ID;
         this.AUTH0_API_CLIENT_SECRET = data.AUTH0_API_CLIENT_SECRET;
         this.AUTH0_API_BASE_URL = data.AUTH0_API_BASE_URL;
+        this.SENTRY_DSN = data.SENTRY_DSN;
     }
 }
 
