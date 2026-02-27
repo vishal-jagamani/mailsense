@@ -1,12 +1,13 @@
+import { GMAIL_SECRETS } from '@config/config.js';
+import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { logger } from '@utils/logger.js';
-import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
-import { AxiosRequestConfig } from 'axios';
+import * as Sentry from '@sentry/node';
 import { apiRequest } from '@utils/axios.js';
 import { decrypt, encrypt } from '@utils/crypto.js';
-import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
-import { GMAIL_SECRETS } from '@config/config.js';
+import { logger } from '@utils/logger.js';
+import { AxiosRequestConfig } from 'axios';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
+import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
 import { GMAIL_LABELS, GmailHistoryResponse, GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
 
 export class GmailApi {
@@ -156,6 +157,7 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.fetchEmailById: ${errorMessage}`, { error: err });
+            Sentry.captureException(err);
             throw err;
         }
     }
