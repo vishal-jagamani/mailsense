@@ -88,6 +88,7 @@ export class Auth0Api {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error in Auth0Api.getUserProfileDetails: ${errorMessage}`, { error });
+            Sentry.captureException(error);
             throw error;
         }
     }
