@@ -6,6 +6,7 @@ import { AxiosRequestConfig } from 'axios';
 import { AUTH0_API_AUDIENCE, AUTH0_API_TOKEN_URI, AUTH0_APIs } from './auth0.constants.js';
 import { Auth0AccessTokenResponse, Auth0UserDetailsResponse } from './auth0.types.js';
 import { UpdateUserSchema } from '@modules/user/user.schema.js';
+import * as Sentry from '@sentry/node';
 
 export class Auth0Api {
     private async fetchAccessToken(): Promise<Auth0AccessTokenResponse> {
@@ -47,6 +48,7 @@ export class Auth0Api {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error in Auth0Api.getUserDetails: ${errorMessage}`, { error });
+            Sentry.captureException(error);
             throw error;
         }
     }
