@@ -21,6 +21,7 @@ import {
     MessagesAfterLastHistoryResponse,
 } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
+import * as Sentry from '@sentry/node';
 
 export class GmailService {
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -74,6 +75,7 @@ export class GmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.getMessagesByMessagesId: ${errorMessage}`, { error: err });
+            Sentry.captureException(err);
             throw err;
         }
     }
