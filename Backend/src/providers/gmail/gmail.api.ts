@@ -1,7 +1,6 @@
 import { GMAIL_SECRETS } from '@config/config.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import * as Sentry from '@sentry/node';
 import { apiRequest } from '@utils/axios.js';
 import { decrypt, encrypt } from '@utils/crypto.js';
 import { logger } from '@utils/logger.js';
