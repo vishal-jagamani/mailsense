@@ -157,7 +157,6 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.fetchEmailById: ${errorMessage}`, { error: err });
-            Sentry.captureException(err);
             throw err;
         }
     }
