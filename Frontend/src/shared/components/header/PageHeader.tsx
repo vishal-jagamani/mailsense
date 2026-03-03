@@ -60,10 +60,6 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent className="w-40">
                                     {dropdownOptions?.map((option) => {
-                                        // TODO: Don't show outlook option, need to change this post outlook connector release
-                                        if (option.name === 'outlook') {
-                                            return null;
-                                        }
                                         return (
                                             <DropdownMenuItem
                                                 key={option.name}

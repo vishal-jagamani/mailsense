@@ -2,8 +2,14 @@ import { EmailInput } from '@modules/emails/email.model.js';
 import { logger } from '@utils/logger.js';
 import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { OutlookApi } from './outlook.api.js';
-import { GetOutlookMessagesResponse, OutlookMessagesResponse, OutlookUserProfile } from './outlook.types.js';
-import { compressString } from '@utils/compression.js';
+import { OUTLOOK_API_BASE_URL, OUTLOOK_API_PARAMS, OUTLOOK_APIs } from './outlook.constants.js';
+import {
+    ExtractDeltaMessageChangesResponse,
+    GetOutlookDeltaMessagesResponse,
+    GetOutlookMessagesResponse,
+    OutlookMessageObjectFull,
+    OutlookUserProfile,
+} from './outlook.types.js';
 
 export class OutlookService {
     private outlookApi: OutlookApi;
@@ -32,12 +38,47 @@ export class OutlookService {
         }
     }
 
+    async getMessagesAfterLastDelta(accountId: string, deltaLink: string): Promise<GetOutlookDeltaMessagesResponse | null> {
+        try {
+            if (!deltaLink) return null;
+            const response = await this.outlookApi.getMessagesFromDeltaLink(accountId, deltaLink);
+            const { addedEmails, deletedEmailIds } = await this.extractDeltaMessagesChanges(response.value);
+            let newAddedEmails: Partial<EmailInput>[] = [];
+            if (addedEmails.length) {
+                newAddedEmails = await this.parseEmailsIntoPlainObjects(accountId, addedEmails);
+            }
+            return { addedEmails: newAddedEmails, deletedEmailIds, newDeltaLink: response['@odata.deltaLink'] || '' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.getMessagesAfterLastDelta: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async extractDeltaMessagesChanges(emails: OutlookMessageObjectFull[]): Promise<ExtractDeltaMessageChangesResponse> {
+        try {
+            const addedEmails: OutlookMessageObjectFull[] = [];
+            const deletedEmailIds: string[] = [];
+            for (const email of emails) {
+                if ('@removed' in email) {
+                    deletedEmailIds.push(email.id);
+                } else {
+                    addedEmails.push(email);
+                }
+            }
+            return { addedEmails, deletedEmailIds };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.extractMessagesChanges: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
     async getMessages(accountId: string): Promise<GetOutlookMessagesResponse> {
         try {
-            const response = await OutlookApi.getMessages(accountId);
-            const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, response);
-            // TODO: Get last sync cursor for outlook
-            return { emails: parsedEmails, lastSyncCursor: '' };
+            const { emails, deltaLink } = await this.loopAndGetOutlookDeltaMessages(accountId);
+            const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails);
+            return { emails: parsedEmails, deltaLink };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.getMessages: ${errorMessage}`, { error: err });
@@ -45,24 +86,49 @@ export class OutlookService {
         }
     }
 
-    async parseEmailsIntoPlainObjects(accountId: string, emailResponseData: OutlookMessagesResponse): Promise<EmailInput[]> {
+    private async loopAndGetOutlookDeltaMessages(accountId: string): Promise<{ emails: OutlookMessageObjectFull[]; deltaLink: string }> {
         try {
-            const parsedEmails: EmailInput[] = emailResponseData.value.map((email) => {
-                const emailObject: EmailInput = {
+            let url: string | null = `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES_DELTA}?$select=${OUTLOOK_API_PARAMS.DELTA_MESSAGES_FIELD}`;
+            const emails: OutlookMessageObjectFull[] = [];
+            let deltaLink: string = '';
+            while (url) {
+                const response = await OutlookApi.getMessages(accountId, url);
+                emails.push(...response.value);
+                if (response['@odata.deltaLink']) {
+                    deltaLink = response['@odata.deltaLink'];
+                }
+                if (!response['@odata.nextLink']) {
+                    url = null;
+                } else {
+                    url = response['@odata.nextLink'];
+                }
+            }
+            return { emails, deltaLink };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.loopAndGetOutlookDeltaMessages: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async parseEmailsIntoPlainObjects(accountId: string, emailResponseData: OutlookMessageObjectFull[]): Promise<Partial<EmailInput>[]> {
+        try {
+            const parsedEmails: Partial<EmailInput>[] = emailResponseData.map((email) => {
+                const emailObject: Partial<EmailInput> = {
                     accountId,
                     providerMessageId: email.id,
                     threadId: email.conversationId,
                     from: email.from.emailAddress.address,
                     to: email.toRecipients.map((val) => val.emailAddress.address).join(' '),
-                    cc: email.ccRecipients.map((val) => val.emailAddress.address).join(' '),
-                    bcc: email.bccRecipients.map((val) => val.emailAddress.address).join(' '),
+                    // cc: email.ccRecipients.map((val) => val.emailAddress.address).join(' '),
+                    // bcc: email.bccRecipients.map((val) => val.emailAddress.address).join(' '),
                     subject: email.subject,
-                    body: email.body.content,
-                    bodyPlain: compressString(email.body.content),
-                    bodyHtml: compressString(email.body.content),
+                    body: email.bodyPreview || '',
+                    // bodyPlain: compressString(email.body.content),
+                    // bodyHtml: compressString(email.body.content),
                     receivedAt: new Date(email.receivedDateTime),
                     isRead: email.isRead,
-                    folders: [email.parentFolderId],
+                    // folders: [email.parentFolderId],
                 };
                 return emailObject;
             });
