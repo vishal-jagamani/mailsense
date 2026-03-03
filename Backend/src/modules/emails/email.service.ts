@@ -1,6 +1,7 @@
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { GmailService } from '@providers/gmail/gmail.service.js';
+import { OutlookService } from '@providers/outlook/outlook.service.js';
 import { decompressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import { FilterQuery } from 'mongoose';
@@ -8,14 +9,16 @@ import { AccountProvider } from 'types/account.types.js';
 import { PaginatedDataResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
-import { EmailDocument } from './email.model.js';
+import { EmailDocument, EmailInput } from './email.model.js';
 import { DATE_RANGE, GetAllEmailsFilters, SearchEmailsParams } from './email.types.js';
 
 export class EmailService {
     private gmailService: GmailService;
+    private outlookService: OutlookService;
 
     constructor() {
         this.gmailService = new GmailService();
+        this.outlookService = new OutlookService();
     }
 
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
@@ -123,14 +126,19 @@ export class EmailService {
         }
     }
 
-    public async getEmail(emailId: string): Promise<EmailDocument | null> {
+    public async getEmail(emailId: string): Promise<EmailDocument | EmailInput | null> {
         try {
             const email = await EmailRepository.getEmail(emailId);
             if (!email) throw new Error('Email not found');
-            email.bodyHtml = decompressString(email.bodyHtml);
-            email.bodyPlain = decompressString(email.bodyPlain);
-            // email.body = decompressString(email.body);
-            return email;
+            const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
+            if (account?.provider === AccountProvider.OUTLOOK) {
+                const outlookEmailDetails = await this.outlookService.getMessageDetails(email.accountId, email.providerMessageId);
+                return outlookEmailDetails;
+            } else {
+                email.bodyHtml = decompressString(email.bodyHtml);
+                email.bodyPlain = decompressString(email.bodyPlain);
+                return email;
+            }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
