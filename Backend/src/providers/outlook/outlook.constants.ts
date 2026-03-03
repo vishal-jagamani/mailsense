@@ -9,5 +9,5 @@ export const OUTLOOK_APIs = {
 };
 
 export const OUTLOOK_API_PARAMS = {
-    DELTA_MESSAGES_FIELD: 'id,subject,from,toRecipients,receivedDateTime,isRead,bodyPreview,conversationId',
+    DELTA_MESSAGES_FIELD: 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,bodyPreview,conversationId',
 };

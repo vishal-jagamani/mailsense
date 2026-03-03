@@ -86,6 +86,18 @@ export class OutlookService {
         }
     }
 
+    async getMessageDetails(accountId: string, emailId: string): Promise<EmailInput> {
+        try {
+            const email = await OutlookApi.getMessageDetails(accountId, emailId);
+            const parsedEmail = await this.parseEmailDetailsIntoPlainObject(accountId, email);
+            return parsedEmail;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.getMessageDetails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
     private async loopAndGetOutlookDeltaMessages(accountId: string): Promise<{ emails: OutlookMessageObjectFull[]; deltaLink: string }> {
         try {
             let url: string | null = `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES_DELTA}?$select=${OUTLOOK_API_PARAMS.DELTA_MESSAGES_FIELD}`;
@@ -111,7 +123,10 @@ export class OutlookService {
         }
     }
 
-    async parseEmailsIntoPlainObjects(accountId: string, emailResponseData: OutlookMessageObjectFull[]): Promise<Partial<EmailInput>[]> {
+    async parseEmailsIntoPlainObjects(
+        accountId: string,
+        emailResponseData: OutlookMessageObjectFull[],
+    ): Promise<Partial<EmailInput>[] | EmailInput[]> {
         try {
             const parsedEmails: Partial<EmailInput>[] = emailResponseData.map((email) => {
                 const emailObject: Partial<EmailInput> = {
@@ -119,20 +134,43 @@ export class OutlookService {
                     providerMessageId: email.id,
                     threadId: email.conversationId,
                     from: email.from.emailAddress.address,
-                    to: email.toRecipients.map((val) => val.emailAddress.address).join(' '),
-                    // cc: email.ccRecipients.map((val) => val.emailAddress.address).join(' '),
-                    // bcc: email.bccRecipients.map((val) => val.emailAddress.address).join(' '),
+                    to: email.toRecipients.map((val) => val.emailAddress.address),
+                    cc: email.ccRecipients.map((val) => val.emailAddress.address),
+                    bcc: email.bccRecipients.map((val) => val.emailAddress.address),
                     subject: email.subject,
                     body: email.bodyPreview || '',
-                    // bodyPlain: compressString(email.body.content),
-                    // bodyHtml: compressString(email.body.content),
                     receivedAt: new Date(email.receivedDateTime),
                     isRead: email.isRead,
-                    // folders: [email.parentFolderId],
                 };
                 return emailObject;
             });
             return parsedEmails;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async parseEmailDetailsIntoPlainObject(accountId: string, email: OutlookMessageObjectFull): Promise<EmailInput> {
+        try {
+            const emailObject: EmailInput = {
+                accountId,
+                providerMessageId: email.id,
+                threadId: email.conversationId,
+                from: email.from.emailAddress.address,
+                to: email.toRecipients.map((val) => val.emailAddress.address),
+                cc: email.ccRecipients.map((val) => val.emailAddress.address),
+                bcc: email.bccRecipients.map((val) => val.emailAddress.address),
+                subject: email.subject,
+                body: email.bodyPreview || '',
+                bodyPlain: email.body.content,
+                bodyHtml: email.body.content,
+                receivedAt: new Date(email.receivedDateTime),
+                isRead: email.isRead,
+                folders: [email.parentFolderId],
+            };
+            return emailObject;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });

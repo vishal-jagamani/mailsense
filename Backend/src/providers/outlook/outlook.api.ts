@@ -7,7 +7,7 @@ import { logger } from '@utils/logger.js';
 import { AxiosRequestConfig } from 'axios';
 import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
-import { GetDeltaMessageChangesResponse, OutlookMessagesResponse, OutlookUserProfile } from './outlook.types.js';
+import { GetDeltaMessageChangesResponse, OutlookMessageObjectFull, OutlookMessagesResponse, OutlookUserProfile } from './outlook.types.js';
 
 export class OutlookApi {
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
@@ -124,6 +124,25 @@ export class OutlookApi {
                 },
             };
             const response: OutlookMessagesResponse = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.getMessages: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getMessageDetails(accountId: string, emailId: string): Promise<OutlookMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<OutlookMessageObjectFull>(options);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
