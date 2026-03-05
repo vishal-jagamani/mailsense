@@ -46,8 +46,9 @@
   - Modify labels for archive/star/unread, trash/delete
 - Outlook (`Backend/src/providers/outlook/*`)
   - OAuth token exchange/refresh
-  - Fetch profile/messages
-  - Sync/mutations are less complete than Gmail
+  - Fetch profile/messages and message details
+  - Delta-based sync support
+  - Inbox mutation support (delete/archive/unread/flag)
 - Auth0 (`Backend/src/providers/auth0/*`)
   - Management API token + user/profile/password operations
 
@@ -145,4 +146,5 @@
   - `Frontend/src/config/config.ts` uses `NEXT_PUBLIC_API_BASE_URL`
   - `Frontend/src/shared/constants/urls.ts` uses `NEXT_PUBLIC_API_URL` fallback `http://localhost:4000`
 - Backend auth middleware currently checks only token presence; token verification is marked TODO.
-- Outlook integration exists but mutation/sync parity is lower than Gmail.
+- Outlook backend sync and inbox mutations are implemented; frontend release availability may still be controlled by product rollout.
+- Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).

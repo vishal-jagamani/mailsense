@@ -40,7 +40,7 @@ const AccountsPage: React.FC = () => {
                 <div className="mt-2 flex h-full w-[98%] flex-col justify-center gap-6 rounded-xl">
                     <ProviderAccountList />
                 </div>
-                <div className="mt-36 md:mt-48 px-4">
+                <div className="mt-12 md:mt-24 px-4">
                     <MoreAccountProviderComingSoon />
                 </div>
             </div>
