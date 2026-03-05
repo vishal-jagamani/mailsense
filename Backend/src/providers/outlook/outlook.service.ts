@@ -10,6 +10,7 @@ import {
     OutlookMessageObjectFull,
     OutlookUserProfile,
 } from './outlook.types.js';
+import { EmailRepository } from '@modules/emails/email.repository.js';
 
 export class OutlookService {
     private outlookApi: OutlookApi;
@@ -174,6 +175,97 @@ export class OutlookService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async deleteEmails(emailIds: string[], accountId: string, trash?: boolean): Promise<void> {
+        try {
+            if (trash) {
+                for (const emailId of emailIds) {
+                    const movedMessage = await OutlookApi.deleteEmail(emailId, accountId);
+                    const email = await EmailRepository.getEmailsByProviderMessageIds([emailId], { folders: 1 });
+                    const folders = email?.[0]?.folders || [];
+
+                    // Update providerMessageId if it changed during move
+                    const updateData: Partial<EmailInput> = {
+                        folders: folders.includes('TRASH') ? folders : [...folders, 'TRASH'],
+                    };
+                    if (movedMessage?.id && movedMessage.id !== emailId) {
+                        updateData.providerMessageId = movedMessage.id;
+                    }
+
+                    await EmailRepository.updateEmailByProviderMessageId(emailId, updateData);
+                }
+            } else {
+                for (const emailId of emailIds) {
+                    await OutlookApi.deleteEmailPermanently(emailId, accountId);
+                }
+                await EmailRepository.deleteManyEmails(emailIds);
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async archiveEmails(emailIds: string[], accountId: string, archive: boolean): Promise<void> {
+        try {
+            for (const emailId of emailIds) {
+                const movedMessage = archive
+                    ? await OutlookApi.archiveEmail(emailId, accountId)
+                    : await OutlookApi.unarchiveEmail(emailId, accountId);
+
+                // Update providerMessageId if it changed during move
+                if (movedMessage?.id && movedMessage.id !== emailId) {
+                    await EmailRepository.updateEmailByProviderMessageId(emailId, {
+                        providerMessageId: movedMessage.id,
+                    });
+                }
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.archiveEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async unreadEmails(emailIds: string[], accountId: string, unread: boolean): Promise<void> {
+        try {
+            for (const emailId of emailIds) {
+                await OutlookApi.unreadEmail(emailId, accountId, unread);
+                await EmailRepository.updateEmailByProviderMessageId(emailId, {
+                    isRead: !unread,
+                });
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.unreadEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async flagEmails(emailIds: string[], accountId: string, flag: boolean): Promise<void> {
+        try {
+            for (const emailId of emailIds) {
+                await OutlookApi.flagEmail(emailId, accountId, flag);
+                const email = await EmailRepository.getEmailsByProviderMessageIds([emailId], { _id: 1, folders: 1 });
+                if (email.length > 0) {
+                    const folders = email[0].folders ?? [];
+                    const newFolders = flag ? [...new Set([...folders, 'Flagged'])] : folders.filter((folder) => folder !== 'Flagged');
+                    await EmailRepository.updateEmailByProviderMessageId(emailId, {
+                        folders: newFolders,
+                    });
+                }
+            }
+            return;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.flagEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }

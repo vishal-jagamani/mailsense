@@ -1,32 +1,46 @@
 'use client';
 
 import { MailCheck, Star, Trash2 } from 'lucide-react';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
+import DeleteModal from '@/modules/emails/components/DeleteModal';
 import { useStarEmailMutation, useUnreadEmailMutation } from '@/modules/emails/services/useEmailApi';
 import { useDeleteEmail } from '@/modules/home/services/useHomeApi';
 import APILoader from '@/shared/components/apiLoader';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
-import DeleteModal from '@/modules/emails/components/DeleteModal';
 
 interface AccountEmailMenuBarOptionsProps {
     emailIds: string[];
+    onRefetchEmails: () => void;
+    onResetSelection: () => void;
+    onResetPage: () => void;
 }
 
-const AccountEmailMenuBarOptions: React.FC<AccountEmailMenuBarOptionsProps> = ({ emailIds }) => {
+const AccountEmailMenuBarOptions: React.FC<AccountEmailMenuBarOptionsProps> = ({ emailIds, onRefetchEmails, onResetSelection, onResetPage }) => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const { mutate: deleteEmail, isPending: deleteEmailLoading } = useDeleteEmail();
-    const { mutate: starEmail, isPending: starEmailLoading } = useStarEmailMutation();
-    const { mutate: unreadEmail, isPending: unreadEmailLoading } = useUnreadEmailMutation();
+    const { mutate: deleteEmail, isPending: deleteEmailLoading, data: deleteEmailSuccess } = useDeleteEmail();
+    const { mutate: starEmail, isPending: starEmailLoading, data: starEmailSuccess } = useStarEmailMutation();
+    const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess } = useUnreadEmailMutation();
+
+    useEffect(() => {
+        const mutations = [
+            { success: starEmailSuccess },
+            { success: unreadEmailSuccess, hasStatus: true },
+            { success: deleteEmailSuccess, hasStatus: true },
+        ];
+
+        const hasSuccessfulMutation = mutations.some((mutation) => mutation.success && (!mutation.hasStatus || mutation.success.status));
+
+        if (hasSuccessfulMutation) {
+            onResetSelection();
+            onResetPage();
+            setTimeout(() => {
+                onRefetchEmails();
+            }, 0);
+        }
+    }, [starEmailSuccess, unreadEmailSuccess, deleteEmailSuccess]);
 
     const options = [
-        // {
-        //     id: 1,
-        //     label: 'Star',
-        //     icon: Star,
-        //     iconColor: 'text-yellow-500',
-        //     action: () => starEmail({ emailIds, star: true }),
-        // },
         {
             id: 2,
             label: 'Star',
@@ -76,7 +90,13 @@ const AccountEmailMenuBarOptions: React.FC<AccountEmailMenuBarOptionsProps> = ({
                     ))}
                 </div>
             </div>
-            <DeleteModal open={showDeleteModal} onOpenChange={setShowDeleteModal} onDelete={() => deleteEmail({ emailIds, trash: true })} />
+            <DeleteModal
+                open={showDeleteModal}
+                onOpenChange={setShowDeleteModal}
+                onDelete={() => {
+                    deleteEmail({ emailIds, trash: true });
+                }}
+            />
         </>
     );
 };

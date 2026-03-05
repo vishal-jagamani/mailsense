@@ -19,6 +19,16 @@ export enum OutlookMessageRemovedReason {
     UPDATED = 'updated',
 }
 
+export enum OutlookFolders {
+    INBOX = 'inbox',
+    SENT = 'sentitems',
+    ARCHIVE = 'archive',
+    DRAFTS = 'drafts',
+    DELETED = 'deleteditems',
+    SPAM = 'spam',
+    OUTBOX = 'outbox',
+}
+
 export interface OutlookMessageObjectFull {
     id: string;
     receivedDateTime: string;

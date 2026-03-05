@@ -7,7 +7,13 @@ import { logger } from '@utils/logger.js';
 import { AxiosRequestConfig } from 'axios';
 import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
-import { GetDeltaMessageChangesResponse, OutlookMessageObjectFull, OutlookMessagesResponse, OutlookUserProfile } from './outlook.types.js';
+import {
+    GetDeltaMessageChangesResponse,
+    OutlookFolders,
+    OutlookMessageObjectFull,
+    OutlookMessagesResponse,
+    OutlookUserProfile,
+} from './outlook.types.js';
 
 export class OutlookApi {
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
@@ -147,6 +153,137 @@ export class OutlookApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookApi.getMessages: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async deleteEmail(emailId: string, accountId: string) {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}/move`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    destinationId: OutlookFolders.DELETED,
+                },
+            };
+            const response = await apiRequest<OutlookMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.deleteEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async deleteEmailPermanently(emailId: string, accountId: string) {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}/permanentDelete`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<void>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.deleteEmailPermanently: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async archiveEmail(emailId: string, accountId: string) {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}/move`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    destinationId: OutlookFolders.ARCHIVE,
+                },
+            };
+            const response = await apiRequest<OutlookMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.archiveEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async unarchiveEmail(emailId: string, accountId: string) {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}/move`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    destinationId: OutlookFolders.INBOX,
+                },
+            };
+            const response = await apiRequest<OutlookMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.unarchiveEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async unreadEmail(emailId: string, accountId: string, unread: boolean) {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}`,
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    isRead: !unread,
+                },
+            };
+            const response = await apiRequest<OutlookMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.unreadEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async flagEmail(emailId: string, accountId: string, flag: boolean) {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}`,
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    flag: {
+                        flagStatus: flag ? 'flagged' : 'notFlagged',
+                    },
+                },
+            };
+            const response = await apiRequest<OutlookMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.flagEmail: ${errorMessage}`, { error: err });
             throw err;
         }
     }
