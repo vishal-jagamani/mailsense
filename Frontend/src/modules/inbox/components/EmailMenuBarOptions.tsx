@@ -2,6 +2,7 @@
 
 import { MailCheck, Star, Trash } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 import DeleteModal from '@/modules/emails/components/DeleteModal';
 import { useStarEmailMutation, useUnreadEmailMutation } from '@/modules/emails/services/useEmailApi';
@@ -11,35 +12,46 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 
 interface EmailMenuBarOptionsProps {
     emailIds: string[];
-    onRefetchEmails: () => void;
-    onResetSelection: () => void;
-    onResetPage: () => void;
 }
 
-const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, onRefetchEmails, onResetSelection, onResetPage }) => {
+const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds }) => {
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
-    const { mutate: starEmail, isPending: starEmailLoading, data: starEmailSuccess } = useStarEmailMutation();
-    const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess } = useUnreadEmailMutation();
-    const { mutate: deleteEmail, isPending: deleteEmailLoading, data: deleteEmailSuccess } = useDeleteEmail();
+    const { mutate: starEmail, isPending: starEmailLoading, data: starEmailSuccess, error: starEmailError } = useStarEmailMutation();
+    const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess, error: unreadEmailError } = useUnreadEmailMutation();
+    const { mutate: deleteEmail, isPending: deleteEmailLoading, data: deleteEmailSuccess, error: deleteEmailError } = useDeleteEmail();
+
+    const mutationStates = [
+        {
+            success: starEmailSuccess,
+            error: starEmailError,
+            successMsg: 'Email starred successfully',
+            errorMsg: 'Error starring email',
+        },
+        {
+            success: unreadEmailSuccess,
+            error: unreadEmailError,
+            successMsg: 'Email marked unread successfully',
+            errorMsg: 'Error marking email unread',
+        },
+        {
+            success: deleteEmailSuccess,
+            error: deleteEmailError,
+            successMsg: 'Email deleted successfully',
+            errorMsg: 'Error deleting email',
+        },
+    ];
 
     useEffect(() => {
-        const mutations = [
-            { success: starEmailSuccess },
-            { success: unreadEmailSuccess, hasStatus: true },
-            { success: deleteEmailSuccess, hasStatus: true },
-        ];
-
-        const hasSuccessfulMutation = mutations.some((mutation) => mutation.success && (!mutation.hasStatus || mutation.success.status));
-
-        if (hasSuccessfulMutation) {
-            onResetSelection();
-            onResetPage();
-            setTimeout(() => {
-                onRefetchEmails();
-            }, 0);
-        }
-    }, [starEmailSuccess, unreadEmailSuccess, deleteEmailSuccess]);
+        mutationStates.forEach((m) => {
+            if (m.success) {
+                toast.success(m.successMsg, { duration: 3000 });
+            }
+            if (m.error) {
+                toast.error(m.errorMsg, { duration: 3000 });
+            }
+        });
+    }, [starEmailSuccess, starEmailError, unreadEmailSuccess, unreadEmailError, deleteEmailSuccess, deleteEmailError]);
 
     const options = [
         {
@@ -54,16 +66,23 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, onR
             label: 'Mark as Unread',
             icon: MailCheck,
             iconColor: 'text-blue-500',
-            action: () => unreadEmail({ emailIds, unread: true }),
+            action: () => {
+                unreadEmail({ emailIds, unread: true });
+            },
         },
+        // {
+        //     id: 2,
+        //     label: 'Forward',
+        //     icon: Forward,
+        //     action: () => console.log('Forward'),
+        // },
+
         {
             id: 3,
             label: 'Delete',
             icon: Trash,
             iconColor: 'text-red-500',
-            action: () => {
-                setShowDeleteModal(true);
-            },
+            action: () => setShowDeleteModal(true),
         },
     ];
 
@@ -91,13 +110,7 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, onR
                             </Tooltip>
                         </div>
                     ))}
-                    <DeleteModal
-                        open={showDeleteModal}
-                        onOpenChange={setShowDeleteModal}
-                        onDelete={() => {
-                            deleteEmail({ emailIds, trash: true });
-                        }}
-                    />
+                    <DeleteModal open={showDeleteModal} onOpenChange={setShowDeleteModal} onDelete={() => deleteEmail({ emailIds, trash: true })} />
                 </div>
             </div>
         </>
