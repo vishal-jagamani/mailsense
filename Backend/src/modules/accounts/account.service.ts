@@ -231,27 +231,26 @@ export class AccountsService {
                     description: 'Given account ID does not exist',
                     suggestedAction: 'Please check the account ID',
                 });
-            this.startAccountSync(accountId, account);
-            return { status: true, message: 'Account sync started!' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async startAccountSync(accountId: string, account: AccountDocument): Promise<void> {
-        try {
             if (account.provider === AccountProvider.GMAIL) {
-                await this.syncGmailAccount(accountId, account);
+                this.syncGmailAccount(accountId, account)
+                    .then(() => {
+                        logger.info('Account Syncing Completed', { accountId });
+                    })
+                    .catch((err) => {
+                        const errorMessage = err instanceof Error ? err.message : String(err);
+                        logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });
+                        throw err;
+                    });
+                return { status: true, message: 'Account sync started!' };
             } else if (account.provider === AccountProvider.OUTLOOK) {
-                await this.syncOutlookAccount(accountId, account);
+                // const response = await this.syncOutlookAccount(accountId, account);
+                return { status: true, message: 'Account sync started!' };
             } else {
                 throw new Error('Invalid provider');
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.startAccountSync: ${errorMessage}`, { error: err });
+            logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });
             throw err;
         }
     }
@@ -274,52 +273,15 @@ export class AccountsService {
             if (newEmails.length) {
                 await EmailRepository.upsertEmailsInBulk(newEmails);
             }
-            await this.updateAccountSyncDetails(accountId, newHistoryId);
+            const updateAccountSyncDetails: Partial<AccountInput> = {
+                lastSyncedAt: Date.now(),
+                lastSyncCursor: newHistoryId,
+            };
+            await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
             return { status: true, message: 'Account synced successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.getAccountEmailsForSyncingAccount: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async syncOutlookAccount(accountId: string, account: AccountDocument): Promise<UpdateAPIResponse> {
-        try {
-            const historyDetails = await this.outlookService.getMessagesAfterLastDelta(accountId, account.lastSyncCursor);
-            let newEmails: Partial<EmailInput>[] = [];
-            let newDeltaLink: string = '';
-            if (historyDetails) {
-                newEmails = historyDetails.addedEmails;
-                newDeltaLink = historyDetails.newDeltaLink;
-                await EmailRepository.deleteManyEmails(historyDetails.deletedEmailIds);
-            } else {
-                const initialEmails = await this.outlookService.getMessages(accountId);
-                newEmails = initialEmails.emails;
-                newDeltaLink = initialEmails.deltaLink;
-                await EmailRepository.deleteEmailsByAccountId(accountId);
-            }
-            if (newEmails.length) {
-                await EmailRepository.upsertEmailsInBulk(newEmails);
-            }
-            await this.updateAccountSyncDetails(accountId, newDeltaLink);
-            return { status: true, message: 'Account synced successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.syncOutlookAccount: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async updateAccountSyncDetails(accountId: string, lastSyncCursor: string): Promise<void> {
-        try {
-            const updateAccountSyncDetails: Partial<AccountInput> = {
-                lastSyncedAt: Date.now(),
-                lastSyncCursor,
-            };
-            await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.updateAccountSyncDetails: ${errorMessage}`, { error: err });
             throw err;
         }
     }

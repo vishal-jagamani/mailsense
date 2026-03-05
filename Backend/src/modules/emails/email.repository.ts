@@ -2,7 +2,7 @@ import { AnyBulkWriteOperation, FilterQuery, FlattenMaps, ProjectionType, SortOr
 import { Email, EmailDocument, EmailInput } from './email.model.js';
 
 export class EmailRepository {
-    public static async upsertEmailsInBulk(emails: Partial<EmailInput>[]) {
+    public static async upsertEmailsInBulk(emails: EmailInput[]) {
         if (emails.length === 0) return [];
         const ops: AnyBulkWriteOperation[] = emails.map((email) => ({
             updateOne: {

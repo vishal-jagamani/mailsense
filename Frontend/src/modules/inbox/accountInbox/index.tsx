@@ -11,9 +11,9 @@ import APILoader from '@/shared/components/apiLoader';
 import SearchHeader from '@/shared/components/inputs/SearchHeader';
 import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
+import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 import { GetAllEmailsFilters } from '@/shared/types/inbox.types';
 import { useAuthStore } from '@/store';
@@ -104,17 +104,9 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
         setPageSize(newSize);
     };
 
-    const handleEmailSelect = useCallback((emailIds: string[]) => {
+    const handleEmailSelect = (emailIds: string[]) => {
         setSelectedEmails(emailIds);
-    }, []);
-
-    const handleResetSelection = useCallback(() => {
-        setSelectedEmails([]);
-    }, []);
-
-    const handleResetPage = useCallback(() => {
-        setPage(1);
-    }, []);
+    };
 
     return (
         <>
@@ -127,12 +119,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                             onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
                         />
                         <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
-                        <AccountEmailMenuBarOptions
-                            emailIds={selectedEmails}
-                            onRefetchEmails={fetchEmailsData}
-                            onResetSelection={handleResetSelection}
-                            onResetPage={handleResetPage}
-                        />
+                        <AccountEmailMenuBarOptions emailIds={selectedEmails} />
                     </div>
                     <div></div>
                     <div className="flex h-[calc(110vh-250px)] w-full flex-col">
