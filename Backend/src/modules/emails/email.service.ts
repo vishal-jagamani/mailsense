@@ -170,11 +170,11 @@ export class EmailService {
 
     public async deleteEmail(emailIds: string[], trash?: boolean): Promise<UpdateAPIResponse> {
         try {
-            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            if (!emails.length) {
+            const emailList = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emailList.length) {
                 throw new Error('Email not found');
             }
-            const groupedEmails = Object.groupBy(emails, (item) => item.accountId);
+            const groupedEmails = Object.groupBy(emailList, (item) => item.accountId);
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
@@ -185,29 +185,28 @@ export class EmailService {
                         trash,
                     );
                 } else if (account.provider === AccountProvider.OUTLOOK) {
-                    // Outlook provider deletion
-                    // await this.outlookService.deleteEmails(
-                    //     emails.map((email) => email.providerMessageId),
-                    //     accountId,
-                    //     trash,
-                    // );
+                    await this.outlookService.deleteEmails(
+                        emails.map((email) => email.providerMessageId),
+                        accountId,
+                        trash,
+                    );
                 }
             }
             return { status: true, message: 'Email deleted successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            logger.error(`Error in EmailService.deleteEmail: ${errorMessage}`, { error: err });
             throw err;
         }
     }
 
     public async archiveEmails(emailIds: string[], archive: boolean): Promise<UpdateAPIResponse> {
         try {
-            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            if (!emails.length) {
+            const emailList = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emailList.length) {
                 throw new Error('Email not found');
             }
-            const groupedEmails = Object.groupBy(emails, (item) => item.accountId);
+            const groupedEmails = Object.groupBy(emailList, (item) => item.accountId);
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
@@ -218,29 +217,28 @@ export class EmailService {
                         archive,
                     );
                 } else if (account.provider === AccountProvider.OUTLOOK) {
-                    // Outlook provider deletion
-                    // await this.outlookService.deleteEmails(
-                    //     emails.map((email) => email.providerMessageId),
-                    //     accountId,
-                    //     trash,
-                    // );
+                    await this.outlookService.archiveEmails(
+                        emails.map((email) => email.providerMessageId),
+                        accountId,
+                        archive,
+                    );
                 }
             }
             return { status: true, message: 'Emails archived successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            logger.error(`Error in EmailService.archiveEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }
 
     public async starEmails(emailIds: string[], star: boolean): Promise<UpdateAPIResponse> {
         try {
-            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            if (!emails.length) {
+            const emailList = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emailList.length) {
                 throw new Error('Email not found');
             }
-            const groupedEmails = Object.groupBy(emails, (item) => item.accountId);
+            const groupedEmails = Object.groupBy(emailList, (item) => item.accountId);
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
@@ -251,29 +249,28 @@ export class EmailService {
                         star,
                     );
                 } else if (account.provider === AccountProvider.OUTLOOK) {
-                    // Outlook provider deletion
-                    // await this.outlookService.deleteEmails(
-                    //     emails.map((email) => email.providerMessageId),
-                    //     accountId,
-                    //     trash,
-                    // );
+                    await this.outlookService.flagEmails(
+                        emails.map((email) => email.providerMessageId),
+                        accountId,
+                        star,
+                    );
                 }
             }
             return { status: true, message: `${star ? 'Starred' : 'Unstarred'} emails successfully` };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            logger.error(`Error in EmailService.starEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }
 
     public async unreadEmails(emailIds: string[], unread: boolean): Promise<UpdateAPIResponse> {
         try {
-            const emails = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            if (!emails.length) {
+            const emailList = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emailList.length) {
                 throw new Error('Email not found');
             }
-            const groupedEmails = Object.groupBy(emails, (item) => item.accountId);
+            const groupedEmails = Object.groupBy(emailList, (item) => item.accountId);
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
@@ -284,18 +281,17 @@ export class EmailService {
                         unread,
                     );
                 } else if (account.provider === AccountProvider.OUTLOOK) {
-                    // Outlook provider deletion
-                    // await this.outlookService.deleteEmails(
-                    //     emails.map((email) => email.providerMessageId),
-                    //     accountId,
-                    //     trash,
-                    // );
+                    await this.outlookService.unreadEmails(
+                        emails.map((email) => email.providerMessageId),
+                        accountId,
+                        unread,
+                    );
                 }
             }
             return { status: true, message: 'Unread emails successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
+            logger.error(`Error in EmailService.unreadEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }
