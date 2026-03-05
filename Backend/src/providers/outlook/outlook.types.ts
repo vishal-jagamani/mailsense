@@ -8,9 +8,25 @@ export interface OutlookUserProfile {
     mail: string;
 }
 
-interface OutlookMessageEmailAddress {
+type OutlookMessageEmailAddress = {
     name: string;
     address: string;
+};
+
+export enum OutlookMessageRemovedReason {
+    CREATED = 'created',
+    DELETED = 'deleted',
+    UPDATED = 'updated',
+}
+
+export enum OutlookFolders {
+    INBOX = 'inbox',
+    SENT = 'sentitems',
+    ARCHIVE = 'archive',
+    DRAFTS = 'drafts',
+    DELETED = 'deleteditems',
+    SPAM = 'spam',
+    OUTBOX = 'outbox',
 }
 
 export interface OutlookMessageObjectFull {
@@ -35,6 +51,9 @@ export interface OutlookMessageObjectFull {
     toRecipients: { emailAddress: OutlookMessageEmailAddress }[];
     ccRecipients: { emailAddress: OutlookMessageEmailAddress }[];
     bccRecipients: { emailAddress: OutlookMessageEmailAddress }[];
+    // '@removed': {
+    //     reason: OutlookMessageRemovedReason;
+    // };
 }
 
 // API Responses
@@ -42,9 +61,27 @@ export interface OutlookMessagesResponse {
     '@odata.context': string;
     value: OutlookMessageObjectFull[];
     '@odata.nextLink': string;
+    '@odata.deltaLink': string;
 }
 
 export interface GetOutlookMessagesResponse {
-    emails: EmailInput[];
-    lastSyncCursor: string;
+    emails: Partial<EmailInput>[];
+    deltaLink: string;
+}
+
+export interface GetOutlookDeltaMessagesResponse {
+    addedEmails: Partial<EmailInput>[];
+    deletedEmailIds: string[];
+    newDeltaLink: string;
+}
+
+export interface GetDeltaMessageChangesResponse {
+    '@odata.context': string;
+    '@odata.deltaLink': string;
+    value: OutlookMessageObjectFull[];
+}
+
+export interface ExtractDeltaMessageChangesResponse {
+    addedEmails: OutlookMessageObjectFull[];
+    deletedEmailIds: string[];
 }

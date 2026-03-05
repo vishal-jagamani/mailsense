@@ -108,9 +108,17 @@ const InboxPage: React.FC = () => {
         setPageSize(newSize);
     };
 
-    const handleEmailSelect = (emailIds: string[]) => {
+    const handleEmailSelect = useCallback((emailIds: string[]) => {
         setSelectedEmails(emailIds);
-    };
+    }, []);
+
+    const handleResetSelection = useCallback(() => {
+        setSelectedEmails([]);
+    }, []);
+
+    const handleResetPage = useCallback(() => {
+        setPage(1);
+    }, []);
 
     return (
         <>
@@ -124,7 +132,12 @@ const InboxPage: React.FC = () => {
                             onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
                         />
                         <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
-                        <EmailMenuBarOptions emailIds={selectedEmails} />
+                        <EmailMenuBarOptions
+                            emailIds={selectedEmails}
+                            onRefetchEmails={fetchEmailsData}
+                            onResetSelection={handleResetSelection}
+                            onResetPage={handleResetPage}
+                        />
                     </div>
                     <div></div>
                     <div className="flex h-[calc(110vh-250px)] w-full flex-col">
