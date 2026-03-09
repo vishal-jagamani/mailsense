@@ -9,6 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useAuthStore } from '@/store';
 import GmailIcon from '@assets/icons/gmail/icons8-gmail-144.png';
 import OutlookIcon from '@assets/icons/outlook/icons8-outlook-144.svg';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 interface PageHeaderProps {
     title: string;
@@ -27,6 +28,7 @@ const iconMapping = [
 ];
 
 const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions, dropdownMenuItemClick }) => {
+    const isMobile = useIsMobile();
     const { user: currentUser } = useAuthStore();
     const { syncAllAccounts } = useSyncAllAccounts();
     const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -46,33 +48,44 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
 
     return (
         <>
-            <div className="border-muted flex w-full items-center justify-between border-b-2 pb-2">
-                <p className="ml-4 text-xl font-bold">{title}</p>
+            <div className={`${isMobile ? 'justify-end' : 'justify-between'} border-muted flex w-full items-center border-b-2 pb-2`}>
+                {!isMobile && <p className="text-md ml-2 font-bold text-nowrap md:ml-4 md:text-xl">{title}</p>}
                 {button && (
                     <>
-                        <div className="flex items-center gap-4">
-                            <Button variant="outline" className="cursor-pointer" onClick={handleSyncAllAccounts} disabled={isSyncing}>
+                        <div className="flex items-center gap-2 md:gap-4">
+                            <Button
+                                variant="outline"
+                                className={`cursor-pointer ${isMobile ? 'py-4 text-xs' : 'py-5 text-sm'}`}
+                                onClick={handleSyncAllAccounts}
+                                disabled={isSyncing}
+                                size={isMobile ? 'xs' : 'sm'}
+                            >
                                 {isSyncing ? 'Syncing...' : 'Sync All Accounts'}
                             </Button>
                             <DropdownMenu>
-                                <DropdownMenuTrigger className="mr-4 border-0 select-none" asChild>
-                                    <Button className="bg-primary text-md cursor-pointer font-semibold">Connect Account</Button>
+                                <DropdownMenuTrigger className="mr-2 border-0 select-none md:mr-4" asChild>
+                                    <Button
+                                        className={`bg-primary cursor-pointer font-semibold ${isMobile ? 'py-4 text-xs' : 'py-5 text-sm'}`}
+                                        size={isMobile ? 'xs' : 'sm'}
+                                    >
+                                        Connect Account
+                                    </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-40">
+                                <DropdownMenuContent className="w-16 md:w-full">
                                     {dropdownOptions?.map((option) => {
                                         return (
                                             <DropdownMenuItem
                                                 key={option.name}
-                                                className="cursor-pointer gap-2"
+                                                className={`cursor-pointer ${isMobile ? 'gap-1' : 'gap-2'}`}
                                                 onClick={() => dropdownMenuItemClick?.(option)}
                                             >
                                                 <Image
                                                     draggable={false}
                                                     src={iconMapping.find((val) => val.name === option.name)?.icon}
                                                     alt={option.name}
-                                                    className="size-5"
+                                                    className={isMobile ? 'size-5' : 'size-5'}
                                                 />
-                                                <p className="text-md font-bold">{option.displayName}</p>
+                                                <p className={`${isMobile ? 'text-xs ' : 'text-sm'} font-semibold`}>{option.displayName}</p>
                                             </DropdownMenuItem>
                                         );
                                     })}

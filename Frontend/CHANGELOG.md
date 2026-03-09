@@ -7,6 +7,21 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-03-09
+
+### Added
+- Added a shared `useIsMobile` hook for viewport-aware behavior across core UI modules.
+
+### Changed
+- Improved mobile responsiveness across inbox, account inbox, email details, accounts, settings, page header, breadcrumbs, and pagination components.
+- Updated inbox mobile layout to better organize search, filters, and bulk actions.
+- Updated email list table rendering for mobile with consolidated details and optimized date/action column sizing.
+- Updated account and settings layouts for better small-screen spacing and width behavior.
+- Frontend dev server script now binds to `0.0.0.0` for easier device/LAN testing during development.
+
+### Fixed
+- Reduced small-screen overflow/clipping issues in inbox and email details layouts by adjusting container heights, paddings, and control sizing.
+
 ## [1.1.0] - 2026-03-05
 
 ### Changed
@@ -58,6 +73,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0
 [1.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.0.0
