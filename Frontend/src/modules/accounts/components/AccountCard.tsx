@@ -44,7 +44,7 @@ const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
 
     return (
         <>
-            <div className="bg-card flex size-2 h-16 w-80 max-w-80 items-center justify-center rounded-xl border p-4">
+            <div className="bg-card flex size-2 h-16 w-full md:w-80 md:max-w-80 items-center justify-center rounded-xl border p-4">
                 <div className="flex w-full items-center gap-2">
                     <div className="flex items-center">
                         <Image

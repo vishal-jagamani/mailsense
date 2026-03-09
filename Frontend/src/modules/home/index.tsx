@@ -1,6 +1,7 @@
 'use client';
 
 import APILoader from '@/shared/components/apiLoader';
+import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
 import { GetEmailsResponse } from '@/shared/types/email.types';
@@ -10,7 +11,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import EmailListTable from './components/EmailListTable';
 import { useFetchEmails } from './services/useHomeApi';
-import PaginationComponent from '@/shared/components/table/Pagination';
 
 const HomePage = () => {
     const { user } = useAuthStore();
