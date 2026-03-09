@@ -13,6 +13,7 @@ import {
 } from '@/shared/ui/pagination';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import React, { useEffect, useState } from 'react';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 interface PaginationProps {
     total: number;
@@ -23,6 +24,7 @@ interface PaginationProps {
 }
 
 const PaginationComponent: React.FC<PaginationProps> = ({ total, currentPage, onPageChange, onPageSizeChange, pageSize = EMAILS_PAGE_SIZE }) => {
+    const isMobile = useIsMobile();
     const totalPages: number = Math.ceil(total / pageSize);
     const [pagesToShow, setPagesToShow] = useState<number[]>([]);
     const [localPageSize, setLocalPageSize] = useState(pageSize);
@@ -65,8 +67,8 @@ const PaginationComponent: React.FC<PaginationProps> = ({ total, currentPage, on
     };
     return (
         <>
-            <div className="flex w-full justify-end">
-                <div className="flex">
+            <div className={`flex w-full ${isMobile ? 'justify-center py-2' : 'justify-end'}`}>
+                <div className={`flex ${isMobile ? 'flex-col items-center gap-2' : ''}`}>
                     <Pagination className="select-none">
                         <PaginationContent>
                             <PaginationItem className={`${currentPage === 1 ? 'pointer-events-none opacity-50' : ''} cursor-pointer`}>
@@ -110,24 +112,26 @@ const PaginationComponent: React.FC<PaginationProps> = ({ total, currentPage, on
                             </PaginationItem>
                         </PaginationContent>
                     </Pagination>
-                    <Field orientation="horizontal" className="w-fit">
-                        <FieldLabel htmlFor="select-rows-per-page" className="text-nowrap">
-                            Rows per page
-                        </FieldLabel>
-                        <Select defaultValue={localPageSize.toString()} onValueChange={handlePageSizeChange}>
-                            <SelectTrigger className="w-20" id="select-rows-per-page">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent align="start">
-                                <SelectGroup>
-                                    <SelectItem value="10">10</SelectItem>
-                                    <SelectItem value="20">20</SelectItem>
-                                    <SelectItem value="50">50</SelectItem>
-                                    <SelectItem value="100">100</SelectItem>
-                                </SelectGroup>
-                            </SelectContent>
-                        </Select>
-                    </Field>
+                    {!isMobile && (
+                        <Field orientation="horizontal" className="w-fit">
+                            <FieldLabel htmlFor="select-rows-per-page" className="text-nowrap">
+                                Rows per page
+                            </FieldLabel>
+                            <Select defaultValue={localPageSize.toString()} onValueChange={handlePageSizeChange}>
+                                <SelectTrigger className="w-20" id="select-rows-per-page">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent align="start">
+                                    <SelectGroup>
+                                        <SelectItem value="10">10</SelectItem>
+                                        <SelectItem value="20">20</SelectItem>
+                                        <SelectItem value="50">50</SelectItem>
+                                        <SelectItem value="100">100</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                    )}
                 </div>
             </div>
         </>

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+## [1.1.1] - 2026-03-09
+
+### Added
+- Improved mobile responsiveness across key screens, including inbox, account inbox, email details, accounts, and settings.
+
+### Changed
+- Inbox list, filter/action bar, and pagination behaviors were updated for better mobile usability.
+- Email list responses now include plain-text preview content to improve message snippet rendering in list views.
+
 ## [1.1.0] - 2026-03-05
 
 ### Outlook connector support for account syncing and email details retrieval.
@@ -23,6 +34,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0
 [1.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.0.0

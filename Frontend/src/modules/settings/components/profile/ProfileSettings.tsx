@@ -14,8 +14,10 @@ import { ProfileSettingsDataObject } from '../../settings.types';
 import AccountDeletionModal from './AccountDeletionModal';
 import ChangePassword from './ChangePassword';
 import { MESSAGES } from '@/shared/constants';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 const ProfileSettings: React.FC = () => {
+    const isMobile = useIsMobile();
     const userId = useAuthStore((state) => state.user?.id);
     const [profileSettingsData, setProfileSettingsData] = useState<ProfileSettingsDataObject | null>(null);
     const [showChangePasswordModal, setShowChangePasswordModal] = useState<boolean>(false);
@@ -92,12 +94,13 @@ const ProfileSettings: React.FC = () => {
         <>
             <div className="bg-sidebar relative flex w-full flex-col gap-6 rounded-md border p-4">
                 <APILoader show={updateProfileSettingsLoading} size="small" />
-                <div className="grid w-4/5 grid-cols-2 gap-10">
+                <div className={`${isMobile ? 'flex-col space-y-5' : 'grid grid-cols-2'} w-full md:gap-10`}>
                     <TextInput
                         type="text"
                         label="Name"
                         value={profileSettingsData?.name || ''}
                         onChange={(value) => setProfileSettingsData({ ...profileSettingsData, name: value })}
+                        className="w-full"
                     />
                     <TextInput
                         type="email"
@@ -120,6 +123,7 @@ const ProfileSettings: React.FC = () => {
                                 },
                             })
                         }
+                        className="w-full"
                     />
                 </div>
                 <div className="flex">
