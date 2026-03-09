@@ -64,7 +64,7 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
 
     return (
         <>
-            <div className="flex h-full w-full px-4 py-2 pb-12">
+            <div className="flex h-full w-full px-4 py-2 pb-16 md:pb-12">
                 <div className="bg-sidebar relative flex h-full w-full flex-col overflow-hidden rounded-md">
                     <APILoader show={unreadEmailLoading} />
                     <EmailMenuBarOptions

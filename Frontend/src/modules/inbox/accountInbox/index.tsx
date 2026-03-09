@@ -13,6 +13,7 @@ import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
 import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 import { GetAllEmailsFilters } from '@/shared/types/inbox.types';
@@ -25,6 +26,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user } = useAuthStore();
+    const isMobile = useIsMobile();
 
     const [page, setPage] = useState(() => {
         const pageParam = searchParams.get('page');
@@ -135,7 +137,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                         />
                     </div>
                     <div></div>
-                    <div className="flex h-[calc(110vh-250px)] w-full flex-col">
+                    <div className={`flex w-full flex-col ${isMobile ? 'h-[calc(100vh-200px)]' : 'h-[calc(100vh-150px)]'}`}>
                         <EmailListTable data={emailsData?.data || []} page={page} selectedEmails={selectedEmails} onEmailSelect={handleEmailSelect} />
                     </div>
                     <PaginationComponent

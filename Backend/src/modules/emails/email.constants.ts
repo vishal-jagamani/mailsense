@@ -11,6 +11,7 @@ export const EMAIL_LIST_DB_FIELD_MAPPING: EmailListDBFieldMapping = {
             isRead: 1,
             providerMessageId: 1,
             accountId: 1,
+            bodyPlain: 1,
         },
     },
     SORT: {

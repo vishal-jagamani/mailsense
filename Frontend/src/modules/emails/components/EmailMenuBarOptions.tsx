@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useDeleteEmail } from '@/modules/home/services/useHomeApi';
 import APILoader from '@/shared/components/apiLoader';
 import { HOME_ROUTES } from '@/shared/constants';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { useStarEmailMutation, useUnreadEmailMutation } from '../services/useEmailApi';
 import DeleteModal from './DeleteModal';
@@ -19,6 +20,7 @@ interface EmailMenuBarOptionsProps {
 }
 
 const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onManualUnreadOperation }) => {
+    const isMobile = useIsMobile();
     const router = useRouter();
     const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
 
@@ -118,13 +120,13 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onMa
     return (
         <>
             <div className="bg-sidebar sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md px-4">
-                <ArrowLeft size={18} onClick={() => router.back()} className="cursor-pointer" />
+                <ArrowLeft size={isMobile ? 16 : 18} onClick={() => router.back()} className="cursor-pointer" />
                 <div className="flex items-center gap-6">
                     {options.map((option) => (
                         <div key={option.id} className="flex items-center">
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <option.icon size={18} onClick={option.action} className={`cursor-pointer ${option.iconColor ?? ''}`} />
+                                    <option.icon size={isMobile ? 16: 18} onClick={option.action} className={`cursor-pointer ${option.iconColor ?? ''}`} />
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p className="text-md font-semibold">{option.label}</p>

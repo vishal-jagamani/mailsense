@@ -11,6 +11,7 @@ import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
 import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 import { GetAllEmailsFilters } from '@/shared/types/inbox.types';
@@ -33,6 +34,7 @@ const InboxPage: React.FC = () => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { user } = useAuthStore();
+    const isMobile = useIsMobile();
 
     const [page, setPage] = useState(() => {
         const pageParam = searchParams.get('page');
@@ -125,22 +127,43 @@ const InboxPage: React.FC = () => {
             <div className="flex items-center justify-center gap-4 px-4 py-2">
                 <div className="flex h-full w-full flex-col items-center justify-center gap-4">
                     <APILoader show={isLoadingEmails || accountsLoading} />
-                    <div className="flex w-full items-center gap-2">
-                        <EmailListFilter
-                            accounts={accounts || []}
-                            filter={getAllEmailsFilters}
-                            onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
-                        />
-                        <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
-                        <EmailMenuBarOptions
-                            emailIds={selectedEmails}
-                            onRefetchEmails={fetchEmailsData}
-                            onResetSelection={handleResetSelection}
-                            onResetPage={handleResetPage}
-                        />
-                    </div>
-                    <div></div>
-                    <div className="flex h-[calc(110vh-250px)] w-full flex-col">
+                    {isMobile ? (
+                        <div className="flex w-full flex-col items-center gap-2">
+                            <div className="w-full">
+                                <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
+                            </div>
+                            <div className="flex w-full justify-between">
+                                <EmailListFilter
+                                    accounts={accounts || []}
+                                    filter={getAllEmailsFilters}
+                                    onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
+                                />
+                                <EmailMenuBarOptions
+                                    emailIds={selectedEmails}
+                                    onResetSelection={handleResetSelection}
+                                    onResetPage={handleResetPage}
+                                    onRefetchEmails={fetchEmailsData}
+                                />
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex w-full items-center gap-2">
+                            <EmailListFilter
+                                accounts={accounts || []}
+                                filter={getAllEmailsFilters}
+                                onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
+                            />
+                            <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
+                            <EmailMenuBarOptions
+                                emailIds={selectedEmails}
+                                onRefetchEmails={fetchEmailsData}
+                                onResetSelection={handleResetSelection}
+                                onResetPage={handleResetPage}
+                            />
+                        </div>
+                    )}
+                    {/* <div></div> */}
+                    <div className={`flex w-full flex-col ${isMobile ? 'h-[calc(100vh-220px)]' : 'h-[calc(100vh-150px)]'}`}>
                         <EmailListTable data={emailsData?.data || []} page={page} selectedEmails={selectedEmails} onEmailSelect={handleEmailSelect} />
                     </div>
                     <PaginationComponent

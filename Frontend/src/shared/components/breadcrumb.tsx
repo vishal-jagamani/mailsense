@@ -17,7 +17,7 @@ const BreadcrumbComponent: React.FC = () => {
                             <React.Fragment key={index}>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href={item.url}>{item.title}</Link>
+                                        <Link href={item.url} className="text-xs">{item.title}</Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 {index < breadcrumbItems.length - 1 && <BreadcrumbSeparator />}

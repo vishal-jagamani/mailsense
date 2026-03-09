@@ -13,9 +13,9 @@ const IndexPage: React.FC = () => {
 
     return (
         <>
-            <div className="flex h-screen w-screen items-center justify-center gap-4">
+            <div className="flex h-screen w-screen items-center justify-center">
                 <AuroraBackgroundDemo />
-                <Card className="z-1 h-44 w-96 justify-around rounded-2xl border-0 bg-[#121212]">
+                <Card className="z-1 h-44 w-96 justify-around rounded-2xl border-0">
                     <CardHeader>
                         <CardTitle>MailSense</CardTitle>
                         <CardDescription>Unified Inbox. Intelligent Focus</CardDescription>
