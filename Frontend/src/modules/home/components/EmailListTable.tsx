@@ -8,6 +8,7 @@ import { Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { useDeleteEmail } from '../services/useHomeApi';
+import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 interface EmailListTableProps {
     data: Email[];
@@ -17,6 +18,7 @@ interface EmailListTableProps {
 }
 
 const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEmails, onEmailSelect }) => {
+    const isMobile = useIsMobile();
     const router = useRouter();
 
     const { mutateAsync } = useDeleteEmail();
@@ -47,9 +49,18 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                                         className="cursor-pointer"
                                     />
                                 </TableHead>
-                                <TableHead className="w-56">From</TableHead>
-                                <TableHead className="max-w-60">Subject</TableHead>
-                                <TableHead className="w-28 whitespace-nowrap">Date</TableHead>
+                                {isMobile ? (
+                                    <>
+                                        <TableHead className="w-80">Details</TableHead>
+                                        <TableHead className="w-12 whitespace-nowrap">Date</TableHead>
+                                    </>
+                                ) : (
+                                    <>
+                                        <TableHead className="w-56">From</TableHead>
+                                        <TableHead className="max-w-60">Subject</TableHead>
+                                        <TableHead className="w-28 whitespace-nowrap">Date</TableHead>
+                                    </>
+                                )}
                                 <TableHead className="w-14 whitespace-nowrap"></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -82,11 +93,23 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                                             className="cursor-pointer"
                                         />
                                     </TableCell>
-                                    <TableCell className="w-44">{email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}</TableCell>
-                                    <TableCell className="max-w-60 truncate">
-                                        {email.subject} - <span className="text-muted-foreground">{email.bodyPlain}</span>
-                                    </TableCell>
-                                    <TableCell className="w-28 whitespace-nowrap">{formatDateToMonthDateString(email.receivedAt)}</TableCell>
+                                    {isMobile ? (
+                                        <TableCell className="flex max-w-64 flex-col">
+                                            <p className="truncate">{email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}</p>
+                                            <p className="truncate">{email.subject}</p>
+                                            <p className="text-muted-foreground line-clamp-2 truncate">{email.bodyPlain}</p>
+                                        </TableCell>
+                                    ) : (
+                                        <>
+                                            <TableCell className="w-44">
+                                                {email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}
+                                            </TableCell>
+                                            <TableCell className="max-w-60 truncate">
+                                                {email.subject} - <span className="text-muted-foreground">{email.bodyPlain}</span>
+                                            </TableCell>
+                                        </>
+                                    )}
+                                    <TableCell className="w-12 whitespace-nowrap md:w-28">{formatDateToMonthDateString(email.receivedAt)}</TableCell>
                                     <TableCell className="w-10 whitespace-nowrap">
                                         <Trash
                                             className={`text-red-500 ${(selectedEmails || []).length > 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}

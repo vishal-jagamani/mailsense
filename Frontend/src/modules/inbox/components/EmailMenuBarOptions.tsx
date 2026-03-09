@@ -73,7 +73,7 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, onR
 
     return (
         <>
-            <div className="sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md px-4">
+            <div className="sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md md:px-4">
                 <div className="flex items-center gap-6">
                     {options.map((option) => (
                         <div key={option.id} className="flex items-center">

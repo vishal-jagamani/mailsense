@@ -7,6 +7,11 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-03-09
+
+### Added
+- Email list projection now includes `bodyPlain` so email list responses can provide plain-text preview snippets.
+
 ## [1.1.0] - 2026-03-05
 
 ### Added
@@ -59,6 +64,7 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0
 [1.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.0.0
