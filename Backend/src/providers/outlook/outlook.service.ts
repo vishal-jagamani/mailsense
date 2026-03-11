@@ -1,16 +1,21 @@
 import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailRepository } from '@modules/emails/email.repository.js';
+import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
+import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { logger } from '@utils/logger.js';
 import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
+import { UpdateAPIResponse } from 'types/api.types.js';
 import { OutlookApi } from './outlook.api.js';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_API_PARAMS, OUTLOOK_APIs } from './outlook.constants.js';
 import {
     ExtractDeltaMessageChangesResponse,
     GetOutlookDeltaMessagesResponse,
     GetOutlookMessagesResponse,
+    OutlookFolderObject,
     OutlookMessageObjectFull,
     OutlookUserProfile,
 } from './outlook.types.js';
-import { EmailRepository } from '@modules/emails/email.repository.js';
+import * as OutlookUtils from './outlook.utils.js';
 
 export class OutlookService {
     private outlookApi: OutlookApi;
@@ -266,6 +271,72 @@ export class OutlookService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.flagEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async getAllFolders(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {
+        try {
+            const folders = await OutlookApi.getAllFolders(accountId);
+            const folderInputs: Partial<FolderInput>[] = folders.value.map((folder) =>
+                OutlookUtils.parseOutlookFolderObject(accountId, userId, folder),
+            );
+            return folderInputs;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.getAllFolders: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async getFolderDetails(accountId: string, folderId: string): Promise<OutlookFolderObject> {
+        try {
+            const folder = await OutlookApi.getFolderDetails(accountId, folderId);
+            return folder;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.getFolderDetails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async createFolder(userId: string, accountId: string, folderName: string, isHidden: boolean): Promise<UpdateAPIResponse> {
+        try {
+            const folder = await OutlookApi.createFolder(accountId, folderName, isHidden);
+            const folderBody = OutlookUtils.parseOutlookFolderObject(accountId, userId, folder);
+            await FolderRepository.createFolder(folderBody);
+            return { status: true, message: 'Folder created successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.createFolder: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async updateFolder(accountId: string, folderId: string, folderName: string): Promise<UpdateAPIResponse> {
+        try {
+            await OutlookApi.updateFolder(accountId, folderId, folderName);
+            const folderBody: Partial<FolderDocument> = {
+                name: folderName,
+                normalizedName: folderName.toLowerCase().trim(),
+            };
+            await FolderRepository.updateFolderByProviderFolderId(folderId, folderBody);
+            return { status: true, message: 'Folder updated successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.updateFolder: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async deleteFolder(accountId: string, folderId: string): Promise<UpdateAPIResponse> {
+        try {
+            await OutlookApi.deleteFolder(accountId, folderId);
+            await FolderRepository.deleteFolderByProviderFolderId(folderId);
+            return { status: true, message: 'Folder deleted successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.deleteFolder: ${errorMessage}`, { error: err });
             throw err;
         }
     }
