@@ -2,17 +2,21 @@ import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/a
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
+import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { BatchProcessor } from '@utils/batchProcessor.js';
 import { compressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import axios from 'axios';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
+import { UpdateAPIResponse } from 'types/api.types.js';
 import { GmailApi } from './gmail.api.js';
 import {
     ExtractMessageChangesResponse,
     GetGmailMessagesResponse,
     GMAIL_LABELS,
     GmailHistoryResponse,
+    GmailLabel,
     GmailMessage,
     GmailMessageObjectFull,
     GmailMessages,
@@ -265,6 +269,77 @@ export class GmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.unreadEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async getAllLabels(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {
+        try {
+            const labels = await GmailApi.getAllLabels(accountId);
+            const batchProcessor = new BatchProcessor<GmailLabel, Partial<FolderInput>>(3, 200); // Process 3 labels at a time with 200ms delay
+
+            const folderInputs = await batchProcessor.processBatches(labels, async (item) => {
+                const label = await GmailApi.getLabelDetails(accountId, item.id);
+                return GmailUtils.parseGmailLabelObject(accountId, userId, label);
+            });
+
+            return folderInputs;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.getAllLabels: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async getLabelDetails(accountId: string, labelId: string): Promise<GmailLabel> {
+        try {
+            const label = await GmailApi.getLabelDetails(accountId, labelId);
+            return label;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.getLabelDetails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async createLabel(userId: string, accountId: string, labelName: string): Promise<UpdateAPIResponse> {
+        try {
+            const label = await GmailApi.createLabel(accountId, labelName);
+            const createdLabel = await GmailApi.getLabelDetails(accountId, label.id);
+            const folderObject = GmailUtils.parseGmailLabelObject(accountId, userId, createdLabel);
+            await FolderRepository.createFolder(folderObject);
+            return { status: true, message: 'Label created successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.createLabel: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async updateLabel(accountId: string, labelId: string, labelName: string): Promise<UpdateAPIResponse> {
+        try {
+            await GmailApi.updateLabel(accountId, labelId, labelName);
+            const folderBody: Partial<FolderDocument> = {
+                name: labelName,
+                normalizedName: labelName.toLowerCase().trim(),
+            };
+            await FolderRepository.updateFolderByProviderFolderId(labelId, folderBody);
+            return { status: true, message: 'Label updated successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.updateLabel: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async deleteLabel(accountId: string, labelId: string): Promise<UpdateAPIResponse> {
+        try {
+            await GmailApi.deleteLabel(accountId, labelId);
+            await FolderRepository.deleteFolderByProviderFolderId(labelId);
+            return { status: true, message: 'Label deleted successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.deleteLabel: ${errorMessage}`, { error: err });
             throw err;
         }
     }
