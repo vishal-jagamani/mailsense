@@ -1,5 +1,5 @@
-import { ProjectionType, SortOrder } from 'mongoose';
-import { DATE_RANGE } from 'types/common.types.js';
+import { PaginatedDataResponse } from './api.types';
+import { DATE_RANGE } from './inbox.types';
 
 export enum FolderKind {
     SYSTEM = 'SYSTEM',
@@ -18,8 +18,8 @@ export enum FolderRole {
     OTHER = 'OTHER',
 }
 
-// DB Model Types
 export interface FolderAttributes {
+    _id: string;
     userId: string;
     accountId: string;
 
@@ -46,12 +46,19 @@ export interface FolderAttributes {
 
     lastSyncedAt: Date;
     providerMeta?: Record<string, unknown>;
+
+    createdAt: Date;
+    updatedAt: Date;
 }
 
-export interface FolderListDBFieldMapping {
-    LIST: { projection: ProjectionType<FolderAttributes> };
-    SORT: { sort: Record<string, SortOrder> };
+export interface GetAllFoldersRequestOptions {
+    userId: string;
+    size: number;
+    page: number;
+    filters: GetAllFoldersFilters;
 }
+
+export interface GetALlFolderResponse extends PaginatedDataResponse<FolderAttributes> {}
 
 export interface GetAllFoldersFilters {
     searchText?: string | undefined;

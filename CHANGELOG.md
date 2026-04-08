@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Added a new folders area in the app with sidebar navigation and a dedicated folders overview page.
+
+### Changed
+- Folder browsing now supports search, account filtering, and paginated listing.
+
+### Fixed
+- Improved sticky header and breadcrumb spacing for smoother page layout on the new folders flow.
+
 ## [1.1.1] - 2026-03-09
 
 ### Added

@@ -3,7 +3,13 @@ import { validate } from '@middlewares/validator.js';
 import { handleRequest } from '@utils/request.handler.js';
 import { Router } from 'express';
 import { FolderController } from './folder.controller.js';
-import { createFolderSchema, getAccountFoldersSchema, updateFolderBodySchema, updateFolderParamsSchema } from './folder.schema.js';
+import {
+    createFolderSchema,
+    getAccountFoldersSchema,
+    getAllFoldersSchema,
+    updateFolderBodySchema,
+    updateFolderParamsSchema,
+} from './folder.schema.js';
 
 const router = Router();
 
@@ -23,7 +29,7 @@ router.patch(
 
 router.delete('/:folderId', validate({ params: updateFolderParamsSchema }), handleRequest(folderController.deleteFolder));
 
-router.get('/list', handleRequest(folderController.getAllFolders));
+router.post('/list', validate({ body: getAllFoldersSchema }), handleRequest(folderController.getAllFolders));
 
 router.get('/list/:accountId', validate({ params: getAccountFoldersSchema }), handleRequest(folderController.getAccountFolders));
 
