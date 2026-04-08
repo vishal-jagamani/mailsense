@@ -6,6 +6,10 @@ import { AccountProvider } from 'types/account.types.js';
 import { PaginatedDataResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { FolderDocument } from './folder.model.js';
 import { FolderRepository } from './folder.repository.js';
+import { GetAllFoldersFilters } from './folder.types.js';
+import { FilterQuery } from 'mongoose';
+import { FOLDER_LIST_DB_FIELD_MAPPING } from './folder.constants.js';
+import * as CommonUtils from '@utils/common.js';
 
 export class FolderService {
     private gmailService: GmailService;
@@ -61,10 +65,35 @@ export class FolderService {
         }
     }
 
-    public async getAllFolders(userId: string): Promise<PaginatedDataResponse<FolderDocument[]>> {
+    public async getAllFolders(
+        userId: string,
+        size: number,
+        page: number,
+        filters: GetAllFoldersFilters,
+    ): Promise<PaginatedDataResponse<FolderDocument[]>> {
         try {
-            const folders = await FolderRepository.getAllFolders(userId);
-            return { data: folders, size: folders.length, page: 1, total: folders.length };
+            const { searchText, accountId, dateRange } = filters;
+            const accounts = await AccountRepository.getAccounts(userId);
+            if (!accounts.length) {
+                return { data: [], size: 0, page: 0, total: 0 };
+            }
+            const filterQuery: FilterQuery<FolderDocument> = {
+                accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
+                ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
+                ...(dateRange &&
+                    CommonUtils.getDateRange(dateRange) && {
+                        updatedAt: { $gte: CommonUtils.getDateRange(dateRange).startDate, $lte: CommonUtils.getDateRange(dateRange).endDate },
+                    }),
+            };
+            const folders = await FolderRepository.getAllFolders(
+                filterQuery,
+                size,
+                page,
+                FOLDER_LIST_DB_FIELD_MAPPING.LIST.projection,
+                FOLDER_LIST_DB_FIELD_MAPPING.SORT.sort,
+            );
+            const total = await FolderRepository.countDocuments(filterQuery);
+            return { data: folders, size: folders.length, page: 1, total };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in FolderService.getAllFolders: ${errorMessage}`, { error: err });

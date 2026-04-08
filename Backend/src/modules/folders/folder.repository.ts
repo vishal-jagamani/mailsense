@@ -1,3 +1,4 @@
+import { ProjectionType, SortOrder } from 'mongoose';
 import { Folder, FolderDocument } from './folder.model.js';
 
 export class FolderRepository {
@@ -5,8 +6,21 @@ export class FolderRepository {
         return await Folder.insertMany(folders);
     }
 
-    public static async getAllFolders(userId: string): Promise<FolderDocument[]> {
-        return await Folder.find({ userId });
+    public static async getAllFolders(
+        filterQuery: Record<string, unknown>,
+        size: number,
+        page: number,
+        fields: ProjectionType<FolderDocument>,
+        sort: Record<string, SortOrder>,
+    ): Promise<FolderDocument[]> {
+        return await Folder.find(filterQuery, fields)
+            .skip((page - 1) * size)
+            .limit(size)
+            .sort(sort);
+    }
+
+    public static async countDocuments(filterQuery: Record<string, unknown>): Promise<number> {
+        return await Folder.countDocuments(filterQuery);
     }
 
     public static async getAccountFolders(accountId: string): Promise<FolderDocument[]> {

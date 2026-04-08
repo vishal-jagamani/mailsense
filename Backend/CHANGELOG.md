@@ -41,6 +41,10 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated Gmail and Outlook services to persist folder/label create, update, and delete operations through `FolderRepository`.
 - Updated backend route registration to include folder endpoints.
 - Standardized folder metadata normalization (role, kind, counts, hidden state, provider metadata) across Gmail and Outlook providers.
+- Updated folder listing API to support paginated responses with account and date-range filters.
+- Updated folder listing route from header-based `GET /folders/list` to validated body-based `POST /folders/list`.
+- Added reusable folder list projection/sort mapping for consistent listing responses.
+- Added shared date-range utilities/types for folder filtering.
 
 ## [1.1.1] - 2026-03-09
 

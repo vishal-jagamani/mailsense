@@ -1,7 +1,17 @@
+import { DATE_RANGE } from '@modules/emails/email.types.js';
 import z from 'zod';
 
 export const getAllFoldersSchema = z.object({
-    userid: z.string(),
+    userId: z.string(),
+    size: z.number(),
+    page: z.number(),
+    filters: z
+        .object({
+            searchText: z.string().optional(),
+            accountId: z.array(z.string()).optional(),
+            dateRange: z.enum(Object.values(DATE_RANGE) as [string, ...string[]]).optional(),
+        })
+        .optional(),
 });
 
 export const getAccountFoldersSchema = z.object({

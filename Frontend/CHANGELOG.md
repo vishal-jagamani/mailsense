@@ -7,6 +7,18 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+### Added
+- Added a new folders section with sidebar navigation, overview page, folder cards, and initial folder detail route wiring.
+- Added frontend folder API hooks, request/response types, and route constants for folders flows.
+
+### Changed
+- Updated the folders page to support search, account filtering, and paginated folder listing.
+- Updated shared UI copy and navigation constants to include folders-related labels and routes.
+- Adjusted shared breadcrumb and page header spacing to better fit the new folders experience.
+
+### Fixed
+- Improved sidebar navigation population so connected account links are shown for both inbox and folders sections.
+
 ## [1.1.1] - 2026-03-09
 
 ### Added

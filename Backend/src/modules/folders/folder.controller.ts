@@ -1,6 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
 import { FolderService } from './folder.service.js';
-import { CreateFolderSchema, GetAccountFoldersSchema, UpdateFolderBodySchema, UpdateFolderParamsSchema } from './folder.schema.js';
+import {
+    CreateFolderSchema,
+    GetAccountFoldersSchema,
+    GetAllFoldersSchema,
+    UpdateFolderBodySchema,
+    UpdateFolderParamsSchema,
+} from './folder.schema.js';
+import { GetAllFoldersFilters } from './folder.types.js';
 
 export class FolderController {
     private folderService: FolderService;
@@ -22,13 +29,16 @@ export class FolderController {
         }
     };
 
-    public getAllFolders = async (req: Request<object, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public getAllFolders = async (req: Request<object, object, GetAllFoldersSchema, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { userid } = req.headers;
-            if (!userid) {
+            const { userId, size, page, filters } = req.body;
+            if (!userId) {
                 throw new Error('User ID is required');
             }
-            const folders = await this.folderService.getAllFolders(String(userid));
+            const sizeValue = size ? Number(size) : 10;
+            const pageValue = page ? Number(page) : 1;
+            const filterValue = (filters || { accountId: undefined, dateRange: undefined }) as GetAllFoldersFilters;
+            const folders = await this.folderService.getAllFolders(String(userId), sizeValue, pageValue, filterValue);
             res.send(folders);
         } catch (error) {
             next(error);
