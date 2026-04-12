@@ -45,6 +45,7 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated folder listing route from header-based `GET /folders/list` to validated body-based `POST /folders/list`.
 - Added reusable folder list projection/sort mapping for consistent listing responses.
 - Added shared date-range utilities/types for folder filtering.
+- Expanded folder list projection to include `accountId` and `providerFolderId` for frontend folder actions.
 
 ## [1.1.1] - 2026-03-09
 

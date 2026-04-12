@@ -65,3 +65,8 @@ export interface GetAllFoldersFilters {
     accountId?: string[] | undefined;
     dateRange?: DATE_RANGE | undefined;
 }
+
+export interface CreateFolderBodyParams {
+    accountId: string;
+    folderName: string;
+}

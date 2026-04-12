@@ -4,7 +4,7 @@ import React from 'react';
 
 interface APILoaderProps {
     show: boolean;
-    size?: 'small' | 'medium' | 'large';
+    size?: 'xs' | 'small' | 'medium' | 'large';
 }
 
 const APILoader = ({ show, size = 'small' }: APILoaderProps) => {
@@ -12,8 +12,8 @@ const APILoader = ({ show, size = 'small' }: APILoaderProps) => {
         return null;
     }
     return (
-        <div className="backdrop-blur-xs absolute inset-0 z-50 flex items-center justify-center">
-            <div className={`relative ${size === 'small' ? 'h-10 w-10' : size === 'medium' ? 'h-16 w-16' : 'h-20 w-20'}`}>
+        <div className="absolute inset-0 z-50 flex items-center justify-center backdrop-blur-xs">
+            <div className={`relative ${size === 'xs' ? 'h-6 w-6' : size === 'small' ? 'h-10 w-10' : size === 'medium' ? 'h-16 w-16' : 'h-20 w-20'}`}>
                 <div
                     className="absolute h-full w-full animate-spin rounded-full border-[3px] border-gray-100/10 border-r-[#0ff] border-b-[#0ff]"
                     style={{ animationDuration: '2s' }}

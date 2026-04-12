@@ -9,9 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 - Added a new folders area in the app with sidebar navigation and a dedicated folders overview page.
+- Added folder management actions for creating, renaming, and deleting folders from the folders workspace.
 
 ### Changed
 - Folder browsing now supports search, account filtering, and paginated listing.
+- Folder data now refreshes automatically after folder create, rename, and delete actions.
 
 ### Fixed
 - Improved sticky header and breadcrumb spacing for smoother page layout on the new folders flow.

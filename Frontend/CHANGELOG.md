@@ -10,14 +10,20 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Added
 - Added a new folders section with sidebar navigation, overview page, folder cards, and initial folder detail route wiring.
 - Added frontend folder API hooks, request/response types, and route constants for folders flows.
+- Added create-folder modal and folder card actions for rename and delete flows.
+- Added folder-specific success/error messaging and query keys for folder mutations.
 
 ### Changed
 - Updated the folders page to support search, account filtering, and paginated folder listing.
 - Updated shared UI copy and navigation constants to include folders-related labels and routes.
 - Adjusted shared breadcrumb and page header spacing to better fit the new folders experience.
+- Updated folders data loading to use query-based fetching with automatic refresh after mutations.
+- Updated folder cards to support inline rename state and mutation-driven actions.
+- Added compact `xs` API loader size for lightweight in-place folder operations.
 
 ### Fixed
 - Improved sidebar navigation population so connected account links are shown for both inbox and folders sections.
+- Improved folder detail breadcrumb setup so folder routes show the correct navigation context.
 
 ## [1.1.1] - 2026-03-09
 
