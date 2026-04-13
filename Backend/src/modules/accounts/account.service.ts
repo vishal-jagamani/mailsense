@@ -2,6 +2,7 @@ import { MAILSENSE_BASE_URL } from '@config/config.js';
 import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { FolderService } from '@modules/folders/folder.service.js';
 import { GmailService } from '@providers/gmail/gmail.service.js';
 import * as GmailUtils from '@providers/gmail/gmail.utils.js';
 import { OutlookService } from '@providers/outlook/outlook.service.js';
@@ -16,10 +17,12 @@ import { AccountRepository } from './account.repository.js';
 export class AccountsService {
     private gmailService: GmailService;
     private outlookService: OutlookService;
+    private folderService: FolderService;
 
     constructor() {
         this.gmailService = new GmailService();
         this.outlookService = new OutlookService();
+        this.folderService = new FolderService();
     }
 
     /**
@@ -249,6 +252,7 @@ export class AccountsService {
             } else {
                 throw new Error('Invalid provider');
             }
+            await this.folderService.syncFolders(accountId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.startAccountSync: ${errorMessage}`, { error: err });

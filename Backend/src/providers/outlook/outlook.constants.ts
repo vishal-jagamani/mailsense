@@ -6,6 +6,7 @@ export const OUTLOOK_APIs = {
     PROFILE: '/me',
     MESSAGES: '/me/mailFolders/Inbox/messages',
     MESSAGES_DELTA: '/me/mailFolders/Inbox/messages/delta',
+    FOLDERS: '/me/mailFolders',
 };
 
 export const OUTLOOK_API_PARAMS = {

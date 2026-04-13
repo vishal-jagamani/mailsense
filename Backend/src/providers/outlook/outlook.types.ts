@@ -51,9 +51,6 @@ export interface OutlookMessageObjectFull {
     toRecipients: { emailAddress: OutlookMessageEmailAddress }[];
     ccRecipients: { emailAddress: OutlookMessageEmailAddress }[];
     bccRecipients: { emailAddress: OutlookMessageEmailAddress }[];
-    // '@removed': {
-    //     reason: OutlookMessageRemovedReason;
-    // };
 }
 
 // API Responses
@@ -84,4 +81,20 @@ export interface GetDeltaMessageChangesResponse {
 export interface ExtractDeltaMessageChangesResponse {
     addedEmails: OutlookMessageObjectFull[];
     deletedEmailIds: string[];
+}
+
+// Outlook Folders Types & Interfaces
+export interface OutlookFolderObject {
+    id: string;
+    displayName: string;
+    parentFolderId: string;
+    childFolderCount: number;
+    unreadItemCount: number;
+    totalItemCount: number;
+    isHidden: boolean;
+}
+
+export interface OutlookFoldersResponse {
+    '@odata.context': string;
+    value: OutlookFolderObject[];
 }

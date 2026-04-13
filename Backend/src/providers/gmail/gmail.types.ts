@@ -107,3 +107,40 @@ export interface GmailParsedEmailResult {
     historyId: string;
     receivedAt: Date;
 }
+
+// Gmail Labels Types & Interfaces
+export enum GmailLabelMessageListVisibility {
+    SHOW = 'show',
+    HIDE = 'hide',
+}
+
+export enum GmailLabelLabelListVisibility {
+    LABEL_SHOW = 'labelShow',
+    LABEL_SHOW_IF_UNREAD = 'labelShowIfUnread',
+    LABEL_HIDE = 'labelHide',
+}
+
+export enum GmailLabelType {
+    SYSTEM = 'system',
+    USER = 'user',
+}
+
+export interface GmailLabel {
+    id: string;
+    name: string;
+    messageListVisibility: GmailLabelMessageListVisibility;
+    labelListVisibility: GmailLabelLabelListVisibility;
+    type: GmailLabelType;
+    messagesTotal: number;
+    messagesUnread: number;
+    threadsTotal: number;
+    threadsUnread: number;
+    color: {
+        textColor: string;
+        backgroundColor: string;
+    };
+}
+
+export interface GmailLabelsListResponse {
+    labels: GmailLabel[];
+}

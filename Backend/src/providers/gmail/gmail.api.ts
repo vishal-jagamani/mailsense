@@ -7,7 +7,15 @@ import { logger } from '@utils/logger.js';
 import { AxiosRequestConfig } from 'axios';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
 import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
-import { GMAIL_LABELS, GmailHistoryResponse, GmailMessageObjectFull, GmailMessages, GmailUserProfile } from './gmail.types.js';
+import {
+    GMAIL_LABELS,
+    GmailHistoryResponse,
+    GmailLabel,
+    GmailLabelsListResponse,
+    GmailMessageObjectFull,
+    GmailMessages,
+    GmailUserProfile
+} from './gmail.types.js';
 
 export class GmailApi {
     static async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -264,6 +272,106 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.deleteEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getAllLabels(accountId: string): Promise<GmailLabel[]> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.LABELS}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<GmailLabelsListResponse>(options);
+            return response.labels;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.getAllLabels: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getLabelDetails(accountId: string, labelId: string): Promise<GmailLabel> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.LABELS}/${labelId}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<GmailLabel>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.getLabelDetails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async createLabel(accountId: string, labelName: string): Promise<GmailLabel> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.LABELS}`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    name: labelName,
+                },
+            };
+            const response = await apiRequest<GmailLabel>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.createLabel: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async updateLabel(accountId: string, labelId: string, labelName: string): Promise<GmailLabel> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.LABELS}/${labelId}`,
+                method: 'PATCH',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: {
+                    name: labelName,
+                },
+            };
+            const response = await apiRequest<GmailLabel>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.updateLabel: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async deleteLabel(accountId: string, labelId: string): Promise<void> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.LABELS}/${labelId}`,
+                method: 'DELETE',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            await apiRequest<void>(options);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.deleteLabel: ${errorMessage}`, { error: err });
             throw err;
         }
     }

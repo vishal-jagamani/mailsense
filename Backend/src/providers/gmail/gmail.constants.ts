@@ -7,6 +7,7 @@ export const GMAIL_APIs = {
     MESSAGES: '/me/messages',
     BATCH_DELETE: '/me/messages/batchDelete',
     HISTORY: '/me/history',
+    LABELS: '/me/labels',
 };
 
 export const GMAIL_USER_INFO = 'https://www.googleapis.com/oauth2/v3/userinfo';

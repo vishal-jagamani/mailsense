@@ -28,4 +28,16 @@ export const MESSAGES = {
     // Settings
     PASSWORD_UPDATE_SUCCESS: 'Password updated successfully',
     PROFILE_UPDATE_SUCCESS: 'Profile updated successfully',
+
+    // Folders Messages
+    FOLDERS: {
+        CREATE_FOLDERS_SUCCESS: 'Folder created successfully',
+        CREATE_FOLDER_ERROR: 'Failed to create folder, please try again!',
+        UPDATE_FOLDER_SUCCESS: 'Folder updated successfully',
+        UPDATE_FOLDER_ERROR: 'Failed to update folder, please try again!',
+        UPDATE_FOLDER_SAME_NAME_ERROR: 'Folder with same name already exists, please try again with other name!',
+        DELETE_FOLDER_SUCCESS: 'Folder deleted successfully',
+        DELETE_FOLDER_ERROR: 'Failed to delete folder, please try again!',
+        FOLDER_LOAD_ERROR: 'Error loading folder',
+    },
 } as const;

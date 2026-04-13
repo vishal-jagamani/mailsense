@@ -7,6 +7,52 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-04-13
+
+### Added
+- Added a new `folders` module with complete backend support:
+  - Folder model and schema
+  - Folder repository
+  - Folder service
+  - Folder controller
+  - Folder routes and request schemas/types
+- Added new API route group: `/folders`.
+- Added Gmail labels API support in provider layer:
+  - List labels
+  - Get label details
+  - Create label
+  - Update label
+  - Delete label
+- Added Outlook folders API support in provider layer:
+  - List folders
+  - Get folder details
+  - Create folder
+  - Update folder
+  - Delete folder
+- Added Gmail label types (`GmailLabel`, `GmailLabelsListResponse`, visibility/type enums).
+- Added Outlook folder types (`OutlookFolderObject`, `OutlookFoldersResponse`).
+- Added provider-level mapping utilities:
+  - Gmail label to unified folder metadata
+  - Outlook folder to unified folder metadata
+- Added provider endpoint constants:
+  - `GMAIL_APIs.LABELS`
+  - `OUTLOOK_APIs.FOLDERS`
+
+### Changed
+- Updated Gmail label sync flow to use batched label-detail processing via `BatchProcessor` (controlled concurrency and delay) before mapping and persistence.
+- Updated Gmail and Outlook services to persist folder/label create, update, and delete operations through `FolderRepository`.
+- Updated backend route registration to include folder endpoints.
+- Standardized folder metadata normalization (role, kind, counts, hidden state, provider metadata) across Gmail and Outlook providers.
+- Updated folder listing API to support paginated responses with account and date-range filters.
+- Updated folder listing route from header-based `GET /folders/list` to validated body-based `POST /folders/list`.
+- Added reusable folder list projection/sort mapping for consistent listing responses.
+- Added shared date-range utilities/types for folder filtering.
+- Expanded folder list projection to include `accountId` and `providerFolderId` for frontend folder actions.
+- Added folder details endpoint support for fetching a single folder by ID.
+- Updated account sync flow to sync folders alongside emails.
+- Updated email list filtering to support folder-based email retrieval.
+- Expanded email list projection to include folder data for folder-aware email views.
+
 ## [1.1.1] - 2026-03-09
 
 ### Added
@@ -64,7 +110,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0
 [1.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.0.0

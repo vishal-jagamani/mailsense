@@ -48,7 +48,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
 
     return (
         <>
-            <div className={`${isMobile ? 'justify-end' : 'justify-between'} border-muted flex w-full items-center border-b-2 pb-2`}>
+            <div className={`${isMobile ? 'justify-end' : 'justify-between'} border-muted flex w-full items-center border-b-2 pb-2 mt-1`}>
                 {!isMobile && <p className="text-md ml-2 font-bold text-nowrap md:ml-4 md:text-xl">{title}</p>}
                 {button && (
                     <>
