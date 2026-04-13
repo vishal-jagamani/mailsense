@@ -7,6 +7,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-04-13
+
 ### Added
 - Added a new `folders` module with complete backend support:
   - Folder model and schema
@@ -46,6 +48,10 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added reusable folder list projection/sort mapping for consistent listing responses.
 - Added shared date-range utilities/types for folder filtering.
 - Expanded folder list projection to include `accountId` and `providerFolderId` for frontend folder actions.
+- Added folder details endpoint support for fetching a single folder by ID.
+- Updated account sync flow to sync folders alongside emails.
+- Updated email list filtering to support folder-based email retrieval.
+- Expanded email list projection to include folder data for folder-aware email views.
 
 ## [1.1.1] - 2026-03-09
 
@@ -104,7 +110,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0
 [1.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.0.0

@@ -1,12 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { FolderService } from './folder.service.js';
-import {
-    CreateFolderSchema,
-    GetAccountFoldersSchema,
-    GetAllFoldersSchema,
-    UpdateFolderBodySchema,
-    UpdateFolderParamsSchema,
-} from './folder.schema.js';
+import { CreateFolderSchema, GetAccountFoldersSchema, GetAllFoldersSchema, GetFolderSchema, UpdateFolderBodySchema } from './folder.schema.js';
 import { GetAllFoldersFilters } from './folder.types.js';
 
 export class FolderController {
@@ -45,6 +39,19 @@ export class FolderController {
         }
     };
 
+    public getFolder = async (req: Request<GetFolderSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { folderId } = req.params;
+            if (!folderId) {
+                throw new Error('Folder ID is required');
+            }
+            const folder = await this.folderService.getFolder(folderId);
+            res.send(folder);
+        } catch (error) {
+            next(error);
+        }
+    };
+
     public getAccountFolders = async (
         req: Request<GetAccountFoldersSchema, object, object, object>,
         res: Response,
@@ -76,7 +83,7 @@ export class FolderController {
     };
 
     public updateFolder = async (
-        req: Request<UpdateFolderParamsSchema, object, UpdateFolderBodySchema, object>,
+        req: Request<GetFolderSchema, object, UpdateFolderBodySchema, object>,
         res: Response,
         next: NextFunction,
     ): Promise<void> => {
@@ -93,11 +100,7 @@ export class FolderController {
         }
     };
 
-    public deleteFolder = async (
-        req: Request<UpdateFolderParamsSchema, object, object, object>,
-        res: Response,
-        next: NextFunction,
-    ): Promise<void> => {
+    public deleteFolder = async (req: Request<GetFolderSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { folderId } = req.params;
             if (!folderId) {

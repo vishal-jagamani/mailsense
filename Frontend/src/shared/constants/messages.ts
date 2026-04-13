@@ -38,5 +38,6 @@ export const MESSAGES = {
         UPDATE_FOLDER_SAME_NAME_ERROR: 'Folder with same name already exists, please try again with other name!',
         DELETE_FOLDER_SUCCESS: 'Folder deleted successfully',
         DELETE_FOLDER_ERROR: 'Failed to delete folder, please try again!',
+        FOLDER_LOAD_ERROR: 'Error loading folder',
     },
 } as const;

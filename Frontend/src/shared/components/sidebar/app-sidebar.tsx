@@ -52,15 +52,9 @@ const data: SidebarData = {
         },
         {
             title: 'Folders',
-            url: '#',
+            url: HOME_ROUTES.ALL_FOLDERS,
             icon: Folder,
             isActive: true,
-            items: [
-                {
-                    title: 'Account',
-                    url: '#',
-                },
-            ],
         },
         // {
         //     title: 'AI Views',
@@ -160,19 +154,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     url: HOME_ROUTES.ACCOUNT_INBOX(acc._id),
                 })),
             ];
-            const folderItems = [
-                { title: 'All Folders', url: HOME_ROUTES.ALL_FOLDERS },
-                ...accounts.map((acc) => ({
-                    title: acc.emailAddress,
-                    url: HOME_ROUTES.ACCOUNT_FOLDERS(acc._id),
-                })),
-            ];
             const updatedNavMain = sidebarData.navMain.map((item) => {
                 if (item.title === 'Inbox') {
                     return { ...item, items: inboxItems };
-                }
-                if (item.title === 'Folders') {
-                    return { ...item, items: folderItems };
                 }
                 return item;
             });

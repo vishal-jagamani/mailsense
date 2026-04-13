@@ -7,6 +7,11 @@ export async function getAllFolders(body: GetAllFoldersRequestOptions) {
     return data;
 }
 
+export async function getFolderDetails(id:string) {
+    const { data } = await axiosClient.get(`${FOLDER_API_ENDPOINTS.FOLDERS}/${id}`);
+    return data;
+}
+
 export async function createFolder(body: CreateFolderBodyParams) {
     const { data } = await axiosClient.post(FOLDER_API_ENDPOINTS.FOLDERS, body);
     return data;

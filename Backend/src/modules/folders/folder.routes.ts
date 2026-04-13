@@ -7,8 +7,8 @@ import {
     createFolderSchema,
     getAccountFoldersSchema,
     getAllFoldersSchema,
+    getFolderSchema,
     updateFolderBodySchema,
-    updateFolderParamsSchema,
 } from './folder.schema.js';
 
 const router = Router();
@@ -21,13 +21,15 @@ router.get('/sync/:accountId', handleRequest(folderController.syncFolders));
 
 router.post('/', validate({ body: createFolderSchema }), handleRequest(folderController.createFolder));
 
+router.get('/:folderId', validate({ params: getFolderSchema }), handleRequest(folderController.getFolder));
+
 router.patch(
     '/:folderId',
-    validate({ params: updateFolderParamsSchema, body: updateFolderBodySchema }),
+    validate({ params: getFolderSchema, body: updateFolderBodySchema }),
     handleRequest(folderController.updateFolder),
 );
 
-router.delete('/:folderId', validate({ params: updateFolderParamsSchema }), handleRequest(folderController.deleteFolder));
+router.delete('/:folderId', validate({ params: getFolderSchema }), handleRequest(folderController.deleteFolder));
 
 router.post('/list', validate({ body: getAllFoldersSchema }), handleRequest(folderController.getAllFolders));
 

@@ -19,4 +19,5 @@ export interface GetAllEmailsFilters {
     searchText?: string | undefined;
     accountId?: string[] | undefined;
     dateRange?: DATE_RANGE | undefined;
+    folders?: string[] | undefined;
 }

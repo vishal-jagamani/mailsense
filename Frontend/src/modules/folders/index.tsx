@@ -27,7 +27,6 @@ const FoldersPage: React.FC = () => {
     const [searchText, setSearchText] = useState<string>('');
     const debouncedSearchValue = UseDebounceQuery({ text: searchText, delay: 500 });
     const [getAllFoldersFilters, setGetAllFoldersFilters] = useState<GetAllFoldersFilters | null>(null);
-    const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 
     const currentPage = debouncedSearchValue !== undefined && debouncedSearchValue !== '' ? 1 : page;
 
@@ -62,14 +61,6 @@ const FoldersPage: React.FC = () => {
     const handlePageSizeChange = (newSize: number) => {
         setPage(1);
         setPageSize(newSize);
-    };
-
-    const handleEmailSelect = (emailIds: string[]) => {
-        setSelectedEmails(emailIds);
-    };
-
-    const handleResetSelection = () => {
-        setSelectedEmails([]);
     };
 
     return (

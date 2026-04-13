@@ -7,13 +7,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-04-13
+
 ### Added
 - Added a new folders area in the app with sidebar navigation and a dedicated folders overview page.
 - Added folder management actions for creating, renaming, and deleting folders from the folders workspace.
+- Added the ability to open a folder and browse the emails inside that folder.
 
 ### Changed
 - Folder browsing now supports search, account filtering, and paginated listing.
 - Folder data now refreshes automatically after folder create, rename, and delete actions.
+- Account sync now also refreshes folder data so folder lists stay aligned with connected mail providers.
 
 ### Fixed
 - Improved sticky header and breadcrumb spacing for smoother page layout on the new folders flow.
@@ -45,7 +49,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0
 [1.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.0.0

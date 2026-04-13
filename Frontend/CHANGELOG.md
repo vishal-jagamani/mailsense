@@ -7,11 +7,14 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-04-13
+
 ### Added
 - Added a new folders section with sidebar navigation, overview page, folder cards, and initial folder detail route wiring.
 - Added frontend folder API hooks, request/response types, and route constants for folders flows.
 - Added create-folder modal and folder card actions for rename and delete flows.
 - Added folder-specific success/error messaging and query keys for folder mutations.
+- Added folder email view so users can open a folder and browse emails within it.
 
 ### Changed
 - Updated the folders page to support search, account filtering, and paginated folder listing.
@@ -20,6 +23,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Updated folders data loading to use query-based fetching with automatic refresh after mutations.
 - Updated folder cards to support inline rename state and mutation-driven actions.
 - Added compact `xs` API loader size for lightweight in-place folder operations.
+- Updated folder email view to reuse inbox search, filters, selection actions, and pagination patterns.
 
 ### Fixed
 - Improved sidebar navigation population so connected account links are shown for both inbox and folders sections.
@@ -91,7 +95,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.1.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0
 [1.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.0.0

@@ -10,6 +10,7 @@ export const getAllEmailsSchema = z.object({
             searchText: z.string().optional(),
             accountId: z.array(z.string()).optional(),
             dateRange: z.enum(Object.values(DATE_RANGE) as [string, ...string[]]).optional(),
+            folders: z.array(z.string()).optional(),
         })
         .optional(),
 });

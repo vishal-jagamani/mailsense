@@ -23,7 +23,7 @@ export const createFolderSchema = z.object({
     folderName: z.string(),
 });
 
-export const updateFolderParamsSchema = z.object({
+export const getFolderSchema = z.object({
     folderId: z.string(),
 });
 
@@ -35,5 +35,5 @@ export const updateFolderBodySchema = z.object({
 export type GetAllFoldersSchema = z.infer<typeof getAllFoldersSchema>;
 export type GetAccountFoldersSchema = z.infer<typeof getAccountFoldersSchema>;
 export type CreateFolderSchema = z.infer<typeof createFolderSchema>;
-export type UpdateFolderParamsSchema = z.infer<typeof updateFolderParamsSchema>;
+export type GetFolderSchema = z.infer<typeof getFolderSchema>;
 export type UpdateFolderBodySchema = z.infer<typeof updateFolderBodySchema>;

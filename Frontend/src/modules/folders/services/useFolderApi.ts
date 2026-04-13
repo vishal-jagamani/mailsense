@@ -1,14 +1,22 @@
 import { FOLDER_KEYS } from '@shared/config/query-keys';
 import { UpdateAPIResponse } from '@shared/types/api.types';
-import { CreateFolderBodyParams, GetALlFolderResponse, GetAllFoldersRequestOptions } from '@shared/types/folder.types';
+import { CreateFolderBodyParams, FolderAttributes, GetALlFolderResponse, GetAllFoldersRequestOptions } from '@shared/types/folder.types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { createFolder, deleteFolder, getAllFolders, updateFolder } from './folder.api';
+import { createFolder, deleteFolder, getAllFolders, getFolderDetails, updateFolder } from './folder.api';
 
 export const useGetAllFolders = (options: GetAllFoldersRequestOptions | null) => {
     return useQuery<GetALlFolderResponse, Error>({
         queryKey: [FOLDER_KEYS.FOLDERS, options?.page, options?.size, options?.filters],
         queryFn: () => getAllFolders(options!),
         enabled: !!options?.userId,
+    });
+};
+
+export const useGetFolderQuery = (id: string) => {
+    return useQuery<FolderAttributes, Error>({
+        queryKey: [FOLDER_KEYS.FOLDERS, id],
+        queryFn: () => getFolderDetails(id),
+        enabled: !!id,
     });
 };
 

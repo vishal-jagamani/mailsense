@@ -19,6 +19,10 @@ export class FolderRepository {
             .sort(sort);
     }
 
+    public static async getFolder(folderId: string): Promise<FolderDocument | null> {
+        return await Folder.findById(folderId);
+    }
+
     public static async countDocuments(filterQuery: Record<string, unknown>): Promise<number> {
         return await Folder.countDocuments(filterQuery);
     }

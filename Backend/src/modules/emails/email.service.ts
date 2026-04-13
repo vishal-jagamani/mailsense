@@ -23,14 +23,14 @@ export class EmailService {
 
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         try {
-            const { searchText, accountId, dateRange } = filters;
+            const { searchText, accountId, dateRange, folders } = filters;
             const accounts = await AccountRepository.getAccounts(userId);
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
             const searchQuery: FilterQuery<EmailDocument> = {
                 accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
-                folders: { $nin: ['TRASH', 'SPAM'] },
+                folders: folders ? { $in: folders } : { $nin: ['TRASH', 'SPAM'] },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
                 ...(dateRange &&
                     this.getDateRange(dateRange) && {

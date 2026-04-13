@@ -101,6 +101,20 @@ export class FolderService {
         }
     }
 
+    public async getFolder(folderId: string): Promise<FolderDocument> {
+        try {
+            const folder = await FolderRepository.getFolder(folderId);
+            if (!folder) {
+                throw new Error('Folder not found');
+            }
+            return folder;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in FolderService.getFolder: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
     public async getAccountFolders(accountId: string): Promise<PaginatedDataResponse<FolderDocument[]>> {
         try {
             const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
