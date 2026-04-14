@@ -1,27 +1,35 @@
 import { NextFunction, Request, Response } from 'express';
-import { ENABLE_AUTH } from '@config/config.js';
+import { AUTH0_SECRETS, ENABLE_AUTH } from '@config/config.js';
 import { logger } from '@utils/logger.js';
+import { auth } from 'express-oauth2-jwt-bearer';
 
 class AuthMiddleware {
+    private checkJwt = auth({
+        issuerBaseURL: AUTH0_SECRETS.issuerBaseURL,
+        audience: AUTH0_SECRETS.audience,
+        tokenSigningAlg: 'RS256',
+    });
+
     private noAuth(req: Request, res: Response, next: NextFunction) {
         next();
     }
 
-    private auth(req: Request, res: Response, next: NextFunction) {
-        try {
-            const authHeader = req.headers.authorization;
-            const token = authHeader?.split(' ')[1];
-
-            if (!token) {
-                return res.status(401).json({ error: 'Unauthorized' });
+    private async auth(req: Request, res: Response, next: NextFunction) {
+        this.checkJwt(req, res, (err) => {
+            if (err) {
+                logger.error('AuthMiddleware Error:', { error: err });
+                return res.status(401).json({
+                    success: false,
+                    error: 'Unauthorized',
+                    message: err.message || 'Invalid token',
+                });
             }
-
-            // TODO: Implement token verification (JWT, OAuth, etc.)
+            req.user = {
+                id: req.auth?.payload?.sub || '',
+                raw: req.auth?.payload,
+            };
             next();
-        } catch (err) {
-            logger.error('Error in AuthMiddleware.auth: ', { error: err });
-            res.status(401).json({ error: 'Unauthorized' });
-        }
+        });
     }
 
     public getMiddleware() {

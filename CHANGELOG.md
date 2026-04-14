@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+- Updated authenticated app requests so account, user, folder, and email data now resolve from the signed-in session instead of passing user IDs in request payloads.
+
+### Fixed
+- Improved reliability of authenticated account and inbox data loading by aligning frontend requests with backend JWT-based authorization.
+
 ## [1.2.0] - 2026-04-13
 
 ### Added
