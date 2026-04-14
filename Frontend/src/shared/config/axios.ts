@@ -1,4 +1,4 @@
-import { getAccessToken } from '@auth0/nextjs-auth0';
+import { getAccessToken } from '@auth0/nextjs-auth0/client';
 import { API_BASE_URL } from '@config/config';
 import axios from 'axios';
 

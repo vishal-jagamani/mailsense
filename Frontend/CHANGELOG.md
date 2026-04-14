@@ -7,6 +7,13 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+### Changed
+- Updated frontend account and inbox data requests to rely on authenticated backend session context instead of sending user IDs in API calls.
+- Updated frontend API token retrieval to match the client-side Auth0 integration used by protected backend routes.
+
+### Fixed
+- Improved authenticated account loading reliability by aligning frontend requests with backend JWT-protected endpoints.
+
 ## [1.2.0] - 2026-04-13
 
 ### Added
