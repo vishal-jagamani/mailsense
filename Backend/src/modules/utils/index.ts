@@ -1,3 +1,4 @@
+import { authMiddleware } from '@middlewares/auth.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { GmailApi } from '@providers/gmail/gmail.api.js';
 import { OutlookApi } from '@providers/outlook/outlook.api.js';
@@ -6,6 +7,8 @@ import { Router } from 'express';
 import { AccountProvider } from 'types/account.types.js';
 
 const router = Router();
+
+router.use(authMiddleware);
 
 router.post('/decrypt', (req, res) => {
     const { data } = req.body;

@@ -2,7 +2,6 @@ import z from 'zod';
 import { DATE_RANGE } from './email.types.js';
 
 export const getAllEmailsSchema = z.object({
-    userId: z.string(),
     size: z.number(),
     page: z.number(),
     filters: z

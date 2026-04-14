@@ -25,7 +25,8 @@ export class FolderController {
 
     public getAllFolders = async (req: Request<object, object, GetAllFoldersSchema, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { userId, size, page, filters } = req.body;
+            const { size, page, filters } = req.body;
+            const userId = req.user?.id;
             if (!userId) {
                 throw new Error('User ID is required');
             }
