@@ -2,8 +2,8 @@ import { FilterQuery, ProjectionType } from 'mongoose';
 import { Account, AccountDocument, AccountInput, AccountMetrics, AccountMetricsDocument, AccountMetricsInput } from './account.model.js';
 
 export class AccountRepository {
-    public static async getAccounts(userId: string) {
-        return await Account.find({ userId });
+    public static async getAccounts(filter: FilterQuery<AccountDocument>) {
+        return await Account.find(filter);
     }
 
     public static async getAccountByEmail(emailAddress: string) {

@@ -20,6 +20,7 @@ export interface AccountAttributes {
     syncInterval: number;
     lastSyncedAt: number;
     lastSyncCursor: string;
+    active: boolean;
 }
 
 export interface AccountMetricsAttributes {

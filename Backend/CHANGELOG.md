@@ -7,6 +7,27 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Added JWT verification middleware using `express-oauth2-jwt-bearer`.
+- Added request auth typing so controllers can read authenticated user context from `req.user` and `req.auth`.
+- Added account enable/disable endpoint and request schema support.
+- Added persistent `active` flag on accounts with supporting indexes.
+
+### Changed
+- Updated accounts, users, folders, and email list/search controllers to derive the active user from the authenticated token instead of request params, query values, headers, or body fields.
+- Updated accounts routes to require auth for account listing, account sync, and other protected account actions while keeping OAuth callback reachable.
+- Updated user routes to authenticated session-based endpoints (`/users`, `/users/profile`, `/users/change-password`) instead of ID-based path variants.
+- Updated folders and emails list request schemas to remove `userId` from request bodies.
+- Updated utils routes to require authentication.
+- Updated frontend account listing request to use the new authenticated accounts endpoint.
+- Updated frontend axios auth token retrieval to use the client-compatible Auth0 token helper.
+- Updated account queries to return only active accounts for account list, sync-all, inbox email queries, search, and folder queries.
+- Updated single-account sync to block sync attempts for disabled accounts.
+
+### Fixed
+- Improved consistency between frontend and backend authenticated requests by removing duplicate client-supplied user identifiers from protected APIs.
+- Improved active mailbox consistency by keeping disabled accounts out of sync and filtered mailbox results.
+
 ## [1.2.0] - 2026-04-13
 
 ### Added

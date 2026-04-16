@@ -34,6 +34,7 @@ export interface AccountAttributes {
     syncEnabled: boolean;
     syncInterval: number;
     lastSyncedAt: number;
+    active: boolean;
 }
 
 export interface GetAccountsResponse {

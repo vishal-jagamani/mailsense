@@ -7,6 +7,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Added account enable and disable controls in the connected accounts experience.
+
+### Changed
+- Updated authenticated app requests so account, user, folder, and email data now resolve from the signed-in session instead of passing user IDs in request payloads.
+- Inactive accounts are now excluded from account lists, sync flows, inbox results, and folder views until re-enabled.
+
+### Fixed
+- Improved reliability of authenticated account and inbox data loading by aligning frontend requests with backend JWT-based authorization.
+- Improved account management flow by preventing disabled accounts from being synced or shown in active mailbox views.
+
 ## [1.2.0] - 2026-04-13
 
 ### Added

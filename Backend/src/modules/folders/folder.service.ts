@@ -73,7 +73,7 @@ export class FolderService {
     ): Promise<PaginatedDataResponse<FolderDocument[]>> {
         try {
             const { searchText, accountId, dateRange } = filters;
-            const accounts = await AccountRepository.getAccounts(userId);
+            const accounts = await AccountRepository.getAccounts({ userId, active: true });
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }

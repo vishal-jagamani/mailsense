@@ -13,7 +13,7 @@ export async function getAccountDetails(accountId: string): Promise<AccountAttri
 }
 
 export async function getAccounts(userId: string) {
-    const { data } = await axiosClient.get<AccountAttributes[]>(ACCOUNTS_API_ENDPOINTS.LIST_BY_USER(userId));
+    const { data } = await axiosClient.get<AccountAttributes[]>(ACCOUNTS_API_ENDPOINTS.LIST_BY_USER);
     return data;
 }
 
@@ -39,4 +39,9 @@ export async function syncAllAccounts(userId: string) {
 export async function removeAccount(accountId: string) {
     const { data } = await axiosClient.delete(ACCOUNTS_API_ENDPOINTS.DELETE(accountId));
     return data;
+}
+
+export async function enableAccount(accountId: string, active: boolean) {
+    const { data: response } = await axiosClient.patch(ACCOUNTS_API_ENDPOINTS.ENABLE(accountId), { active });
+    return response;
 }

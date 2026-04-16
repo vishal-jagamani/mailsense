@@ -12,7 +12,8 @@ export class EmailController {
 
     public getAllEmails = async (req: Request<object, object, GetAllEmailsSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const { userId, size, page, filters } = req.body;
+            const { size, page, filters } = req.body;
+            const userId = req.user?.id;
             if (!userId) {
                 throw new Error('User ID is required');
             }
@@ -62,7 +63,7 @@ export class EmailController {
     public searchEmails = async (req: Request<object, object, SearchEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { searchText, size, page } = req.body;
-            const { userid } = req.headers;
+            const { id: userid } = req.user || {};
             if (!userid) {
                 res.status(400).send('User ID is required');
             }

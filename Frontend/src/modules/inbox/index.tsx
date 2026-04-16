@@ -50,6 +50,7 @@ const InboxPage: React.FC = () => {
 
     const { data: emails, mutate: refetchEmails, isPending: isLoadingEmails, isError: isEmailError } = useFetchEmails();
     const { data: accounts, isLoading: accountsLoading, error: accountError } = useGetAccountsQuery(user?.id ?? '');
+    console.log('🚀 ~ InboxPage ~ accounts:', accounts, accountError);
 
     const fetchEmailsData = useCallback(() => {
         if (!user) return;

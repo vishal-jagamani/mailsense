@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
+import { ConnectAccountSchema, DeleteAccountSchema, EnableAccountSchema, GetAccountDetailsSchema } from './account.schema.js';
 import { AccountsService } from './account.service.js';
-import { ConnectAccountSchema, DeleteAccountSchema, GetAccountDetailsSchema, GetAccountsSchema } from './account.schema.js';
 
 export class AccountsController {
     private accountsService: AccountsService;
@@ -32,9 +32,9 @@ export class AccountsController {
         }
     };
 
-    public getAccounts = async (req: Request<GetAccountsSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public getAccounts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const userId = req.params.userId;
+            const userId = req.user?.id;
             if (!userId) throw new Error('User ID is required');
             const accounts = await this.accountsService.getAccounts(userId);
             res.send(accounts);
@@ -80,7 +80,7 @@ export class AccountsController {
 
     public syncAccounts = async (req: Request<object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            const userId = req.query.userId;
+            const userId = req.user?.id;
             if (!userId) throw new Error('User ID is required');
             const emails = await this.accountsService.syncAccounts(String(userId));
             res.send(emails);
@@ -94,6 +94,21 @@ export class AccountsController {
             const accountId = req.params.accountId;
             this.accountsService.syncAccount(accountId);
             res.send(true);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public enableAccount = async (
+        req: Request<GetAccountDetailsSchema, object, EnableAccountSchema>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const accountId = req.params.accountId;
+            const { active } = req.body;
+            const response = await this.accountsService.enableAccount(accountId, active);
+            res.send(response);
         } catch (error) {
             next(error);
         }

@@ -24,7 +24,7 @@ export class EmailService {
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         try {
             const { searchText, accountId, dateRange, folders } = filters;
-            const accounts = await AccountRepository.getAccounts(userId);
+            const accounts = await AccountRepository.getAccounts({ userId, active: true });
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
@@ -149,7 +149,7 @@ export class EmailService {
     public async searchEmails(params: SearchEmailsParams): Promise<PaginatedDataResponse<EmailDocument[]>> {
         try {
             const { userId, searchText, size, page } = params;
-            const accounts = await AccountRepository.getAccounts(userId);
+            const accounts = await AccountRepository.getAccounts({ userId, active: true });
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
