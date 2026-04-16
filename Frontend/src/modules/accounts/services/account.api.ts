@@ -40,3 +40,8 @@ export async function removeAccount(accountId: string) {
     const { data } = await axiosClient.delete(ACCOUNTS_API_ENDPOINTS.DELETE(accountId));
     return data;
 }
+
+export async function enableAccount(accountId: string, active: boolean) {
+    const { data: response } = await axiosClient.patch(ACCOUNTS_API_ENDPOINTS.ENABLE(accountId), { active });
+    return response;
+}

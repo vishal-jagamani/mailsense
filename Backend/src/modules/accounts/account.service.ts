@@ -78,7 +78,7 @@ export class AccountsService {
      */
     async getAccounts(userId: string): Promise<AccountInput[]> {
         try {
-            return AccountRepository.getAccounts(userId);
+            return AccountRepository.getAccounts({ userId, active: true });
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.getAccounts: ${errorMessage}`, { error: err });
@@ -200,7 +200,7 @@ export class AccountsService {
 
     async syncAccounts(userId: string): Promise<SuccessAPIResponse> {
         try {
-            const accounts = await AccountRepository.getAccounts(userId);
+            const accounts = await AccountRepository.getAccounts({ userId, active: true });
             if (!accounts.length) return { status: true, message: 'Accounts not found' };
             this.syncAllAccounts(accounts);
             return { status: true, message: 'Accounts sync started!' };
@@ -234,6 +234,14 @@ export class AccountsService {
                     description: 'Given account ID does not exist',
                     suggestedAction: 'Please check the account ID',
                 });
+            if (!account.active) {
+                throw Object.assign(new Error('Account is not active'), {
+                    status: 400,
+                    isOperational: true,
+                    description: 'Given account is not active',
+                    suggestedAction: 'Please activate the account',
+                });
+            }
             this.startAccountSync(accountId, account);
             return { status: true, message: 'Account sync started!' };
         } catch (err) {
@@ -324,6 +332,17 @@ export class AccountsService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.updateAccountSyncDetails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async enableAccount(accountId: string, active: boolean): Promise<UpdateAPIResponse> {
+        try {
+            await AccountRepository.updateAccount(accountId, { active });
+            return { status: true, message: `Account ${active ? 'enabled' : 'disabled'} successfully` };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.enableAccount: ${errorMessage}`, { error: err });
             throw err;
         }
     }

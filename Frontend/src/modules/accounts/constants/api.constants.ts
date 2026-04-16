@@ -6,4 +6,5 @@ export const ACCOUNTS_API_ENDPOINTS = {
     SYNC: (accountId: string) => `/accounts/sync/${accountId}`,
     SYNC_ALL: '/accounts/sync-all',
     DELETE: (accountId: string) => `/accounts/${accountId}`,
+    ENABLE: (accountId: string) => `/accounts/enable/${accountId}`,
 } as const;

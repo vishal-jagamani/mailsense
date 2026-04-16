@@ -3,7 +3,7 @@ import { UpdateAPIResponse } from '@/shared/types/api.types';
 import { QUERY_KEYS } from '@shared/config/query-keys';
 import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount, syncAccount, syncAllAccounts } from './account.api';
+import { connectAccount, enableAccount, getAccountDetails, getAccountProvider, getAccounts, removeAccount, syncAccount, syncAllAccounts } from './account.api';
 
 type ConnectAccountResult = Awaited<ReturnType<typeof connectAccount>>;
 
@@ -63,6 +63,17 @@ export const useRemoveAccountQuery = () => {
     const queryClient = useQueryClient();
     return useMutation<UpdateAPIResponse, Error, string>({
         mutationFn: (accountId) => removeAccount(accountId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNT_PROVIDERS] });
+        },
+    });
+};
+
+export const useEnableAccountMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation<UpdateAPIResponse, Error, { accountId: string; active: boolean }>({
+        mutationFn: ({ accountId, active }) => enableAccount(accountId, active),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNT_PROVIDERS] });

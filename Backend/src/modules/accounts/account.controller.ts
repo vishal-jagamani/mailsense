@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { ConnectAccountSchema, DeleteAccountSchema, GetAccountDetailsSchema } from './account.schema.js';
+import { ConnectAccountSchema, DeleteAccountSchema, EnableAccountSchema, GetAccountDetailsSchema } from './account.schema.js';
 import { AccountsService } from './account.service.js';
 
 export class AccountsController {
@@ -94,6 +94,21 @@ export class AccountsController {
             const accountId = req.params.accountId;
             this.accountsService.syncAccount(accountId);
             res.send(true);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public enableAccount = async (
+        req: Request<GetAccountDetailsSchema, object, EnableAccountSchema>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const accountId = req.params.accountId;
+            const { active } = req.body;
+            const response = await this.accountsService.enableAccount(accountId, active);
+            res.send(response);
         } catch (error) {
             next(error);
         }

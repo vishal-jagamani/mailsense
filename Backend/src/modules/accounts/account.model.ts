@@ -26,12 +26,15 @@ const AccountSchema = new Schema<AccountDocument>(
         syncInterval: { type: Number, required: true },
         lastSyncedAt: { type: Number, required: true },
         lastSyncCursor: { type: String, required: false },
+        active: { type: Boolean, required: true },
     },
     { timestamps: true, versionKey: false },
 );
 
 // Indexes
 AccountSchema.index({ emailAddress: 1 }, { unique: true });
+AccountSchema.index({ userId: 1 });
+AccountSchema.index({ active: 1 });
 
 // ✅ Pre-save hook
 AccountSchema.pre('save', function (next) {

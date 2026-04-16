@@ -3,7 +3,7 @@ import { validate } from '@middlewares/validator.js';
 import { handleRequest } from '@utils/request.handler.js';
 import { Router } from 'express';
 import { AccountsController } from './account.controller.js';
-import { connectAccountSchema, deleteAccountSchema, getAccountDetailsSchema } from './account.schema.js';
+import { connectAccountSchema, deleteAccountSchema, enableAccountSchema, getAccountDetailsSchema } from './account.schema.js';
 
 const router = Router();
 
@@ -26,6 +26,8 @@ router.get('/list/all', handleRequest(accountsController.getAccounts));
 router.get('/providers/list', handleRequest(accountsController.getAccountProviders));
 
 router.get('/connect/:provider', validate({ params: connectAccountSchema }), handleRequest(accountsController.connect));
+
+router.patch('/enable/:accountId', validate({ params: getAccountDetailsSchema, body: enableAccountSchema }), handleRequest(accountsController.enableAccount));
 
 
 export default router;
