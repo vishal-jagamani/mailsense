@@ -14,7 +14,7 @@ import {
     GmailLabelsListResponse,
     GmailMessageObjectFull,
     GmailMessages,
-    GmailUserProfile
+    GmailUserProfile,
 } from './gmail.types.js';
 
 export class GmailApi {
@@ -372,6 +372,26 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.deleteLabel: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async sendMessage(accountId: string, message: { raw: string }): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/send`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: message,
+            };
+            const response = await apiRequest<GmailMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.sendMessage: ${errorMessage}`, { error: err });
             throw err;
         }
     }

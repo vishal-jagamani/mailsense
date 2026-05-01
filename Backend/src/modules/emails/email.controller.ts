@@ -1,5 +1,13 @@
 import { NextFunction, Request, Response } from 'express';
-import { ArchiveEmailBody, DeleteEmailSchema, GetAllEmailsSchema, SearchEmailBody, StarEmailBody, UnreadEmailBody } from './email.schema.js';
+import {
+    ArchiveEmailBody,
+    ComposeEmailBody,
+    DeleteEmailSchema,
+    GetAllEmailsSchema,
+    SearchEmailBody,
+    StarEmailBody,
+    UnreadEmailBody,
+} from './email.schema.js';
 import { EmailService } from './email.service.js';
 import { GetAllEmailsFilters } from './email.types.js';
 
@@ -126,6 +134,19 @@ export class EmailController {
                 throw new Error('Email ID is required');
             }
             const email = await this.emailService.unreadEmails(emailIds, Boolean(unread));
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public composeEmail = async (req: Request<object, object, ComposeEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { accountId, to, subject, body } = req.body;
+            if (!accountId || !to || !subject || !body) {
+                throw new Error('Account ID, To, subject and body are required');
+            }
+            const email = await this.emailService.composeEmail(req.body);
             res.send(email);
         } catch (error) {
             next(error);

@@ -10,6 +10,9 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 - Added JWT verification middleware using `express-oauth2-jwt-bearer`.
 - Added request auth typing so controllers can read authenticated user context from `req.user` and `req.auth`.
+- Added compose email endpoint support in the emails module.
+- Added provider send-mail support for both Gmail and Outlook.
+- Added reusable `AppError` and `AxiosApiError` classes for structured error handling.
 
 ### Changed
 - Updated accounts, users, folders, and email list/search controllers to derive the active user from the authenticated token instead of request params, query values, headers, or body fields.
@@ -19,9 +22,13 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated utils routes to require authentication.
 - Updated frontend account listing request to use the new authenticated accounts endpoint.
 - Updated frontend axios auth token retrieval to use the client-compatible Auth0 token helper.
+- Updated email service to support compose/send flows through provider-specific implementations.
+- Updated inbox default filtering to exclude sent folders for Gmail and Outlook accounts.
+- Consolidated API error handling into a single structured error middleware flow.
 
 ### Fixed
 - Improved consistency between frontend and backend authenticated requests by removing duplicate client-supplied user identifiers from protected APIs.
+- Improved provider error propagation so external API failures return cleaner status/message payloads.
 
 ## [1.2.0] - 2026-04-13
 

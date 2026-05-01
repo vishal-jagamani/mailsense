@@ -1,6 +1,6 @@
 'use client';
 
-import { CircleUser, Folder, Inbox, LucideIcon, Mail, Settings } from 'lucide-react';
+import { CircleUser, Folder, Inbox, LucideIcon, Mail, Pencil, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
@@ -12,6 +12,8 @@ import { NavMain } from './nav-main';
 import { NavProjects } from './nav-projects';
 import { NavUser } from './nav-user';
 import { TeamSwitcher } from './team-switcher';
+import { Button } from '@/shared/ui/button';
+import { useComposeEmailPopupStore } from '@/shared/store/composeEmailPopup.store';
 
 type NavMainItem = {
     title: string;
@@ -142,6 +144,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const [sidebarData, setSidebarData] = useState(data);
     const { user } = useUser();
 
+    const { openCompose } = useComposeEmailPopupStore();
     const { user: currentUser } = useAuthStore();
     const { data: accounts } = useGetAccountsQuery(currentUser?.id || '', { enabled: !!currentUser?.id });
 
@@ -179,6 +182,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <TeamSwitcher />
             </SidebarHeader>
             <SidebarContent>
+                <div className="mt-4 flex items-center px-4">
+                    <Button className="w-36 cursor-pointer rounded-lg p-5 text-xs font-semibold md:text-sm" onClick={openCompose}>
+                        <Pencil className="size-4" strokeWidth={2} />
+                        Compose
+                    </Button>
+                </div>
                 <NavMain items={sidebarData.navMain || []} />
                 <NavProjects projects={sidebarData.projects} />
             </SidebarContent>

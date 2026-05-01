@@ -8,7 +8,7 @@
 
 ### Runtime Entry
 - `Backend/src/server.ts`: starts app, connects MongoDB, listens on `PORT`
-- `Backend/src/app.ts`: Express app wiring (CORS, body parsers, static, routes, error handlers)
+- `Backend/src/app.ts`: Express app wiring (CORS, body parsers, static, routes, Sentry, centralized error handler)
 - `Backend/src/routes/index.routes.ts`: mounts module routes under `/api`
 
 ### Config
@@ -20,7 +20,7 @@
 - `Backend/src/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`
 - `Backend/src/middlewares/validator.ts`: Zod request validation (`headers`, `params`, `query`, `body`)
 - `Backend/src/utils/request.handler.ts`: async wrapper for controllers
-- `Backend/src/middlewares/error.handler.ts`: operational + global error responses
+- `Backend/src/middlewares/error.handler.ts`: centralized structured error responses for app/provider failures
 
 ### Modules
 - Accounts (`Backend/src/modules/accounts/*`)
@@ -30,6 +30,7 @@
 - Emails (`Backend/src/modules/emails/*`)
   - Unified list, per-account list, email details
   - Search, delete, archive, star, unread
+  - Compose/send mail through Gmail and Outlook providers
   - Supports account/date/folder-based filtering
   - Uses provider APIs + DB projection/sorting
 - Folders (`Backend/src/modules/folders/*`)
@@ -50,12 +51,14 @@
   - Fetch history + messages
   - Modify labels for archive/star/unread, trash/delete
   - Label CRUD + label sync into folders
+  - Send outgoing mail and upsert sent copy locally
 - Outlook (`Backend/src/providers/outlook/*`)
   - OAuth token exchange/refresh
   - Fetch profile/messages and message details
   - Delta-based sync support
   - Inbox mutation support (delete/archive/unread/flag)
   - Folder CRUD + folder sync into folders
+  - Create/send outgoing mail and upsert sent copy locally
 - Auth0 (`Backend/src/providers/auth0/*`)
   - Management API token + user/profile/password operations
 
@@ -73,6 +76,8 @@
 - `Backend/src/types/express.d.ts`: extends Express request typing for validated payloads and Auth0 JWT user context
 - `Backend/src/types/common.types.ts`: shared enums such as `DATE_RANGE`
 - `Backend/src/utils/common.ts`: reusable date-range helpers
+- `Backend/src/errors/AppError.ts`: base structured application error
+- `Backend/src/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
 
 ### API Surface (mounted at `/api`)
 - `GET /`
@@ -97,6 +102,7 @@
   - `GET /emails/list/:accountId`
   - `GET /emails/details/:emailId`
   - `POST /emails/search`
+  - `POST /emails/compose`
   - `POST /emails/delete`
   - `POST /emails/archive`
   - `POST /emails/star`
@@ -119,6 +125,7 @@
 - `Frontend/src/app/layout.tsx`: root layout + providers
 - `Frontend/src/app/providers.tsx`: Auth0 provider, app auth sync, React Query, theme, toaster
 - `Frontend/src/middleware.ts`: route protection via Auth0 session (redirect unauthenticated to `/get_started`)
+- `Frontend/src/app/(home)/layout.tsx`: authenticated shell with sidebar, breadcrumb, and global compose-email popup
 
 ### App Router Pages
 - `Frontend/src/app/(home)/page.tsx`: redirects to `/inbox`
@@ -133,7 +140,7 @@
 ### Feature Modules
 - `Frontend/src/modules/inbox/*`: unified inbox UI + search/filter/pagination
 - `Frontend/src/modules/home/*`: list/delete APIs and reusable email table
-- `Frontend/src/modules/emails/*`: email details + star/unread
+- `Frontend/src/modules/emails/*`: email details, star/unread, and compose email popup/editor
 - `Frontend/src/modules/folders/*`: folders overview, folder filters, create/rename/delete actions, folder email list
 - `Frontend/src/modules/accounts/*`: providers list, connect flow, account actions
 - `Frontend/src/modules/settings/*`: profile and password changes
@@ -142,6 +149,7 @@
 ### State and Data
 - Zustand:
   - `Frontend/src/store/auth.store.ts` auth session data (`user`, loading, authenticated flag)
+  - `Frontend/src/shared/store/composeEmailPopup.store.ts` compose popup open/close state
 - React Query:
   - query keys in `Frontend/src/shared/config/query-keys.ts`
   - module-level hooks under each `modules/*/services/use*.ts`
@@ -167,12 +175,14 @@
 4. Account sync pulls emails and folders from Gmail/Outlook APIs, transforms provider payloads, and upserts Mongo docs.
 5. Inbox UI reads paginated email data and performs mutation actions (delete/archive/star/unread).
 6. Folders UI reads paginated folder data, supports folder CRUD, and opens filtered email lists for a selected folder.
+7. Compose popup lets the user send email from a connected account; backend sends through the provider and stores the sent message for later listing/details.
 
 ## Important Notes
 - Frontend has two base URL definitions:
   - `Frontend/src/config/config.ts` uses `NEXT_PUBLIC_API_BASE_URL`
   - `Frontend/src/shared/constants/urls.ts` uses `NEXT_PUBLIC_API_URL` fallback `http://localhost:4000`
 - Backend auth middleware now validates Auth0 JWTs for protected routes.
+- Backend now uses structured app/provider error classes for cleaner API error responses.
 - Outlook backend sync and inbox mutations are implemented; frontend release availability may still be controlled by product rollout.
 - Protected backend APIs now resolve user context from the signed-in session instead of client-supplied user IDs.
 - Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).
