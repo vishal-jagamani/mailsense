@@ -25,6 +25,8 @@ import {
     MessagesAfterLastHistoryResponse,
 } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
+import { ComposeEmailBody } from '@modules/emails/email.schema.js';
+import { AxiosApiError } from 'errors/AxiosApiError.js';
 
 export class GmailService {
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -341,6 +343,23 @@ export class GmailService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.deleteLabel: ${errorMessage}`, { error: err });
             throw err;
+        }
+    }
+
+    async sendMessage(composeEmailData: ComposeEmailBody): Promise<Partial<GmailMessageObjectFull>> {
+        try {
+            const { accountId, to, subject, body } = composeEmailData;
+            const raw = GmailUtils.buildGmailRawString(to, subject, body);
+            const response = await GmailApi.sendMessage(accountId, { raw });
+            const emailDetails = await GmailApi.fetchEmailById(response.id, accountId);
+            const emilData = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+            await EmailRepository.upsertEmailsInBulk([emilData]);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.sendMessage: ${errorMessage}`, { error: err });
+            // throw err;
+            throw new AxiosApiError(err);
         }
     }
 }

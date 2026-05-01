@@ -9,15 +9,21 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ### Added
 - Added account enable and disable toggle controls in connected account cards.
+- Added a sidebar-triggered compose email popup with account selection, recipients, subject, and rich-text message editing.
+- Added frontend compose email API hook, request type, and success/error messaging.
+- Added shared compose popup store and scroll-area/editor UI support for the compose experience.
 
 ### Changed
 - Updated frontend account and inbox data requests to rely on authenticated backend session context instead of sending user IDs in API calls.
 - Updated frontend API token retrieval to match the client-side Auth0 integration used by protected backend routes.
 - Updated account management UI to support account activation state and refresh account data after toggle actions.
+- Updated home layout to mount the compose popup globally within authenticated app screens.
+- Updated sidebar UI to expose a primary Compose action.
 
 ### Fixed
 - Improved authenticated account loading reliability by aligning frontend requests with backend JWT-protected endpoints.
 - Improved connected account visibility so disabled accounts no longer appear in active account-driven mailbox flows.
+- Improved rich-text editor rendering and popup layout behavior for the compose workflow.
 
 ## [1.2.0] - 2026-04-13
 

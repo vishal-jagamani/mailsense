@@ -6,4 +6,5 @@ export const EMAIL_API_URLS = {
     STAR: '/emails/star',
     UNREAD: '/emails/unread',
     SEARCH: '/emails/search',
+    COMPOSE: '/emails/compose',
 } as const;
