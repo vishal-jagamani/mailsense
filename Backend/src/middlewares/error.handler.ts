@@ -1,56 +1,42 @@
-import { NextFunction, Request, Response } from 'express';
+import { NODE_ENV } from '@config/config.js';
 import { logger } from '@utils/logger.js';
+import { AppError } from 'errors/AppError.js';
+import { NextFunction, Request, Response } from 'express';
 
-interface ExtendedError extends Error {
-    status?: number;
-    isOperational?: boolean;
-    description?: string;
-    suggestedAction?: string;
-}
-
-// ✅ Known operational API errors
-export const apiErrorHandler = (err: ExtendedError, req: Request, res: Response, next: NextFunction) => {
-    const statusCode = err.status || 500;
-    const message = err.message || 'Internal Server Error';
-
-    logError(req, statusCode, err);
-
-    if (err.isOperational !== false && err.status) {
-        res.status(statusCode).json({
-            error: {
-                code: statusCode,
-                message,
-                description: err.description || 'A known error occurred in the API flow.',
-                suggestedAction: err.suggestedAction || 'Please review your request or check documentation.',
-            },
-        });
-    } else {
-        next(err); // pass to global handler if unknown
-    }
-};
-
-// 🌐 Global unknown error handler
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const errorHandler = (err: ExtendedError, req: Request, res: Response, next: NextFunction) => {
-    const statusCode = err.status || 500;
-    const message = err.message || 'Internal Server Error';
+export const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunction) => {
+    let error: AppError;
 
-    logError(req, statusCode, err);
+    if (err instanceof AppError) {
+        error = err;
+    } else {
+        error = new AppError({
+            message: 'Internal Server Error',
+            status: 500,
+            isOperational: false,
+        });
+    }
+
+    const statusCode = error.status || 500;
+
+    logger.error(`[${req.method}] ${req.url} -> ${statusCode} :: ${error.message}`, {
+        stack: error.stack,
+    });
 
     res.status(statusCode).json({
-        status: false,
+        success: false,
         error: {
             code: statusCode,
-            message,
-            ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+            message: error.message,
+            description: error.description || 'Something went wrong while processing your request.',
+            suggestedAction: error.suggestedAction || 'Please try again later or contact support.',
+
+            // ✅ Only in development
+            ...(NODE_ENV === 'local' && {
+                stack: error.stack,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                external: (error as any).originalError,
+            }),
         },
     });
-};
-
-// 🔍 Logging utility (replace with Winston or Pino in production)
-const logError = (req: Request, statusCode: number, err: Error) => {
-    logger.error(`[${req.method}] ${req.url} -> ${statusCode} :: ${err.message}`);
-    if (process.env.NODE_ENV === 'development') {
-        logger.error(`Stack trace:`, { stack: err.stack });
-    }
 };

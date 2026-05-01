@@ -31,3 +31,10 @@ export interface GetEmailsResponse {
     page: number;
     total: number;
 }
+
+export interface ComposeEmailRequestBody {
+    accountId: string;
+    to: string[];
+    subject: string;
+    body: string;
+}

@@ -16,6 +16,8 @@ import {
     OutlookUserProfile,
 } from './outlook.types.js';
 import * as OutlookUtils from './outlook.utils.js';
+import { ComposeEmailBody } from '@modules/emails/email.schema.js';
+import { compressString } from '@utils/compression.js';
 
 export class OutlookService {
     private outlookApi: OutlookApi;
@@ -158,7 +160,7 @@ export class OutlookService {
         }
     }
 
-    private async parseEmailDetailsIntoPlainObject(accountId: string, email: OutlookMessageObjectFull): Promise<EmailInput> {
+    private parseEmailDetailsIntoPlainObject(accountId: string, email: OutlookMessageObjectFull): EmailInput {
         try {
             const emailObject: EmailInput = {
                 accountId,
@@ -170,8 +172,8 @@ export class OutlookService {
                 bcc: email.bccRecipients.map((val) => val.emailAddress.address),
                 subject: email.subject,
                 body: email.bodyPreview || '',
-                bodyPlain: email.body.content,
-                bodyHtml: email.body.content,
+                bodyPlain: compressString(email.body.content),
+                bodyHtml: compressString(email.body.content),
                 receivedAt: new Date(email.receivedDateTime),
                 isRead: email.isRead,
                 folders: [email.parentFolderId],
@@ -337,6 +339,23 @@ export class OutlookService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.deleteFolder: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async sendMail(composeEmailData: ComposeEmailBody): Promise<OutlookMessageObjectFull> {
+        try {
+            const { accountId, to, subject, body } = composeEmailData;
+            const messageBody = OutlookUtils.buildOutlookMessagePayload(to, subject, body, 'HTML');
+            const response = await OutlookApi.createDraftMessage(accountId, messageBody);
+            await OutlookApi.sendDraftMessage(accountId, response.id);
+            const emailDetails = await OutlookApi.getMessageDetails(accountId, response.id);
+            const emailData = this.parseEmailDetailsIntoPlainObject(accountId, emailDetails);
+            await EmailRepository.upsertEmailsInBulk([emailData]);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.sendMail: ${errorMessage}`, { error: err });
             throw err;
         }
     }

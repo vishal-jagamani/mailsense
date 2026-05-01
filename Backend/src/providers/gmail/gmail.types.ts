@@ -15,6 +15,7 @@ export interface GmailUserProfile {
 // Messages interfaces
 export enum GMAIL_LABELS {
     INBOX = 'INBOX',
+    SENT = 'SENT',
     SPAM = 'SPAM',
     TRASH = 'TRASH',
     UNREAD = 'UNREAD',

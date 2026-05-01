@@ -5,6 +5,7 @@ import { Router } from 'express';
 import { EmailController } from './email.controller.js';
 import {
     archiveEmailSchema,
+    composeEmailSchema,
     deleteEmailSchema,
     getAllEmailsSchema,
     getEmailSchema,
@@ -34,5 +35,7 @@ router.post('/star', validate({ body: starEmailSchema }), handleRequest(emailCon
 router.post('/unread', validate({ body: unreadEmailSchema }), handleRequest(emailController.unreadEmails));
 
 router.post('/search', validate({ body: searchEmailSchema }), handleRequest(emailController.searchEmails));
+
+router.post('/compose', validate({ body: composeEmailSchema }), handleRequest(emailController.composeEmail));
 
 export default router;

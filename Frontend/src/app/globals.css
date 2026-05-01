@@ -3,6 +3,17 @@
 
 @custom-variant dark (&:is(.dark *));
 
+.ProseMirror {
+    min-height: 100%;
+    outline: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.ProseMirror p {
+    margin: 0;
+}
+
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);

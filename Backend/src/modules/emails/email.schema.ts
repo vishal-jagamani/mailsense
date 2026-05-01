@@ -49,6 +49,13 @@ export const searchEmailSchema = z.object({
     page: z.string().optional(),
 });
 
+export const composeEmailSchema = z.object({
+    accountId: z.string().min(1, 'Account ID is required'),
+    to: z.array(z.string().email('Invalid email address')),
+    subject: z.string().min(1, 'Subject is required'),
+    body: z.string().min(1, 'Email body is required'),
+});
+
 export type GetAllEmailsSchema = z.infer<typeof getAllEmailsSchema>;
 export type GetEmailsSchema = z.infer<typeof getEmailsSchema>;
 export type GetEmailSchema = z.infer<typeof getEmailSchema>;
@@ -57,3 +64,4 @@ export type ArchiveEmailBody = z.infer<typeof archiveEmailSchema>;
 export type StarEmailBody = z.infer<typeof starEmailSchema>;
 export type UnreadEmailBody = z.infer<typeof unreadEmailSchema>;
 export type SearchEmailBody = z.infer<typeof searchEmailSchema>;
+export type ComposeEmailBody = z.infer<typeof composeEmailSchema>;
