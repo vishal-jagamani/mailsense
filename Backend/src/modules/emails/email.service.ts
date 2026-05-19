@@ -338,7 +338,7 @@ export class EmailService {
 
     public async searchOtherContacts(userId: string, searchText: string): Promise<APIResponse<SearchOtherContactsResponse[]>> {
         try {
-            const accounts = await AccountRepository.getAccounts(userId);
+            const accounts = await AccountRepository.getAccounts({ userId, active: true });
             if (!accounts.length) {
                 return { status: false, message: 'No accounts found', data: [] };
             }
