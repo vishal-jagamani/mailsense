@@ -2,12 +2,15 @@ import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/a
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { ComposeEmailBody } from '@modules/emails/email.schema.js';
+import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { BatchProcessor } from '@utils/batchProcessor.js';
 import { compressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import axios from 'axios';
+import { AxiosApiError } from 'errors/AxiosApiError.js';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
 import { UpdateAPIResponse } from 'types/api.types.js';
 import { GmailApi } from './gmail.api.js';
@@ -25,8 +28,6 @@ import {
     MessagesAfterLastHistoryResponse,
 } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
-import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { AxiosApiError } from 'errors/AxiosApiError.js';
 
 export class GmailService {
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
@@ -360,6 +361,27 @@ export class GmailService {
             logger.error(`Error in GmailService.sendMessage: ${errorMessage}`, { error: err });
             // throw err;
             throw new AxiosApiError(err);
+        }
+    }
+
+    async searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]> {
+        try {
+            const response = await GmailApi.searchContacts(accountId, searchText);
+            const contacts =
+                response.results
+                    ?.map((result) => {
+                        const email = result.person.emailAddresses?.[0]?.value || '';
+                        return {
+                            name: result.person.names?.[0]?.displayName || email,
+                            email: email,
+                        };
+                    })
+                    .filter((contact) => contact.email !== '') || [];
+            return contacts;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.searchContacts: ${errorMessage}`, { error: err });
+            throw err;
         }
     }
 }

@@ -10,6 +10,7 @@ import {
     getAllEmailsSchema,
     getEmailSchema,
     searchEmailSchema,
+    searchOtherContactsSchema,
     starEmailSchema,
     unreadEmailSchema,
 } from './email.schema.js';
@@ -37,5 +38,7 @@ router.post('/unread', validate({ body: unreadEmailSchema }), handleRequest(emai
 router.post('/search', validate({ body: searchEmailSchema }), handleRequest(emailController.searchEmails));
 
 router.post('/compose', validate({ body: composeEmailSchema }), handleRequest(emailController.composeEmail));
+
+router.post('/searchOtherContacts', validate({ body: searchOtherContactsSchema }), handleRequest(emailController.searchOtherContacts));
 
 export default router;

@@ -18,6 +18,7 @@ import {
 import * as OutlookUtils from './outlook.utils.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { compressString } from '@utils/compression.js';
+import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 
 export class OutlookService {
     private outlookApi: OutlookApi;
@@ -356,6 +357,23 @@ export class OutlookService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.sendMail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]> {
+        try {
+            const response = await OutlookApi.searchContacts(accountId, searchText);
+            const contacts = response.value
+                .filter((contact) => contact.scoredEmailAddresses && contact.scoredEmailAddresses.length > 0)
+                .map((contact) => ({
+                    email: contact.scoredEmailAddresses[0].address,
+                    name: contact.displayName,
+                }));
+            return contacts;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.searchContacts: ${errorMessage}`, { error: err });
             throw err;
         }
     }

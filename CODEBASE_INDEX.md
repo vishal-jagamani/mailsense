@@ -15,6 +15,7 @@
 - `Backend/src/config/env.ts`: validates env via Zod
 - `Backend/src/config/config.ts`: exports typed config/secrets (Auth0, Gmail, Outlook, Mongo, Redis)
 - `Backend/src/config/db.ts`: Mongo connect/disconnect with pooling
+- `Backend/src/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
 
 ### Middleware and Request Flow
 - `Backend/src/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`
@@ -31,6 +32,7 @@
   - Unified list, per-account list, email details
   - Search, delete, archive, star, unread
   - Compose/send mail through Gmail and Outlook providers
+  - Search recipient suggestions across connected provider contacts
   - Supports account/date/folder-based filtering
   - Uses provider APIs + DB projection/sorting
 - Folders (`Backend/src/modules/folders/*`)
@@ -52,6 +54,7 @@
   - Modify labels for archive/star/unread, trash/delete
   - Label CRUD + label sync into folders
   - Send outgoing mail and upsert sent copy locally
+  - Search Google other contacts for compose recipient suggestions
 - Outlook (`Backend/src/providers/outlook/*`)
   - OAuth token exchange/refresh
   - Fetch profile/messages and message details
@@ -59,6 +62,7 @@
   - Inbox mutation support (delete/archive/unread/flag)
   - Folder CRUD + folder sync into folders
   - Create/send outgoing mail and upsert sent copy locally
+  - Search Microsoft Graph people for compose recipient suggestions
 - Auth0 (`Backend/src/providers/auth0/*`)
   - Management API token + user/profile/password operations
 
@@ -103,6 +107,7 @@
   - `GET /emails/details/:emailId`
   - `POST /emails/search`
   - `POST /emails/compose`
+  - `POST /emails/searchOtherContacts`
   - `POST /emails/delete`
   - `POST /emails/archive`
   - `POST /emails/star`
@@ -140,7 +145,7 @@
 ### Feature Modules
 - `Frontend/src/modules/inbox/*`: unified inbox UI + search/filter/pagination
 - `Frontend/src/modules/home/*`: list/delete APIs and reusable email table
-- `Frontend/src/modules/emails/*`: email details, star/unread, and compose email popup/editor
+- `Frontend/src/modules/emails/*`: email details, star/unread, compose popup/editor, and recipient suggestion search
 - `Frontend/src/modules/folders/*`: folders overview, folder filters, create/rename/delete actions, folder email list
 - `Frontend/src/modules/accounts/*`: providers list, connect flow, account actions
 - `Frontend/src/modules/settings/*`: profile and password changes
@@ -165,6 +170,10 @@
 - Home/inbox list/delete: `Frontend/src/modules/home/constants/api.constants.ts`
 - Inbox search: `Frontend/src/modules/inbox/constants/api.constants.ts`
 
+### Shared UI / Types
+- `Frontend/src/shared/ui/badge.tsx`: reusable recipient chip/badge UI used in compose flow
+- `Frontend/src/shared/types/email.types.ts`: email list/detail types plus compose request and contact search response types
+
 ## End-to-End Flow Summary
 1. User authenticates with Auth0 (frontend middleware + provider).
 2. Frontend sends backend requests through `axiosClient` with bearer token header.
@@ -176,6 +185,7 @@
 5. Inbox UI reads paginated email data and performs mutation actions (delete/archive/star/unread).
 6. Folders UI reads paginated folder data, supports folder CRUD, and opens filtered email lists for a selected folder.
 7. Compose popup lets the user send email from a connected account; backend sends through the provider and stores the sent message for later listing/details.
+8. Compose recipient search uses provider contacts/people APIs to suggest and add recipients as chips while typing.
 
 ## Important Notes
 - Frontend has two base URL definitions:

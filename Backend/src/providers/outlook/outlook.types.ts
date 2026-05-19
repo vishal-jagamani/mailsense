@@ -98,3 +98,41 @@ export interface OutlookFoldersResponse {
     '@odata.context': string;
     value: OutlookFolderObject[];
 }
+
+/**
+ * Individual email address object in Outlook
+ */
+interface OutlookEmailAddress {
+    address: string;
+    relevanceScore?: number;
+}
+
+/**
+ * The Person resource returned by the /me/people endpoint
+ */
+export interface OutlookPerson {
+    id: string;
+    displayName: string;
+    givenName?: string;
+    surname?: string;
+    birthday?: string;
+    personNotes?: string;
+    isFavorite?: boolean;
+    jobTitle?: string;
+    companyName?: string;
+    userPrincipalName?: string;
+    scoredEmailAddresses: OutlookEmailAddress[];
+    personType: {
+        class: string;
+        subclass: string;
+    };
+}
+
+/**
+ * Standard Microsoft Graph Collection Response
+ */
+export interface OutlookPeopleSearchResponse {
+    value: OutlookPerson[];
+    '@odata.context': string;
+    '@odata.nextLink'?: string;
+}

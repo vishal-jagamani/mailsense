@@ -7,11 +7,14 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-19
+
 ### Added
 - Added account enable and disable toggle controls in connected account cards.
 - Added a sidebar-triggered compose email popup with account selection, recipients, subject, and rich-text message editing.
 - Added frontend compose email API hook, request type, and success/error messaging.
 - Added shared compose popup store and scroll-area/editor UI support for the compose experience.
+- Added recipient search popup and suggestion badges for compose email.
 
 ### Changed
 - Updated frontend account and inbox data requests to rely on authenticated backend session context instead of sending user IDs in API calls.
@@ -19,6 +22,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Updated account management UI to support account activation state and refresh account data after toggle actions.
 - Updated home layout to mount the compose popup globally within authenticated app screens.
 - Updated sidebar UI to expose a primary Compose action.
+- Updated compose popup to support multi-recipient chips, debounced contact search, and selection from provider-backed suggestions.
 
 ### Fixed
 - Improved authenticated account loading reliability by aligning frontend requests with backend JWT-protected endpoints.
@@ -113,7 +117,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0
