@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useGetAccountDetailsQuery } from '@/modules/accounts/services/useAccountApi';
@@ -9,16 +9,16 @@ import EmailListTable from '@/modules/home/components/EmailListTable';
 import { useFetchEmails } from '@/modules/home/services/useHomeApi';
 import APILoader from '@/shared/components/apiLoader';
 import SearchHeader from '@/shared/components/inputs/SearchHeader';
+import Loader from '@/shared/components/loader';
 import PaginationComponent from '@/shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
 import { UI_CONSTANTS } from '@/shared/constants/ui';
-import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
 import { useIsMobile } from '@/shared/hooks/use-mobile';
+import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { GetEmailsResponse } from '@/shared/types/email.types';
 import { GetAllEmailsFilters } from '@/shared/types/inbox.types';
 import { useAuthStore } from '@/store';
-
 import AccountEmailListFilter from './components/AccountEmailListFilter';
 import AccountEmailMenuBarOptions from './components/AccountEmailMenuBarOptions';
 
@@ -153,4 +153,10 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     );
 };
 
-export default AccountInboxPage;
+const AccountInboxPageWrapper: React.FC<{ account: string }> = ({ account }) => (
+    <Suspense fallback={<Loader />}>
+        <AccountInboxPage account={account} />
+    </Suspense>
+);
+
+export default AccountInboxPageWrapper;

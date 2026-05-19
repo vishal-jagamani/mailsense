@@ -1,16 +1,17 @@
 'use client';
 
+import APILoader from '@/shared/components/apiLoader';
+import Loader from '@/shared/components/loader';
+import { useAuthStore } from '@/store';
 import { EMAILS_PAGE_SIZE, HOME_ROUTES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks/useDebounceQuery';
 import { useBreadcrumbStore } from '@shared/store/breadcrumb.store';
 import { GetAllFoldersFilters, GetAllFoldersRequestOptions } from '@shared/types/folder.types';
-import { useAuthStore } from '@/store';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useGetAllFolders } from './services/useFolderApi';
-import APILoader from '@/shared/components/apiLoader';
 
 const FolderHeader = dynamic(() => import('./components/header'));
 const FolderBody = dynamic(() => import('./components/body'));
@@ -84,4 +85,10 @@ const FoldersPage: React.FC = () => {
     );
 };
 
-export default FoldersPage;
+const FoldersPageWrapper = () => (
+    <Suspense fallback={<Loader />}>
+        <FoldersPage />
+    </Suspense>
+);
+
+export default FoldersPageWrapper;
