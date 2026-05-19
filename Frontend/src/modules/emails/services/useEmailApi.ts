@@ -1,8 +1,8 @@
-import { QUERY_KEYS } from '@/shared/config/query-keys';
-import { UpdateAPIResponse } from '@/shared/types/api.types';
-import { Email } from '@/shared/types/email.types';
+import { EMAILS, QUERY_KEYS } from '@shared/config/query-keys';
+import { APIResponse, UpdateAPIResponse } from '@shared/types/api.types';
+import { ComposeEmailRequestBody, Email, SearchOtherContactsResponse } from '@shared/types/email.types';
 import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
-import { getEmailDetails, starEmail, unreadEmail } from './email.api';
+import { composeEmail, getEmailDetails, searchOtherContacts, starEmail, unreadEmail } from './email.api';
 
 type UseGetEmailDetailsQueryOptions = Omit<UseQueryOptions<Email, Error>, 'queryKey' | 'queryFn'>;
 
@@ -27,5 +27,22 @@ export const useStarEmailMutation = () => {
 export const useUnreadEmailMutation = () => {
     return useMutation<UpdateAPIResponse, Error, { emailIds: string[]; unread: boolean }>({
         mutationFn: ({ emailIds, unread }) => unreadEmail(emailIds, unread),
+    });
+};
+
+export const useComposeEmailMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation<UpdateAPIResponse, Error, ComposeEmailRequestBody>({
+        mutationFn: (body) => composeEmail(body),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMAIL] });
+            queryClient.invalidateQueries({ queryKey: [EMAILS] });
+        },
+    });
+};
+
+export const useSearchOtherContactsMutation = () => {
+    return useMutation<APIResponse<SearchOtherContactsResponse[]>, Error, string>({
+        mutationFn: (searchText) => searchOtherContacts(searchText),
     });
 };

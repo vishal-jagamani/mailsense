@@ -14,6 +14,7 @@ import {
     OutlookFoldersResponse,
     OutlookMessageObjectFull,
     OutlookMessagesResponse,
+    OutlookPeopleSearchResponse,
     OutlookUserProfile,
 } from './outlook.types.js';
 
@@ -148,6 +149,7 @@ export class OutlookApi {
                 method: 'GET',
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
+                    Prefer: 'IdType="ImmutableId"',
                 },
             };
             const response = await apiRequest<OutlookMessageObjectFull>(options);
@@ -389,6 +391,70 @@ export class OutlookApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookApi.deleteFolder: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async createDraftMessage(accountId: string, message: Partial<OutlookMessageObjectFull>): Promise<OutlookMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/messages`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                    Prefer: 'IdType="ImmutableId"',
+                },
+                data: message,
+            };
+            const response = await apiRequest<OutlookMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.sendMessage: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async sendDraftMessage(accountId: string, messageId: string): Promise<void> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/messages/${messageId}/send`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            await apiRequest<void>(options);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.sendDraftMessage: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async searchContacts(accountId: string, searchText: string): Promise<OutlookPeopleSearchResponse> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/people`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                params: {
+                    $search: `"${searchText}"`,
+                    $top: 10,
+                    $select: 'displayName,givenName,surname,scoredEmailAddresses,personType',
+                },
+            };
+            const response = await apiRequest<OutlookPeopleSearchResponse>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.searchContacts: ${errorMessage}`, { error: err });
             throw err;
         }
     }

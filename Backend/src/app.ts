@@ -1,11 +1,11 @@
+import * as Sentry from '@sentry/node';
 import cors from 'cors';
 import express, { Application, NextFunction, Request, Response } from 'express';
 import path from 'path';
-import * as Sentry from '@sentry/node';
 
-import { apiErrorHandler, errorHandler } from '@middlewares/error.handler.js';
-import indexRoutes from '@routes/index.routes.js';
 import { MAILSENSE_BASE_URL } from '@config/config.js';
+import { errorHandler } from '@middlewares/error.handler.js';
+import indexRoutes from '@routes/index.routes.js';
 
 export class App {
     public expressApp: Application;
@@ -60,7 +60,6 @@ export class App {
     private setupErrorHandler(): void {
         this.expressApp.use(Sentry.expressErrorHandler());
         // Centralized error handler
-        this.expressApp.use(apiErrorHandler);
         this.expressApp.use(errorHandler);
     }
 }

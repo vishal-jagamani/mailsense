@@ -40,4 +40,10 @@ export const MESSAGES = {
         DELETE_FOLDER_ERROR: 'Failed to delete folder, please try again!',
         FOLDER_LOAD_ERROR: 'Error loading folder',
     },
+
+    // Emails Messages
+    EMAILS: {
+        SEND_EMAIL_SUCCESS: 'Email sent successfully',
+        SEND_EMAIL_ERROR: 'Failed to send email, please try again!',
+    },
 } as const;

@@ -7,16 +7,23 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-19
+
 ### Added
 - Added account enable and disable controls in the connected accounts experience.
+- Added compose email support with a new in-app compose popup for sending messages from connected accounts.
+- Added contact-based recipient suggestions while composing emails.
 
 ### Changed
 - Updated authenticated app requests so account, user, folder, and email data now resolve from the signed-in session instead of passing user IDs in request payloads.
 - Inactive accounts are now excluded from account lists, sync flows, inbox results, and folder views until re-enabled.
+- Updated inbox defaults to keep sent, spam, and trash messages out of the main email list across connected providers.
+- Updated compose email flow to support multi-recipient chips and faster contact selection from provider data.
 
 ### Fixed
 - Improved reliability of authenticated account and inbox data loading by aligning frontend requests with backend JWT-based authorization.
 - Improved account management flow by preventing disabled accounts from being synced or shown in active mailbox views.
+- Improved backend error responses for provider API failures during email actions.
 
 ## [1.2.0] - 2026-04-13
 
@@ -60,7 +67,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0

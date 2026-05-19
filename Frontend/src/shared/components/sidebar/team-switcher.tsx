@@ -16,10 +16,10 @@ export function TeamSwitcher() {
                         className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground hover:cursor-pointer"
                     >
                         <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                            <Mail className="size-4" />
+                            <Mail className="size-5" />
                         </div>
                         <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-medium">MailSense</span>
+                            <span className="truncate font-semibold text-lg">MailSense</span>
                         </div>
                     </SidebarMenuButton>
                 </DropdownMenu>

@@ -43,7 +43,7 @@ const FolderEmailList: React.FC<FolderEmailListProps> = ({ folderId }) => {
     const [getAllEmailsFilters, setGetAllEmailsFilters] = useState<GetAllEmailsFilters | null>(null);
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 
-    const { data: folder, isPending: isFolderLoading, isError: isFolderError } = useGetFolderQuery(folderId);
+    const { data: folder, isError: isFolderError } = useGetFolderQuery(folderId);
     const { data: emails, mutate: refetchEmails, isPending: isLoadingEmails, isError: isEmailError } = useFetchEmails();
     const { data: accounts, isLoading: accountsLoading, error: accountError } = useGetAccountsQuery(user?.id ?? '');
 

@@ -90,3 +90,15 @@ export const parseGmailLabelObject = (accountId: string, userId: string, gmailLa
         },
     };
 };
+
+export const buildGmailRawString = (to: string[], subject: string, body: string): string => {
+    const recipientList = to.join(', ');
+    // Standard RFC 2822 format: Headers, followed by a blank line, followed by the body
+    const emailParts = [`To: ${recipientList}`, `Subject: ${subject}`, 'Content-Type: text/html; charset="UTF-8"', 'MIME-Version: 1.0', '', body];
+    const raw = Buffer.from(emailParts.join('\r\n'))
+        .toString('base64')
+        .replace(/\+/g, '-') // Replace + with -
+        .replace(/\//g, '_') // Replace / with _
+        .replace(/=+$/, ''); // Remove padding =
+    return raw;
+};

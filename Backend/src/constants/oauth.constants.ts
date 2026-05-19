@@ -1,6 +1,13 @@
 export const OAUTH_SCOPES = {
-    GMAIL: ['https://mail.google.com/', 'openid', 'email', 'profile'].join(' '),
-    OUTLOOK: ['Mail.Read', 'Mail.ReadWrite', 'Mail.Send', 'offline_access', 'User.Read', 'openid', 'profile', 'email'].join(' '),
+    GMAIL: [
+        'https://mail.google.com/',
+        'openid',
+        'email',
+        'profile',
+        'https://www.googleapis.com/auth/contacts.readonly',
+        'https://www.googleapis.com/auth/contacts.other.readonly',
+    ].join(' '),
+    OUTLOOK: ['Mail.Read', 'Mail.ReadWrite', 'Mail.Send', 'offline_access', 'User.Read', 'openid', 'profile', 'email', 'People.Read'].join(' '),
 };
 
 export const OAUTH_ACCESS_REDIRECT_URI = {

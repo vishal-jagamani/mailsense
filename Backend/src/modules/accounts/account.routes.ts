@@ -27,7 +27,10 @@ router.get('/providers/list', handleRequest(accountsController.getAccountProvide
 
 router.get('/connect/:provider', validate({ params: connectAccountSchema }), handleRequest(accountsController.connect));
 
-router.patch('/enable/:accountId', validate({ params: getAccountDetailsSchema, body: enableAccountSchema }), handleRequest(accountsController.enableAccount));
-
+router.patch(
+    '/enable/:accountId',
+    validate({ params: getAccountDetailsSchema, body: enableAccountSchema }),
+    handleRequest(accountsController.enableAccount),
+);
 
 export default router;

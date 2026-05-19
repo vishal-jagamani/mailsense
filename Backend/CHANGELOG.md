@@ -7,11 +7,18 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-19
+
 ### Added
 - Added JWT verification middleware using `express-oauth2-jwt-bearer`.
 - Added request auth typing so controllers can read authenticated user context from `req.user` and `req.auth`.
 - Added account enable/disable endpoint and request schema support.
 - Added persistent `active` flag on accounts with supporting indexes.
+- Added compose email endpoint support in the emails module.
+- Added provider send-mail support for both Gmail and Outlook.
+- Added reusable `AppError` and `AxiosApiError` classes for structured error handling.
+- Added provider contact-search support for Gmail and Outlook compose flows.
+- Added email search endpoint support for looking up recipient suggestions from connected provider contacts.
 
 ### Changed
 - Updated accounts, users, folders, and email list/search controllers to derive the active user from the authenticated token instead of request params, query values, headers, or body fields.
@@ -23,10 +30,16 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated frontend axios auth token retrieval to use the client-compatible Auth0 token helper.
 - Updated account queries to return only active accounts for account list, sync-all, inbox email queries, search, and folder queries.
 - Updated single-account sync to block sync attempts for disabled accounts.
+- Updated email service to support compose/send flows through provider-specific implementations.
+- Updated inbox default filtering to exclude sent folders for Gmail and Outlook accounts.
+- Consolidated API error handling into a single structured error middleware flow.
+- Expanded OAuth scopes to include provider contact/people read access for compose recipient suggestions.
+- Updated compose-related email service/controller/schema flow to support recipient contact search.
 
 ### Fixed
 - Improved consistency between frontend and backend authenticated requests by removing duplicate client-supplied user identifiers from protected APIs.
 - Improved active mailbox consistency by keeping disabled accounts out of sync and filtered mailbox results.
+- Improved provider error propagation so external API failures return cleaner status/message payloads.
 
 ## [1.2.0] - 2026-04-13
 
@@ -131,7 +144,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1
 [1.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.0

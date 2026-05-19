@@ -6,11 +6,14 @@ import { decompressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import { FilterQuery } from 'mongoose';
 import { AccountProvider } from 'types/account.types.js';
-import { PaginatedDataResponse, UpdateAPIResponse } from 'types/api.types.js';
+import { APIResponse, PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument, EmailInput } from './email.model.js';
-import { DATE_RANGE, GetAllEmailsFilters, SearchEmailsParams } from './email.types.js';
+import { ComposeEmailBody } from './email.schema.js';
+import { DATE_RANGE, GetAllEmailsFilters, SearchEmailsParams, SearchOtherContactsResponse } from './email.types.js';
+import { GMAIL_LABELS } from '@providers/gmail/gmail.types.js';
+import { FolderRepository } from '@modules/folders/folder.repository.js';
 
 export class EmailService {
     private gmailService: GmailService;
@@ -28,9 +31,24 @@ export class EmailService {
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
+            const outlookAccounts = accounts.filter((account) => account.provider === AccountProvider.OUTLOOK);
+            let folderIds: string[] = [];
+            if (outlookAccounts.length) {
+                const folders = await FolderRepository.getAllFolders(
+                    {
+                        accountId: { $in: outlookAccounts.map((account) => account._id) },
+                        kind: 'SYSTEM',
+                    },
+                    1000,
+                    1,
+                    { name: 1, _id: 1, providerFolderId: 1 },
+                    {},
+                );
+                folderIds = folders.map((folder) => folder.providerFolderId);
+            }
             const searchQuery: FilterQuery<EmailDocument> = {
                 accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
-                folders: folders ? { $in: folders } : { $nin: ['TRASH', 'SPAM'] },
+                folders: folders ? { $in: folders } : { $nin: [GMAIL_LABELS.TRASH, GMAIL_LABELS.SPAM, GMAIL_LABELS.SENT, ...folderIds] },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
                 ...(dateRange &&
                     this.getDateRange(dateRange) && {
@@ -292,6 +310,53 @@ export class EmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.unreadEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async composeEmail(composeEmailData: ComposeEmailBody): Promise<SuccessAPIResponse> {
+        try {
+            const account = await AccountRepository.getAccountById(composeEmailData.accountId, { provider: 1 });
+            if (!account) {
+                throw new Error('Account not found');
+            }
+            if (account.provider === AccountProvider.GMAIL) {
+                await this.gmailService.sendMessage(composeEmailData);
+                return { status: true, message: 'Email composed successfully' };
+            } else if (account.provider === AccountProvider.OUTLOOK) {
+                await this.outlookService.sendMail(composeEmailData);
+                return { status: true, message: 'Email composed successfully' };
+            } else {
+                throw new Error('Unsupported provider');
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.composeEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async searchOtherContacts(userId: string, searchText: string): Promise<APIResponse<SearchOtherContactsResponse[]>> {
+        try {
+            const accounts = await AccountRepository.getAccounts(userId);
+            if (!accounts.length) {
+                return { status: false, message: 'No accounts found', data: [] };
+            }
+            const contacts = accounts.map((account) => {
+                if (account.provider === AccountProvider.GMAIL) {
+                    return this.gmailService.searchContacts(account._id.toString(), searchText).catch(() => []);
+                } else if (account.provider === AccountProvider.OUTLOOK) {
+                    return this.outlookService.searchContacts(account._id.toString(), searchText).catch(() => []);
+                }
+                return Promise.resolve([]);
+            });
+            const results = await Promise.all(contacts);
+            const allContacts = results.flat();
+            const mergedContacts = allContacts.filter((contact, index, self) => index === self.findIndex((c) => c.email === contact.email));
+            return { status: true, message: 'Search other contacts successfully', data: mergedContacts };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.searchOtherContacts: ${errorMessage}`, { error: err });
             throw err;
         }
     }

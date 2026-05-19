@@ -5,10 +5,12 @@ import { Router } from 'express';
 import { EmailController } from './email.controller.js';
 import {
     archiveEmailSchema,
+    composeEmailSchema,
     deleteEmailSchema,
     getAllEmailsSchema,
     getEmailSchema,
     searchEmailSchema,
+    searchOtherContactsSchema,
     starEmailSchema,
     unreadEmailSchema,
 } from './email.schema.js';
@@ -34,5 +36,9 @@ router.post('/star', validate({ body: starEmailSchema }), handleRequest(emailCon
 router.post('/unread', validate({ body: unreadEmailSchema }), handleRequest(emailController.unreadEmails));
 
 router.post('/search', validate({ body: searchEmailSchema }), handleRequest(emailController.searchEmails));
+
+router.post('/compose', validate({ body: composeEmailSchema }), handleRequest(emailController.composeEmail));
+
+router.post('/searchOtherContacts', validate({ body: searchOtherContactsSchema }), handleRequest(emailController.searchOtherContacts));
 
 export default router;
