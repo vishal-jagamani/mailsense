@@ -6,7 +6,7 @@ import { HOME_ROUTES } from '@/shared/constants/routes';
 import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import { Separator } from '@/shared/ui/separator';
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useGetAccountDetailsQuery } from '../accounts/services/useAccountApi';
 import EmailBodyPreview from './components/EmailBodyPreview';
 import EmailHeader from './components/EmailHeader';
@@ -81,4 +81,10 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
     );
 };
 
-export default EmailPage;
+const EmailPageWrapper: React.FC<EmailPageProps> = (props) => (
+    <Suspense fallback={<Loader />}>
+        <EmailPage {...props} />
+    </Suspense>
+);
+
+export default EmailPageWrapper;
