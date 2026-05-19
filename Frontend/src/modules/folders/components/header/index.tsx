@@ -1,17 +1,17 @@
 'use client';
 
-import React, { useState } from 'react';
-import FoldersFilter from './FoldersFilter';
-import SearchHeader from '@/shared/components/inputs/SearchHeader';
-import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
-import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
+import SearchHeader from '@/shared/components/inputs/SearchHeader';
+import { UI_CONSTANTS } from '@/shared/constants/ui';
 import { useAuthStore } from '@/store';
-import { Button } from '@/shared/ui/button';
+import React from 'react';
 import CreateFolderModal from './CreateFolderModal';
+import FoldersFilter from './FoldersFilter';
 
 interface FolderHeaderProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     filter: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onFilterChange: (filter: any) => void;
     searchText: string;
     setSearchText: (searchText: string) => void;
@@ -20,13 +20,7 @@ interface FolderHeaderProps {
 const FolderHeader: React.FC<FolderHeaderProps> = ({ filter, onFilterChange, searchText, setSearchText }) => {
     const { user } = useAuthStore();
 
-    const {
-        data: accounts,
-        isLoading: accountsLoading,
-        error: accountError,
-    } = useGetAccountsQuery(user?.id ?? '', {
-        enabled: !!user?.id,
-    });
+    const { data: accounts } = useGetAccountsQuery(user?.id ?? '', { enabled: !!user?.id });
 
     return (
         <div className="mt-1 flex items-center justify-center gap-2 px-3">

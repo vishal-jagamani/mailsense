@@ -58,8 +58,6 @@ export interface GetAllFoldersRequestOptions {
     filters: GetAllFoldersFilters;
 }
 
-export interface GetALlFolderResponse extends PaginatedDataResponse<FolderAttributes> {}
-
 export interface GetAllFoldersFilters {
     searchText?: string | undefined;
     accountId?: string[] | undefined;

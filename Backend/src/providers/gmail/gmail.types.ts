@@ -145,3 +145,41 @@ export interface GmailLabel {
 export interface GmailLabelsListResponse {
     labels: GmailLabel[];
 }
+
+// Other contacts types
+interface GooglePersonMetadata {
+    primary?: boolean;
+    sourcePrimary?: boolean;
+    source: {
+        type: string;
+        id: string;
+    };
+}
+
+interface GooglePersonEmail {
+    metadata: GooglePersonMetadata;
+    value: string;
+}
+
+interface GooglePersonName {
+    metadata: GooglePersonMetadata;
+    displayName: string;
+    familyName?: string;
+    givenName?: string;
+}
+
+export interface GooglePerson {
+    resourceName: string;
+    etag: string;
+    emailAddresses?: GooglePersonEmail[];
+    names?: GooglePersonName[]; // Note: frequently missing in Other Contacts
+}
+
+/**
+ * Matches your actual response: root property is "results"
+ */
+export interface GoogleOtherContactsSearchResponse {
+    results?: {
+        person: GooglePerson;
+    }[];
+}

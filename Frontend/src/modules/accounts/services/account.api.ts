@@ -12,7 +12,7 @@ export async function getAccountDetails(accountId: string): Promise<AccountAttri
     return data;
 }
 
-export async function getAccounts(userId: string) {
+export async function getAccounts() {
     const { data } = await axiosClient.get<AccountAttributes[]>(ACCOUNTS_API_ENDPOINTS.LIST_BY_USER);
     return data;
 }

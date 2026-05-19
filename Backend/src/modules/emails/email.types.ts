@@ -47,3 +47,8 @@ export interface GetAllEmailsFilters {
     dateRange?: DATE_RANGE | undefined;
     folders?: string[] | undefined;
 }
+
+export interface SearchOtherContactsResponse {
+    name: string;
+    email: string;
+}
