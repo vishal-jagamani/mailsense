@@ -3,9 +3,8 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useEffect } from 'react';
 
-import { getEditorExtensions } from './editor.config';
-import { ScrollArea } from '@/shared/ui/scroll-area';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { getEditorExtensions } from './editor.config';
 
 interface RichTextEditorProps {
     content: string;

@@ -14,6 +14,7 @@ import {
     OutlookFoldersResponse,
     OutlookMessageObjectFull,
     OutlookMessagesResponse,
+    OutlookPeopleSearchResponse,
     OutlookUserProfile,
 } from './outlook.types.js';
 
@@ -430,6 +431,30 @@ export class OutlookApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookApi.sendDraftMessage: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async searchContacts(accountId: string, searchText: string): Promise<OutlookPeopleSearchResponse> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/people`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                params: {
+                    $search: `"${searchText}"`,
+                    $top: 10,
+                    $select: 'displayName,givenName,surname,scoredEmailAddresses,personType',
+                },
+            };
+            const response = await apiRequest<OutlookPeopleSearchResponse>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.searchContacts: ${errorMessage}`, { error: err });
             throw err;
         }
     }

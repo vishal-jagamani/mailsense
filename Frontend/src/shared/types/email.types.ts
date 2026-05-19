@@ -38,3 +38,8 @@ export interface ComposeEmailRequestBody {
     subject: string;
     body: string;
 }
+
+export interface SearchOtherContactsResponse {
+    name: string;
+    email: string;
+}

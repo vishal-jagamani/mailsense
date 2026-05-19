@@ -1,9 +1,10 @@
+import { PaginatedDataResponse } from '@/shared/types/api.types';
 import { axiosClient } from '@shared/config/axios';
-import { CreateFolderBodyParams, GetALlFolderResponse, GetAllFoldersRequestOptions } from '@shared/types/folder.types';
+import { CreateFolderBodyParams, FolderAttributes, GetAllFoldersRequestOptions } from '@shared/types/folder.types';
 import { FOLDER_API_ENDPOINTS } from '../constants/api.constants';
 
 export async function getAllFolders(body: GetAllFoldersRequestOptions) {
-    const { data } = await axiosClient.post<GetALlFolderResponse>(FOLDER_API_ENDPOINTS.GET_ALL_FOLDERS, body);
+    const { data } = await axiosClient.post<PaginatedDataResponse<FolderAttributes>>(FOLDER_API_ENDPOINTS.GET_ALL_FOLDERS, body);
     return data;
 }
 

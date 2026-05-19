@@ -5,6 +5,7 @@ import {
     DeleteEmailSchema,
     GetAllEmailsSchema,
     SearchEmailBody,
+    SearchOtherContactsBody,
     StarEmailBody,
     UnreadEmailBody,
 } from './email.schema.js';
@@ -147,6 +148,24 @@ export class EmailController {
                 throw new Error('Account ID, To, subject and body are required');
             }
             const email = await this.emailService.composeEmail(req.body);
+            res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public searchOtherContacts = async (
+        req: Request<object, object, SearchOtherContactsBody, object>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const { searchText } = req.body;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
+            const email = await this.emailService.searchOtherContacts(userId, searchText);
             res.send(email);
         } catch (error) {
             next(error);

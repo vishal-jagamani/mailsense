@@ -6,12 +6,12 @@ import { decompressString } from '@utils/compression.js';
 import { logger } from '@utils/logger.js';
 import { FilterQuery } from 'mongoose';
 import { AccountProvider } from 'types/account.types.js';
-import { PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from 'types/api.types.js';
+import { APIResponse, PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from 'types/api.types.js';
 import { GetEmailsResponse } from 'types/email.types.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
-import { DATE_RANGE, GetAllEmailsFilters, SearchEmailsParams } from './email.types.js';
+import { DATE_RANGE, GetAllEmailsFilters, SearchEmailsParams, SearchOtherContactsResponse } from './email.types.js';
 import { GMAIL_LABELS } from '@providers/gmail/gmail.types.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 
@@ -332,6 +332,31 @@ export class EmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.composeEmail: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async searchOtherContacts(userId: string, searchText: string): Promise<APIResponse<SearchOtherContactsResponse[]>> {
+        try {
+            const accounts = await AccountRepository.getAccounts(userId);
+            if (!accounts.length) {
+                return { status: false, message: 'No accounts found', data: [] };
+            }
+            const contacts = accounts.map((account) => {
+                if (account.provider === AccountProvider.GMAIL) {
+                    return this.gmailService.searchContacts(account._id.toString(), searchText).catch(() => []);
+                } else if (account.provider === AccountProvider.OUTLOOK) {
+                    return this.outlookService.searchContacts(account._id.toString(), searchText).catch(() => []);
+                }
+                return Promise.resolve([]);
+            });
+            const results = await Promise.all(contacts);
+            const allContacts = results.flat();
+            const mergedContacts = allContacts.filter((contact, index, self) => index === self.findIndex((c) => c.email === contact.email));
+            return { status: true, message: 'Search other contacts successfully', data: mergedContacts };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.searchOtherContacts: ${errorMessage}`, { error: err });
             throw err;
         }
     }
