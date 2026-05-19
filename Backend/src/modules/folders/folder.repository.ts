@@ -1,4 +1,4 @@
-import { ProjectionType, SortOrder } from 'mongoose';
+import { FilterQuery, ProjectionType, SortOrder } from 'mongoose';
 import { Folder, FolderDocument } from './folder.model.js';
 
 export class FolderRepository {
@@ -7,7 +7,7 @@ export class FolderRepository {
     }
 
     public static async getAllFolders(
-        filterQuery: Record<string, unknown>,
+        filterQuery: FilterQuery<FolderDocument>,
         size: number,
         page: number,
         fields: ProjectionType<FolderDocument>,

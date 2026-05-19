@@ -3,7 +3,6 @@
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 
-import { ACCOUNT_PROVIDER, AccountAttributes } from '@/shared/types/account.types';
 import { Card, CardContent } from '@/shared/ui/card';
 import { encrypt } from '@/shared/utils/crypto';
 import { useAuthStore } from '@/store';

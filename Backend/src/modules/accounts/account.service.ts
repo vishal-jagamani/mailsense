@@ -120,6 +120,7 @@ export class AccountsService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.connect: ${errorMessage}`, { error: err });
             throw err;
+            
         }
     }
 

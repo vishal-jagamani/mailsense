@@ -6,7 +6,7 @@ import { decrypt, encrypt } from '@utils/crypto.js';
 import { logger } from '@utils/logger.js';
 import { AxiosRequestConfig } from 'axios';
 import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
-import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
+import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_PEOPLE_API_BASE_URL, GMAIL_PEOPLE_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
 import {
     GMAIL_LABELS,
     GmailHistoryResponse,
@@ -14,7 +14,8 @@ import {
     GmailLabelsListResponse,
     GmailMessageObjectFull,
     GmailMessages,
-    GmailUserProfile
+    GmailUserProfile,
+    GoogleOtherContactsSearchResponse,
 } from './gmail.types.js';
 
 export class GmailApi {
@@ -372,6 +373,49 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.deleteLabel: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async sendMessage(accountId: string, message: { raw: string }): Promise<GmailMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/send`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                data: message,
+            };
+            const response = await apiRequest<GmailMessageObjectFull>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.sendMessage: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async searchContacts(accountId: string, searchText: string): Promise<GoogleOtherContactsSearchResponse> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_PEOPLE_API_BASE_URL}${GMAIL_PEOPLE_APIs.OTHER_CONTACTS}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                params: {
+                    query: searchText,
+                    readMask: 'names,emailAddresses',
+                },
+            };
+            const response = await apiRequest<GoogleOtherContactsSearchResponse>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.searchContacts: ${errorMessage}`, { error: err });
             throw err;
         }
     }

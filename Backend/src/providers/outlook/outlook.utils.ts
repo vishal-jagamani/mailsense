@@ -1,8 +1,8 @@
 import { OUTLOOK_SECRETS } from '@config/config.js';
 import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants/index.js';
-import { OutlookFolderObject } from './outlook.types.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { FolderKind, FolderRole } from '@modules/folders/folder.types.js';
+import { OutlookFolderObject, OutlookMessageObjectFull } from './outlook.types.js';
 
 // Build outlook oauth access consent url
 export const buildOutlookOAuthConsentURL = async () => {
@@ -69,6 +69,22 @@ export const parseOutlookFolderObject = (accountId: string, userId: string, fold
         providerMeta: {
             isHidden: folder.isHidden,
             childFolderCount: folder.childFolderCount,
+        },
+    };
+};
+
+export const buildOutlookMessagePayload = (
+    to: string[],
+    subject: string,
+    body: string,
+    contentType: 'Text' | 'HTML' = 'Text',
+): Partial<OutlookMessageObjectFull> => {
+    return {
+        toRecipients: to.map((email) => ({ emailAddress: { address: email, name: '' } })),
+        subject,
+        body: {
+            contentType,
+            content: body,
         },
     };
 };

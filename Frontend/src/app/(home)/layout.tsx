@@ -5,6 +5,7 @@ import { AppSidebar } from '@/shared/components/sidebar/app-sidebar';
 import BreadcrumbComponent from '@/shared/components/breadcrumb';
 import { SidebarProvider, SidebarTrigger } from '@/shared/ui/sidebar';
 import { useAuthStore } from '@/store';
+import ComposeEmailPopup from '@/modules/emails/composeEmail/components/email/ComposeEmailPopup';
 
 export default function HomeLayout({ children }: { children: React.ReactNode }) {
     const { isLoading } = useAuthStore();
@@ -16,9 +17,10 @@ export default function HomeLayout({ children }: { children: React.ReactNode }) 
             <SidebarProvider>
                 <div className="flex h-screen w-screen overflow-hidden">
                     <AppSidebar />
-                    <main className="flex-1 overflow-x-hidden overflow-hidden">
+                    <main className="flex-1 overflow-hidden overflow-x-hidden">
                         <SidebarTrigger className="bg-background absolute z-100 rounded-none p-4 pt-4" />
                         <BreadcrumbComponent />
+                        <ComposeEmailPopup />
                         {children}
                     </main>
                 </div>

@@ -31,3 +31,15 @@ export interface GetEmailsResponse {
     page: number;
     total: number;
 }
+
+export interface ComposeEmailRequestBody {
+    accountId: string;
+    to: string[];
+    subject: string;
+    body: string;
+}
+
+export interface SearchOtherContactsResponse {
+    name: string;
+    email: string;
+}
