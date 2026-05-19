@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useAuthStore } from '@/store';
@@ -12,6 +12,7 @@ import EmailListFilter from '@modules/inbox/components/EmailListFilter';
 import EmailMenuBarOptions from '@modules/inbox/components/EmailMenuBarOptions';
 import APILoader from '@shared/components/apiLoader';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
+import Loader from '@shared/components/loader';
 import PaginationComponent from '@shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks/use-mobile';
@@ -184,4 +185,10 @@ const FolderEmailList: React.FC<FolderEmailListProps> = ({ folderId }) => {
     );
 };
 
-export default FolderEmailList;
+const FolderEmailListWrapper: React.FC<FolderEmailListProps> = (props) => (
+    <Suspense fallback={<Loader />}>
+        <FolderEmailList {...props} />
+    </Suspense>
+);
+
+export default FolderEmailListWrapper;
