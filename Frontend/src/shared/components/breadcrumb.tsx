@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import React from 'react';
 
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@/shared/ui/breadcrumb';
+import { useBreadcrumbStore } from '@shared/store';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from '@shared/ui/breadcrumb';
 
 const BreadcrumbComponent: React.FC = () => {
     const { items: breadcrumbItems } = useBreadcrumbStore();
@@ -17,7 +17,9 @@ const BreadcrumbComponent: React.FC = () => {
                             <React.Fragment key={index}>
                                 <BreadcrumbItem>
                                     <BreadcrumbLink asChild>
-                                        <Link href={item.url} className="text-xs">{item.title}</Link>
+                                        <Link href={item.url} className="text-xs">
+                                            {item.title}
+                                        </Link>
                                     </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 {index < breadcrumbItems.length - 1 && <BreadcrumbSeparator />}

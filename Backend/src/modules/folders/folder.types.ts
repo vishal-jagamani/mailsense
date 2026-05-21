@@ -1,5 +1,6 @@
 import { ProjectionType, SortOrder } from 'mongoose';
-import { DATE_RANGE } from 'types/common.types.js';
+
+import { DATE_RANGE } from '@types';
 
 export enum FolderKind {
     SYSTEM = 'SYSTEM',

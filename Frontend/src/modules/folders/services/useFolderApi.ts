@@ -1,6 +1,5 @@
 import { FOLDER_KEYS } from '@shared/config/query-keys';
-import { PaginatedDataResponse, UpdateAPIResponse } from '@shared/types/api.types';
-import { CreateFolderBodyParams, FolderAttributes, GetAllFoldersRequestOptions } from '@shared/types/folder.types';
+import { CreateFolderBodyParams, FolderAttributes, GetAllFoldersRequestOptions, PaginatedDataResponse, UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFolder, deleteFolder, getAllFolders, getFolderDetails, updateFolder } from './folder.api';
 

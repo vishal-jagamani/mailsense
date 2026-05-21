@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { AccountProvider } from 'types/account.types.js';
+
+import { AccountProvider } from '@types';
 
 export const connectAccountSchema = z.object({
     provider: z.enum(AccountProvider),

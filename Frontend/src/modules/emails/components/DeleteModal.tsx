@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -9,8 +11,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '@/shared/ui/alert-dialog';
-import React from 'react';
+} from '@shared/ui/alert-dialog';
 
 interface DeleteModalProps {
     open: boolean;

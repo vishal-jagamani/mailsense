@@ -1,4 +1,3 @@
-import { PaginatedDataResponse } from './api.types';
 import { DATE_RANGE } from './inbox.types';
 
 export enum FolderKind {

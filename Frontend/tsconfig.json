@@ -23,9 +23,6 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ],
       "@assets/*": [
         "./src/assets/*"
       ],
@@ -35,11 +32,32 @@
       "@modules/*": [
         "./src/modules/*"
       ],
-      "@shared/*": [
-        "./src/shared/*"
+      "@shared/components/*": [
+        "./src/shared/components/*"
       ],
-      "@types/*": [
-        "./src/types/*"
+      "@shared/config/*": [
+        "./src/shared/config/*"
+      ],
+      "@shared/constants": [
+        "./src/shared/constants/index"
+      ],
+      "@shared/hooks": [
+        "./src/shared/hooks/index"
+      ],
+      "@shared/ui/*": [
+        "./src/shared/ui/*"
+      ],
+      "@shared/utils/*": [
+        "./src/shared/utils/*"
+      ],
+      "@shared/types": [
+        "./src/shared/types/index"
+      ],
+      "@shared/store": [
+        "./src/shared/store/index"
+      ],
+      "@lib/*": [
+        "./src/lib/*"
       ]
     }
   },

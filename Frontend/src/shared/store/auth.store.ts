@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { User } from '../shared/types';
+import { User } from '../types';
 
 interface AuthState {
     isAuthenticated: boolean;

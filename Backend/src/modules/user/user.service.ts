@@ -1,7 +1,7 @@
 import { Auth0Service } from '@providers/auth0/auth0.service.js';
 import { Auth0UserDetailsResponse } from '@providers/auth0/auth0.types.js';
-import { decrypt } from '@utils/crypto.js';
-import { APIResponse, UpdateAPIResponse } from 'types/api.types.js';
+import { APIResponse, UpdateAPIResponse } from '@types';
+import { decrypt } from '@utils';
 import { UserDocument, UserInput } from './user.model.js';
 import { UserRepository } from './user.repository.js';
 import { ChangePasswordSchema, UpdateUserSchema } from './user.schema.js';

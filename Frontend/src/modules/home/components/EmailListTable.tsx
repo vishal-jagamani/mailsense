@@ -1,14 +1,15 @@
 'use client';
 
-import { Email } from '@/shared/types/email.types';
-import { Checkbox } from '@/shared/ui/checkbox';
-import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
-import { formatDateToMonthDateString } from '@/shared/utils/formatter';
 import { Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+
+import { useIsMobile } from '@shared/hooks';
+import { Email } from '@shared/types';
+import { Checkbox } from '@shared/ui/checkbox';
+import { Table, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
+import { formatDateToMonthDateString } from '@shared/utils/formatter';
 import { useDeleteEmail } from '../services/useHomeApi';
-import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 interface EmailListTableProps {
     data: Email[];

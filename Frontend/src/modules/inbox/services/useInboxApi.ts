@@ -1,5 +1,5 @@
-import { EMAILS } from '@/shared/config/query-keys';
-import { InboxSearchResultResponse } from '@/shared/types/inbox.types';
+import { EMAILS } from '@shared/config/query-keys';
+import { InboxSearchResultResponse } from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getEmailDetails } from './inbox.api';
 

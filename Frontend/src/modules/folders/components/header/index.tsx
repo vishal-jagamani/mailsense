@@ -1,10 +1,11 @@
 'use client';
 
-import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
-import SearchHeader from '@/shared/components/inputs/SearchHeader';
-import { UI_CONSTANTS } from '@/shared/constants/ui';
-import { useAuthStore } from '@/store';
 import React from 'react';
+
+import { useGetAccountsQuery } from '@modules/accounts/services/useAccountApi';
+import SearchHeader from '@shared/components/inputs/SearchHeader';
+import { UI_CONSTANTS } from '@shared/constants';
+import { useAuthStore } from '@shared/store';
 import CreateFolderModal from './CreateFolderModal';
 import FoldersFilter from './FoldersFilter';
 

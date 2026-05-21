@@ -1,5 +1,6 @@
-import FoldersPage from '@/modules/folders';
 import React from 'react';
+
+import FoldersPage from '@modules/folders';
 
 const page: React.FC = () => {
     return (

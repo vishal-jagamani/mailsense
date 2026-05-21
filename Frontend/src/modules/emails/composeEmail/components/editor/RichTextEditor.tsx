@@ -3,7 +3,7 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useEffect } from 'react';
 
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsMobile } from '@shared/hooks';
 import { getEditorExtensions } from './editor.config';
 
 interface RichTextEditorProps {

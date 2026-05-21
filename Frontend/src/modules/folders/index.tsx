@@ -1,16 +1,16 @@
 'use client';
 
-import APILoader from '@/shared/components/apiLoader';
-import Loader from '@/shared/components/loader';
-import { useAuthStore } from '@/store';
-import { EMAILS_PAGE_SIZE, HOME_ROUTES } from '@shared/constants';
-import { UseDebounceQuery } from '@shared/hooks/useDebounceQuery';
-import { useBreadcrumbStore } from '@shared/store/breadcrumb.store';
-import { GetAllFoldersFilters, GetAllFoldersRequestOptions } from '@shared/types/folder.types';
 import dynamic from 'next/dynamic';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
+import APILoader from '@shared/components/apiLoader';
+import Loader from '@shared/components/loader';
+import { EMAILS_PAGE_SIZE, HOME_ROUTES } from '@shared/constants';
+import { UseDebounceQuery } from '@shared/hooks';
+import { useAuthStore, useBreadcrumbStore } from '@shared/store';
+import { GetAllFoldersFilters, GetAllFoldersRequestOptions } from '@shared/types';
 import { useGetAllFolders } from './services/useFolderApi';
 
 const FolderHeader = dynamic(() => import('./components/header'));
