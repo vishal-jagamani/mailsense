@@ -3,11 +3,11 @@
 import { MailCheck, Star, Trash } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import DeleteModal from '@/modules/emails/components/DeleteModal';
-import { useStarEmailMutation, useUnreadEmailMutation } from '@/modules/emails/services/useEmailApi';
-import { useDeleteEmail } from '@/modules/home/services/useHomeApi';
-import APILoader from '@/shared/components/apiLoader';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import DeleteModal from '@modules/emails/components/DeleteModal';
+import { useStarEmailMutation, useUnreadEmailMutation } from '@modules/emails/services/useEmailApi';
+import { useDeleteEmail } from '@modules/home/services/useHomeApi';
+import APILoader from '@shared/components/apiLoader';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 
 interface EmailMenuBarOptionsProps {
     emailIds: string[];

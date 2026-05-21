@@ -1,12 +1,12 @@
 'use client';
 
-import { DATE_RANGE, GetAllEmailsFilters } from '@/shared/types/inbox.types';
-import { Button } from '@/shared/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { ListFilter } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { DATE_RANGE, GetAllEmailsFilters } from '@shared/types';
+import { Button } from '@shared/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { DATE_RANGE_DROPDOWN_OPTIONS } from '../../constants/api.constants';
 
 interface AccountEmailListFilterProps {

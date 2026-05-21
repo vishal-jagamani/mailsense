@@ -1,5 +1,6 @@
-import AccountInboxPage from '@/modules/inbox/accountInbox';
 import React from 'react';
+
+import AccountInboxPage from '@modules/inbox/accountInbox';
 
 const page = async ({ params }: { params: { account: string } }) => {
     const { account } = await params;

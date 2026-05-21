@@ -1,6 +1,6 @@
-import { axiosClient } from '@/shared/config/axios';
-import { ProfileSettingsDataObject, UpdateUserProfileSettingsResponse } from '../settings.types';
-import { APIResponse, UpdateAPIResponse } from '@/shared/types/api.types';
+import { axiosClient } from '@shared/config/axios';
+import { APIResponse, UpdateAPIResponse } from '@shared/types';
+import { ProfileSettingsDataObject, UpdateUserProfileSettingsResponse } from '../../../shared/types/settings.types';
 
 export async function getUserProfileSettings(userId: string) {
     const { data } = await axiosClient.get<APIResponse<ProfileSettingsDataObject>>(`/users/${userId}/profile`);

@@ -1,5 +1,4 @@
-import { UpdateAPIResponse } from '@/shared/types/api.types';
-import { FetchEmailRequestOptions, GetEmailsResponse } from '@/shared/types/email.types';
+import { FetchEmailRequestOptions, GetEmailsResponse, UpdateAPIResponse } from '@shared/types';
 import { useMutation } from '@tanstack/react-query';
 import { deleteEmail, fetchEmails } from './home.api';
 

@@ -1,19 +1,19 @@
 'use client';
 
-import { CircleUser, Folder, Inbox, LucideIcon, Mail, Pencil, Settings } from 'lucide-react';
+import { useUser } from '@auth0/nextjs-auth0';
+import { CircleUser, Folder, Inbox, LucideIcon, Pencil, Settings } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
-import { HOME_ROUTES, ROUTES } from '@/shared/constants';
-import { useAuthStore } from '@/store';
-import { useUser } from '@auth0/nextjs-auth0';
+import { useGetAccountsQuery } from '@modules/accounts/services/useAccountApi';
+import { HOME_ROUTES, ROUTES } from '@shared/constants';
+import { useComposeEmailPopupStore } from '@shared/store';
+import { Button } from '@shared/ui/button';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail } from '@shared/ui/sidebar';
+import { useAuthStore } from '../../store';
 import { NavMain } from './nav-main';
 import { NavProjects } from './nav-projects';
 import { NavUser } from './nav-user';
 import { TeamSwitcher } from './team-switcher';
-import { Button } from '@/shared/ui/button';
-import { useComposeEmailPopupStore } from '@/shared/store/composeEmailPopup.store';
 
 type NavMainItem = {
     title: string;

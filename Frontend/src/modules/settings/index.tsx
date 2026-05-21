@@ -1,8 +1,9 @@
 'use client';
 
-import { ROUTES } from '@/shared/constants';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import React, { useEffect } from 'react';
+
+import { ROUTES } from '@shared/constants';
+import { useBreadcrumbStore } from '@shared/store';
 import ProfileSettings from './components/profile/ProfileSettings';
 
 interface SettingsPageProps {

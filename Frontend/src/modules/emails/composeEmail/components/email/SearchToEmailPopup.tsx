@@ -1,7 +1,8 @@
 'use client';
 
-import { ComposeEmailRequestBody, SearchOtherContactsResponse } from '@shared/types/email.types';
 import React from 'react';
+
+import { ComposeEmailRequestBody, SearchOtherContactsResponse } from '@shared/types';
 
 interface SearchToEmailPopupProps {
     data: SearchOtherContactsResponse[];

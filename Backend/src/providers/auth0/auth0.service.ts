@@ -1,8 +1,8 @@
+import { UpdateUserSchema } from '@modules/user/user.schema.js';
 import { UserDetailsObject } from '@modules/user/user.types.js';
-import { logger } from '@utils/logger.js';
+import { logger } from '@utils';
 import { Auth0Api } from './auth0.api.js';
 import { Auth0UserDetailsResponse } from './auth0.types.js';
-import { UpdateUserSchema } from '@modules/user/user.schema.js';
 
 export class Auth0Service {
     private auth0Api: Auth0Api;

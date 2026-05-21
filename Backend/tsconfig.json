@@ -19,7 +19,8 @@
             "@modules/*": ["modules/*"],
             "@providers/*": ["providers/*"],
             "@routes/*": ["routes/*"],
-            "@utils/*": ["utils/*"]
+            "@types": ["types/index.js"],
+            "@utils": ["utils/index.js"]
         }
     },
     "include": ["src/**/*.ts", "src/config/config.ts", "src/types/express.d.ts"],

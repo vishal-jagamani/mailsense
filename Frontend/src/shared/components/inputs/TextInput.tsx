@@ -1,9 +1,10 @@
 'use client';
 
-import { cn } from '@/lib/utils';
-import { Input } from '@/shared/ui/input';
-import { Label } from '@/shared/ui/label';
 import React from 'react';
+
+import { Input } from '@shared/ui/input';
+import { Label } from '@shared/ui/label';
+import { cn } from '../../../lib/utils';
 
 interface TextInputProps {
     label: string;

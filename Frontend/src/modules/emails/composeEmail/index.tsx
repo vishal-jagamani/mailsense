@@ -2,11 +2,7 @@
 
 import React from 'react';
 
-interface ComposeEmailProps {
-    accountId: string;
-}
-
-const ComposeEmail: React.FC<ComposeEmailProps> = ({ accountId }) => {
+const ComposeEmail: React.FC = () => {
     return <div>ComposeEmail</div>;
 };
 

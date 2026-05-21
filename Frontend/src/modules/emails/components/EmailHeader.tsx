@@ -1,8 +1,9 @@
 'use client';
 
-import { Email } from '@/shared/types/email.types';
-import { formatDateToDateTimeAgoString } from '@/shared/utils/formatter';
 import React from 'react';
+
+import { Email } from '@shared/types';
+import { formatDateToDateTimeAgoString } from '@shared/utils/formatter';
 import { formatEmailFromString } from '../utils/formatter';
 
 interface EmailHeaderProps {

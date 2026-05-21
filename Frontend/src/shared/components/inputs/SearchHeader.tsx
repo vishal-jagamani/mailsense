@@ -1,7 +1,8 @@
 'use client';
 
-import { Input } from '@/shared/ui/input';
 import React from 'react';
+
+import { Input } from '@shared/ui/input';
 
 interface SearchHeaderProps {
     value: string;

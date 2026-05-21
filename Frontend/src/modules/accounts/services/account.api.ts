@@ -1,5 +1,5 @@
-import { AccountAttributes, AccountProviders } from '@/shared/types/account.types';
 import { axiosClient } from '@shared/config/axios';
+import { AccountAttributes, AccountProviders } from '@shared/types';
 import { ACCOUNTS_API_ENDPOINTS } from '../constants/api.constants';
 
 export async function getAccountProvider(): Promise<AccountProviders[]> {

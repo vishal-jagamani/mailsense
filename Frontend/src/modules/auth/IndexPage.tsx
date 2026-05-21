@@ -1,12 +1,14 @@
 'use client';
 
-import { AuroraBackgroundDemo } from '@/shared/components/AuroraBackground';
-import { AUTH0_URLS } from '@/shared/constants';
-import { Button } from '@/shared/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/ui/card';
-import { useUser } from '@auth0/nextjs-auth0';
 import Link from 'next/link';
 import React from 'react';
+
+import { useUser } from '@auth0/nextjs-auth0';
+import { AuroraBackgroundDemo } from '@shared/components/AuroraBackground';
+import { AUTH0_URLS } from '@shared/constants';
+import { Button } from '@shared/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/ui/card';
+
 
 const IndexPage: React.FC = () => {
     const { user } = useUser();

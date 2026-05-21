@@ -1,7 +1,8 @@
+import { Router } from 'express';
+
 import { authMiddleware } from '@middlewares/auth.js';
 import { validate } from '@middlewares/validator.js';
-import { handleRequest } from '@utils/request.handler.js';
-import { Router } from 'express';
+import { handleRequest } from '@utils';
 import { UserController } from './user.controller.js';
 import { changePasswordSchema, updateUserSchema } from './user.schema.js';
 

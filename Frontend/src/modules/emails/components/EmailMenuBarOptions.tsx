@@ -5,11 +5,11 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useDeleteEmail } from '@/modules/home/services/useHomeApi';
-import APILoader from '@/shared/components/apiLoader';
-import { HOME_ROUTES } from '@/shared/constants';
-import { useIsMobile } from '@/shared/hooks/use-mobile';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import { useDeleteEmail } from '@modules/home/services/useHomeApi';
+import APILoader from '@shared/components/apiLoader';
+import { HOME_ROUTES } from '@shared/constants';
+import { useIsMobile } from '@shared/hooks';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { useStarEmailMutation, useUnreadEmailMutation } from '../services/useEmailApi';
 import DeleteModal from './DeleteModal';
 
@@ -126,7 +126,11 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onMa
                         <div key={option.id} className="flex items-center">
                             <Tooltip>
                                 <TooltipTrigger>
-                                    <option.icon size={isMobile ? 16: 18} onClick={option.action} className={`cursor-pointer ${option.iconColor ?? ''}`} />
+                                    <option.icon
+                                        size={isMobile ? 16 : 18}
+                                        onClick={option.action}
+                                        className={`cursor-pointer ${option.iconColor ?? ''}`}
+                                    />
                                 </TooltipTrigger>
                                 <TooltipContent>
                                     <p className="text-md font-semibold">{option.label}</p>

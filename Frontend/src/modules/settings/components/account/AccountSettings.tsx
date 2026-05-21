@@ -1,9 +1,10 @@
 'use client';
 
-import ProviderAccountList from '@/modules/accounts/components/ProviderAccountList';
-import { ROUTES } from '@/shared/constants';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
 import React, { useEffect } from 'react';
+
+import ProviderAccountList from '@modules/accounts/components/ProviderAccountList';
+import { ROUTES } from '@shared/constants';
+import { useBreadcrumbStore } from '@shared/store';
 
 const AccountSettings: React.FC = () => {
     useEffect(() => {

@@ -3,10 +3,10 @@
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
-import { useIsMobile } from '@/hooks/use-mobile';
-import { FolderAttributes } from '@/shared/types/folder.types';
-import { Table, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
 import { Checkbox } from '@radix-ui/react-checkbox';
+import { useIsMobile } from '@shared/hooks';
+import { FolderAttributes } from '@shared/types';
+import { Table, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
 import { Trash } from 'lucide-react';
 
 interface FoldersTableProps {

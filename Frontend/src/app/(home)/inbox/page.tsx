@@ -1,5 +1,6 @@
-import InboxPage from '@/modules/inbox';
 import React from 'react';
+
+import InboxPage from '@modules/inbox';
 
 const page: React.FC = () => {
     return (

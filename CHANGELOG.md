@@ -7,6 +7,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-05-21
+
+### Added
+- Newly connected mail accounts are now enabled automatically as soon as the connection completes.
+
+### Changed
+- Account connection flow now keeps newly linked accounts available immediately in connected account and mailbox-driven experiences.
+
+### Fixed
+- Fixed a post-connect account state issue that could leave a newly linked account inactive until manually re-enabled.
+
 ## [1.3.0] - 2026-05-19
 
 ### Added
@@ -67,7 +78,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
 [1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1

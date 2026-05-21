@@ -1,4 +1,4 @@
-import FolderEmailList from '@/modules/folders/folderEmailList';
+import FolderEmailList from '@modules/folders/folderEmailList';
 
 const page = async ({ params }: { params: Promise<{ folder: string }> }) => {
     const { folder } = await params;

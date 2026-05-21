@@ -1,10 +1,11 @@
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { ComposeEmailBody } from '@modules/emails/email.schema.js';
+import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { logger } from '@utils/logger.js';
-import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
-import { UpdateAPIResponse } from 'types/api.types.js';
+import { OutlookOAuthAccessTokenResponse, UpdateAPIResponse } from '@types';
+import { compressString, logger } from '@utils';
 import { OutlookApi } from './outlook.api.js';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_API_PARAMS, OUTLOOK_APIs } from './outlook.constants.js';
 import {
@@ -16,9 +17,6 @@ import {
     OutlookUserProfile,
 } from './outlook.types.js';
 import * as OutlookUtils from './outlook.utils.js';
-import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { compressString } from '@utils/compression.js';
-import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 
 export class OutlookService {
     private outlookApi: OutlookApi;

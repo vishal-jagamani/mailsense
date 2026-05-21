@@ -4,7 +4,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useAuthStore } from '@/store';
 import { useGetAccountsQuery } from '@modules/accounts/services/useAccountApi';
 import EmailListTable from '@modules/home/components/EmailListTable';
 import { useFetchEmails } from '@modules/home/services/useHomeApi';
@@ -15,11 +14,9 @@ import SearchHeader from '@shared/components/inputs/SearchHeader';
 import Loader from '@shared/components/loader';
 import PaginationComponent from '@shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES, UI_CONSTANTS } from '@shared/constants';
-import { useIsMobile } from '@shared/hooks/use-mobile';
-import { UseDebounceQuery } from '@shared/hooks/useDebounceQuery';
-import { useBreadcrumbStore } from '@shared/store/breadcrumb.store';
-import { GetEmailsResponse } from '@shared/types/email.types';
-import { GetAllEmailsFilters } from '@shared/types/inbox.types';
+import { UseDebounceQuery, useIsMobile } from '@shared/hooks';
+import { useAuthStore, useBreadcrumbStore } from '@shared/store';
+import { GetAllEmailsFilters, GetEmailsResponse } from '@shared/types';
 import { useGetFolderQuery } from '../services/useFolderApi';
 
 interface FolderEmailListProps {
@@ -85,7 +82,7 @@ const FolderEmailList: React.FC<FolderEmailListProps> = ({ folderId }) => {
         const params = new URLSearchParams(window.location.search);
         params.set('page', page.toString());
         router.replace(`/folders/${folderId}?${params.toString()}`, { scroll: false });
-    }, [page, folderId]);
+    }, [page, folderId, router]);
 
     useEffect(() => {
         if (folder) {

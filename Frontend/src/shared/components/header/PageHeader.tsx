@@ -3,13 +3,13 @@
 import Image from 'next/image';
 import React, { useState } from 'react';
 
-import { useSyncAllAccounts } from '@/modules/accounts/services/useAccountApi';
-import { Button } from '@/shared/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/shared/ui/dropdown-menu';
-import { useAuthStore } from '@/store';
 import GmailIcon from '@assets/icons/gmail/icons8-gmail-144.png';
 import OutlookIcon from '@assets/icons/outlook/icons8-outlook-144.svg';
-import { useIsMobile } from '@/shared/hooks/use-mobile';
+import { useSyncAllAccounts } from '@modules/accounts/services/useAccountApi';
+import { useIsMobile } from '@shared/hooks';
+import { Button } from '@shared/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@shared/ui/dropdown-menu';
+import { useAuthStore } from '../../store';
 
 interface PageHeaderProps {
     title: string;
@@ -48,7 +48,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
 
     return (
         <>
-            <div className={`${isMobile ? 'justify-end' : 'justify-between'} border-muted flex w-full items-center border-b-2 pb-2 mt-1`}>
+            <div className={`${isMobile ? 'justify-end' : 'justify-between'} border-muted mt-1 flex w-full items-center border-b-2 pb-2`}>
                 {!isMobile && <p className="text-md ml-2 font-bold text-nowrap md:ml-4 md:text-xl">{title}</p>}
                 {button && (
                     <>
@@ -85,7 +85,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
                                                     alt={option.name}
                                                     className={isMobile ? 'size-5' : 'size-5'}
                                                 />
-                                                <p className={`${isMobile ? 'text-xs ' : 'text-sm'} font-semibold`}>{option.displayName}</p>
+                                                <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold`}>{option.displayName}</p>
                                             </DropdownMenuItem>
                                         );
                                     })}

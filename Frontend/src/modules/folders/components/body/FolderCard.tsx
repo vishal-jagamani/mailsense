@@ -4,7 +4,7 @@ import { Check, Dot, Ellipsis, FolderOpenDot, Pen, RefreshCw, Trash, X } from 'l
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
-import { CreateFolderBodyParams, FolderAttributes } from '@shared/types/folder.types';
+import { CreateFolderBodyParams, FolderAttributes } from '@shared/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Separator } from '@shared/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
