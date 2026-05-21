@@ -1,13 +1,13 @@
 'use client';
 
-import PageHeader from '@/shared/components/header/PageHeader';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
-import { encrypt } from '@/shared/utils/crypto';
-import { useAuthStore } from '@/store';
 import React, { useEffect, useState } from 'react';
+
+import PageHeader from '@shared/components/header/PageHeader';
+import { useAuthStore, useBreadcrumbStore } from '@shared/store';
+import { encrypt } from '@shared/utils/crypto';
+import MoreAccountProviderComingSoon from './components/MoreAccountProviderComingSoon';
 import ProviderAccountList from './components/ProviderAccountList';
 import { useAccountProviderQuery, useAccountQuery } from './services/useAccountApi';
-import MoreAccountProviderComingSoon from './components/MoreAccountProviderComingSoon';
 
 const AccountsPage: React.FC = () => {
     const [provider, setProvider] = useState<string>('');
@@ -40,7 +40,7 @@ const AccountsPage: React.FC = () => {
                 <div className="mt-2 flex h-full w-[98%] flex-col justify-center gap-6 rounded-xl px-2">
                     <ProviderAccountList />
                 </div>
-                <div className="mt-12 md:mt-24 px-4">
+                <div className="mt-12 px-4 md:mt-24">
                     <MoreAccountProviderComingSoon />
                 </div>
             </div>

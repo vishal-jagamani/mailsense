@@ -1,8 +1,8 @@
+import { QUERY_KEYS } from '@shared/config/query-keys';
+import { APIResponse, UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ProfileSettingsDataObject, UpdateUserProfileSettingsResponse } from '../settings.types';
+import { ProfileSettingsDataObject, UpdateUserProfileSettingsResponse } from '../../../shared/types/settings.types';
 import { changeUserPassword, getUserProfileSettings, updateUserProfileSettings } from './settings.api';
-import { QUERY_KEYS } from '@/shared/config/query-keys';
-import { APIResponse, UpdateAPIResponse } from '@/shared/types/api.types';
 
 export const useGetUserProfileSettings = (userId: string, enabled: boolean) => {
     return useQuery<APIResponse<ProfileSettingsDataObject>>({

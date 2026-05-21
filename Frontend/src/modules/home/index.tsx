@@ -1,15 +1,16 @@
 'use client';
 
-import APILoader from '@/shared/components/apiLoader';
-import Loader from '@/shared/components/loader';
-import PaginationComponent from '@/shared/components/table/Pagination';
-import { EMAILS_PAGE_SIZE, MESSAGES } from '@/shared/constants';
-import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
-import { GetEmailsResponse } from '@/shared/types/email.types';
-import { useAuthStore } from '@/store';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
+import APILoader from '@shared/components/apiLoader';
+import Loader from '@shared/components/loader';
+import PaginationComponent from '@shared/components/table/Pagination';
+import { EMAILS_PAGE_SIZE, MESSAGES } from '@shared/constants';
+import { UseDebounceQuery } from '@shared/hooks';
+import { useAuthStore } from '@shared/store';
+import { GetEmailsResponse } from '@shared/types';
 import EmailListTable from './components/EmailListTable';
 import { useFetchEmails } from './services/useHomeApi';
 

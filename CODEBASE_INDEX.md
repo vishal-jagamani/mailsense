@@ -77,8 +77,10 @@
   - `User` indexed by `auth0UserId`
 
 ### Shared Types / Utils
+- `Backend/src/types/index.ts`: barrel export for shared backend type modules
 - `Backend/src/types/express.d.ts`: extends Express request typing for validated payloads and Auth0 JWT user context
 - `Backend/src/types/common.types.ts`: shared enums such as `DATE_RANGE`
+- `Backend/src/utils/index.ts`: barrel export for shared backend utilities
 - `Backend/src/utils/common.ts`: reusable date-range helpers
 - `Backend/src/errors/AppError.ts`: base structured application error
 - `Backend/src/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
@@ -153,8 +155,14 @@
 
 ### State and Data
 - Zustand:
-  - `Frontend/src/store/auth.store.ts` auth session data (`user`, loading, authenticated flag)
+  - `Frontend/src/shared/store/auth.store.ts` auth session data (`user`, loading, authenticated flag)
+  - `Frontend/src/shared/store/theme.store.ts` theme state
   - `Frontend/src/shared/store/composeEmailPopup.store.ts` compose popup open/close state
+  - `Frontend/src/shared/store/index.ts` barrel export for shared Zustand stores
+- Shared hooks/types:
+  - `Frontend/src/shared/hooks/index.ts` barrel export for shared hooks such as `useIsMobile`, `UseDebounceQuery`, and breadcrumb reset
+  - `Frontend/src/shared/types/index.ts` barrel export for shared account, API, auth, email, folder, inbox, and settings types
+  - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:
   - query keys in `Frontend/src/shared/config/query-keys.ts`
   - module-level hooks under each `modules/*/services/use*.ts`
@@ -188,6 +196,7 @@
 8. Compose recipient search uses provider contacts/people APIs to suggest and add recipients as chips while typing.
 
 ## Important Notes
+- Backend and frontend both now use barrel exports for shared types/utilities/hooks/stores to reduce deep relative imports.
 - Frontend has two base URL definitions:
   - `Frontend/src/config/config.ts` uses `NEXT_PUBLIC_API_BASE_URL`
   - `Frontend/src/shared/constants/urls.ts` uses `NEXT_PUBLIC_API_URL` fallback `http://localhost:4000`
@@ -195,4 +204,5 @@
 - Backend now uses structured app/provider error classes for cleaner API error responses.
 - Outlook backend sync and inbox mutations are implemented; frontend release availability may still be controlled by product rollout.
 - Protected backend APIs now resolve user context from the signed-in session instead of client-supplied user IDs.
+- Newly connected accounts are persisted as active, so they appear immediately in active-account-driven flows after OAuth completion.
 - Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).

@@ -4,13 +4,12 @@ import { ListFilter } from 'lucide-react';
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 
-import { AccountAttributes } from '@/shared/types/account.types';
-import { DATE_RANGE, GetAllEmailsFilters } from '@/shared/types/inbox.types';
-import { Button } from '@/shared/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import gmailIcon from '@assets/icons/gmail/icons8-gmail-96.png';
 import outlookIcon from '@assets/icons/outlook/icons8-outlook-96.svg';
+import { AccountAttributes, DATE_RANGE, GetAllEmailsFilters } from '@shared/types';
+import { Button } from '@shared/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { DATE_RANGE_DROPDOWN_OPTIONS } from '../constants/api.constants';
 
 const iconMapping = [

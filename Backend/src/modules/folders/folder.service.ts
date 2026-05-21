@@ -1,15 +1,13 @@
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { GmailService } from '@providers/gmail/gmail.service.js';
 import { OutlookService } from '@providers/outlook/outlook.service.js';
-import { logger } from '@utils/logger.js';
-import { AccountProvider } from 'types/account.types.js';
-import { PaginatedDataResponse, UpdateAPIResponse } from 'types/api.types.js';
+import { AccountProvider, PaginatedDataResponse, UpdateAPIResponse } from '@types';
+import { getDateRange, logger } from '@utils';
+import { FilterQuery } from 'mongoose';
+import { FOLDER_LIST_DB_FIELD_MAPPING } from './folder.constants.js';
 import { FolderDocument } from './folder.model.js';
 import { FolderRepository } from './folder.repository.js';
 import { GetAllFoldersFilters } from './folder.types.js';
-import { FilterQuery } from 'mongoose';
-import { FOLDER_LIST_DB_FIELD_MAPPING } from './folder.constants.js';
-import * as CommonUtils from '@utils/common.js';
 
 export class FolderService {
     private gmailService: GmailService;
@@ -81,8 +79,8 @@ export class FolderService {
                 accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
                 ...(dateRange &&
-                    CommonUtils.getDateRange(dateRange) && {
-                        updatedAt: { $gte: CommonUtils.getDateRange(dateRange).startDate, $lte: CommonUtils.getDateRange(dateRange).endDate },
+                    getDateRange(dateRange) && {
+                        updatedAt: { $gte: getDateRange(dateRange).startDate, $lte: getDateRange(dateRange).endDate },
                     }),
             };
             const folders = await FolderRepository.getAllFolders(

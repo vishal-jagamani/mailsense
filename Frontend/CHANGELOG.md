@@ -7,6 +7,19 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-05-21
+
+### Added
+- Added shared barrel exports for frontend hooks, stores, and types to simplify module access across the app.
+
+### Changed
+- Standardized frontend imports around centralized `@shared/*`, `@modules/*`, and `@lib/*` aliases across account, inbox, folders, compose, settings, and shared UI modules.
+- Moved auth and theme Zustand stores under `Frontend/src/shared/store/*` and consolidated settings types under shared type exports.
+- Updated component alias configuration so shared UI primitives resolve through `@shared/ui`.
+
+### Fixed
+- Newly connected accounts now align correctly with the account activation UI because connected accounts are created as active by default.
+
 ## [1.3.0] - 2026-05-19
 
 ### Added
@@ -117,7 +130,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
 [1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1

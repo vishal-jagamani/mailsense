@@ -7,6 +7,22 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.3.1] - 2026-05-21
+
+### Added
+- Added backend barrel export entry points for shared types and utilities:
+  - `Backend/src/types/index.ts`
+  - `Backend/src/utils/index.ts`
+- Newly connected Gmail and Outlook accounts are now persisted with `active: true` during OAuth callback completion.
+
+### Changed
+- Standardized backend imports to consume shared `@types` and `@utils` aliases across middleware, routes, services, providers, and config modules.
+- Updated backend TypeScript path aliases to resolve the new shared barrel exports.
+- Updated folder service to use the shared `getDateRange` utility through the centralized utilities export.
+
+### Fixed
+- Ensured newly connected accounts are immediately included in active-account flows for account listing, sync eligibility, inbox queries, and folder queries.
+
 ## [1.3.0] - 2026-05-19
 
 ### Added
@@ -144,7 +160,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.1...HEAD
+[1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
 [1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
 [1.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.1.1

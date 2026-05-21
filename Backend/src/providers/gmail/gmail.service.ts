@@ -6,13 +6,10 @@ import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { BatchProcessor } from '@utils/batchProcessor.js';
-import { compressString } from '@utils/compression.js';
-import { logger } from '@utils/logger.js';
+import { GmailOAuthAccessTokenResponse, UpdateAPIResponse } from '@types';
+import { BatchProcessor, compressString, logger } from '@utils';
 import axios from 'axios';
 import { AxiosApiError } from 'errors/AxiosApiError.js';
-import { GmailOAuthAccessTokenResponse } from 'types/account.types.js';
-import { UpdateAPIResponse } from 'types/api.types.js';
 import { GmailApi } from './gmail.api.js';
 import {
     ExtractMessageChangesResponse,

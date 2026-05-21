@@ -1,15 +1,10 @@
+import { Router } from 'express';
+
 import { authMiddleware } from '@middlewares/auth.js';
 import { validate } from '@middlewares/validator.js';
-import { handleRequest } from '@utils/request.handler.js';
-import { Router } from 'express';
+import { handleRequest } from '@utils';
 import { FolderController } from './folder.controller.js';
-import {
-    createFolderSchema,
-    getAccountFoldersSchema,
-    getAllFoldersSchema,
-    getFolderSchema,
-    updateFolderBodySchema,
-} from './folder.schema.js';
+import { createFolderSchema, getAccountFoldersSchema, getAllFoldersSchema, getFolderSchema, updateFolderBodySchema } from './folder.schema.js';
 
 const router = Router();
 
@@ -23,11 +18,7 @@ router.post('/', validate({ body: createFolderSchema }), handleRequest(folderCon
 
 router.get('/:folderId', validate({ params: getFolderSchema }), handleRequest(folderController.getFolder));
 
-router.patch(
-    '/:folderId',
-    validate({ params: getFolderSchema, body: updateFolderBodySchema }),
-    handleRequest(folderController.updateFolder),
-);
+router.patch('/:folderId', validate({ params: getFolderSchema, body: updateFolderBodySchema }), handleRequest(folderController.updateFolder));
 
 router.delete('/:folderId', validate({ params: getFolderSchema }), handleRequest(folderController.deleteFolder));
 

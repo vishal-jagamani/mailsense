@@ -2,15 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { useIsMobile } from '@/hooks/use-mobile';
-import PaginationComponent from '@/shared/components/table/Pagination';
-import { CreateFolderBodyParams, FolderAttributes } from '@/shared/types/folder.types';
-import FolderCard from './FolderCard';
-import { useDeleteFolderMutation, useUpdateFolderMutation } from '../../services/useFolderApi';
+import APILoader from '@shared/components/apiLoader';
+import PaginationComponent from '@shared/components/table/Pagination';
+import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
+import { useIsMobile } from '@shared/hooks';
+import { CreateFolderBodyParams, FolderAttributes } from '@shared/types';
 import { toast } from 'sonner';
-import { MESSAGES } from '@/shared/constants';
-import { UI_CONSTANTS } from '@/shared/constants/ui';
-import APILoader from '@/shared/components/apiLoader';
+import { useDeleteFolderMutation, useUpdateFolderMutation } from '../../services/useFolderApi';
+import FolderCard from './FolderCard';
 
 interface FolderBodyProps {
     tableData: FolderAttributes[];

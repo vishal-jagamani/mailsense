@@ -1,12 +1,14 @@
 'use client';
 
+import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import gmailIcon from '@assets/icons/gmail/icons8-gmail-96.png';
 import outlookIcon from '@assets/icons/outlook/icons8-outlook-96.svg';
-import { AccountAttributes } from '@shared/types/account.types';
-import Image from 'next/image';
+import APILoader from '@shared/components/apiLoader';
+import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
+import { AccountAttributes, CreateFolderBodyParams } from '@shared/types';
 import { AlertDialogFooter, AlertDialogHeader } from '@shared/ui/alert-dialog';
 import { Button } from '@shared/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@shared/ui/dialog';
@@ -14,11 +16,7 @@ import { Field, FieldGroup } from '@shared/ui/field';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
-import { CreateFolderBodyParams } from '@/shared/types/folder.types';
 import { useCreateFolderMutation } from '../../services/useFolderApi';
-import APILoader from '@/shared/components/apiLoader';
-import { UI_CONSTANTS } from '@/shared/constants/ui';
-import { MESSAGES } from '@/shared/constants';
 
 const iconMapping = [
     { name: 'outlook', icon: outlookIcon },

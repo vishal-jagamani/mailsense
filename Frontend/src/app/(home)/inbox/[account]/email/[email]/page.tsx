@@ -1,4 +1,4 @@
-import EmailPage from '@/modules/emails';
+import EmailPage from '@modules/emails';
 
 const page = async ({ params }: { params: { account: string; email: string } }) => {
     const { account, email } = await params;

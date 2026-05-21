@@ -1,20 +1,21 @@
 'use client';
 
-import APILoader from '@/shared/components/apiLoader';
-import TextInput from '@/shared/components/inputs/TextInput';
-import Loader from '@/shared/components/loader';
-import { Button } from '@/shared/ui/button';
-import { Label } from '@/shared/ui/label';
-import { Separator } from '@/shared/ui/separator';
-import { useAuthStore } from '@/store';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
+import APILoader from '@shared/components/apiLoader';
+import TextInput from '@shared/components/inputs/TextInput';
+import Loader from '@shared/components/loader';
+import { MESSAGES } from '@shared/constants';
+import { useIsMobile } from '@shared/hooks';
+import { useAuthStore } from '@shared/store';
+import { Button } from '@shared/ui/button';
+import { Label } from '@shared/ui/label';
+import { Separator } from '@shared/ui/separator';
 import { useGetUserProfileSettings, useUpdateUserProfileSettings } from '../../services/useSettingsApi';
-import { ProfileSettingsDataObject } from '../../settings.types';
+import { ProfileSettingsDataObject } from '../../../../shared/types/settings.types';
 import AccountDeletionModal from './AccountDeletionModal';
 import ChangePassword from './ChangePassword';
-import { MESSAGES } from '@/shared/constants';
-import { useIsMobile } from '@/shared/hooks/use-mobile';
 
 const ProfileSettings: React.FC = () => {
     const isMobile = useIsMobile();

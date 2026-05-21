@@ -1,11 +1,10 @@
+import { AxiosRequestConfig } from 'axios';
+
 import { OUTLOOK_SECRETS } from '@config/config.js';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { apiRequest } from '@utils/axios.js';
-import { decrypt, encrypt } from '@utils/crypto.js';
-import { logger } from '@utils/logger.js';
-import { AxiosRequestConfig } from 'axios';
-import { OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
+import { OutlookOAuthAccessTokenResponse } from '@types';
+import { apiRequest, decrypt, encrypt, logger } from '@utils';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
 import {
     GetDeltaMessageChangesResponse,

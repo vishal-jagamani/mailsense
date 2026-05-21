@@ -1,5 +1,6 @@
-import AccountsPage from '@/modules/accounts';
 import React from 'react';
+
+import AccountsPage from '@modules/accounts';
 
 const page: React.FC = () => {
     return (

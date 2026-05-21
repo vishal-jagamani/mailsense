@@ -1,19 +1,17 @@
+import { FilterQuery } from 'mongoose';
+
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { GmailService } from '@providers/gmail/gmail.service.js';
+import { GMAIL_LABELS } from '@providers/gmail/gmail.types.js';
 import { OutlookService } from '@providers/outlook/outlook.service.js';
-import { decompressString } from '@utils/compression.js';
-import { logger } from '@utils/logger.js';
-import { FilterQuery } from 'mongoose';
-import { AccountProvider } from 'types/account.types.js';
-import { APIResponse, PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from 'types/api.types.js';
-import { GetEmailsResponse } from 'types/email.types.js';
+import { AccountProvider, APIResponse, GetEmailsResponse, PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from '@types';
+import { decompressString, logger } from '@utils';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
 import { DATE_RANGE, GetAllEmailsFilters, SearchEmailsParams, SearchOtherContactsResponse } from './email.types.js';
-import { GMAIL_LABELS } from '@providers/gmail/gmail.types.js';
-import { FolderRepository } from '@modules/folders/folder.repository.js';
 
 export class EmailService {
     private gmailService: GmailService;

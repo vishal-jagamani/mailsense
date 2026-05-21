@@ -3,11 +3,11 @@
 import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 
-import { Card, CardContent } from '@/shared/ui/card';
-import { encrypt } from '@/shared/utils/crypto';
-import { useAuthStore } from '@/store';
 import gmailIcon from '@assets/icons/gmail/icons8-gmail-240.png';
 import outlookIcon from '@assets/icons/outlook/icons8-outlook-240.svg';
+import { Card, CardContent } from '@shared/ui/card';
+import { encrypt } from '@shared/utils/crypto';
+import { useAuthStore } from '@shared/store';
 import { Plus } from 'lucide-react';
 import { useAccountProviderQuery, useAccountQuery, useGetAccountsQuery } from '../services/useAccountApi';
 import AccountCard from './AccountCard';

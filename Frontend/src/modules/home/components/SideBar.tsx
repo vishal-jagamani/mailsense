@@ -1,8 +1,8 @@
 'use client';
 
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/shared/ui/breadcrumb';
-import { Separator } from '@/shared/ui/separator';
-import { SidebarInset, SidebarTrigger } from '@/shared/ui/sidebar';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@shared/ui/breadcrumb';
+import { Separator } from '@shared/ui/separator';
+import { SidebarInset, SidebarTrigger } from '@shared/ui/sidebar';
 
 const SideBar = () => {
     return (

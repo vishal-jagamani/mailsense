@@ -1,7 +1,10 @@
 'use client';
 
-import { EMAILS_PAGE_SIZE } from '@/shared/constants';
-import { Field, FieldLabel } from '@/shared/ui/field';
+import React, { useEffect, useState } from 'react';
+
+import { EMAILS_PAGE_SIZE } from '@shared/constants';
+import { useIsMobile } from '@shared/hooks';
+import { Field, FieldLabel } from '@shared/ui/field';
 import {
     Pagination,
     PaginationContent,
@@ -10,10 +13,8 @@ import {
     PaginationLink,
     PaginationNext,
     PaginationPrevious,
-} from '@/shared/ui/pagination';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
-import React, { useEffect, useState } from 'react';
-import { useIsMobile } from '@/shared/hooks/use-mobile';
+} from '@shared/ui/pagination';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 
 interface PaginationProps {
     total: number;

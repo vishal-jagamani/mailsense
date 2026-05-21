@@ -1,6 +1,13 @@
 'use client';
 
-import { AccountAttributes } from '@/shared/types/account.types';
+import Image from 'next/image';
+import React, { useEffect, useState } from 'react';
+
+import gmailIcon from '@assets/icons/gmail/icons8-gmail-240.png';
+import outlookIcon from '@assets/icons/outlook/icons8-outlook-240.svg';
+import APILoader from '@shared/components/apiLoader';
+import { UI_CONSTANTS } from '@shared/constants';
+import { AccountAttributes } from '@shared/types';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -11,19 +18,13 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
     AlertDialogTrigger,
-} from '@/shared/ui/alert-dialog';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
-import { formatEpochTimeToString } from '@/shared/utils/formatter';
-import gmailIcon from '@assets/icons/gmail/icons8-gmail-240.png';
-import outlookIcon from '@assets/icons/outlook/icons8-outlook-240.svg';
+} from '@shared/ui/alert-dialog';
+import { Switch } from '@shared/ui/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
+import { formatEpochTimeToString } from '@shared/utils/formatter';
 import { CircleMinus, RefreshCw } from 'lucide-react';
-import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
-import { useEnableAccountMutation, useRemoveAccountQuery, useSyncAccountQuery } from '../services/useAccountApi';
-import { Switch } from '@/shared/ui/switch';
-import APILoader from '@/shared/components/apiLoader';
 import { toast } from 'sonner';
-import { UI_CONSTANTS } from '@/shared/constants';
+import { useEnableAccountMutation, useRemoveAccountQuery, useSyncAccountQuery } from '../services/useAccountApi';
 
 interface AccountCardProps {
     account: AccountAttributes;

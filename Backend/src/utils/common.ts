@@ -1,4 +1,4 @@
-import { DATE_RANGE } from 'types/common.types.js';
+import { DATE_RANGE } from '@types';
 
 export const getDateRange = (dateRange: DATE_RANGE): { startDate: Date; endDate: Date } => {
     const now = new Date();

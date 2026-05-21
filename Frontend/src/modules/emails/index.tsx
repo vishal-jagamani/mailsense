@@ -1,12 +1,13 @@
 'use client';
 
-import APILoader from '@/shared/components/apiLoader';
-import Loader from '@/shared/components/loader';
-import { HOME_ROUTES } from '@/shared/constants/routes';
-import { useBreadcrumbStore } from '@/shared/store/breadcrumb.store';
-import { Separator } from '@/shared/ui/separator';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useState } from 'react';
+
+import APILoader from '@shared/components/apiLoader';
+import Loader from '@shared/components/loader';
+import { HOME_ROUTES } from '@shared/constants';
+import { useBreadcrumbStore } from '@shared/store';
+import { Separator } from '@shared/ui/separator';
 import { useGetAccountDetailsQuery } from '../accounts/services/useAccountApi';
 import EmailBodyPreview from './components/EmailBodyPreview';
 import EmailHeader from './components/EmailHeader';
@@ -50,13 +51,13 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
             }
         };
         updateEmailStatus();
-    }, [emailData, accountData]);
+    }, [emailData, accountData, hasMarkedAsRead]);
 
     useEffect(() => {
         if (unreadEmailSuccess && isManualUnreadOperation) {
             router.push(`${HOME_ROUTES.UNIFIED_INBOX}?page=${page}`);
         }
-    }, [emailData, unreadEmailSuccess, isManualUnreadOperation]);
+    }, [emailData, unreadEmailSuccess, isManualUnreadOperation, page, router]);
 
     if (isLoadingAccount || isLoadingEmail) {
         return <Loader />;

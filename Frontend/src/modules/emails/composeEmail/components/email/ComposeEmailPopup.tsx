@@ -4,25 +4,24 @@ import { Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useGetAccountsQuery } from '@/modules/accounts/services/useAccountApi';
-import { useComposeEmailPopupStore } from '@/shared/store/composeEmailPopup.store';
-import { ComposeEmailRequestBody } from '@/shared/types/email.types';
-import { Button } from '@/shared/ui/button';
-import { Input } from '@/shared/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
-import { Separator } from '@/shared/ui/separator';
-import { useAuthStore } from '@/store';
 import gmailIcon from '@assets/icons/gmail/icons8-gmail-96.png';
 import outlookIcon from '@assets/icons/outlook/icons8-outlook-96.svg';
-import RichTextEditor from '../editor/RichTextEditor';
-import { useComposeEmailMutation, useSearchOtherContactsMutation } from '@/modules/emails/services/useEmailApi';
-import APILoader from '@/shared/components/apiLoader';
+import { useGetAccountsQuery } from '@modules/accounts/services/useAccountApi';
+import { useComposeEmailMutation, useSearchOtherContactsMutation } from '@modules/emails/services/useEmailApi';
+import APILoader from '@shared/components/apiLoader';
+import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
+import { UseDebounceQuery, useIsMobile } from '@shared/hooks';
+import { useComposeEmailPopupStore } from '@shared/store';
+import { ComposeEmailRequestBody } from '@shared/types';
+import { Badge } from '@shared/ui/badge';
+import { Button } from '@shared/ui/button';
+import { Input } from '@shared/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
+import { Separator } from '@shared/ui/separator';
 import { toast } from 'sonner';
-import { MESSAGES, UI_CONSTANTS } from '@/shared/constants';
-import { UseDebounceQuery } from '@/shared/hooks/useDebounceQuery';
+import { useAuthStore } from '../../../../../shared/store';
+import RichTextEditor from '../editor/RichTextEditor';
 import SearchToEmailPopup from './SearchToEmailPopup';
-import { Badge } from '@/shared/ui/badge';
 
 const iconMapping = [
     { name: 'outlook', icon: outlookIcon },

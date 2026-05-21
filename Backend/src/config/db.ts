@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import { logger } from '@utils/logger.js';
+
+import { logger } from '@utils';
 import { DATABASE, MONGODB_URI } from './config.js';
 
 export const connectDB = async (): Promise<void> => {

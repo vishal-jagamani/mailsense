@@ -7,10 +7,8 @@ import { GmailService } from '@providers/gmail/gmail.service.js';
 import * as GmailUtils from '@providers/gmail/gmail.utils.js';
 import { OutlookService } from '@providers/outlook/outlook.service.js';
 import * as OutlookUtils from '@providers/outlook/outlook.utils.js';
-import { decrypt, encrypt } from '@utils/crypto.js';
-import { logger } from '@utils/logger.js';
-import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse } from 'types/account.types.js';
-import { SuccessAPIResponse, UpdateAPIResponse } from 'types/api.types.js';
+import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse, SuccessAPIResponse, UpdateAPIResponse } from '@types';
+import { decrypt, encrypt, logger } from '@utils';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
 
@@ -120,7 +118,6 @@ export class AccountsService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.connect: ${errorMessage}`, { error: err });
             throw err;
-            
         }
     }
 
@@ -161,6 +158,7 @@ export class AccountsService {
                     syncEnabled: true,
                     syncInterval: 60,
                     lastSyncedAt: Date.now(),
+                    active: true,
                 };
 
                 const savedAccount = await AccountRepository.upsertAccount(account);
@@ -185,6 +183,7 @@ export class AccountsService {
                     syncEnabled: true,
                     syncInterval: 60,
                     lastSyncedAt: Date.now(),
+                    active: true,
                 };
                 const savedAccount = await AccountRepository.upsertAccount(account);
                 this.syncAccount(String(savedAccount._id));
