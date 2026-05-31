@@ -1,38 +1,23 @@
 'use client';
 
-import { ChevronRight, type LucideIcon } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shared/ui/collapsible';
 import {
     SidebarGroup,
     SidebarGroupLabel,
     SidebarMenu,
+    SidebarMenuAction,
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarMenuSub,
     SidebarMenuSubButton,
     SidebarMenuSubItem,
 } from '@shared/ui/sidebar';
-import Link from 'next/link';
+import { NavMainItem } from '../../types/sidebar.types';
 
-export function NavMain({
-    items,
-}: {
-    items: {
-        title: string;
-        url: string;
-        icon?: LucideIcon;
-        isActive?: boolean;
-        items?: {
-            title: string;
-            url: string;
-        }[];
-    }[];
-}) {
-    // {
-    //             title: account.emailAddress,
-    //             url: HOME_ROUTES.ACCOUNT_INBOX(account._id),
-    //         }
+export function NavMain({ items }: { items: NavMainItem[] }) {
     return (
         <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>
@@ -41,13 +26,20 @@ export function NavMain({
                     <Collapsible key={item.title} asChild defaultOpen={item.isActive} className="group/collapsible">
                         <SidebarMenuItem>
                             {item.items && item.items.length > 0 ? (
-                                <CollapsibleTrigger asChild>
-                                    <SidebarMenuButton tooltip={item.title}>
-                                        {item.icon && <item.icon />}
-                                        <span>{item.title}</span>
-                                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                                <>
+                                    <SidebarMenuButton asChild tooltip={item.title}>
+                                        <Link href={item.url}>
+                                            {item.icon && <item.icon />}
+                                            <span>{item.title}</span>
+                                        </Link>
                                     </SidebarMenuButton>
-                                </CollapsibleTrigger>
+                                    <CollapsibleTrigger asChild>
+                                        <SidebarMenuAction className="transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90">
+                                            <ChevronRight />
+                                            <span className="sr-only">Toggle</span>
+                                        </SidebarMenuAction>
+                                    </CollapsibleTrigger>
+                                </>
                             ) : (
                                 <SidebarMenuButton asChild tooltip={item.title}>
                                     <Link href={item.url}>

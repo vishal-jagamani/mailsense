@@ -7,6 +7,22 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-05-31
+
+### Added
+- Added centralized sidebar constants and shared sidebar types for navigation structure.
+- Added a compact Compose trigger with tooltip support for the collapsed sidebar state.
+
+### Changed
+- Updated sidebar account navigation to build inbox sub-items from connected accounts using shared sidebar configuration.
+- Updated primary sidebar items so expandable sections keep a direct page link while using a separate toggle control for sub-navigation.
+- Added route constants for starred mailbox navigation in shared frontend routing helpers.
+- Moved settings API endpoint constants into a dedicated settings constants module.
+
+### Fixed
+- Improved collapsed-sidebar usability by keeping the Compose action accessible in icon-only mode.
+- Fixed expandable sidebar navigation interactions so opening sub-items no longer replaces the parent item click target.
+
 ## [1.3.1] - 2026-05-21
 
 ### Added
@@ -130,7 +146,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
 [1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0
