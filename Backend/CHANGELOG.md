@@ -7,6 +7,11 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-05-31
+
+### Changed
+- Simplified the backend shared types barrel by removing the runtime export for Express typing declarations.
+
 ## [1.3.1] - 2026-05-21
 
 ### Added
@@ -160,7 +165,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
 [1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0

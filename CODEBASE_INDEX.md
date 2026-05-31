@@ -151,6 +151,7 @@
 - `Frontend/src/modules/folders/*`: folders overview, folder filters, create/rename/delete actions, folder email list
 - `Frontend/src/modules/accounts/*`: providers list, connect flow, account actions
 - `Frontend/src/modules/settings/*`: profile and password changes
+- `Frontend/src/modules/settings/constants/api.constants.ts`: settings API endpoint constants
 - `Frontend/src/modules/auth/*`: profile fetch via app `/auth` routes
 
 ### State and Data
@@ -177,10 +178,13 @@
 - Folders: `Frontend/src/modules/folders/constants/api.constants.ts`
 - Home/inbox list/delete: `Frontend/src/modules/home/constants/api.constants.ts`
 - Inbox search: `Frontend/src/modules/inbox/constants/api.constants.ts`
+- Settings: `Frontend/src/modules/settings/constants/api.constants.ts`
 
 ### Shared UI / Types
 - `Frontend/src/shared/ui/badge.tsx`: reusable recipient chip/badge UI used in compose flow
 - `Frontend/src/shared/types/email.types.ts`: email list/detail types plus compose request and contact search response types
+- `Frontend/src/shared/types/sidebar.types.ts`: shared sidebar navigation item and project typing
+- `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
 
 ## End-to-End Flow Summary
 1. User authenticates with Auth0 (frontend middleware + provider).
@@ -194,6 +198,7 @@
 6. Folders UI reads paginated folder data, supports folder CRUD, and opens filtered email lists for a selected folder.
 7. Compose popup lets the user send email from a connected account; backend sends through the provider and stores the sent message for later listing/details.
 8. Compose recipient search uses provider contacts/people APIs to suggest and add recipients as chips while typing.
+9. Sidebar navigation builds connected account inbox entries dynamically from the fetched account list while preserving direct navigation to parent sections.
 
 ## Important Notes
 - Backend and frontend both now use barrel exports for shared types/utilities/hooks/stores to reduce deep relative imports.
@@ -205,4 +210,5 @@
 - Outlook backend sync and inbox mutations are implemented; frontend release availability may still be controlled by product rollout.
 - Protected backend APIs now resolve user context from the signed-in session instead of client-supplied user IDs.
 - Newly connected accounts are persisted as active, so they appear immediately in active-account-driven flows after OAuth completion.
+- Shared sidebar/navigation structure is now defined in centralized constants and types instead of inline component-local data.
 - Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).
