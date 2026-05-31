@@ -7,6 +7,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.3.2] - 2026-05-31
+
+### Added
+- Added a compact Compose button with tooltip support for the collapsed sidebar.
+
+### Changed
+- Updated sidebar navigation to build connected account inbox links from centralized navigation data.
+
+### Fixed
+- Fixed sidebar navigation behavior so expandable sections can be toggled without blocking direct navigation to the parent page.
+
 ## [1.3.1] - 2026-05-21
 
 ### Added
@@ -78,7 +89,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.2...HEAD
+[1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
 [1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0
 [1.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.2.0

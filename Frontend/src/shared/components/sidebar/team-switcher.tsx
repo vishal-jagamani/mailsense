@@ -1,7 +1,5 @@
 'use client';
 
-import * as React from 'react';
-
 import { DropdownMenu } from '@shared/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@shared/ui/sidebar';
 import { Mail } from 'lucide-react';
@@ -19,7 +17,7 @@ export function TeamSwitcher() {
                             <Mail className="size-5" />
                         </div>
                         <div className="grid flex-1 text-left text-sm leading-tight">
-                            <span className="truncate font-semibold text-lg">MailSense</span>
+                            <span className="truncate text-lg font-semibold">MailSense</span>
                         </div>
                     </SidebarMenuButton>
                 </DropdownMenu>
