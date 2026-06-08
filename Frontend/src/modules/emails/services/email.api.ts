@@ -1,5 +1,6 @@
-import { axiosClient } from '@shared/config/axios';
-import { APIResponse, ComposeEmailRequestBody, Email, SearchOtherContactsResponse, UpdateAPIResponse } from '@shared/types';
+import { ComposeEmailRequestBody, Email, SearchOtherContactsResponse } from '@entities/email';
+import { axiosClient } from '@shared/api';
+import { APIResponse, UpdateAPIResponse } from '@shared/types';
 import { EMAIL_API_URLS } from '../constants/api.constants';
 
 export async function getEmailDetails(emailId: string): Promise<Email> {

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { ComposeEmailRequestBody, SearchOtherContactsResponse } from '@shared/types';
+import { ComposeEmailRequestBody, SearchOtherContactsResponse } from '@entities/email';
 
 interface SearchToEmailPopupProps {
     data: SearchOtherContactsResponse[];

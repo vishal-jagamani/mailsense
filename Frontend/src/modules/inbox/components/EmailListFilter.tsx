@@ -1,21 +1,14 @@
 'use client';
 
 import { ListFilter } from 'lucide-react';
-import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 
-import gmailIcon from '@assets/icons/gmail/icons8-gmail-96.png';
-import outlookIcon from '@assets/icons/outlook/icons8-outlook-96.svg';
-import { AccountAttributes, DATE_RANGE, GetAllEmailsFilters } from '@shared/types';
+import { AccountAttributes, AccountProviderIcon } from '@entities/account';
 import { Button } from '@shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { DATE_RANGE_DROPDOWN_OPTIONS } from '../constants/api.constants';
-
-const iconMapping = [
-    { name: 'outlook', icon: outlookIcon },
-    { name: 'gmail', icon: gmailIcon },
-];
+import { DATE_RANGE, GetAllEmailsFilters } from '@entities/email';
 
 interface EmailListFilterProps {
     accounts: AccountAttributes[];
@@ -60,12 +53,7 @@ const EmailListFilter: React.FC<EmailListFilterProps> = ({ accounts, filter, onF
                                         accounts?.map((item, index) => {
                                             return (
                                                 <SelectItem key={index + 1} value={item?._id} className="text-xs">
-                                                    <Image
-                                                        draggable={false}
-                                                        src={iconMapping?.find((val) => val.name === item.provider)?.icon}
-                                                        alt={item.provider}
-                                                        className="size-4"
-                                                    />
+                                                    <AccountProviderIcon provider={item.provider} className="size-4" />
                                                     {item?.emailAddress}
                                                 </SelectItem>
                                             );

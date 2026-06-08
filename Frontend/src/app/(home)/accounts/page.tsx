@@ -1,6 +1,6 @@
 import React from 'react';
 
-import AccountsPage from '@modules/accounts';
+import AccountsPage from '@features/accounts/pages';
 
 const page: React.FC = () => {
     return (

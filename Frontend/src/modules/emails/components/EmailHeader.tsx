@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Email } from '@shared/types';
+import { Email } from '@entities/email';
 import { formatDateToDateTimeAgoString } from '@shared/utils/formatter';
 import { formatEmailFromString } from '../utils/formatter';
 

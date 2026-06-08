@@ -1,21 +1,15 @@
 'use client';
 
 import { ListFilter } from 'lucide-react';
-import Image from 'next/image';
 import React, { useEffect, useState } from 'react';
 
-import gmailIcon from '@assets/icons/gmail/icons8-gmail-96.png';
-import outlookIcon from '@assets/icons/outlook/icons8-outlook-96.svg';
+import { AccountAttributes, AccountProviderIcon } from '@entities/account';
+import { DATE_RANGE } from '@entities/email';
 import { DATE_RANGE_DROPDOWN_OPTIONS } from '@modules/inbox/constants/api.constants';
-import { AccountAttributes, DATE_RANGE, GetAllFoldersFilters } from '@shared/types';
+import { GetAllFoldersFilters } from '@shared/types';
 import { Button } from '@shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
-
-const iconMapping = [
-    { name: 'outlook', icon: outlookIcon },
-    { name: 'gmail', icon: gmailIcon },
-];
 
 interface FoldersFilterProps {
     accounts: AccountAttributes[];
@@ -60,12 +54,7 @@ const FoldersFilter: React.FC<FoldersFilterProps> = ({ accounts, filter, onFilte
                                         accounts?.map((item, index) => {
                                             return (
                                                 <SelectItem key={index + 1} value={item?._id} className="text-xs">
-                                                    <Image
-                                                        draggable={false}
-                                                        src={iconMapping?.find((val) => val.name === item.provider)?.icon}
-                                                        alt={item.provider}
-                                                        className="size-4"
-                                                    />
+                                                    <AccountProviderIcon provider={item.provider} className="size-4" />
                                                     {item?.emailAddress}
                                                 </SelectItem>
                                             );

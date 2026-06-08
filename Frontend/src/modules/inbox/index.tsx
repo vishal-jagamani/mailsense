@@ -11,12 +11,12 @@ import PaginationComponent from '@shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { UseDebounceQuery, useIsMobile } from '@shared/hooks';
 import { useAuthStore, useBreadcrumbStore } from '@shared/store';
-import { GetAllEmailsFilters, GetEmailsResponse } from '@shared/types';
-import { useGetAccountsQuery } from '../accounts/services/useAccountApi';
 import EmailListTable from '../home/components/EmailListTable';
 import { useFetchEmails } from '../home/services/useHomeApi';
 import EmailListFilter from './components/EmailListFilter';
 import EmailMenuBarOptions from './components/EmailMenuBarOptions';
+import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
+import { GetAllEmailsFilters, GetEmailsResponse } from '@entities/email';
 
 const InboxPageWrapper = () => (
     <Suspense fallback={<Loader />}>

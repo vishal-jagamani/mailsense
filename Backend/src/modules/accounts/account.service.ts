@@ -76,7 +76,7 @@ export class AccountsService {
      */
     async getAccounts(userId: string): Promise<AccountInput[]> {
         try {
-            return AccountRepository.getAccounts({ userId, active: true });
+            return AccountRepository.getAccounts({ userId });
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.getAccounts: ${errorMessage}`, { error: err });

@@ -1,5 +1,6 @@
-import { axiosClient } from '@shared/config/axios';
-import { FetchEmailRequestOptions, GetEmailsResponse, UpdateAPIResponse } from '@shared/types';
+import { FetchEmailRequestOptions, GetEmailsResponse } from '@entities/email';
+import { axiosClient } from '@shared/api';
+import { UpdateAPIResponse } from '@shared/types';
 import { HOME_API_ENDPOINTS } from '../constants/api.constants';
 
 export async function fetchEmails(body: FetchEmailRequestOptions) {

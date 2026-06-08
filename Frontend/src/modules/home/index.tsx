@@ -4,13 +4,13 @@ import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { GetEmailsResponse } from '@entities/email';
 import APILoader from '@shared/components/apiLoader';
 import Loader from '@shared/components/loader';
 import PaginationComponent from '@shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useAuthStore } from '@shared/store';
-import { GetEmailsResponse } from '@shared/types';
 import EmailListTable from './components/EmailListTable';
 import { useFetchEmails } from './services/useHomeApi';
 

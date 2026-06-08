@@ -1,6 +1,6 @@
-import { EMAILS } from '@shared/config/query-keys';
-import { InboxSearchResultResponse } from '@shared/types';
+import { InboxSearchResultResponse } from '@entities/email';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { EMAILS } from '../../../shared/api/query-keys';
 import { getEmailDetails } from './inbox.api';
 
 export const useSearchEmails = () => {

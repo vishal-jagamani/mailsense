@@ -29,6 +29,15 @@ export const MESSAGES = {
     PASSWORD_UPDATE_SUCCESS: 'Password updated successfully',
     PROFILE_UPDATE_SUCCESS: 'Profile updated successfully',
 
+    // Accounts Messages
+    ACCOUNTS: {
+        INFO_CARD: {
+            TITLE: '🚀 More connectors are on the way',
+            DESCRIPTION: `✨Outlook is now available! We're working on bringing more email providers to you soon.`,
+            GET_STARTED: `💡 To get started, click "Connect Account" in the header and select your provider.`,
+        },
+    },
+
     // Folders Messages
     FOLDERS: {
         CREATE_FOLDERS_SUCCESS: 'Folder created successfully',

@@ -3,12 +3,12 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useEffect, useState } from 'react';
 
+import { useGetAccountDetailsQuery } from '@features/accounts/api/accounts.queries';
 import APILoader from '@shared/components/apiLoader';
 import Loader from '@shared/components/loader';
 import { HOME_ROUTES } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
 import { Separator } from '@shared/ui/separator';
-import { useGetAccountDetailsQuery } from '../accounts/services/useAccountApi';
 import EmailBodyPreview from './components/EmailBodyPreview';
 import EmailHeader from './components/EmailHeader';
 import EmailMenuBarOptions from './components/EmailMenuBarOptions';

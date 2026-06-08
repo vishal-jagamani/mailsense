@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Added updated account-page guidance reflecting Outlook availability and connector onboarding steps.
+
+### Changed
+- Connected account management now groups accounts by provider with a cleaner provider-based presentation.
+- Disabled accounts are now shown in Connected Accounts so they can be reviewed and re-enabled when needed.
+
+### Fixed
+- Fixed account enable/disable toggle behavior so the UI restores the previous state if an update fails.
+
 ## [1.3.2] - 2026-05-31
 
 ### Added

@@ -7,6 +7,12 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+- Updated account listing in `AccountsService` to return all connected accounts for the user instead of filtering to only active accounts.
+
+### Fixed
+- Restored backend support for account-management screens that need to display disabled accounts for re-enable flows.
+
 ## [1.3.2] - 2026-05-31
 
 ### Changed

@@ -1,5 +1,6 @@
-import { EMAILS, QUERY_KEYS } from '@shared/config/query-keys';
-import { APIResponse, ComposeEmailRequestBody, Email, SearchOtherContactsResponse, UpdateAPIResponse } from '@shared/types';
+import { ComposeEmailRequestBody, Email, SearchOtherContactsResponse } from '@entities/email';
+import { EMAILS, QUERY_KEYS } from '@shared/api';
+import { APIResponse, UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 import { composeEmail, getEmailDetails, searchOtherContacts, starEmail, unreadEmail } from './email.api';
 
