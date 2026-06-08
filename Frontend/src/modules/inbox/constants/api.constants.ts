@@ -1,4 +1,4 @@
-import { DATE_RANGE } from '@shared/types';
+import { DATE_RANGE } from '@entities/email';
 
 export const INBOX_API_ENDPOINTS = {
     SEARCH: '/emails/search',

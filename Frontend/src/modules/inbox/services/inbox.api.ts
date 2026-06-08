@@ -1,5 +1,5 @@
-import { axiosClient } from '@shared/config/axios';
-import { InboxSearchResultResponse } from '@shared/types';
+import { InboxSearchResultResponse } from '@entities/email';
+import { axiosClient } from '@shared/api';
 import { INBOX_API_ENDPOINTS } from '../constants/api.constants';
 
 export async function getEmailDetails(searchText: string, userId: string): Promise<InboxSearchResultResponse> {

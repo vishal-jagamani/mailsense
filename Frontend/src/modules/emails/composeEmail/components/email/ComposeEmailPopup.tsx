@@ -1,18 +1,16 @@
 'use client';
 
 import { Trash2, X } from 'lucide-react';
-import Image from 'next/image';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import gmailIcon from '@assets/icons/gmail/icons8-gmail-96.png';
-import outlookIcon from '@assets/icons/outlook/icons8-outlook-96.svg';
-import { useGetAccountsQuery } from '@modules/accounts/services/useAccountApi';
+import { AccountProviderIcon } from '@entities/account';
+import { ComposeEmailRequestBody } from '@entities/email';
+import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
 import { useComposeEmailMutation, useSearchOtherContactsMutation } from '@modules/emails/services/useEmailApi';
 import APILoader from '@shared/components/apiLoader';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { UseDebounceQuery, useIsMobile } from '@shared/hooks';
 import { useComposeEmailPopupStore } from '@shared/store';
-import { ComposeEmailRequestBody } from '@shared/types';
 import { Badge } from '@shared/ui/badge';
 import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
@@ -22,11 +20,6 @@ import { toast } from 'sonner';
 import { useAuthStore } from '../../../../../shared/store';
 import RichTextEditor from '../editor/RichTextEditor';
 import SearchToEmailPopup from './SearchToEmailPopup';
-
-const iconMapping = [
-    { name: 'outlook', icon: outlookIcon },
-    { name: 'gmail', icon: gmailIcon },
-];
 
 const ComposeEmailPopup: React.FC = () => {
     const isMobile = useIsMobile();
@@ -176,12 +169,7 @@ const ComposeEmailPopup: React.FC = () => {
                                     accounts?.map((item, index) => {
                                         return (
                                             <SelectItem key={index + 1} value={item?._id} className="text-xs">
-                                                <Image
-                                                    draggable={false}
-                                                    src={iconMapping?.find((val) => val.name === item.provider)?.icon}
-                                                    alt={item.provider}
-                                                    className="size-4"
-                                                />
+                                                <AccountProviderIcon provider={item.provider} className="size-4" />
                                                 {item?.emailAddress}
                                             </SelectItem>
                                         );

@@ -1,4 +1,4 @@
-import { QUERY_KEYS } from '@shared/config/query-keys';
+import { QUERY_KEYS } from '@shared/api';
 import { APIResponse, UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ProfileSettingsDataObject, UpdateUserProfileSettingsResponse } from '../../../shared/types/settings.types';

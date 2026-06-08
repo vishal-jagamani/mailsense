@@ -7,6 +7,26 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+### Added
+- Added frontend `entities` and `features` layers for accounts, auth, email, and user domain models.
+- Added shared API barrel exports for Axios clients, endpoint constants, and query keys under `Frontend/src/shared/api/*`.
+- Added reusable `AccountProviderIcon` support across connected accounts, compose account selection, inbox filters, folder filters, and page-header provider menus.
+- Added a dedicated account info card component with updated connector messaging and onboarding copy.
+
+### Changed
+- Refactored accounts and auth screens to load from the new feature-based page structure.
+- Moved accounts API calls, account mutations, and account queries into `Frontend/src/features/accounts/api/*`.
+- Moved auth API calls and queries into `Frontend/src/features/auth/api/*`.
+- Updated shared type usage so account, email, and user models are imported from entity layers instead of the old shared type files.
+- Consolidated frontend API access through `Frontend/src/shared/api/client.ts`, `Frontend/src/shared/api/endpoints.ts`, and `Frontend/src/shared/api/query-keys.ts`.
+- Updated connected accounts grouping to render provider sections from the new feature-layer grouping hook.
+- Updated connected accounts data loading so disabled accounts remain visible in account-management screens for re-enable flows.
+- Updated account messaging to indicate Outlook availability and guide users to connect providers from the page header.
+
+### Fixed
+- Fixed account toggle state handling so failed enable/disable requests revert the local switch state instead of leaving the UI out of sync.
+- Fixed provider icon rendering consistency by replacing repeated inline icon-mapping logic with a shared account provider icon component.
+
 ## [1.3.2] - 2026-05-31
 
 ### Added

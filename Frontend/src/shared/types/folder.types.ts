@@ -1,4 +1,4 @@
-import { DATE_RANGE } from './inbox.types';
+import { DATE_RANGE } from '@entities/email';
 
 export enum FolderKind {
     SYSTEM = 'SYSTEM',

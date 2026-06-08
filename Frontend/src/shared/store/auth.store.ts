@@ -1,5 +1,5 @@
+import { User } from '@entities/user';
 import { create } from 'zustand';
-import { User } from '../types';
 
 interface AuthState {
     isAuthenticated: boolean;

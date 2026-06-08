@@ -4,8 +4,8 @@ import { useUser } from '@auth0/nextjs-auth0';
 import { Pencil } from 'lucide-react';
 import React, { useMemo } from 'react';
 
+import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
 import { cn } from '@lib/utils';
-import { useGetAccountsQuery } from '@modules/accounts/services/useAccountApi';
 import { HOME_ROUTES, SIDEBAR_DATA } from '@shared/constants';
 import { useAuthStore, useComposeEmailPopupStore } from '@shared/store';
 import { Button } from '@shared/ui/button';

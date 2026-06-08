@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useGetAccountsQuery } from '@modules/accounts/services/useAccountApi';
+import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import { UI_CONSTANTS } from '@shared/constants';
 import { useAuthStore } from '@shared/store';

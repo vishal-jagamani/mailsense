@@ -29,8 +29,17 @@
       "@config/*": [
         "./src/config/*"
       ],
+      "@entities/*":[
+        "./src/entities/*"
+      ],
+      "@features/*": [
+        "./src/features/*"
+      ],
       "@modules/*": [
         "./src/modules/*"
+      ],
+      "@shared/api": [
+        "./src/shared/api/index"
       ],
       "@shared/components/*": [
         "./src/shared/components/*"

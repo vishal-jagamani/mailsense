@@ -3,7 +3,7 @@
 import { ListFilter } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { DATE_RANGE, GetAllEmailsFilters } from '@shared/types';
+import { DATE_RANGE, GetAllEmailsFilters } from '@entities/email';
 import { Button } from '@shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';

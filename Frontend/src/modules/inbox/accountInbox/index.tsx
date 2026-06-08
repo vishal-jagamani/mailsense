@@ -4,7 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { useGetAccountDetailsQuery } from '@modules/accounts/services/useAccountApi';
+import { GetAllEmailsFilters, GetEmailsResponse } from '@entities/email';
+import { useGetAccountDetailsQuery } from '@features/accounts/api/accounts.queries';
 import EmailListTable from '@modules/home/components/EmailListTable';
 import { useFetchEmails } from '@modules/home/services/useHomeApi';
 import APILoader from '@shared/components/apiLoader';
@@ -14,7 +15,6 @@ import PaginationComponent from '@shared/components/table/Pagination';
 import { EMAILS_PAGE_SIZE, MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { UseDebounceQuery, useIsMobile } from '@shared/hooks';
 import { useAuthStore, useBreadcrumbStore } from '@shared/store';
-import { GetAllEmailsFilters, GetEmailsResponse } from '@shared/types';
 import AccountEmailListFilter from './components/AccountEmailListFilter';
 import AccountEmailMenuBarOptions from './components/AccountEmailMenuBarOptions';
 

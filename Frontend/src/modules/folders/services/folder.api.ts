@@ -1,4 +1,4 @@
-import { axiosClient } from '@shared/config/axios';
+import { axiosClient } from '@shared/api';
 import { CreateFolderBodyParams, FolderAttributes, GetAllFoldersRequestOptions, PaginatedDataResponse } from '@shared/types';
 import { FOLDER_API_ENDPOINTS } from '../constants/api.constants';
 
