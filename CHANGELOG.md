@@ -17,6 +17,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Fixed
 - Fixed account enable/disable toggle behavior so the UI restores the previous state if an update fails.
 
+### Removed
+- Removed the deprecated `src/modules` directory in the frontend, finishing the transition to the new directory architecture (`entities`, `features`, and `shared`).
+
 ## [1.3.2] - 2026-05-31
 
 ### Added

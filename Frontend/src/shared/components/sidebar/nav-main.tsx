@@ -3,6 +3,7 @@
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
+import { NavMainItem } from '@shared/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shared/ui/collapsible';
 import {
     SidebarGroup,
@@ -15,7 +16,6 @@ import {
     SidebarMenuSubButton,
     SidebarMenuSubItem,
 } from '@shared/ui/sidebar';
-import { NavMainItem } from '../../types/sidebar.types';
 
 export function NavMain({ items }: { items: NavMainItem[] }) {
     return (

@@ -1,11 +1,11 @@
 'use client';
 
-import ComposeEmailPopup from '@modules/emails/composeEmail/components/email/ComposeEmailPopup';
+import ComposeEmailPopup from '@features/emails/components/composeEmail/components/email/ComposeEmailPopup';
 import BreadcrumbComponent from '@shared/components/breadcrumb';
 import Loader from '@shared/components/loader';
 import { AppSidebar } from '@shared/components/sidebar/app-sidebar';
+import { useAuthStore } from '@shared/store';
 import { SidebarProvider, SidebarTrigger } from '@shared/ui/sidebar';
-import { useAuthStore } from '../../shared/store';
 
 export default function HomeLayout({ children }: { children: React.ReactNode }) {
     const { isLoading } = useAuthStore();

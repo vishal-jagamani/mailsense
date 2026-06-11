@@ -1,11 +1,11 @@
 import React from 'react';
 
-import InboxPage from '@modules/inbox';
+import InboxPageWrapper from '@features/inbox/pages';
 
 const page: React.FC = () => {
     return (
         <React.Suspense fallback={null}>
-            <InboxPage />
+            <InboxPageWrapper />
         </React.Suspense>
     );
 };

@@ -12,3 +12,25 @@ export const ACCOUNTS_API_ENDPOINTS = {
     DELETE: (accountId: string) => `/accounts/${accountId}`,
     ENABLE: (accountId: string) => `/accounts/enable/${accountId}`,
 } as const;
+
+export const EMAILS_API_ENDPOINTS = {
+    LIST: '/emails/list',
+    SEARCH: '/emails/search',
+    DELETE: '/emails',
+    DETAILS: (emailId: string) => `/emails/details/${emailId}`,
+    ARCHIVE: '/emails/archive',
+    STAR: '/emails/star',
+    UNREAD: '/emails/unread',
+    COMPOSE: '/emails/compose',
+    SEARCH_OTHER_CONTACTS: '/emails/searchOtherContacts',
+} as const;
+
+export const FOLDER_API_ENDPOINTS = {
+    GET_ALL_FOLDERS: '/folders/list',
+    FOLDERS: '/folders',
+} as const;
+
+export const SETTINGS_API_ENDPOINTS = {
+    USERS: '/users',
+    CHANGE_PASSWORD: '/users/change-password',
+} as const;

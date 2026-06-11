@@ -35,9 +35,6 @@
       "@features/*": [
         "./src/features/*"
       ],
-      "@modules/*": [
-        "./src/modules/*"
-      ],
       "@shared/api": [
         "./src/shared/api/index"
       ],

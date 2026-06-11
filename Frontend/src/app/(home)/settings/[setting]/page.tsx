@@ -1,4 +1,4 @@
-import SettingsPage from '@modules/settings';
+import SettingsPage from '@features/settings/pages';
 
 const page = async ({ params }: { params: Promise<{ setting: string }> }) => {
     const { setting } = await params;

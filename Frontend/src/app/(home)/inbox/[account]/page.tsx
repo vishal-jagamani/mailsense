@@ -1,12 +1,12 @@
 import React from 'react';
 
-import AccountInboxPage from '@modules/inbox/accountInbox';
+import AccountInboxPageWrapper from '@features/inbox/pages/account-inbox';
 
 const page = async ({ params }: { params: { account: string } }) => {
     const { account } = await params;
     return (
         <React.Suspense fallback={null}>
-            <AccountInboxPage account={account} />
+            <AccountInboxPageWrapper account={account} />
         </React.Suspense>
     );
 };

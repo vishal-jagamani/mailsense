@@ -1,11 +1,11 @@
 import React from 'react';
 
-import FoldersPage from '@modules/folders';
+import FoldersPageWrapper from '@features/folders/pages';
 
 const page: React.FC = () => {
     return (
         <React.Suspense fallback={null}>
-            <FoldersPage />
+            <FoldersPageWrapper />
         </React.Suspense>
     );
 };

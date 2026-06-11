@@ -1,29 +1,34 @@
 # MailSense Codebase Index
 
 ## Repo Shape
+
 - `Backend/`: Node.js + Express + TypeScript + MongoDB
 - `Frontend/`: Next.js App Router + React + TypeScript + React Query + Auth0 + Zustand
 
 ## Backend Index (`/Backend`)
 
 ### Runtime Entry
+
 - `Backend/src/server.ts`: starts app, connects MongoDB, listens on `PORT`
 - `Backend/src/app.ts`: Express app wiring (CORS, body parsers, static, routes, Sentry, centralized error handler)
 - `Backend/src/routes/index.routes.ts`: mounts module routes under `/api`
 
 ### Config
+
 - `Backend/src/config/env.ts`: validates env via Zod
 - `Backend/src/config/config.ts`: exports typed config/secrets (Auth0, Gmail, Outlook, Mongo, Redis)
 - `Backend/src/config/db.ts`: Mongo connect/disconnect with pooling
 - `Backend/src/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
 
 ### Middleware and Request Flow
+
 - `Backend/src/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`
 - `Backend/src/middlewares/validator.ts`: Zod request validation (`headers`, `params`, `query`, `body`)
 - `Backend/src/utils/request.handler.ts`: async wrapper for controllers
 - `Backend/src/middlewares/error.handler.ts`: centralized structured error responses for app/provider failures
 
 ### Modules
+
 - Accounts (`Backend/src/modules/accounts/*`)
   - Connect/callback OAuth for Gmail/Outlook
   - Sync one/all accounts
@@ -48,6 +53,7 @@
   - Decrypt helper and account-token debug endpoint (auth protected)
 
 ### Providers
+
 - Gmail (`Backend/src/providers/gmail/*`)
   - OAuth token exchange/refresh
   - Fetch history + messages
@@ -67,6 +73,7 @@
   - Management API token + user/profile/password operations
 
 ### Data Models
+
 - `Backend/src/modules/accounts/account.model.ts`
   - `Account`, `AccountMetrics`
 - `Backend/src/modules/emails/email.model.ts`
@@ -77,6 +84,7 @@
   - `User` indexed by `auth0UserId`
 
 ### Shared Types / Utils
+
 - `Backend/src/types/index.ts`: barrel export for shared backend type modules
 - `Backend/src/types/express.d.ts`: extends Express request typing for validated payloads and Auth0 JWT user context
 - `Backend/src/types/common.types.ts`: shared enums such as `DATE_RANGE`
@@ -86,6 +94,7 @@
 - `Backend/src/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
 
 ### API Surface (mounted at `/api`)
+
 - `GET /`
 - `GET /demo/catFact`
 - Users:
@@ -129,12 +138,14 @@
 ## Frontend Index (`/Frontend`)
 
 ### Runtime Entry
+
 - `Frontend/src/app/layout.tsx`: root layout + providers
 - `Frontend/src/app/providers.tsx`: Auth0 provider, app auth sync, React Query, theme, toaster
 - `Frontend/src/middleware.ts`: route protection via Auth0 session (redirect unauthenticated to `/get_started`)
 - `Frontend/src/app/(home)/layout.tsx`: authenticated shell with sidebar, breadcrumb, and global compose-email popup
 
 ### App Router Pages
+
 - `Frontend/src/app/(home)/page.tsx`: redirects to `/inbox`
 - `Frontend/src/app/(home)/inbox/page.tsx`: unified inbox page
 - `Frontend/src/app/(home)/inbox/[account]/page.tsx`: account inbox page
@@ -146,6 +157,7 @@
 - `Frontend/src/app/get_started/page.tsx`: auth entry page via `@features/auth/pages`
 
 ### Frontend Architecture
+
 - `Frontend/src/entities/*`: domain entities and shared domain UI/types
   - `entities/account/*`: account types, provider icon helpers, `AccountProviderIcon`
   - `entities/email/*`: email list/detail/search/filter request types
@@ -153,17 +165,14 @@
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
   - `features/accounts/*`: accounts page, provider grouping, account actions, account API layer
   - `features/auth/*`: login page and profile fetch query
+  - `features/emails/*`: email details page, compose flow, delete modal, email actions, email API layer
+  - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer
+  - `features/inbox/*`: unified inbox, account inbox, inbox filters/actions/table, inbox API layer
+  - `features/settings/*`: settings page, profile/password/account-deletion UI, settings API layer
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys
 
-### Feature Modules
-- `Frontend/src/modules/inbox/*`: unified inbox UI + search/filter/pagination
-- `Frontend/src/modules/home/*`: list/delete APIs and reusable email table
-- `Frontend/src/modules/emails/*`: email details, star/unread, compose popup/editor, and recipient suggestion search
-- `Frontend/src/modules/folders/*`: folders overview, folder filters, create/rename/delete actions, folder email list
-- `Frontend/src/modules/settings/*`: profile and password changes
-- `Frontend/src/modules/settings/constants/api.constants.ts`: settings API endpoint constants
-
 ### State and Data
+
 - Zustand:
   - `Frontend/src/shared/store/auth.store.ts` auth session data (`user`, loading, authenticated flag)
   - `Frontend/src/shared/store/theme.store.ts` theme state
@@ -175,27 +184,30 @@
   - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:
   - query keys in `Frontend/src/shared/api/query-keys.ts`
-  - feature/module-level hooks under `features/*/api/*.queries.ts` and `modules/*/services/use*.ts`
+  - feature-level queries and mutations under `features/*/api/*.queries.ts` and `features/*/api/*.mutations.ts`
 - Axios clients:
   - `Frontend/src/shared/api/client.ts`
   - `axiosClient` -> backend API base URL + Auth0 client-side bearer token injection
   - `auth0ApiClient` -> frontend `/auth/*` routes
 
 ### Backend API Endpoint Constants in Frontend
+
 - Accounts: `Frontend/src/shared/api/endpoints.ts`
 - Auth: `Frontend/src/shared/api/endpoints.ts`
-- Emails: `Frontend/src/modules/emails/constants/api.constants.ts`
-- Folders: `Frontend/src/modules/folders/constants/api.constants.ts`
-- Home/inbox list/delete: `Frontend/src/modules/home/constants/api.constants.ts`
-- Inbox search: `Frontend/src/modules/inbox/constants/api.constants.ts`
-- Settings: `Frontend/src/modules/settings/constants/api.constants.ts`
+- Emails: `Frontend/src/shared/api/endpoints.ts`
+- Folders: `Frontend/src/shared/api/endpoints.ts`
+- Inbox search/list actions: `Frontend/src/shared/api/endpoints.ts`
+- Settings: `Frontend/src/shared/api/endpoints.ts`
 
 ### Shared UI / Types
+
 - `Frontend/src/shared/ui/badge.tsx`: reusable recipient chip/badge UI used in compose flow
 - `Frontend/src/shared/types/sidebar.types.ts`: shared sidebar navigation item and project typing
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
+- `Frontend/src/shared/constants/email.ts`: email list pagination and date-range dropdown options backed by email entity enums
 
 ## End-to-End Flow Summary
+
 1. User authenticates with Auth0 (frontend middleware + provider).
 2. Frontend sends backend requests through `axiosClient` with bearer token header.
 3. Account connect flow:
@@ -211,6 +223,7 @@
 10. Background sync and mailbox views still limit operational flows to active accounts only.
 
 ## Important Notes
+
 - Backend and frontend both now use barrel exports for shared types/utilities/hooks/stores to reduce deep relative imports.
 - Frontend has two base URL definitions:
   - `Frontend/src/config/config.ts` uses `NEXT_PUBLIC_API_BASE_URL`
@@ -222,5 +235,5 @@
 - Newly connected accounts are persisted as active, so they appear immediately in active-account-driven flows after OAuth completion.
 - Connected Accounts now intentionally includes disabled accounts for management/re-enable workflows, while sync and inbox flows remain active-account-only.
 - Shared sidebar/navigation structure is now defined in centralized constants and types instead of inline component-local data.
-- Frontend account/auth code is being migrated from `modules/*` into `entities/*`, `features/*`, and `shared/api/*`.
+- Frontend account/auth/email/inbox/folders/settings code is fully migrated from the deprecated `modules/*` directory into `entities/*`, `features/*`, and `shared/api/*` (with the `src/modules` directory removed entirely).
 - Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).
