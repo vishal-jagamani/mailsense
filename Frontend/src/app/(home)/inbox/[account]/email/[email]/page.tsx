@@ -1,10 +1,10 @@
-import EmailPage from '@modules/emails';
+import EmailPageWrapper from '@features/emails/pages';
 
 const page = async ({ params }: { params: { account: string; email: string } }) => {
     const { account, email } = await params;
     return (
         <>
-            <EmailPage account={account} email={email} />
+            <EmailPageWrapper account={account} email={email} />
         </>
     );
 };

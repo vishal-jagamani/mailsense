@@ -5,9 +5,9 @@ import React, { useState } from 'react';
 import { AccountProviderIcon } from '@entities/account';
 import { useSyncAllAccounts } from '@features/accounts/api/accounts.queries';
 import { useIsMobile } from '@shared/hooks';
+import { useAuthStore } from '@shared/store';
 import { Button } from '@shared/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@shared/ui/dropdown-menu';
-import { useAuthStore } from '../../store';
 
 interface PageHeaderProps {
     title: string;
