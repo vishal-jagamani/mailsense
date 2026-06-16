@@ -9,16 +9,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 - Added updated account-page guidance reflecting Outlook availability and connector onboarding steps.
+- Added a unified, responsive filter modal to filter emails and folders by connected account and date range.
+- Added a mobile-optimized view for the folders list.
 
 ### Changed
 - Connected account management now groups accounts by provider with a cleaner provider-based presentation.
 - Disabled accounts are now shown in Connected Accounts so they can be reviewed and re-enabled when needed.
+- Refactored the inbox, account inbox, and folders overview pages for a smoother interface and better layout sizing.
 
 ### Fixed
 - Fixed account enable/disable toggle behavior so the UI restores the previous state if an update fails.
 
 ### Removed
-- Removed the deprecated `src/modules` directory in the frontend, finishing the transition to the new directory architecture (`entities`, `features`, and `shared`).
+- Removed the deprecated `src/modules` directory entirely, completing the migration of frontend logic to `entities`, `features`, and `shared/api` layers.
 
 ## [1.3.2] - 2026-05-31
 

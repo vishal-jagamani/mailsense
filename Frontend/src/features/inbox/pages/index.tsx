@@ -2,17 +2,17 @@
 
 import React, { Suspense } from 'react';
 
-import { GetAllEmailsFilters } from '@entities/email';
 import APILoader from '@shared/components/apiLoader';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import Loader from '@shared/components/loader';
 import PaginationComponent from '@shared/components/table/Pagination';
-import { UI_CONSTANTS } from '@shared/constants';
+import FilterModal from '@shared/components/utils/FilterModal';
+import { DATE_RANGE_DROPDOWN_OPTIONS, UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
+import { FilterOption, FilterOptionType } from '@shared/types';
 import EmailListTable from '../components/EmailListTable';
-import { useInboxPage } from '../hooks';
-import EmailListFilter from '../components/EmailListFilter';
 import EmailMenuBarOptions from '../components/EmailMenuBarOptions';
+import { useInboxPage } from '../hooks';
 
 const InboxPage: React.FC = () => {
     const isMobile = useIsMobile();
@@ -21,9 +21,42 @@ const InboxPage: React.FC = () => {
         accounts: { data: accountsData, accountsDataLoading },
         emails: { data: emailsData, fetchEmailsData, isLoadingEmails },
         actions: { handleEmailSelect, handlePageSizeChange, handleResetPage, handleResetSelection },
-        states: { selectedEmails, page, pageSize, searchValue, getAllEmailsFilters },
-        setters: { setGetAllEmailsFilters, setPage, setSearchValue },
+        states: { selectedEmails, page, pageSize, searchValue, filter },
+        setters: { setPage, setSearchValue, setFilter },
     } = useInboxPage();
+
+    const filterOptions: FilterOption[] = [
+        {
+            id: 1,
+            name: 'accountId',
+            type: FilterOptionType.DROPDOWN,
+            label: 'Accounts',
+            data:
+                accountsData?.map((account) => {
+                    return {
+                        id: account._id,
+                        name: account._id,
+                        label: account.emailAddress,
+                        provider: account.provider,
+                        selectedValue: '',
+                    };
+                }) || [],
+        },
+        {
+            id: 2,
+            name: 'dateRange',
+            label: 'Date Range',
+            type: FilterOptionType.DROPDOWN,
+            data: DATE_RANGE_DROPDOWN_OPTIONS.map((item) => {
+                return {
+                    id: item.name,
+                    name: item.name,
+                    label: item.label,
+                    selectedValue: '',
+                };
+            }),
+        },
+    ];
 
     return (
         <>
@@ -36,11 +69,7 @@ const InboxPage: React.FC = () => {
                                 <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                             </div>
                             <div className="flex w-full justify-between">
-                                <EmailListFilter
-                                    accounts={accountsData || []}
-                                    filter={getAllEmailsFilters}
-                                    onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
-                                />
+                                <FilterModal filter={filter} onFilterChange={(value) => setFilter(value)} filterOptions={filterOptions} />
                                 <EmailMenuBarOptions
                                     emailIds={selectedEmails}
                                     onResetSelection={handleResetSelection}
@@ -51,11 +80,7 @@ const InboxPage: React.FC = () => {
                         </div>
                     ) : (
                         <div className="flex w-full items-center gap-2">
-                            <EmailListFilter
-                                accounts={accountsData || []}
-                                filter={getAllEmailsFilters}
-                                onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
-                            />
+                            <FilterModal filter={filter} onFilterChange={(value) => setFilter(value)} filterOptions={filterOptions} />
                             <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                             <EmailMenuBarOptions
                                 emailIds={selectedEmails}

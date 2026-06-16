@@ -1,5 +1,6 @@
+import { CreateFolderBodyParams } from '@entities/folder';
 import { FOLDER_KEYS } from '@shared/api';
-import { CreateFolderBodyParams, UpdateAPIResponse } from '@shared/types';
+import { UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFolder, deleteFolder, updateFolder } from './folder.api';
 

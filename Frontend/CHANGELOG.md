@@ -13,6 +13,10 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Added reusable `AccountProviderIcon` support across connected accounts, compose account selection, inbox filters, folder filters, and page-header provider menus.
 - Added a dedicated account info card component with updated connector messaging and onboarding copy.
 - Added feature-based email, inbox, folders, and settings entry points under `Frontend/src/features/*`.
+- Added a reusable, centralized `FilterModal` component to unify filter operations (by account and date range) across the folders overview and email inbox lists.
+- Added a modular domain-driven folder model structure (`@entities/folder`) for type definitions and component state management.
+- Added responsive desktop (`FolderBody.web.tsx`) and mobile (`FolderBody.mobile.tsx`) view files for the folders list.
+- Added custom hooks (`useFoldersPage`, `useFolderBody`, and `useFolderEmailListPage`) to separate business/data logic from page and modal layout components.
 
 ### Changed
 - Refactored accounts and auth screens to load from the new feature-based page structure.
@@ -30,6 +34,10 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Updated connected accounts grouping to render provider sections from the new feature-layer grouping hook.
 - Updated connected accounts data loading so disabled accounts remain visible in account-management screens for re-enable flows.
 - Updated account messaging to indicate Outlook availability and guide users to connect providers from the page header.
+- Centralized core application state providers by moving them from `src/app/providers.tsx` to `src/shared/providers/index.tsx`.
+- Refactored inbox, account inbox, and folder email list pages to integrate the new unified `FilterModal`.
+- Replaced custom inbox and email search return interfaces with a generic `PaginatedDataResponse<T>` interface for cleaner query structures.
+- Upgraded package dependencies, including `@auth0/nextjs-auth0`, `@tanstack/react-query`, `zustand`, `axios`, `motion`, and various Radix UI primitives.
 
 ### Fixed
 - Fixed account toggle state handling so failed enable/disable requests revert the local switch state instead of leaving the UI out of sync.
@@ -37,6 +45,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ### Removed
 - Removed the deprecated `src/modules` directory entirely, completing the migration of frontend logic to `entities`, `features`, and `shared/api` layers.
+- Removed duplicate filter components (`FoldersFilter.tsx` and `EmailListFilter.tsx`).
+- Removed deprecated type definitions from `src/shared/types/folder.types.ts`.
 
 ## [1.3.2] - 2026-05-31
 

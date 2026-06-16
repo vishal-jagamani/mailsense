@@ -4,10 +4,10 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { AccountAttributes, AccountProviderIcon } from '@entities/account';
+import { CreateFolderBodyParams } from '@entities/folder';
 import { useCreateFolderMutation } from '@features/folders/api/folder.mutation';
 import APILoader from '@shared/components/apiLoader';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
-import { CreateFolderBodyParams } from '@shared/types';
 import { AlertDialogFooter, AlertDialogHeader } from '@shared/ui/alert-dialog';
 import { Button } from '@shared/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from '@shared/ui/dialog';
