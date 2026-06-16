@@ -5,7 +5,7 @@ import { ThemeProvider } from '@shared/components/theme-provider';
 import { useResetBreadcrumb } from '@shared/hooks';
 import { Toaster } from '@shared/ui/sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import AuthProvider from '../shared/providers/auth.provider';
+import AuthProvider from './auth.provider';
 
 const queryClient = new QueryClient();
 

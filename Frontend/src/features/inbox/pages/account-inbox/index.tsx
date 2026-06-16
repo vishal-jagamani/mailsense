@@ -2,8 +2,6 @@
 
 import React, { Suspense } from 'react';
 
-import { GetAllEmailsFilters } from '@entities/email';
-import EmailListFilter from '@features/inbox/components/EmailListFilter';
 import EmailListTable from '@features/inbox/components/EmailListTable';
 import EmailMenuBarOptions from '@features/inbox/components/EmailMenuBarOptions';
 import { useInboxPage } from '@features/inbox/hooks';
@@ -11,8 +9,10 @@ import APILoader from '@shared/components/apiLoader';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import Loader from '@shared/components/loader';
 import PaginationComponent from '@shared/components/table/Pagination';
-import { UI_CONSTANTS } from '@shared/constants';
+import FilterModal from '@shared/components/utils/FilterModal';
+import { DATE_RANGE_DROPDOWN_OPTIONS, UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
+import { Filter, FilterOption, FilterOptionType } from '@shared/types';
 
 const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     const isMobile = useIsMobile();
@@ -20,9 +20,26 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     const {
         emails: { data: emailsData, fetchEmailsData, isLoadingEmails },
         actions: { handleEmailSelect, handlePageSizeChange, handleResetPage, handleResetSelection },
-        states: { selectedEmails, page, pageSize, searchValue, getAllEmailsFilters },
-        setters: { setGetAllEmailsFilters, setPage, setSearchValue },
+        states: { selectedEmails, page, pageSize, searchValue, filter },
+        setters: { setPage, setSearchValue, setFilter },
     } = useInboxPage(account);
+
+    const filterOptions: FilterOption[] = [
+        {
+            id: 1,
+            name: 'dateRange',
+            label: 'Date Range',
+            type: FilterOptionType.DROPDOWN,
+            data: DATE_RANGE_DROPDOWN_OPTIONS.map((item) => {
+                return {
+                    id: item.name,
+                    name: item.name,
+                    label: item.label,
+                    selectedValue: '',
+                };
+            }),
+        },
+    ];
 
     return (
         <>
@@ -30,12 +47,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                 <div className="flex h-full w-full flex-col items-center justify-center gap-4">
                     <APILoader show={isLoadingEmails} />
                     <div className="flex w-full gap-2">
-                        <EmailListFilter
-                            accounts={[]}
-                            filter={getAllEmailsFilters}
-                            onFilterChange={(value: GetAllEmailsFilters) => setGetAllEmailsFilters(value)}
-                            accountsPage={true}
-                        />
+                        <FilterModal filter={filter} onFilterChange={(value: Filter) => setFilter(value)} filterOptions={filterOptions} />
                         <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                         <EmailMenuBarOptions
                             emailIds={selectedEmails}

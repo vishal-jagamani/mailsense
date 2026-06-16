@@ -1,4 +1,4 @@
-import FolderEmailListWrapper from "@features/folders/pages/email-folder-list";
+import FolderEmailListWrapper from "@features/folders/pages/folder-email-list";
 
 const page = async ({ params }: { params: Promise<{ folder: string }> }) => {
     const { folder } = await params;

@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
+import { FolderAttributes } from '@entities/folder';
 import { Checkbox } from '@radix-ui/react-checkbox';
 import { useIsMobile } from '@shared/hooks';
-import { FolderAttributes } from '@shared/types';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
 import { Trash } from 'lucide-react';
 
@@ -99,7 +99,6 @@ const FoldersTable: React.FC<FoldersTableProps> = ({ tableData, page, selectedFo
                                         <TableCell className="w-28 whitespace-nowrap">View Emails</TableCell>
                                     </>
                                 )}
-                                {/* <TableCell className="w-12 whitespace-nowrap md:w-28">{formatDateToMonthDateString(folder.createdAt)}</TableCell> */}
                                 <TableCell className="w-10 whitespace-nowrap">
                                     <Trash
                                         className={`text-red-500 ${(selectedFolders || []).length > 0 ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}

@@ -4,21 +4,11 @@ import { Check, Dot, Ellipsis, FolderOpenDot, Pen, RefreshCw, Trash, X } from 'l
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
-import { CreateFolderBodyParams, FolderAttributes } from '@shared/types';
+import { FolderAttributes, RenameFolderState } from '@entities/folder';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Separator } from '@shared/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { formatEpochTimeToString } from '@shared/utils/formatter';
-
-interface RenameFolderState {
-    renameFolderFlag: boolean;
-    renameFolderId: string;
-    renameFolderValue: string;
-    setRenameFolderFlag: (value: boolean) => void;
-    setRenameFolderId: (id: string) => void;
-    setRenameFolderValue: (value: string) => void;
-    handleUpdateFolder: (id: string, body: CreateFolderBodyParams) => void;
-}
 
 interface FolderCardProps {
     data: FolderAttributes;

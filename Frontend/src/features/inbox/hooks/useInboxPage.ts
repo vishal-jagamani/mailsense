@@ -1,28 +1,29 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { GetAllEmailsFilters, GetEmailsResponse } from '@entities/email';
-import { useGetAccountsQuery, useGetAccountDetailsQuery } from '@features/accounts/api/accounts.queries';
+import { AccountAttributes } from '@entities/account';
+import { Email } from '@entities/email';
+import { useGetAccountDetailsQuery, useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useAuthStore, useBreadcrumbStore } from '@shared/store';
+import { Filter, PaginatedDataResponse } from '@shared/types';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useFetchEmails } from '../api/inbox.queries';
-import { AccountAttributes } from '@entities/account';
 
 interface useInboxPageReturnParams {
     accounts: { data: AccountAttributes[] | undefined; accountsDataLoading: boolean; accountDataError: Error | null };
-    emails: { data: GetEmailsResponse | null; fetchEmailsData: () => void; isLoadingEmails: boolean; isEmailError: boolean };
+    emails: { data: PaginatedDataResponse<Email> | null; fetchEmailsData: () => void; isLoadingEmails: boolean; isEmailError: boolean };
     actions: {
         handleResetSelection: () => void;
         handleEmailSelect: (emailIds: string[]) => void;
         handlePageSizeChange: (newSize: number) => void;
         handleResetPage: () => void;
     };
-    states: { selectedEmails: string[]; pageSize: number; searchValue: string; getAllEmailsFilters: GetAllEmailsFilters | null; page: number };
+    states: { selectedEmails: string[]; pageSize: number; searchValue: string; filter: Filter | null; page: number };
     setters: {
         setSearchValue: (value: string) => void;
-        setGetAllEmailsFilters: (value: GetAllEmailsFilters) => void;
+        setFilter: (value: Filter) => void;
         setPage: (value: number) => void;
     };
 }
@@ -33,16 +34,18 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
     const router = useRouter();
 
     const { data: emails, mutate: refetchEmails, isPending: isLoadingEmails, isError: isEmailError } = useFetchEmails();
-    
-    const { data: accountsData, isLoading: allAccountsLoading, error: accountsError } = useGetAccountsQuery(
-        user?.id ?? '',
-        { enabled: !accountId && !!user?.id } as any
-    );
 
-    const { data: accountData, isLoading: accountLoading, error: accountDetailsError } = useGetAccountDetailsQuery(
-        accountId || '',
-        { enabled: !!accountId } as any
-    );
+    const {
+        data: accountsData,
+        isLoading: allAccountsLoading,
+        error: accountsError,
+    } = useGetAccountsQuery(user?.id ?? '', { enabled: !accountId && !!user?.id });
+
+    const {
+        data: accountData,
+        isLoading: accountLoading,
+        error: accountDetailsError,
+    } = useGetAccountDetailsQuery(accountId || '', { enabled: !!accountId });
 
     const [page, setPage] = useState(() => {
         const pageParam = searchParams.get('page');
@@ -50,10 +53,10 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
     });
     const [pageSize, setPageSize] = useState(EMAILS_PAGE_SIZE);
     const [searchValue, setSearchValue] = useState('');
-    const [emailsData, setEmailsData] = useState<GetEmailsResponse | null>(null);
+    const [emailsData, setEmailsData] = useState<PaginatedDataResponse<Email> | null>(null);
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
     const [errorShown, setErrorShown] = useState<boolean>(false);
-    const [getAllEmailsFilters, setGetAllEmailsFilters] = useState<GetAllEmailsFilters | null>(null);
+    const [filter, setFilter] = useState<Filter | null>(null);
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 
     const fetchEmailsData = useCallback(() => {
@@ -64,12 +67,12 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
             size: pageSize,
             page: currentPage,
             filters: {
-                accountId: accountId ? [accountId] : getAllEmailsFilters?.accountId,
+                accountId: accountId ? [accountId] : filter?.accountId,
                 searchText: debouncedSearchValue || undefined,
-                dateRange: getAllEmailsFilters?.dateRange,
+                dateRange: filter?.dateRange,
             },
         });
-    }, [user, page, pageSize, debouncedSearchValue, refetchEmails, getAllEmailsFilters, accountId]);
+    }, [user, page, pageSize, debouncedSearchValue, refetchEmails, filter, accountId]);
 
     useEffect(() => {
         if (debouncedSearchValue !== undefined && debouncedSearchValue !== '') {
@@ -151,8 +154,7 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
         },
         emails: { data: emailsData, fetchEmailsData, isLoadingEmails, isEmailError },
         actions: { handleResetSelection, handleEmailSelect, handlePageSizeChange, handleResetPage },
-        states: { selectedEmails, pageSize, searchValue, getAllEmailsFilters, page },
-        setters: { setSearchValue, setGetAllEmailsFilters, setPage },
+        states: { selectedEmails, pageSize, searchValue, filter, page },
+        setters: { setSearchValue, setFilter, setPage },
     };
 };
-

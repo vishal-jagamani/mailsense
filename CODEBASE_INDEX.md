@@ -140,7 +140,7 @@
 ### Runtime Entry
 
 - `Frontend/src/app/layout.tsx`: root layout + providers
-- `Frontend/src/app/providers.tsx`: Auth0 provider, app auth sync, React Query, theme, toaster
+- `Frontend/src/shared/providers/index.tsx`: Centralized application providers wrapper (Auth0, custom AuthProvider, React Query, theme, toaster)
 - `Frontend/src/middleware.ts`: route protection via Auth0 session (redirect unauthenticated to `/get_started`)
 - `Frontend/src/app/(home)/layout.tsx`: authenticated shell with sidebar, breadcrumb, and global compose-email popup
 
@@ -161,6 +161,7 @@
 - `Frontend/src/entities/*`: domain entities and shared domain UI/types
   - `entities/account/*`: account types, provider icon helpers, `AccountProviderIcon`
   - `entities/email/*`: email list/detail/search/filter request types
+  - `entities/folder/*`: folder attributes, request options, and related component types/interfaces
   - `entities/user/*`: signed-in user model
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
   - `features/accounts/*`: accounts page, provider grouping, account actions, account API layer
@@ -180,7 +181,8 @@
   - `Frontend/src/shared/store/index.ts` barrel export for shared Zustand stores
 - Shared hooks/types:
   - `Frontend/src/shared/hooks/index.ts` barrel export for shared hooks such as `useIsMobile`, `UseDebounceQuery`, and breadcrumb reset
-  - `Frontend/src/shared/types/index.ts` barrel export for shared API, folder, and settings types
+  - `Frontend/src/shared/types/index.ts` barrel export for shared API, settings, and filter types
+  - `Frontend/src/shared/types/filter.types.ts` filter model types and option structures
   - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:
   - query keys in `Frontend/src/shared/api/query-keys.ts`
@@ -201,6 +203,7 @@
 
 ### Shared UI / Types
 
+- `Frontend/src/shared/components/utils/FilterModal.tsx`: reusable filter modal component used in folders and inbox list views
 - `Frontend/src/shared/ui/badge.tsx`: reusable recipient chip/badge UI used in compose flow
 - `Frontend/src/shared/types/sidebar.types.ts`: shared sidebar navigation item and project typing
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
@@ -237,3 +240,4 @@
 - Shared sidebar/navigation structure is now defined in centralized constants and types instead of inline component-local data.
 - Frontend account/auth/email/inbox/folders/settings code is fully migrated from the deprecated `modules/*` directory into `entities/*`, `features/*`, and `shared/api/*` (with the `src/modules` directory removed entirely).
 - Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).
+- Centralized `FilterModal` component is introduced under `@shared/components/utils` to unify the filter logic/UI for both inbox lists and folders overview.

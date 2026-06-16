@@ -1,4 +1,4 @@
-import { DATE_RANGE } from '@entities/email';
+import { DATE_RANGE } from '@shared/types';
 
 export const EMAILS_PAGE_SIZE = 20;
 

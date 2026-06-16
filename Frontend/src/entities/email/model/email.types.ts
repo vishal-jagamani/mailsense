@@ -1,30 +1,10 @@
-export interface InboxSearchResultResponse {
-    data: Email[];
-    size: number;
-    page: number;
-    total: number;
-}
-
-export enum DATE_RANGE {
-    TODAY = 'today',
-    LAST_WEEK = 'last_week',
-    LAST_MONTH = 'last_month',
-    LAST_3_MONTHS = 'last_3_months',
-    ALL_TIME = 'all_time',
-}
-
-export interface GetAllEmailsFilters {
-    searchText?: string | undefined;
-    accountId?: string[] | undefined;
-    dateRange?: DATE_RANGE | undefined;
-    folders?: string[] | undefined;
-}
+import { Filter } from '@shared/types';
 
 export interface FetchEmailRequestOptions {
     userId: string;
     size: number;
     page: number;
-    filters: GetAllEmailsFilters;
+    filters: Filter;
 }
 
 export interface Email {
@@ -43,13 +23,6 @@ export interface Email {
     receivedAt: Date;
     isRead: boolean;
     folders: string[];
-}
-
-export interface GetEmailsResponse {
-    data: Email[];
-    size: number;
-    page: number;
-    total: number;
 }
 
 export interface ComposeEmailRequestBody {

@@ -1,5 +1,6 @@
+import { CreateFolderBodyParams, FolderAttributes, GetAllFoldersRequestOptions } from '@entities/folder';
 import { axiosClient, FOLDER_API_ENDPOINTS } from '@shared/api';
-import { CreateFolderBodyParams, FolderAttributes, GetAllFoldersRequestOptions, PaginatedDataResponse } from '@shared/types';
+import { PaginatedDataResponse } from '@shared/types';
 
 export async function getAllFolders(body: GetAllFoldersRequestOptions) {
     const { data } = await axiosClient.post<PaginatedDataResponse<FolderAttributes>>(FOLDER_API_ENDPOINTS.GET_ALL_FOLDERS, body);

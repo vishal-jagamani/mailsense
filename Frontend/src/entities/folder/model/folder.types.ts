@@ -1,4 +1,4 @@
-import { DATE_RANGE } from '@entities/email';
+import { Filter } from '@shared/types';
 
 export enum FolderKind {
     SYSTEM = 'SYSTEM',
@@ -54,16 +54,31 @@ export interface GetAllFoldersRequestOptions {
     userId: string;
     size: number;
     page: number;
-    filters: GetAllFoldersFilters;
+    filters: Filter;
 }
-
-export interface GetAllFoldersFilters {
-    searchText?: string | undefined;
-    accountId?: string[] | undefined;
-    dateRange?: DATE_RANGE | undefined;
-}
-
 export interface CreateFolderBodyParams {
     accountId: string;
     folderName: string;
+}
+
+// Component types
+export interface RenameFolderState {
+    renameFolderFlag: boolean;
+    renameFolderId: string;
+    renameFolderValue: string;
+    setRenameFolderFlag: (value: boolean) => void;
+    setRenameFolderId: (id: string) => void;
+    setRenameFolderValue: (value: string) => void;
+    handleUpdateFolder: (id: string, body: CreateFolderBodyParams) => void;
+}
+
+export interface FolderBodyProps {
+    tableData: FolderAttributes[];
+    size: number;
+    page: number;
+    total: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange: (size: number) => void;
+    renameState: RenameFolderState;
+    deleteFolder: (id: string) => void;
 }

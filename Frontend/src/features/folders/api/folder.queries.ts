@@ -1,5 +1,6 @@
+import { FolderAttributes, GetAllFoldersRequestOptions } from '@entities/folder';
 import { FOLDER_KEYS } from '@shared/api';
-import { FolderAttributes, GetAllFoldersRequestOptions, PaginatedDataResponse } from '@shared/types';
+import { PaginatedDataResponse } from '@shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { getAllFolders, getFolderDetails } from './folder.api';
 
