@@ -56,7 +56,6 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                             onResetPage={handleResetPage}
                         />
                     </div>
-                    <div></div>
                     <div className={`flex w-full flex-col ${isMobile ? 'h-[calc(100vh-200px)]' : 'h-[calc(100vh-150px)]'}`}>
                         <EmailListTable data={emailsData?.data || []} page={page} selectedEmails={selectedEmails} onEmailSelect={handleEmailSelect} />
                     </div>

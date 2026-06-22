@@ -17,6 +17,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Added a modular domain-driven folder model structure (`@entities/folder`) for type definitions and component state management.
 - Added responsive desktop (`FolderBody.web.tsx`) and mobile (`FolderBody.mobile.tsx`) view files for the folders list.
 - Added custom hooks (`useFoldersPage`, `useFolderBody`, and `useFolderEmailListPage`) to separate business/data logic from page and modal layout components.
+- Added dedicated compose-email subcomponents and hooks for header, footer, recipient search, and send-flow state management.
+- Added dedicated settings profile subcomponents and hooks for profile editing and password-change modal flows.
 
 ### Changed
 - Refactored accounts and auth screens to load from the new feature-based page structure.
@@ -38,10 +40,16 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Refactored inbox, account inbox, and folder email list pages to integrate the new unified `FilterModal`.
 - Replaced custom inbox and email search return interfaces with a generic `PaginatedDataResponse<T>` interface for cleaner query structures.
 - Upgraded package dependencies, including `@auth0/nextjs-auth0`, `@tanstack/react-query`, `zustand`, `axios`, `motion`, and various Radix UI primitives.
+- Refactored compose email into smaller feature components by moving rich-text editor, dialog sections, and recipient suggestion logic into focused files.
+- Refactored settings profile flows into a page-level wrapper, reusable profile form, dedicated password modal, and shared `useProfileSettings` hook.
+- Refactored inbox and email action menus to pull mutation/state logic into dedicated feature hooks.
+- Consolidated runtime API/auth constants into `Frontend/src/shared/api/endpoints.ts` and removed deprecated shared URL/crypto constant files.
+- Consolidated shared formatter and crypto utility usage by removing feature-local formatter copies and stale constants exports.
 
 ### Fixed
 - Fixed account toggle state handling so failed enable/disable requests revert the local switch state instead of leaving the UI out of sync.
 - Fixed provider icon rendering consistency by replacing repeated inline icon-mapping logic with a shared account provider icon component.
+- Preserved existing compose, inbox action, folder action, and settings profile behavior while reducing duplicated component logic.
 
 ### Removed
 - Removed the deprecated `src/modules` directory entirely, completing the migration of frontend logic to `entities`, `features`, and `shared/api` layers.

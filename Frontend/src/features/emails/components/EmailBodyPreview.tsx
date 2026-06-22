@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+
 import DOMPurify from 'isomorphic-dompurify';
 
 interface EmailBodyPreviewProps {

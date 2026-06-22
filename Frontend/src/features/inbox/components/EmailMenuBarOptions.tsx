@@ -1,13 +1,11 @@
 'use client';
 
-import { MailCheck, Star, Trash2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 
-import { useStarEmailMutation, useUnreadEmailMutation } from '@features/emails/api/email.mutations';
 import DeleteModal from '@features/emails/components/DeleteModal';
 import APILoader from '@shared/components/apiLoader';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
-import { useDeleteEmail } from '../api/inbox.queries';
+import { useInboxEmailMenuBarOptions } from '../hooks';
 
 interface EmailMenuBarOptionsProps {
     emailIds: string[];
@@ -17,55 +15,21 @@ interface EmailMenuBarOptionsProps {
 }
 
 const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, onRefetchEmails, onResetSelection, onResetPage }) => {
-    const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+    const {
+        states: { showDeleteModal },
+        setters: { setShowDeleteModal },
+        actionOptions: options,
+        starEmail: { isLoading: isStarEmailLoading },
+        unreadEmail: { isLoading: isUnreadEmailLoading },
+        deleteEmail: { mutate: deleteEmail, isLoading: isDeleteEmailLoading },
+    } = useInboxEmailMenuBarOptions({
+        emailIds,
+        onRefetchEmails,
+        onResetPage,
+        onResetSelection,
+    });
 
-    const { mutate: starEmail, isPending: starEmailLoading, data: starEmailSuccess } = useStarEmailMutation();
-    const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess } = useUnreadEmailMutation();
-    const { mutate: deleteEmail, isPending: deleteEmailLoading, data: deleteEmailSuccess } = useDeleteEmail();
-
-    useEffect(() => {
-        const mutations = [
-            { success: starEmailSuccess },
-            { success: unreadEmailSuccess, hasStatus: true },
-            { success: deleteEmailSuccess, hasStatus: true },
-        ];
-
-        const hasSuccessfulMutation = mutations.some((mutation) => mutation.success && (!mutation.hasStatus || mutation.success.status));
-
-        if (hasSuccessfulMutation) {
-            onResetSelection();
-            onResetPage();
-            setTimeout(() => {
-                onRefetchEmails();
-            }, 0);
-        }
-    }, [starEmailSuccess, unreadEmailSuccess, deleteEmailSuccess]);
-
-    const options = [
-        {
-            id: 1,
-            label: 'Star',
-            icon: Star,
-            iconColor: 'text-yellow-500',
-            action: () => starEmail({ emailIds, star: true }),
-        },
-        {
-            id: 2,
-            label: 'Mark as Unread',
-            icon: MailCheck,
-            iconColor: 'text-blue-500',
-            action: () => unreadEmail({ emailIds, unread: true }),
-        },
-        {
-            id: 3,
-            label: 'Delete',
-            icon: Trash2,
-            iconColor: 'text-red-500',
-            action: () => setShowDeleteModal(true),
-        },
-    ];
-
-    if (starEmailLoading || unreadEmailLoading || deleteEmailLoading) {
+    if (isStarEmailLoading || isUnreadEmailLoading || isDeleteEmailLoading) {
         return <APILoader show size="small" />;
     }
 

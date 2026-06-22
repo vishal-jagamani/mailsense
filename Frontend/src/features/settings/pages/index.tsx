@@ -5,7 +5,7 @@ import React, { Suspense, useEffect } from 'react';
 import { ROUTES } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
 import { Loader } from 'lucide-react';
-import ProfileSettings from '../components/profile/ProfileSettings';
+import ProfileSettings from './profile';
 
 interface SettingsPageProps {
     setting: string;

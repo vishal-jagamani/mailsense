@@ -119,10 +119,10 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
     const activeAccountError = accountId ? accountDetailsError : accountsError;
     useEffect(() => {
         if (isEmailError && !errorShown) {
-            toast.error(MESSAGES.EMAIL_LOAD_ERROR, { duration: 3000 });
+            toast.error(MESSAGES.EMAILS.EMAIL_LOAD_ERROR, { duration: 3000 });
             setErrorShown(true);
         } else if (activeAccountError && !errorShown) {
-            toast.error(MESSAGES.ACCOUNTS_LOAD_ERROR, { duration: 3000 });
+            toast.error(MESSAGES.ACCOUNTS.ACCOUNTS_LOAD_ERROR, { duration: 3000 });
             setErrorShown(true);
         } else if (!isEmailError && !activeAccountError) {
             setErrorShown(false);

@@ -3,8 +3,8 @@
 import React from 'react';
 
 import { Email } from '@entities/email';
+import { formatEmailFromString } from '@entities/email/lib';
 import { formatDateToDateTimeAgoString } from '@shared/utils/formatter';
-import { formatEmailFromString } from '../utils/formatter';
 
 interface EmailHeaderProps {
     accountId: string;

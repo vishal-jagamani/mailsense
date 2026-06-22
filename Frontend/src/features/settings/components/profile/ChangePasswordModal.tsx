@@ -2,23 +2,23 @@
 
 import React, { useEffect, useState } from 'react';
 
+import { useChangePasswordMutation } from '@features/settings/api/settings.mutation';
 import APILoader from '@shared/components/apiLoader';
+import { useAuthStore } from '@shared/store';
 import { Button } from '@shared/ui/button';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import { encrypt } from '@shared/utils/crypto';
-import { useAuthStore } from '@shared/store';
-import { useChangePasswordMutation } from '@features/settings/api/settings.mutation';
 
-interface ChangePasswordProps {
+interface ChangePasswordModalProps {
     show: boolean;
     setShow: (show: boolean) => void;
     setShowToast: (showToast: boolean) => void;
     setToastType: (toastType: string) => void;
 }
 
-const ChangePassword: React.FC<ChangePasswordProps> = ({ show, setShow, setShowToast, setToastType }) => {
+const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ show, setShow, setShowToast, setToastType }) => {
     const userId = useAuthStore((state) => state.user?.id);
 
     const [newPassword, setNewPassword] = useState<string>('');
@@ -81,4 +81,4 @@ const ChangePassword: React.FC<ChangePasswordProps> = ({ show, setShow, setShowT
     );
 };
 
-export default ChangePassword;
+export default ChangePasswordModal;

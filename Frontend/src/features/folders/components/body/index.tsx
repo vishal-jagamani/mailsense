@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { FolderAttributes } from '@entities/folder';
-import { useFolderBody } from '@features/folders/hooks/useFolderBody';
+import { useFolderBody } from '@features/folders/hooks';
 import APILoader from '@shared/components/apiLoader';
 import { useIsMobile } from '@shared/hooks';
 import dynamic from 'next/dynamic';
