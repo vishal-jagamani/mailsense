@@ -1,11 +1,11 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@middlewares/auth.js';
+import { authMiddleware } from '@middlewares';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { GmailApi } from '@providers/gmail/gmail.api.js';
-import { OutlookApi } from '@providers/outlook/outlook.api.js';
+import { GmailApi } from '@integrations/gmail/gmail.client.js';
+import { OutlookApi } from 'integrations/outlook/outlook.api.js';
 import { AccountProvider } from '@types';
-import { decrypt } from '@utils';
+import { decrypt } from 'shared/utils/index.js';
 
 const router = Router();
 

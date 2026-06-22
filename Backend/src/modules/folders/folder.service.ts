@@ -1,8 +1,8 @@
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { GmailService } from '@providers/gmail/gmail.service.js';
-import { OutlookService } from '@providers/outlook/outlook.service.js';
+import { GmailService } from 'integrations/gmail/gmail.service.js';
+import { OutlookService } from 'integrations/outlook/outlook.service.js';
 import { AccountProvider, PaginatedDataResponse, UpdateAPIResponse } from '@types';
-import { getDateRange, logger } from '@utils';
+import { getDateRange, logger } from 'shared/utils/index.js';
 import { FilterQuery } from 'mongoose';
 import { FOLDER_LIST_DB_FIELD_MAPPING } from './folder.constants.js';
 import { FolderDocument } from './folder.model.js';

@@ -7,11 +7,25 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Added backend architecture entry points under:
+  - `Backend/src/core/*` for config, constants, errors, and shared backend types
+  - `Backend/src/integrations/*` for Auth0, Gmail, and Outlook provider integrations
+  - `Backend/src/shared/utils/*` for reusable backend utility helpers
+  - `Backend/src/routes.ts` as the centralized API route registry
+  - `Backend/src/middlewares/index.ts` as a barrel export for middleware access
+
 ### Changed
 - Updated account listing in `AccountsService` to return all connected accounts for the user instead of filtering to only active accounts.
+- Refactored backend imports and TypeScript path aliases to use the new `@config`, `@constants`, `@errors`, `@integrations`, `@types`, and `@utils` entry points.
+- Moved backend configuration, constants, errors, shared types, provider clients/services, and utility helpers out of their older top-level directories into `core`, `integrations`, and `shared`.
+- Updated backend app and server bootstrapping to use the new centralized route entry file and reorganized config/utilities structure.
 
 ### Fixed
 - Restored backend support for account-management screens that need to display disabled accounts for re-enable flows.
+
+### Removed
+- Removed the deprecated backend directory layout for top-level `config`, `constants`, `errors`, `providers`, `types`, `utils`, and `routes/index.routes.ts` after reorganizing those concerns into the new architecture structure.
 
 ## [1.3.2] - 2026-05-31
 

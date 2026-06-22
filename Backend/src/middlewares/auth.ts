@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { auth } from 'express-oauth2-jwt-bearer';
 
-import { AUTH0_SECRETS, ENABLE_AUTH } from '@config/config.js';
-import { logger } from '@utils';
+import { AUTH0_SECRETS, ENABLE_AUTH } from '@config';
+import { logger } from 'shared/utils/index.js';
 
 class AuthMiddleware {
     private checkJwt = auth({

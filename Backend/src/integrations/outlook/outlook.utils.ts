@@ -1,5 +1,5 @@
-import { OUTLOOK_SECRETS } from '@config/config.js';
-import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants/index.js';
+import { OUTLOOK_SECRETS } from '@config';
+import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { FolderKind, FolderRole } from '@modules/folders/folder.types.js';
 import { OutlookFolderObject, OutlookMessageObjectFull } from './outlook.types.js';

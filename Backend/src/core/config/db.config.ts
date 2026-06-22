@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
-import { logger } from '@utils';
-import { DATABASE, MONGODB_URI } from './config.js';
+import { logger } from 'shared/utils/index.js';
+import { DATABASE, MONGODB_URI } from './app.config.js';
 
 export const connectDB = async (): Promise<void> => {
     try {

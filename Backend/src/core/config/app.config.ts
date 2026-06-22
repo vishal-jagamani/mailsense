@@ -1,4 +1,4 @@
-import { ENV } from './env.js';
+import { ENV } from './env.config.js';
 
 export const NODE_ENV = ENV.NODE_ENV;
 

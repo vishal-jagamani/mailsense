@@ -1,4 +1,4 @@
-import { AUTH0_API_SECRETS } from '@config/config.js';
+import { AUTH0_API_SECRETS } from '@config';
 
 export const AUTH0_API_AUDIENCE = `${AUTH0_API_SECRETS.baseUrl}/api/v2/`;
 

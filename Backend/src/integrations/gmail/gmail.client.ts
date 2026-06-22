@@ -1,8 +1,8 @@
-import { GMAIL_SECRETS } from '@config/config.js';
-import { OAUTH_ACCESS_TOKEN_URI } from '@constants/oauth.constants.js';
+import { GMAIL_SECRETS } from '@config';
+import { OAUTH_ACCESS_TOKEN_URI } from '@constants';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { GmailOAuthAccessTokenResponse } from '@types';
-import { apiRequest, decrypt, encrypt, logger } from '@utils';
+import { apiRequest, decrypt, encrypt, logger } from 'shared/utils/index.js';
 import { AxiosRequestConfig } from 'axios';
 import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_PEOPLE_API_BASE_URL, GMAIL_PEOPLE_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
 import {
