@@ -1,5 +1,5 @@
-import { ENCRYPTION_KEY } from '@config/config.js';
-import { CRYPTO } from '@constants/index.js';
+import { ENCRYPTION_KEY } from '@config';
+import { CRYPTO } from '@constants';
 import crypto from 'crypto';
 import { logger } from './logger.js';
 

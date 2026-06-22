@@ -1,5 +1,5 @@
+import { NODE_ENV } from '@config';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { NODE_ENV } from '@config/config.js';
 import { logger } from './logger.js';
 
 const isDev = NODE_ENV !== 'production';

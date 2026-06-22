@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from 'express';
-import { createApiError } from '../../utils/api.error.js';
+import { createApiError } from '../../shared/utils/api.error.js';
 import { DemoService } from './demo.service.js';
 
 export class DemoController {

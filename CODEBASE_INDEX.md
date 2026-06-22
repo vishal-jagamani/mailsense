@@ -11,20 +11,22 @@
 
 - `Backend/src/server.ts`: starts app, connects MongoDB, listens on `PORT`
 - `Backend/src/app.ts`: Express app wiring (CORS, body parsers, static, routes, Sentry, centralized error handler)
-- `Backend/src/routes/index.routes.ts`: mounts module routes under `/api`
+- `Backend/src/routes.ts`: mounts module routes under `/api`
 
 ### Config
 
-- `Backend/src/config/env.ts`: validates env via Zod
-- `Backend/src/config/config.ts`: exports typed config/secrets (Auth0, Gmail, Outlook, Mongo, Redis)
-- `Backend/src/config/db.ts`: Mongo connect/disconnect with pooling
-- `Backend/src/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
+- `Backend/src/core/config/env.config.ts`: validates env via Zod
+- `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis)
+- `Backend/src/core/config/db.config.ts`: Mongo connect/disconnect with pooling
+- `Backend/src/core/config/logger.config.ts`: logger configuration
+- `Backend/src/core/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
 
 ### Middleware and Request Flow
 
+- `Backend/src/middlewares/index.ts`: barrel export for backend middleware
 - `Backend/src/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`
 - `Backend/src/middlewares/validator.ts`: Zod request validation (`headers`, `params`, `query`, `body`)
-- `Backend/src/utils/request.handler.ts`: async wrapper for controllers
+- `Backend/src/shared/utils/request.handler.ts`: async wrapper for controllers
 - `Backend/src/middlewares/error.handler.ts`: centralized structured error responses for app/provider failures
 
 ### Modules
@@ -52,16 +54,16 @@
 - Utils route (`Backend/src/modules/utils/index.ts`)
   - Decrypt helper and account-token debug endpoint (auth protected)
 
-### Providers
+### Integrations
 
-- Gmail (`Backend/src/providers/gmail/*`)
+- Gmail (`Backend/src/integrations/gmail/*`)
   - OAuth token exchange/refresh
   - Fetch history + messages
   - Modify labels for archive/star/unread, trash/delete
   - Label CRUD + label sync into folders
   - Send outgoing mail and upsert sent copy locally
   - Search Google other contacts for compose recipient suggestions
-- Outlook (`Backend/src/providers/outlook/*`)
+- Outlook (`Backend/src/integrations/outlook/*`)
   - OAuth token exchange/refresh
   - Fetch profile/messages and message details
   - Delta-based sync support
@@ -69,7 +71,7 @@
   - Folder CRUD + folder sync into folders
   - Create/send outgoing mail and upsert sent copy locally
   - Search Microsoft Graph people for compose recipient suggestions
-- Auth0 (`Backend/src/providers/auth0/*`)
+- Auth0 (`Backend/src/integrations/auth0/*`)
   - Management API token + user/profile/password operations
 
 ### Data Models
@@ -85,13 +87,13 @@
 
 ### Shared Types / Utils
 
-- `Backend/src/types/index.ts`: barrel export for shared backend type modules
-- `Backend/src/types/express.d.ts`: extends Express request typing for validated payloads and Auth0 JWT user context
-- `Backend/src/types/common.types.ts`: shared enums such as `DATE_RANGE`
-- `Backend/src/utils/index.ts`: barrel export for shared backend utilities
-- `Backend/src/utils/common.ts`: reusable date-range helpers
-- `Backend/src/errors/AppError.ts`: base structured application error
-- `Backend/src/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
+- `Backend/src/core/types/index.ts`: barrel export for shared backend type modules
+- `Backend/src/core/types/express.d.ts`: extends Express request typing for validated payloads and Auth0 JWT user context
+- `Backend/src/core/types/common.types.ts`: shared enums such as `DATE_RANGE`
+- `Backend/src/shared/utils/index.ts`: barrel export for shared backend utilities
+- `Backend/src/shared/utils/common.ts`: reusable date-range helpers
+- `Backend/src/core/errors/AppError.ts`: base structured application error
+- `Backend/src/core/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
 
 ### API Surface (mounted at `/api`)
 
@@ -229,6 +231,7 @@
 ## Important Notes
 
 - Backend and frontend both now use barrel exports for shared types/utilities/hooks/stores to reduce deep relative imports.
+- Backend architecture now separates core concerns into `core/*`, third-party provider integrations into `integrations/*`, and reusable helpers into `shared/utils/*`.
 - Frontend runtime API base URL and Auth0 route helpers are now centralized in `Frontend/src/shared/api/endpoints.ts`.
 - Backend auth middleware now validates Auth0 JWTs for protected routes.
 - Backend now uses structured app/provider error classes for cleaner API error responses.

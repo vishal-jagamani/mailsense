@@ -1,9 +1,9 @@
 import pino from 'pino';
-import { LOG_LEVEL, NODE_ENV } from './config.js';
+import { LOG_LEVEL, NODE_ENV } from './app.config.js';
 
 const isDev = NODE_ENV !== 'production';
 
-const log = pino({
+export const log = pino({
     level: LOG_LEVEL || 'info',
     transport: isDev
         ? {
@@ -15,5 +15,3 @@ const log = pino({
           }
         : undefined,
 });
-
-export default log;

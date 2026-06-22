@@ -1,3 +1,4 @@
+import { AxiosApiError } from '@errors';
 import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/account.constants.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailInput } from '@modules/emails/email.model.js';
@@ -7,10 +8,9 @@ import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { GmailOAuthAccessTokenResponse, UpdateAPIResponse } from '@types';
-import { BatchProcessor, compressString, logger } from '@utils';
 import axios from 'axios';
-import { AxiosApiError } from 'errors/AxiosApiError.js';
-import { GmailApi } from './gmail.api.js';
+import { BatchProcessor, compressString, logger } from 'shared/utils/index.js';
+import { GmailApi } from './gmail.client.js';
 import {
     ExtractMessageChangesResponse,
     GetGmailMessagesResponse,

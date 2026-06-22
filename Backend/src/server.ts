@@ -1,8 +1,7 @@
+import { connectDB, PORT } from '@config';
 import { App } from './app.js';
-import { PORT } from './config/config.js';
-import { connectDB } from './config/db.js';
-import { logger } from './utils/logger.js';
 import './instruction.mjs';
+import { logger } from './shared/utils/logger.js';
 
 // Create app instance
 const appInstance = new App();

@@ -1,9 +1,9 @@
-import { GMAIL_SECRETS } from '@config/config.js';
-import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants/index.js';
-import { GMAIL_LABELS, GmailLabel, GmailLabelLabelListVisibility, GmailLabelType, GmailMessageObjectFull } from './gmail.types.js';
-import { htmlToText } from 'html-to-text';
-import { FolderKind, FolderRole } from '@modules/folders/folder.types.js';
+import { GMAIL_SECRETS } from '@config';
+import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
 import { FolderDocument } from '@modules/folders/folder.model.js';
+import { FolderKind, FolderRole } from '@modules/folders/folder.types.js';
+import { htmlToText } from 'html-to-text';
+import { GMAIL_LABELS, GmailLabel, GmailLabelLabelListVisibility, GmailLabelType, GmailMessageObjectFull } from './gmail.types.js';
 
 // Build gmail oauth access consent url
 export const buildGmailOAuthConsentURL = async () => {
