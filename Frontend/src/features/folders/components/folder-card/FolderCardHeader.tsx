@@ -3,18 +3,8 @@
 import { Check, Dot, X } from 'lucide-react';
 import React from 'react';
 
-import { CreateFolderBodyParams, FolderAttributes } from '@entities/folder';
+import { FolderAttributes, RenameFolderState } from '@entities/folder';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
-
-interface RenameFolderState {
-    renameFolderFlag: boolean;
-    renameFolderId: string;
-    renameFolderValue: string;
-    setRenameFolderFlag: (value: boolean) => void;
-    setRenameFolderId: (id: string) => void;
-    setRenameFolderValue: (value: string) => void;
-    handleUpdateFolder: (id: string, body: CreateFolderBodyParams) => void;
-}
 
 interface FolderCardHeaderProps {
     data: FolderAttributes;

@@ -4,7 +4,7 @@ import { useUser } from '@auth0/nextjs-auth0';
 import Link from 'next/link';
 import React from 'react';
 
-import { AUTH0_URLS } from '@shared/constants';
+import { AUTH0_URLS } from '@shared/api';
 import { Button } from '@shared/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/ui/card';
 

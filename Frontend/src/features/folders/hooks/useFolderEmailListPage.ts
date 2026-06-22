@@ -84,10 +84,10 @@ export const useFolderEmailListPage = (folderId: string) => {
 
     useEffect(() => {
         if (isEmailError && !errorShown) {
-            toast.error(MESSAGES.EMAIL_LOAD_ERROR, { duration: 3000 });
+            toast.error(MESSAGES.EMAILS.EMAIL_LOAD_ERROR, { duration: 3000 });
             setErrorShown(true);
         } else if (accountError && !errorShown) {
-            toast.error(MESSAGES.ACCOUNTS_LOAD_ERROR, { duration: 3000 });
+            toast.error(MESSAGES.ACCOUNTS.ACCOUNTS_LOAD_ERROR, { duration: 3000 });
             setErrorShown(true);
         } else if (isFolderError && !errorShown) {
             toast.error(MESSAGES.FOLDERS.FOLDER_LOAD_ERROR, { duration: 3000 });

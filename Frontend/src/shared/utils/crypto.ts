@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 
 import { ENCRYPTION_KEY } from '@config/config';
-import { CRYPTO } from '../constants';
+import { CRYPTO } from '@shared/constants';
 
 const cryptoKey = Buffer.from(ENCRYPTION_KEY, 'base64');
 

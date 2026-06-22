@@ -166,10 +166,10 @@
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
   - `features/accounts/*`: accounts page, provider grouping, account actions, account API layer
   - `features/auth/*`: login page and profile fetch query
-  - `features/emails/*`: email details page, compose flow, delete modal, email actions, email API layer
-  - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer
-  - `features/inbox/*`: unified inbox, account inbox, inbox filters/actions/table, inbox API layer
-  - `features/settings/*`: settings page, profile/password/account-deletion UI, settings API layer
+  - `features/emails/*`: email details page, compose flow, rich-text editor, delete modal, email actions, email API layer
+  - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer, folder action hooks
+  - `features/inbox/*`: unified inbox, account inbox, inbox filters/actions/table, inbox API layer, inbox page hooks
+  - `features/settings/*`: settings page, profile page/form, password modal, account-deletion UI, settings API layer
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys
 
 ### State and Data
@@ -186,7 +186,7 @@
   - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:
   - query keys in `Frontend/src/shared/api/query-keys.ts`
-  - feature-level queries and mutations under `features/*/api/*.queries.ts` and `features/*/api/*.mutations.ts`
+  - feature-level queries and mutations under `features/*/api/*.queries.ts`, `features/*/api/*.mutation.ts`, and `features/*/api/*.mutations.ts`
 - Axios clients:
   - `Frontend/src/shared/api/client.ts`
   - `axiosClient` -> backend API base URL + Auth0 client-side bearer token injection
@@ -208,6 +208,7 @@
 - `Frontend/src/shared/types/sidebar.types.ts`: shared sidebar navigation item and project typing
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
 - `Frontend/src/shared/constants/email.ts`: email list pagination and date-range dropdown options backed by email entity enums
+- `Frontend/src/shared/api/endpoints.ts`: centralized API base URL, Auth0 route helpers, and backend endpoint constants
 
 ## End-to-End Flow Summary
 
@@ -228,9 +229,7 @@
 ## Important Notes
 
 - Backend and frontend both now use barrel exports for shared types/utilities/hooks/stores to reduce deep relative imports.
-- Frontend has two base URL definitions:
-  - `Frontend/src/config/config.ts` uses `NEXT_PUBLIC_API_BASE_URL`
-  - `Frontend/src/shared/constants/urls.ts` uses `NEXT_PUBLIC_API_URL` fallback `http://localhost:4000`
+- Frontend runtime API base URL and Auth0 route helpers are now centralized in `Frontend/src/shared/api/endpoints.ts`.
 - Backend auth middleware now validates Auth0 JWTs for protected routes.
 - Backend now uses structured app/provider error classes for cleaner API error responses.
 - Outlook backend sync and inbox mutations are implemented; frontend release availability may still be controlled by product rollout.

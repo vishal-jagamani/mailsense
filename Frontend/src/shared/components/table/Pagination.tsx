@@ -116,7 +116,7 @@ const PaginationComponent: React.FC<PaginationProps> = ({ total, currentPage, on
                     {!isMobile && (
                         <Field orientation="horizontal" className="w-fit">
                             <FieldLabel htmlFor="select-rows-per-page" className="text-nowrap">
-                                Rows per page
+                                Per page
                             </FieldLabel>
                             <Select defaultValue={localPageSize.toString()} onValueChange={handlePageSizeChange}>
                                 <SelectTrigger className="w-20" id="select-rows-per-page">

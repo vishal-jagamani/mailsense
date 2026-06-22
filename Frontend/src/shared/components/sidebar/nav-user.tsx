@@ -4,7 +4,8 @@ import { ChevronsUpDown, LogOut, Moon, Settings, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useRouter } from 'next/navigation';
 
-import { AUTH0_URLS, ROUTES } from '@shared/constants';
+import { AUTH0_URLS } from '@shared/api';
+import { ROUTES } from '@shared/constants';
 import { Avatar, AvatarFallback, AvatarImage } from '@shared/ui/avatar';
 import {
     DropdownMenu,

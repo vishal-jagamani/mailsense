@@ -30,7 +30,9 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange, onDelete 
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-orange-800 text-white" onClick={onDelete}>Confirm</AlertDialogAction>
+                        <AlertDialogAction className="bg-orange-800 text-white" onClick={onDelete}>
+                            Confirm
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
