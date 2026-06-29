@@ -6,12 +6,12 @@ import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { GmailService } from '@integrations/gmail/gmail.service.js';
 import { GMAIL_LABELS } from '@integrations/gmail/gmail.types.js';
 import { OutlookService } from '@integrations/outlook/outlook.service.js';
-import { AccountProvider, APIResponse, GetEmailsResponse, PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from '@types';
+import { AccountProvider, APIResponse, DATE_RANGE, GetEmailsResponse, PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from '@types';
 import { decompressString, logger } from 'shared/utils/index.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
-import { DATE_RANGE, GetAllEmailsFilters, SearchEmailsParams, SearchOtherContactsResponse } from './email.types.js';
+import { GetAllEmailsFilters, GetFiltersResponse, SearchEmailsParams, SearchOtherContactsResponse } from './email.types.js';
 
 export class EmailService {
     private gmailService: GmailService;
@@ -24,7 +24,7 @@ export class EmailService {
 
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         try {
-            const { searchText, accountId, dateRange, folders } = filters;
+            const { searchText, accountId, dateRange, folders, unread } = filters;
             const accounts = await AccountRepository.getAccounts({ userId, active: true });
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
@@ -52,6 +52,7 @@ export class EmailService {
                     this.getDateRange(dateRange) && {
                         receivedAt: { $gte: this.getDateRange(dateRange).startDate, $lte: this.getDateRange(dateRange).endDate },
                     }),
+                ...(unread && { isRead: false }),
             };
             const emails = await EmailRepository.getEmails(
                 searchQuery,
@@ -138,6 +139,34 @@ export class EmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async getFilters(userId: string): Promise<GetFiltersResponse> {
+        try {
+            const accounts = await AccountRepository.getAccounts({ userId, active: true });
+            const folders = await FolderRepository.getAllFolders(
+                { accountId: { $in: accounts.map((account) => account._id) }, kind: 'SYSTEM' },
+                1000,
+                1,
+                { name: 1, _id: 1, providerFolderId: 1 },
+                {},
+            );
+            const accountsData = accounts.map((account) => ({
+                id: account._id.toString(),
+                provider: account.provider,
+                emailAddress: account.emailAddress,
+            }));
+            const foldersData = folders.map((folder) => ({
+                id: folder._id.toString(),
+                name: folder.name,
+                providerFolderId: folder.providerFolderId,
+            }));
+            return { accounts: accountsData, folders: foldersData };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getFilters: ${errorMessage}`, { error: err });
             throw err;
         }
     }

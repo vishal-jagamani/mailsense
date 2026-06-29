@@ -1,5 +1,5 @@
+import { DATE_RANGE } from '@types';
 import z from 'zod';
-import { DATE_RANGE } from './email.types.js';
 
 export const getAllEmailsSchema = z.object({
     size: z.number(),
@@ -10,6 +10,7 @@ export const getAllEmailsSchema = z.object({
             accountId: z.array(z.string()).optional(),
             dateRange: z.enum(Object.values(DATE_RANGE) as [string, ...string[]]).optional(),
             folders: z.array(z.string()).optional(),
+            unread: z.boolean().optional().default(false),
         })
         .optional(),
 });

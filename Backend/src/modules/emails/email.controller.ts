@@ -28,7 +28,7 @@ export class EmailController {
             }
             const sizeValue = size ? Number(size) : 10;
             const pageValue = page ? Number(page) : 1;
-            const filterValue = (filters || { accountId: undefined, dateRange: undefined, folders: undefined }) as GetAllEmailsFilters;
+            const filterValue = (filters || { accountId: undefined, dateRange: undefined, folders: undefined, unread: undefined }) as GetAllEmailsFilters;
             const emails = await this.emailService.getAllEmails(userId, sizeValue, pageValue, filterValue);
             res.send(emails);
         } catch (error) {
@@ -51,6 +51,19 @@ export class EmailController {
             const pageValue = page ? Number(page) : 1;
             const emails = await this.emailService.getEmails(accountId, sizeValue, pageValue);
             res.send(emails);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public getFilters = async (req: Request<object, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
+            const filters = await this.emailService.getFilters(userId);
+            res.send(filters);
         } catch (error) {
             next(error);
         }

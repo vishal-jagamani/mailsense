@@ -9,6 +9,8 @@ export const QUERY_KEYS = {
 
 export const EMAILS = 'emails';
 
+export const EMAIL_FILTERS = 'email-filters';
+
 export const FOLDER_KEYS = {
     FOLDERS: 'folders',
 };

@@ -7,6 +7,22 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-06-29
+
+### Added
+- Added backend-driven inbox filter options for connected accounts, folders, date range, and unread status.
+- Added shared inbox header component for search, filter, and bulk-action controls.
+
+### Changed
+- Updated unified inbox and account inbox pages to use shared filter option data from the backend instead of building filter lists locally.
+- Updated the filter modal to support folder selection and unread toggle filters.
+- Refactored inbox filtering flow to use dedicated email-filter query keys and endpoint wiring.
+
+### Fixed
+- Improved filter behavior consistency between unified inbox and account inbox views by using the same header and filter model.
+
+## [1.4.0] - 2026-06-29
+
 ### Added
 - Added frontend `entities` and `features` layers for accounts, auth, email, and user domain models.
 - Added shared API barrel exports for Axios clients, endpoint constants, and query keys under `Frontend/src/shared/api/*`.
@@ -195,7 +211,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0
 [1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
 [1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0

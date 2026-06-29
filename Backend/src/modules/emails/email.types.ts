@@ -1,3 +1,4 @@
+import { DATE_RANGE } from '@types';
 import { ProjectionType, SortOrder } from 'mongoose';
 import { EmailDocument } from './email.model.js';
 
@@ -33,22 +34,20 @@ export interface SearchEmailsParams {
     page: number;
 }
 
-export enum DATE_RANGE {
-    TODAY = 'today',
-    LAST_WEEK = 'last_week',
-    LAST_MONTH = 'last_month',
-    LAST_3_MONTHS = 'last_3_months',
-    ALL_TIME = 'all_time',
-}
-
 export interface GetAllEmailsFilters {
     searchText?: string | undefined;
     accountId?: string[] | undefined;
     dateRange?: DATE_RANGE | undefined;
     folders?: string[] | undefined;
+    unread?: boolean | undefined;
 }
 
 export interface SearchOtherContactsResponse {
     name: string;
     email: string;
+}
+
+export interface GetFiltersResponse {
+    accounts: { id: string; provider: string; emailAddress: string }[];
+    folders: { id: string; name: string; providerFolderId: string }[];
 }

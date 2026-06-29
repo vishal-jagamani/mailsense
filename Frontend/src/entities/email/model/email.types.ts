@@ -36,3 +36,8 @@ export interface SearchOtherContactsResponse {
     name: string;
     email: string;
 }
+
+export interface GetFiltersResponse {
+    accounts: { id: string; provider: string; emailAddress: string }[];
+    folders: { id: string; name: string; providerFolderId: string }[];
+}
