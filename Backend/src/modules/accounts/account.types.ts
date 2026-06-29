@@ -1,6 +1,6 @@
 import { EmailInput } from '@modules/emails/email.model.js';
-import { GmailUserProfile } from '@providers/gmail/gmail.types.js';
-import { OutlookUserProfile } from '@providers/outlook/outlook.types.js';
+import { GmailUserProfile } from 'integrations/gmail/gmail.types.js';
+import { OutlookUserProfile } from 'integrations/outlook/outlook.types.js';
 import { ProjectionType } from 'mongoose';
 import { AccountDocument } from './account.model.js';
 

@@ -1,4 +1,4 @@
-import IndexPage from '@modules/auth/IndexPage';
+import IndexPage from '@features/auth/pages';
 
 const GetStartedPage: React.FC = () => {
     return (

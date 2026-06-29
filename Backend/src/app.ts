@@ -3,9 +3,9 @@ import cors from 'cors';
 import express, { Application, NextFunction, Request, Response } from 'express';
 import path from 'path';
 
-import { MAILSENSE_BASE_URL } from '@config/config.js';
-import { errorHandler } from '@middlewares/error.handler.js';
-import indexRoutes from '@routes/index.routes.js';
+import { MAILSENSE_BASE_URL } from '@config';
+import { errorHandler } from '@middlewares';
+import indexRoutes from 'routes.js';
 
 export class App {
     public expressApp: Application;

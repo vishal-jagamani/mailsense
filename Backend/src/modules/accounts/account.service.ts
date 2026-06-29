@@ -1,14 +1,14 @@
-import { MAILSENSE_BASE_URL } from '@config/config.js';
-import { ACCOUNT_PROVIDERS } from '@constants/account.constants.js';
+import { MAILSENSE_BASE_URL } from '@config';
+import { ACCOUNT_PROVIDERS } from '@constants';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderService } from '@modules/folders/folder.service.js';
-import { GmailService } from '@providers/gmail/gmail.service.js';
-import * as GmailUtils from '@providers/gmail/gmail.utils.js';
-import { OutlookService } from '@providers/outlook/outlook.service.js';
-import * as OutlookUtils from '@providers/outlook/outlook.utils.js';
+import { GmailService } from 'integrations/gmail/gmail.service.js';
+import * as GmailUtils from 'integrations/gmail/gmail.utils.js';
+import { OutlookService } from 'integrations/outlook/outlook.service.js';
+import * as OutlookUtils from 'integrations/outlook/outlook.utils.js';
 import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse, SuccessAPIResponse, UpdateAPIResponse } from '@types';
-import { decrypt, encrypt, logger } from '@utils';
+import { decrypt, encrypt, logger } from 'shared/utils/index.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
 
@@ -76,7 +76,7 @@ export class AccountsService {
      */
     async getAccounts(userId: string): Promise<AccountInput[]> {
         try {
-            return AccountRepository.getAccounts({ userId, active: true });
+            return AccountRepository.getAccounts({ userId });
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.getAccounts: ${errorMessage}`, { error: err });

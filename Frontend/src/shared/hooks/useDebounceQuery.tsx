@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 
+import { UI_CONSTANTS } from '@shared/constants';
+
 interface UseDebounceQueryProps {
     text: string;
     delay?: number;
 }
 
-export const UseDebounceQuery = ({ text, delay = 300 }: UseDebounceQueryProps): string => {
+export const UseDebounceQuery = ({ text, delay = UI_CONSTANTS.DEBOUNCE.SEARCH_DELAY }: UseDebounceQueryProps): string => {
     const [debouncedText, setDebouncedText] = useState<string>(text);
     useEffect(() => {
         const handler = setTimeout(() => {

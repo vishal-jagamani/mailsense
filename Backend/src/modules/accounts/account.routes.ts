@@ -1,8 +1,7 @@
 import { Router } from 'express';
 
-import { authMiddleware } from '@middlewares/auth.js';
-import { validate } from '@middlewares/validator.js';
-import { handleRequest } from '@utils';
+import { authMiddleware, validate } from '@middlewares';
+import { handleRequest } from 'shared/utils/index.js';
 import { AccountsController } from './account.controller.js';
 import { connectAccountSchema, deleteAccountSchema, enableAccountSchema, getAccountDetailsSchema } from './account.schema.js';
 

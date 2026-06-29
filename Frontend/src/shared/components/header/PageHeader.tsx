@@ -1,15 +1,13 @@
 'use client';
 
-import Image from 'next/image';
 import React, { useState } from 'react';
 
-import GmailIcon from '@assets/icons/gmail/icons8-gmail-144.png';
-import OutlookIcon from '@assets/icons/outlook/icons8-outlook-144.svg';
-import { useSyncAllAccounts } from '@modules/accounts/services/useAccountApi';
+import { AccountProviderIcon } from '@entities/account';
+import { useSyncAllAccounts } from '@features/accounts/api/accounts.queries';
 import { useIsMobile } from '@shared/hooks';
+import { useAuthStore } from '@shared/store';
 import { Button } from '@shared/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@shared/ui/dropdown-menu';
-import { useAuthStore } from '../../store';
 
 interface PageHeaderProps {
     title: string;
@@ -21,11 +19,6 @@ interface PageHeaderProps {
     }[];
     dropdownMenuItemClick?: (dropdownOption: { id: number; name: string; displayName: string }) => void;
 }
-
-const iconMapping = [
-    { name: 'gmail', icon: GmailIcon },
-    { name: 'outlook', icon: OutlookIcon },
-];
 
 const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions, dropdownMenuItemClick }) => {
     const isMobile = useIsMobile();
@@ -79,12 +72,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
                                                 className={`cursor-pointer ${isMobile ? 'gap-1' : 'gap-2'}`}
                                                 onClick={() => dropdownMenuItemClick?.(option)}
                                             >
-                                                <Image
-                                                    draggable={false}
-                                                    src={iconMapping.find((val) => val.name === option.name)?.icon}
-                                                    alt={option.name}
-                                                    className={isMobile ? 'size-5' : 'size-5'}
-                                                />
+                                                <AccountProviderIcon provider={option.name} className={isMobile ? 'size-5' : 'size-5'} />
                                                 <p className={`${isMobile ? 'text-xs' : 'text-sm'} font-semibold`}>{option.displayName}</p>
                                             </DropdownMenuItem>
                                         );
