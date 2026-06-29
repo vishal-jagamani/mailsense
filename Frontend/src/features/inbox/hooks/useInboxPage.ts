@@ -1,19 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { AccountAttributes } from '@entities/account';
 import { Email } from '@entities/email';
-import { useGetAccountDetailsQuery, useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
-import { EMAILS_PAGE_SIZE, MESSAGES } from '@shared/constants';
+import { useGetAccountDetailsQuery } from '@features/accounts/api/accounts.queries';
+import { DATE_RANGE_DROPDOWN_OPTIONS, EMAILS_PAGE_SIZE, MESSAGES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useAuthStore, useBreadcrumbStore } from '@shared/store';
-import { Filter, PaginatedDataResponse } from '@shared/types';
+import { Filter, FilterOption, FilterOptionType, PaginatedDataResponse } from '@shared/types';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
-import { useFetchEmails } from '../api/inbox.queries';
+import { useFetchEmailFilters, useFetchEmails } from '../api/inbox.queries';
 
 interface useInboxPageReturnParams {
-    accounts: { data: AccountAttributes[] | undefined; accountsDataLoading: boolean; accountDataError: Error | null };
     emails: { data: PaginatedDataResponse<Email> | null; fetchEmailsData: () => void; isLoadingEmails: boolean; isEmailError: boolean };
+    emailFilterOptions: { data: FilterOption[] | undefined; isLoading: boolean };
     actions: {
         handleResetSelection: () => void;
         handleEmailSelect: (emailIds: string[]) => void;
@@ -35,17 +34,9 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
 
     const { data: emails, mutate: refetchEmails, isPending: isLoadingEmails, isError: isEmailError } = useFetchEmails();
 
-    const {
-        data: accountsData,
-        isLoading: allAccountsLoading,
-        error: accountsError,
-    } = useGetAccountsQuery(user?.id ?? '', { enabled: !accountId && !!user?.id });
+    const { data: accountData, error: accountDetailsError } = useGetAccountDetailsQuery(accountId || '', { enabled: !!accountId });
 
-    const {
-        data: accountData,
-        isLoading: accountLoading,
-        error: accountDetailsError,
-    } = useGetAccountDetailsQuery(accountId || '', { enabled: !!accountId });
+    const { data: emailFilters, isLoading: isLoadingEmailFilters } = useFetchEmailFilters();
 
     const [page, setPage] = useState(() => {
         const pageParam = searchParams.get('page');
@@ -56,6 +47,7 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
     const [emailsData, setEmailsData] = useState<PaginatedDataResponse<Email> | null>(null);
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
     const [errorShown, setErrorShown] = useState<boolean>(false);
+    const [emailFilterOptions, setEmailFilterOptions] = useState<FilterOption[]>();
     const [filter, setFilter] = useState<Filter | null>(null);
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 
@@ -69,7 +61,9 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
             filters: {
                 accountId: accountId ? [accountId] : filter?.accountId,
                 searchText: debouncedSearchValue || undefined,
+                folders: filter?.folders,
                 dateRange: filter?.dateRange,
+                unread: filter?.unread,
             },
         });
     }, [user, page, pageSize, debouncedSearchValue, refetchEmails, filter, accountId]);
@@ -116,7 +110,75 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
         }
     }, [accountId, accountData]);
 
-    const activeAccountError = accountId ? accountDetailsError : accountsError;
+    useEffect(() => {
+        if (emailFilters) {
+            const filterOptionData: FilterOption[] = [
+                ...(!accountId
+                    ? [
+                          {
+                              id: 1,
+                              name: 'accountId',
+                              type: FilterOptionType.DROPDOWN,
+                              label: 'Accounts',
+                              data:
+                                  emailFilters?.accounts.map((account) => {
+                                      return {
+                                          id: account.id,
+                                          name: account.id,
+                                          label: account.emailAddress,
+                                          provider: account.provider,
+                                          selectedValue: '',
+                                      };
+                                  }) || [],
+                          },
+                      ]
+                    : []),
+                {
+                    id: 2,
+                    name: 'folders',
+                    label: 'Folders',
+                    type: FilterOptionType.DROPDOWN,
+                    data: emailFilters?.folders.map((folder) => {
+                        return {
+                            id: folder.id,
+                            name: folder.providerFolderId,
+                            label: folder.name,
+                            selectedValue: '',
+                        };
+                    }),
+                },
+                {
+                    id: 3,
+                    name: 'dateRange',
+                    label: 'Date Range',
+                    type: FilterOptionType.DROPDOWN,
+                    data: DATE_RANGE_DROPDOWN_OPTIONS.map((item) => {
+                        return {
+                            id: item.name,
+                            name: item.name,
+                            label: item.label,
+                            selectedValue: '',
+                        };
+                    }),
+                },
+                {
+                    id: 4,
+                    name: 'unread',
+                    label: 'Unread',
+                    type: FilterOptionType.TOGGLE,
+                    data: {
+                        id: 'unread',
+                        name: 'unread',
+                        label: 'Unread',
+                        selectedValue: false,
+                    },
+                },
+            ];
+            setEmailFilterOptions(filterOptionData);
+        }
+    }, [emailFilters, accountId]);
+
+    const activeAccountError = accountId ? accountDetailsError : null;
     useEffect(() => {
         if (isEmailError && !errorShown) {
             toast.error(MESSAGES.EMAILS.EMAIL_LOAD_ERROR, { duration: 3000 });
@@ -147,12 +209,8 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
     }, []);
 
     return {
-        accounts: {
-            data: accountsData,
-            accountsDataLoading: accountId ? accountLoading : allAccountsLoading,
-            accountDataError: activeAccountError as Error | null,
-        },
         emails: { data: emailsData, fetchEmailsData, isLoadingEmails, isEmailError },
+        emailFilterOptions: { data: emailFilterOptions, isLoading: isLoadingEmailFilters },
         actions: { handleResetSelection, handleEmailSelect, handlePageSizeChange, handleResetPage },
         states: { selectedEmails, pageSize, searchValue, filter, page },
         setters: { setSearchValue, setFilter, setPage },

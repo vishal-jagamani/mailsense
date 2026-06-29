@@ -7,6 +7,20 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-06-29
+
+### Added
+- Added `GET /emails/filters` endpoint support to return available account and folder filter options for inbox views.
+
+### Changed
+- Updated email listing filters to support `unread` state alongside account, date-range, folder, and search filters.
+- Moved shared `DATE_RANGE` usage to backend core types so email and folder filtering use the same enum source.
+
+### Fixed
+- Improved inbox filter-data consistency by sourcing account and folder filter options from active connected accounts and system folders.
+
+## [1.4.0] - 2026-06-29
+
 ### Added
 - Added backend architecture entry points under:
   - `Backend/src/core/*` for config, constants, errors, and shared backend types
@@ -185,7 +199,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.3.2...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0
 [1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
 [1.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.0

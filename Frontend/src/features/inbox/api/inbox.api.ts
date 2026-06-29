@@ -1,4 +1,4 @@
-import { Email, FetchEmailRequestOptions } from '@entities/email';
+import { Email, FetchEmailRequestOptions, GetFiltersResponse } from '@entities/email';
 import { axiosClient, EMAILS_API_ENDPOINTS } from '@shared/api';
 import { PaginatedDataResponse, UpdateAPIResponse } from '@shared/types';
 
@@ -7,6 +7,10 @@ export async function fetchEmails(body: FetchEmailRequestOptions) {
     return data;
 }
 
+export async function getEmailFilters() {
+    const { data } = await axiosClient.get<GetFiltersResponse>(EMAILS_API_ENDPOINTS.FILTERS);
+    return data;
+}
 export async function deleteEmail(emailIds: string[], trash: boolean) {
     const { data } = await axiosClient.post<UpdateAPIResponse>(EMAILS_API_ENDPOINTS.DELETE, { emailIds, trash });
     return data;

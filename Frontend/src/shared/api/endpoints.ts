@@ -25,6 +25,7 @@ export const ACCOUNTS_API_ENDPOINTS = {
 export const EMAILS_API_ENDPOINTS = {
     LIST: '/emails/list',
     SEARCH: '/emails/search',
+    FILTERS: '/emails/filters',
     DELETE: '/emails',
     DETAILS: (emailId: string) => `/emails/details/${emailId}`,
     ARCHIVE: '/emails/archive',

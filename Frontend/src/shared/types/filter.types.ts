@@ -1,5 +1,6 @@
 export enum FilterOptionType {
     STRING = 'string',
+    TOGGLE = 'toggle',
     DROPDOWN = 'dropdown',
 }
 
@@ -16,13 +17,14 @@ export interface Filter {
     accountId?: string[] | undefined;
     dateRange?: DATE_RANGE | undefined;
     folders?: string[] | undefined;
+    unread?: boolean;
 }
 
 interface FilterOptionData {
     id: string;
     name: string;
     label: string;
-    selectedValue: string;
+    selectedValue: string | boolean;
     provider?: string;
 }
 
@@ -31,5 +33,5 @@ export interface FilterOption {
     name: string;
     label: string;
     type: FilterOptionType;
-    data: FilterOptionData[];
+    data: FilterOptionData[] | FilterOptionData;
 }

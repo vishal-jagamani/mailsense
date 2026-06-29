@@ -1,4 +1,4 @@
-import { DATE_RANGE } from '@modules/emails/email.types.js';
+import { DATE_RANGE } from '@types';
 import z from 'zod';
 
 export const getAllFoldersSchema = z.object({
