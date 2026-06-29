@@ -116,6 +116,7 @@
   - `GET /accounts/sync/:accountId`
 - Emails:
   - `POST /emails/list`
+  - `GET /emails/filters`
   - `GET /emails/list/:accountId`
   - `GET /emails/details/:emailId`
   - `POST /emails/search`
@@ -170,7 +171,7 @@
   - `features/auth/*`: login page and profile fetch query
   - `features/emails/*`: email details page, compose flow, rich-text editor, delete modal, email actions, email API layer
   - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer, folder action hooks
-  - `features/inbox/*`: unified inbox, account inbox, inbox filters/actions/table, inbox API layer, inbox page hooks
+  - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks
   - `features/settings/*`: settings page, profile page/form, password modal, account-deletion UI, settings API layer
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys
 
@@ -205,7 +206,7 @@
 
 ### Shared UI / Types
 
-- `Frontend/src/shared/components/utils/FilterModal.tsx`: reusable filter modal component used in folders and inbox list views
+- `Frontend/src/shared/components/utils/FilterModal.tsx`: reusable filter modal component used in folders and inbox list views, including folder and unread filters for inbox
 - `Frontend/src/shared/ui/badge.tsx`: reusable recipient chip/badge UI used in compose flow
 - `Frontend/src/shared/types/sidebar.types.ts`: shared sidebar navigation item and project typing
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
@@ -222,6 +223,8 @@
    - backend callback stores encrypted tokens and triggers sync
 4. Connected Accounts page loads all linked accounts, including disabled ones, so users can review and re-enable them from account-management UI.
 5. Inbox UI reads paginated email data and performs mutation actions (delete/archive/star/unread).
+   - available filter options are fetched from `GET /emails/filters`
+   - filters can include account, folder, date range, search text, and unread state
 6. Folders UI reads paginated folder data, supports folder CRUD, and opens filtered email lists for a selected folder.
 7. Compose popup lets the user send email from a connected account; backend sends through the provider and stores the sent message for later listing/details.
 8. Compose recipient search uses provider contacts/people APIs to suggest and add recipients as chips while typing.

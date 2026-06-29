@@ -25,6 +25,8 @@ router.post('/list', validate({ body: getAllEmailsSchema }), handleRequest(email
 
 router.get('/list/:accountId', handleRequest(emailController.getEmails));
 
+router.get('/filters', handleRequest(emailController.getFilters));
+
 router.get('/details/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getEmail));
 
 router.post('/delete', validate({ body: deleteEmailSchema }), handleRequest(emailController.deleteEmail));
