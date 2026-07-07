@@ -55,3 +55,8 @@ src/**/*.js.map
 # yarn.lock
 # pnpm-lock.yaml
 deploy.sh
+
+# IDE files
+.vscode/
+.cursor/
+.devin/

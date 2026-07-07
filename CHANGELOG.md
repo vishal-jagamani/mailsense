@@ -14,6 +14,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 - Updated inbox filtering to use dynamic filter data from connected accounts and folders.
+- Improved backend sync infrastructure to support future queued background processing.
 
 ### Fixed
 - Improved consistency between unified inbox and account inbox filtering by using the same shared filter flow.

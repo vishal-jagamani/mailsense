@@ -8,5 +8,6 @@ const router = Router();
 const demoController = new DemoController();
 
 router.get('/catFact', validate({ query: catFactQuerySchema }), handleRequest(demoController.getCatFact));
+router.post('/queue-sync', handleRequest(demoController.triggerQueueSync));
 
 export default router;

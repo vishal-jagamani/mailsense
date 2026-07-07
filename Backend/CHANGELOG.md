@@ -7,17 +7,36 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Created queuing infrastructure using **BullMQ** connected to **Upstash Redis** (TCP/TLS).
+- Added `QueueService.addSyncAccountJob` to queue account sync tasks with priorities.
+- Added graceful shutdown handlers for queues and Redis connections in `src/server.ts` matching `SIGINT` and `SIGTERM`.
+- Added test endpoint `POST /api/demo/queue-sync` for enqueuing sync jobs locally.
+- Added Jest integration test for the `QueueService` verifying Upstash connectivity.
+
+### Changed
+- Configured Jest to resolve ES Module `.js` imports to `.ts` source files and map project-scoped TypeScript path aliases.
+- Fixed a compilation mismatch with Sentry's express error handler under Express 5.
+
 ## [1.4.1] - 2026-06-29
 
 ### Added
 - Added `GET /emails/filters` endpoint support to return available account and folder filter options for inbox views.
+- Added BullMQ/Redis queue infrastructure under `Backend/src/core/queue/*` for future background account sync execution.
+- Added queue lifecycle startup/shutdown hooks in server boot flow.
+- Added demo endpoint support to enqueue sync-account jobs for queue testing.
+- Added queue integration tests and background-sync implementation planning docs under `Backend/docs/plans/*`.
 
 ### Changed
 - Updated email listing filters to support `unread` state alongside account, date-range, folder, and search filters.
 - Moved shared `DATE_RANGE` usage to backend core types so email and folder filtering use the same enum source.
+- Updated backend runtime and environment config to support Upstash Redis queue connectivity.
+- Updated Jest config and package dependencies to support the new queue architecture and alias-based test resolution.
+- Updated Sentry Express error-handler setup to the current SDK integration pattern.
 
 ### Fixed
 - Improved inbox filter-data consistency by sourcing account and folder filter options from active connected accounts and system folders.
+- Improved backend shutdown behavior by closing queue and Redis resources gracefully on termination signals.
 
 ## [1.4.0] - 2026-06-29
 

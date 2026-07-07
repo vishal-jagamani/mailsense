@@ -30,6 +30,8 @@ class EnvConfig {
     public readonly AUTH0_API_CLIENT_SECRET: string;
     public readonly AUTH0_API_BASE_URL: string;
     public readonly SENTRY_DSN: string;
+    public readonly UPSTASH_REDIS_REST_URL: string;
+    public readonly UPSTASH_REDIS_REST_TOKEN: string;
 
     constructor() {
         dotenv?.config();
@@ -69,6 +71,9 @@ class EnvConfig {
             AUTH0_API_CLIENT_SECRET: z.string(),
             AUTH0_API_BASE_URL: z.string(),
             SENTRY_DSN: z.string(),
+            // Upstash redis secrets
+            UPSTASH_REDIS_REST_URL: z.string(),
+            UPSTASH_REDIS_REST_TOKEN: z.string(),
         });
 
         const result = schema.safeParse(process.env);
@@ -105,6 +110,9 @@ class EnvConfig {
         this.AUTH0_API_CLIENT_SECRET = data.AUTH0_API_CLIENT_SECRET;
         this.AUTH0_API_BASE_URL = data.AUTH0_API_BASE_URL;
         this.SENTRY_DSN = data.SENTRY_DSN;
+        // Upstash redis secrets
+        this.UPSTASH_REDIS_REST_URL = data.UPSTASH_REDIS_REST_URL;
+        this.UPSTASH_REDIS_REST_TOKEN = data.UPSTASH_REDIS_REST_TOKEN;
     }
 }
 
