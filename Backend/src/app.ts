@@ -58,7 +58,7 @@ export class App {
     }
 
     private setupErrorHandler(): void {
-        this.expressApp.use(Sentry.expressErrorHandler());
+        Sentry.setupExpressErrorHandler(this.expressApp);
         // Centralized error handler
         this.expressApp.use(errorHandler);
     }

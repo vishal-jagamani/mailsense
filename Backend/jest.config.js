@@ -12,4 +12,18 @@ export default {
     transform: {
         ...tsJestTransformCfg,
     },
+    moduleDirectories: ['node_modules', 'src'],
+    moduleNameMapper: {
+        '^@config$': '<rootDir>/src/core/config/index.ts',
+        '^@constants$': '<rootDir>/src/core/constants/index.ts',
+        '^@errors$': '<rootDir>/src/core/errors/index.ts',
+        '^@middlewares$': '<rootDir>/src/middlewares/index.ts',
+        '^@modules/(.*)$': '<rootDir>/src/modules/$1',
+        '^@integrations/(.*)$': '<rootDir>/src/integrations/$1',
+        '^@routes/(.*)$': '<rootDir>/src/routes/$1',
+        '^@types$': '<rootDir>/src/core/types/index.ts',
+        '^@utils$': '<rootDir>/src/shared/utils/index.ts',
+        '^(core|integrations|middlewares|modules|shared)/(.*)\\.js$': '<rootDir>/src/$1/$2',
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+    },
 };

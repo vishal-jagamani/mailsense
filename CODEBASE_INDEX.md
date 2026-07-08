@@ -19,7 +19,18 @@
 - `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis)
 - `Backend/src/core/config/db.config.ts`: Mongo connect/disconnect with pooling
 - `Backend/src/core/config/logger.config.ts`: logger configuration
+- `Backend/src/core/config/app.config.ts`: now also exposes Upstash Redis REST-backed queue connection config
 - `Backend/src/core/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
+
+### Queue Infrastructure
+
+- `Backend/src/core/queue/*`: BullMQ/Redis queue bootstrap, queue registry, queue service, and graceful shutdown handling
+  - `queue.config.ts`: queue names and default retry/backoff behavior
+  - `queue.registry.ts`: queue instance initialization/caching and cleanup
+  - `queue.service.ts`: job enqueue helpers such as sync-account job submission
+  - `redis.connection.ts`: shared Upstash Redis connection for queue processing
+  - `index.ts`: queue startup/shutdown hooks used by the server lifecycle
+- `Backend/src/core/queue/__tests__/queue.service.test.ts`: queue integration coverage for sync job enqueue flow
 
 ### Middleware and Request Flow
 
@@ -51,6 +62,7 @@
   - Change password via Auth0 Management API
 - Demo (`Backend/src/modules/demo/*`)
   - Cat fact sample endpoint
+  - Queue-sync demo endpoint for manually enqueuing sync-account jobs
 - Utils route (`Backend/src/modules/utils/index.ts`)
   - Decrypt helper and account-token debug endpoint (auth protected)
 
@@ -230,11 +242,13 @@
 8. Compose recipient search uses provider contacts/people APIs to suggest and add recipients as chips while typing.
 9. Sidebar navigation builds connected account inbox entries dynamically from the fetched account list while preserving direct navigation to parent sections.
 10. Background sync and mailbox views still limit operational flows to active accounts only.
+11. Backend now includes queue infrastructure for future asynchronous account-sync execution, with Redis-backed job enqueue support and graceful queue shutdown handling.
 
 ## Important Notes
 
 - Backend and frontend both now use barrel exports for shared types/utilities/hooks/stores to reduce deep relative imports.
 - Backend architecture now separates core concerns into `core/*`, third-party provider integrations into `integrations/*`, and reusable helpers into `shared/utils/*`.
+- Backend queue infrastructure now lives under `Backend/src/core/queue/*` and is configured for BullMQ with Upstash Redis connectivity.
 - Frontend runtime API base URL and Auth0 route helpers are now centralized in `Frontend/src/shared/api/endpoints.ts`.
 - Backend auth middleware now validates Auth0 JWTs for protected routes.
 - Backend now uses structured app/provider error classes for cleaner API error responses.

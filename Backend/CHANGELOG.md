@@ -7,6 +7,27 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Created queuing infrastructure using **BullMQ** connected to **Upstash Redis** (TCP/TLS).
+- Added `QueueService.addSyncAccountJob` to queue account sync tasks with priorities.
+- Added graceful shutdown handlers for queues and Redis connections in `src/server.ts` matching `SIGINT` and `SIGTERM`.
+- Added test endpoint `POST /api/demo/queue-sync` for enqueuing sync jobs locally.
+- Added Jest integration test for the `QueueService` verifying Upstash connectivity.
+- Added BullMQ/Redis queue infrastructure under `Backend/src/core/queue/*` for future background account sync execution.
+- Added queue lifecycle startup/shutdown hooks in server boot flow.
+- Added demo endpoint support to enqueue sync-account jobs for queue testing.
+- Added queue integration tests and background-sync implementation planning docs under `Backend/docs/plans/*`.
+
+### Changed
+- Configured Jest to resolve ES Module `.js` imports to `.ts` source files and map project-scoped TypeScript path aliases.
+- Updated backend runtime and environment config to support Upstash Redis queue connectivity.
+- Updated Jest config and package dependencies to support the new queue architecture and alias-based test resolution.
+- Updated Sentry Express error-handler setup to the current SDK integration pattern.
+
+### Fixed
+- Fixed a compilation mismatch with Sentry's express error handler under Express 5.
+- Improved backend shutdown behavior by closing queue and Redis resources gracefully on termination signals.
+
 ## [1.4.1] - 2026-06-29
 
 ### Added
@@ -199,7 +220,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1
 [1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0
 [1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1
