@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
 
@@ -37,7 +38,14 @@ class EnvConfig {
         dotenv?.config();
         if (process.env.NODE_ENV) {
             const envFilePath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
-            dotenv.config({ path: envFilePath });
+            if (fs.existsSync(envFilePath)) {
+                dotenv.config({ path: envFilePath });
+            } else if (process.env.NODE_ENV === 'test') {
+                const fallbackPath = path.resolve(process.cwd(), '.env.local');
+                dotenv.config({ path: fallbackPath });
+            } else {
+                dotenv.config({ path: envFilePath });
+            }
         } else {
             const envFilePath = path.resolve(process.cwd(), `.env.local`);
             dotenv.config({ path: envFilePath });

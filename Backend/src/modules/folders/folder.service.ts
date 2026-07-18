@@ -1,6 +1,4 @@
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { GmailService } from 'integrations/gmail/gmail.service.js';
-import { OutlookService } from 'integrations/outlook/outlook.service.js';
 import { AccountProvider, PaginatedDataResponse, UpdateAPIResponse } from '@types';
 import { getDateRange, logger } from 'shared/utils/index.js';
 import { FilterQuery } from 'mongoose';
@@ -8,15 +6,10 @@ import { FOLDER_LIST_DB_FIELD_MAPPING } from './folder.constants.js';
 import { FolderDocument } from './folder.model.js';
 import { FolderRepository } from './folder.repository.js';
 import { GetAllFoldersFilters } from './folder.types.js';
+import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 
 export class FolderService {
-    private gmailService: GmailService;
-    private outlookService: OutlookService;
-
-    constructor() {
-        this.gmailService = new GmailService();
-        this.outlookService = new OutlookService();
-    }
+    constructor() {}
 
     public async syncFolders(accountId: string): Promise<UpdateAPIResponse> {
         try {
@@ -24,41 +17,13 @@ export class FolderService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            if (account.provider === AccountProvider.GMAIL) {
-                const result = await this.syncGmailLabels(accountId, account.userId);
-                return result;
-            } else if (account.provider === AccountProvider.OUTLOOK) {
-                const result = await this.syncOutlookFolders(accountId, account.userId);
-                return result;
-            }
-            return { status: false, message: 'Invalid provider' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in FolderService.syncFolders: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async syncGmailLabels(accountId: string, userId: string): Promise<UpdateAPIResponse> {
-        try {
-            const result = await this.gmailService.getAllLabels(accountId, userId);
-            await FolderRepository.addFoldersInBulk(result);
-            return { status: true, message: 'Labels synced successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in FolderService.syncGmailLabels: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async syncOutlookFolders(accountId: string, userId: string): Promise<UpdateAPIResponse> {
-        try {
-            const result = await this.outlookService.getAllFolders(accountId, userId);
-            await FolderRepository.addFoldersInBulk(result);
+            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            const folderInputs = await provider.getAllFolders(accountId, account.userId);
+            await FolderRepository.addFoldersInBulk(folderInputs);
             return { status: true, message: 'Folders synced successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in FolderService.syncOutlookFolders: ${errorMessage}`, { error: err });
+            logger.error(`Error in FolderService.syncFolders: ${errorMessage}`, { error: err });
             throw err;
         }
     }
@@ -134,14 +99,8 @@ export class FolderService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            if (account.provider === AccountProvider.GMAIL) {
-                const result = await this.gmailService.createLabel(account.userId, accountId, folderName);
-                return result;
-            } else if (account.provider === AccountProvider.OUTLOOK) {
-                const result = await this.outlookService.createFolder(account.userId, accountId, folderName, false);
-                return result;
-            }
-            return { status: false, message: 'Invalid provider' };
+            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            return provider.createFolder(account.userId, accountId, folderName);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in FolderService.createFolder: ${errorMessage}`, { error: err });
@@ -155,14 +114,8 @@ export class FolderService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            if (account.provider === AccountProvider.GMAIL) {
-                const result = await this.gmailService.updateLabel(accountId, folderId, folderName);
-                return result;
-            } else if (account.provider === AccountProvider.OUTLOOK) {
-                const result = await this.outlookService.updateFolder(accountId, folderId, folderName);
-                return result;
-            }
-            return { status: false, message: 'Invalid provider' };
+            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            return provider.updateFolder(accountId, folderId, folderName);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in FolderService.updateFolder: ${errorMessage}`, { error: err });
@@ -180,14 +133,8 @@ export class FolderService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            if (account.provider === AccountProvider.GMAIL) {
-                const result = await this.gmailService.deleteLabel(String(account._id), folderId);
-                return result;
-            } else if (account.provider === AccountProvider.OUTLOOK) {
-                const result = await this.outlookService.deleteFolder(String(account._id), folderId);
-                return result;
-            }
-            return { status: false, message: 'Invalid provider' };
+            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            return provider.deleteFolder(folder.accountId, folderId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in FolderService.deleteFolder: ${errorMessage}`, { error: err });

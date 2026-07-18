@@ -20,6 +20,7 @@
 - `Backend/src/core/config/db.config.ts`: Mongo connect/disconnect with pooling
 - `Backend/src/core/config/logger.config.ts`: logger configuration
 - `Backend/src/core/config/app.config.ts`: now also exposes Upstash Redis REST-backed queue connection config
+- `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
 - `Backend/src/core/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
 
 ### Queue Infrastructure
@@ -46,6 +47,7 @@
   - Connect/callback OAuth for Gmail/Outlook
   - Sync one/all accounts
   - Account list/details/delete
+  - Provider callback token exchange, profile fetch, and sync execution now route through `EmailProviderFactory`
 - Emails (`Backend/src/modules/emails/*`)
   - Unified list, per-account list, email details
   - Search, delete, archive, star, unread
@@ -53,10 +55,12 @@
   - Search recipient suggestions across connected provider contacts
   - Supports account/date/folder-based filtering
   - Uses provider APIs + DB projection/sorting
+  - Provider-specific email details and mail actions now dispatch through shared provider strategy instances
 - Folders (`Backend/src/modules/folders/*`)
   - Folder sync from providers
   - Folder list/details
   - Folder create/update/delete
+  - Folder sync and CRUD now dispatch through shared provider strategy instances
 - Users (`Backend/src/modules/user/*`)
   - Session-scoped user/profile fetch/update
   - Change password via Auth0 Management API
@@ -68,6 +72,11 @@
 
 ### Integrations
 
+- Email provider abstraction (`Backend/src/integrations/email/*`)
+  - `email.provider.ts`: shared provider contract for OAuth, sync, email actions, compose, contact search, and folder CRUD
+  - `email.provider.factory.ts`: provider selector and singleton cache for Gmail and Outlook adapters
+  - `email.provider.types.ts`: shared auth/profile/send-result types used by provider implementations
+  - `__tests__/provider.factory.test.ts`: factory coverage for provider selection and singleton behavior
 - Gmail (`Backend/src/integrations/gmail/*`)
   - OAuth token exchange/refresh
   - Fetch history + messages
@@ -75,6 +84,7 @@
   - Label CRUD + label sync into folders
   - Send outgoing mail and upsert sent copy locally
   - Search Google other contacts for compose recipient suggestions
+  - `gmail.provider.ts`: adapts Gmail service capabilities to the shared provider contract
 - Outlook (`Backend/src/integrations/outlook/*`)
   - OAuth token exchange/refresh
   - Fetch profile/messages and message details
@@ -83,6 +93,7 @@
   - Folder CRUD + folder sync into folders
   - Create/send outgoing mail and upsert sent copy locally
   - Search Microsoft Graph people for compose recipient suggestions
+  - `outlook.provider.ts`: adapts Outlook service capabilities to the shared provider contract
 - Auth0 (`Backend/src/integrations/auth0/*`)
   - Management API token + user/profile/password operations
 

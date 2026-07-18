@@ -17,16 +17,28 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added queue lifecycle startup/shutdown hooks in server boot flow.
 - Added demo endpoint support to enqueue sync-account jobs for queue testing.
 - Added queue integration tests and background-sync implementation planning docs under `Backend/docs/plans/*`.
+- Added a shared email provider abstraction layer under `Backend/src/integrations/email/*` for connector-agnostic mail operations.
+- Added provider adapter classes for Gmail and Outlook to unify auth, sync, email actions, contact search, compose, and folder operations.
+- Added provider factory unit tests covering provider selection, singleton reuse, and unsupported-provider handling.
+- Added implementation planning documents for background sync phases 1 through 3 under `Backend/.agents/implementations/*`.
 
 ### Changed
 - Configured Jest to resolve ES Module `.js` imports to `.ts` source files and map project-scoped TypeScript path aliases.
 - Updated backend runtime and environment config to support Upstash Redis queue connectivity.
 - Updated Jest config and package dependencies to support the new queue architecture and alias-based test resolution.
 - Updated Sentry Express error-handler setup to the current SDK integration pattern.
+- Refactored account OAuth callback and sync flows to use the shared provider factory instead of provider-specific branching.
+- Refactored email detail retrieval, delete/archive/star/unread actions, compose flow, and contact search to execute through shared provider strategy instances.
+- Refactored folder sync and folder create/update/delete flows to use provider-managed folder operations instead of direct Gmail/Outlook service wiring.
+- Updated test env loading to fall back to `.env.local` when `.env.test` is not present.
+- Updated Jest alias mapping to resolve `.js` imports for `@modules`, `@integrations`, and `@routes`.
+- Updated ESLint rules to enforce unused import cleanup with underscore-based unused-argument exceptions.
+- Renamed the lint autofix script from `lint:fix` to `lint-fix`.
 
 ### Fixed
 - Fixed a compilation mismatch with Sentry's express error handler under Express 5.
 - Improved backend shutdown behavior by closing queue and Redis resources gracefully on termination signals.
+- Fixed Express not-found and error-handler signatures to align with current middleware usage without unused-parameter issues.
 
 ## [1.4.1] - 2026-06-29
 

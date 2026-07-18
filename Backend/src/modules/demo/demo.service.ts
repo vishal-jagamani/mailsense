@@ -3,8 +3,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { logger } from '../../shared/utils/logger.js';
 
 export class DemoService {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async getCatFact(id: number): Promise<void> {
+    async getCatFact(_id: number): Promise<void> {
         try {
             const options: AxiosRequestConfig = {
                 url: `${config.url}/fact`,

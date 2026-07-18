@@ -4,8 +4,7 @@ import { NODE_ENV } from '@config';
 import { AppError } from '@errors';
 import { logger } from 'shared/utils/index.js';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const errorHandler = (err: unknown, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = (err: unknown, req: Request, res: Response, _next: NextFunction) => {
     let error: AppError;
 
     if (err instanceof AppError) {
