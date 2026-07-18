@@ -1,11 +1,10 @@
 import { FilterQuery } from 'mongoose';
 
+import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { GMAIL_LABELS } from '@integrations/gmail/gmail.types.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { GmailService } from '@integrations/gmail/gmail.service.js';
-import { GMAIL_LABELS } from '@integrations/gmail/gmail.types.js';
-import { OutlookService } from '@integrations/outlook/outlook.service.js';
 import { AccountProvider, APIResponse, DATE_RANGE, GetEmailsResponse, PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from '@types';
 import { decompressString, logger } from 'shared/utils/index.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
@@ -14,13 +13,7 @@ import { ComposeEmailBody } from './email.schema.js';
 import { GetAllEmailsFilters, GetFiltersResponse, SearchEmailsParams, SearchOtherContactsResponse } from './email.types.js';
 
 export class EmailService {
-    private gmailService: GmailService;
-    private outlookService: OutlookService;
-
-    constructor() {
-        this.gmailService = new GmailService();
-        this.outlookService = new OutlookService();
-    }
+    constructor() {}
 
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         try {
@@ -176,14 +169,9 @@ export class EmailService {
             const email = await EmailRepository.getEmail(emailId);
             if (!email) throw new Error('Email not found');
             const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
-            if (account?.provider === AccountProvider.OUTLOOK) {
-                const outlookEmailDetails = await this.outlookService.getMessageDetails(email.accountId, email.providerMessageId);
-                return outlookEmailDetails;
-            } else {
-                email.bodyHtml = decompressString(email.bodyHtml);
-                email.bodyPlain = decompressString(email.bodyPlain);
-                return email;
-            }
+            if (!account) throw new Error('Account not found');
+            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            return provider.getMessageDetails(email.accountId, email.providerMessageId, email);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
@@ -223,19 +211,12 @@ export class EmailService {
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
-                if (account.provider === AccountProvider.GMAIL) {
-                    await this.gmailService.deleteEmails(
-                        emails.map((email) => email.providerMessageId),
-                        accountId,
-                        trash,
-                    );
-                } else if (account.provider === AccountProvider.OUTLOOK) {
-                    await this.outlookService.deleteEmails(
-                        emails.map((email) => email.providerMessageId),
-                        accountId,
-                        trash,
-                    );
-                }
+                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                await provider.deleteEmails(
+                    emails.map((email) => email.providerMessageId),
+                    accountId,
+                    trash,
+                );
             }
             return { status: true, message: 'Email deleted successfully' };
         } catch (err) {
@@ -255,19 +236,12 @@ export class EmailService {
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
-                if (account.provider === AccountProvider.GMAIL) {
-                    await this.gmailService.archiveEmails(
-                        emails.map((email) => email.providerMessageId),
-                        accountId,
-                        archive,
-                    );
-                } else if (account.provider === AccountProvider.OUTLOOK) {
-                    await this.outlookService.archiveEmails(
-                        emails.map((email) => email.providerMessageId),
-                        accountId,
-                        archive,
-                    );
-                }
+                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                await provider.archiveEmails(
+                    emails.map((email) => email.providerMessageId),
+                    accountId,
+                    archive,
+                );
             }
             return { status: true, message: 'Emails archived successfully' };
         } catch (err) {
@@ -287,19 +261,12 @@ export class EmailService {
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
-                if (account.provider === AccountProvider.GMAIL) {
-                    await this.gmailService.starEmails(
-                        emails.map((email) => ({ id: String(email._id), providerMessageId: email.providerMessageId })),
-                        accountId,
-                        star,
-                    );
-                } else if (account.provider === AccountProvider.OUTLOOK) {
-                    await this.outlookService.flagEmails(
-                        emails.map((email) => email.providerMessageId),
-                        accountId,
-                        star,
-                    );
-                }
+                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                await provider.starEmails(
+                    emails.map((email) => ({ id: String(email._id), providerMessageId: email.providerMessageId })),
+                    accountId,
+                    star,
+                );
             }
             return { status: true, message: `${star ? 'Starred' : 'Unstarred'} emails successfully` };
         } catch (err) {
@@ -319,19 +286,12 @@ export class EmailService {
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
-                if (account.provider === AccountProvider.GMAIL) {
-                    await this.gmailService.unreadEmails(
-                        emails.map((email) => email.providerMessageId),
-                        accountId,
-                        unread,
-                    );
-                } else if (account.provider === AccountProvider.OUTLOOK) {
-                    await this.outlookService.unreadEmails(
-                        emails.map((email) => email.providerMessageId),
-                        accountId,
-                        unread,
-                    );
-                }
+                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                await provider.unreadEmails(
+                    emails.map((email) => email.providerMessageId),
+                    accountId,
+                    unread,
+                );
             }
             return { status: true, message: 'Unread emails successfully' };
         } catch (err) {
@@ -347,15 +307,9 @@ export class EmailService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            if (account.provider === AccountProvider.GMAIL) {
-                await this.gmailService.sendMessage(composeEmailData);
-                return { status: true, message: 'Email composed successfully' };
-            } else if (account.provider === AccountProvider.OUTLOOK) {
-                await this.outlookService.sendMail(composeEmailData);
-                return { status: true, message: 'Email composed successfully' };
-            } else {
-                throw new Error('Unsupported provider');
-            }
+            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            await provider.sendMail(composeEmailData);
+            return { status: true, message: 'Email composed successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.composeEmail: ${errorMessage}`, { error: err });
@@ -370,12 +324,8 @@ export class EmailService {
                 return { status: false, message: 'No accounts found', data: [] };
             }
             const contacts = accounts.map((account) => {
-                if (account.provider === AccountProvider.GMAIL) {
-                    return this.gmailService.searchContacts(account._id.toString(), searchText).catch(() => []);
-                } else if (account.provider === AccountProvider.OUTLOOK) {
-                    return this.outlookService.searchContacts(account._id.toString(), searchText).catch(() => []);
-                }
-                return Promise.resolve([]);
+                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                return provider.searchContacts(account._id.toString(), searchText).catch(() => []);
             });
             const results = await Promise.all(contacts);
             const allContacts = results.flat();

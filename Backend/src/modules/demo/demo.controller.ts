@@ -37,7 +37,7 @@ export class DemoController {
                     userId,
                     force: !!force,
                 },
-                priority !== undefined ? Number(priority) : 2
+                priority !== undefined ? Number(priority) : 2,
             );
 
             res.status(202).json({

@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 - Improved backend sync infrastructure to support future queued background processing.
+- Improved backend mail-provider handling so account sync, email actions, compose flows, contact search, and folder operations now run through a shared provider strategy layer.
 
 ## [1.4.1] - 2026-06-29
 

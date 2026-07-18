@@ -28,7 +28,12 @@ export class EmailController {
             }
             const sizeValue = size ? Number(size) : 10;
             const pageValue = page ? Number(page) : 1;
-            const filterValue = (filters || { accountId: undefined, dateRange: undefined, folders: undefined, unread: undefined }) as GetAllEmailsFilters;
+            const filterValue = (filters || {
+                accountId: undefined,
+                dateRange: undefined,
+                folders: undefined,
+                unread: undefined,
+            }) as GetAllEmailsFilters;
             const emails = await this.emailService.getAllEmails(userId, sizeValue, pageValue, filterValue);
             res.send(emails);
         } catch (error) {
