@@ -1,6 +1,6 @@
 import { Document, model, Schema } from 'mongoose';
 import validator from 'validator';
-import { AccountAttributes, AccountMetricsAttributes } from './account.types.js';
+import { AccountAttributes, AccountMetricsAttributes, ACCOUNT_LAST_SYNC_STATUS } from './account.types.js';
 
 // ✅ Input type (plain object you pass into create)
 export type AccountInput = Omit<AccountAttributes, 'createdAt' | 'updatedAt'>;
@@ -27,6 +27,11 @@ const AccountSchema = new Schema<AccountDocument>(
         lastSyncedAt: { type: Number, required: true },
         lastSyncCursor: { type: String, required: false },
         active: { type: Boolean, required: true },
+        syncInProgress: { type: Boolean, required: true },
+        lastSyncStatus: { type: String, enum: Object.values(ACCOUNT_LAST_SYNC_STATUS), required: false },
+        lastSyncError: { type: String, required: false },
+        lastSyncStartedAt: { type: Number, required: false },
+        lastSyncCompletedAt: { type: Number, required: false },
     },
     { timestamps: true, versionKey: false },
 );

@@ -95,8 +95,14 @@ Below are the complete file contents proposed for creation or modification.
 import { EmailInput } from '@modules/emails/email.model.js';
 import { GmailUserProfile } from 'integrations/gmail/gmail.types.js';
 import { OutlookUserProfile } from 'integrations/outlook/outlook.types.js';
-import { ProjectionType } from 'mongoose';
+import { Types, ProjectionType } from 'mongoose';
 import { AccountDocument } from './account.model.js';
+
+export enum ACCOUNT_LAST_SYNC_STATUS {
+    PENDING = 'PENDING',
+    SUCCESS = 'SUCCESS',
+    FAILED = 'FAILED',
+}
 
 // Model types
 export interface AccountAttributes {
@@ -116,7 +122,7 @@ export interface AccountAttributes {
     lastSyncCursor: string;
     active: boolean;
     syncInProgress: boolean;
-    lastSyncStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
+    lastSyncStatus?: ACCOUNT_LAST_SYNC_STATUS;
     lastSyncError?: string;
     lastSyncStartedAt?: number;
     lastSyncCompletedAt?: number;
@@ -141,6 +147,31 @@ export interface GetAccountEmailsResponse {
     emails: EmailInput[];
     lastSyncCursor: string;
 }
+
+export enum ACCOUNT_SYNC_JOB_STATUS {
+    PENDING = 'PENDING',
+    RUNNING = 'RUNNING',
+    COMPLETED = 'COMPLETED',
+    FAILED = 'FAILED',
+}
+
+export enum ACCOUNT_SYNC_JOB_TRIGGER_TYPE {
+    MANUAL = 'MANUAL',
+    SCHEDULED = 'SCHEDULED',
+}
+
+export interface SyncJobAttributes {
+    accountId: Types.ObjectId;
+    bullJobId: string;
+    status: ACCOUNT_SYNC_JOB_STATUS;
+    triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE;
+    startedAt: number;
+    completedAt?: number;
+    addedEmailsCount: number;
+    deletedEmailsCount: number;
+    errorMessage?: string;
+    errorStack?: string;
+}
 ```
 
 ### 2. `src/modules/accounts/account.model.ts`
@@ -148,7 +179,7 @@ export interface GetAccountEmailsResponse {
 ```typescript
 import { Document, model, Schema } from 'mongoose';
 import validator from 'validator';
-import { AccountAttributes, AccountMetricsAttributes } from './account.types.js';
+import { AccountAttributes, AccountMetricsAttributes, ACCOUNT_LAST_SYNC_STATUS } from './account.types.js';
 
 // ✅ Input type (plain object you pass into create)
 export type AccountInput = Omit<AccountAttributes, 'createdAt' | 'updatedAt'>;
@@ -176,7 +207,7 @@ const AccountSchema = new Schema<AccountDocument>(
         lastSyncCursor: { type: String, required: false },
         active: { type: Boolean, required: true },
         syncInProgress: { type: Boolean, default: false },
-        lastSyncStatus: { type: String, enum: ['PENDING', 'SUCCESS', 'FAILED'], required: false },
+        lastSyncStatus: { type: String, enum: Object.values(ACCOUNT_LAST_SYNC_STATUS), required: false },
         lastSyncError: { type: String, required: false },
         lastSyncStartedAt: { type: Number, required: false },
         lastSyncCompletedAt: { type: Number, required: false },
@@ -225,19 +256,7 @@ export const AccountMetrics = model<AccountMetricsDocument>('AccountMetrics', Ac
 
 ```typescript
 import { Document, model, Schema } from 'mongoose';
-
-export interface SyncJobAttributes {
-    accountId: string;
-    bullJobId: string;
-    status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-    triggerType: 'manual' | 'scheduled';
-    startedAt: number;
-    completedAt?: number;
-    addedEmailsCount: number;
-    deletedEmailsCount: number;
-    errorMessage?: string;
-    errorStack?: string;
-}
+import { ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, SyncJobAttributes } from './account.types.js';
 
 export type SyncJobInput = Omit<SyncJobAttributes, 'createdAt' | 'updatedAt'>;
 export type SyncJobDocument = Document & SyncJobAttributes;
@@ -248,11 +267,15 @@ const SyncJobSchema = new Schema<SyncJobDocument>(
         bullJobId: { type: String, required: true, unique: true, index: true },
         status: {
             type: String,
-            enum: ['PENDING', 'RUNNING', 'COMPLETED', 'FAILED'],
-            default: 'PENDING',
+            enum: Object.values(ACCOUNT_SYNC_JOB_STATUS),
+            default: ACCOUNT_SYNC_JOB_STATUS.PENDING,
             index: true,
         },
-        triggerType: { type: String, enum: ['manual', 'scheduled'], required: true },
+        triggerType: {
+            type: String,
+            enum: Object.values(ACCOUNT_SYNC_JOB_TRIGGER_TYPE),
+            required: true,
+        },
         startedAt: { type: Number, required: true },
         completedAt: { type: Number, required: false },
         addedEmailsCount: { type: Number, default: 0 },
@@ -293,12 +316,12 @@ export class SyncJobRepository {
 ### 5. `src/workers/base.worker.ts`
 
 ```typescript
+import { logger } from '@utils';
 import { Job, Worker, WorkerOptions } from 'bullmq';
-import { getRedisConnection } from '../core/queue/redis.connection.js';
-import { logger } from '../shared/utils/logger.js';
+import { getRedisConnection } from 'core/queue/redis.connection.js';
 
-export abstract class BaseWorker<TData = any, TResult = any> {
-    protected worker: Worker<TData, TResult>;
+export abstract class BaseWorker<TData, TResult> {
+    protected worker!: Worker<TData, TResult>;
     protected abstract queueName: string;
     protected abstract processJob(job: Job<TData, TResult>): Promise<TResult>;
 
@@ -366,20 +389,21 @@ import { SyncJobRepository } from '../modules/accounts/sync-job.repository.js';
 import { AccountRepository } from '../modules/accounts/account.repository.js';
 import { logger } from '../shared/utils/logger.js';
 import { syncAccountProcessor } from './processors/sync-account.processor.js';
+import { SyncAccountPayload } from '../core/queue/queue.service.js';
 
 export interface SyncJobResult {
     addedEmailsCount: number;
     deletedEmailsCount: number;
 }
 
-export class SyncWorker extends BaseWorker<any, SyncJobResult> {
+export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
     protected queueName = QUEUE_NAMES.SYNC_ACCOUNT;
 
-    protected async processJob(job: Job<any, SyncJobResult>): Promise<SyncJobResult> {
+    protected async processJob(job: Job<SyncAccountPayload, SyncJobResult>): Promise<SyncJobResult> {
         return syncAccountProcessor(job);
     }
 
-    protected async onActive(job: Job<any, SyncJobResult>): Promise<void> {
+    protected async onActive(job: Job<SyncAccountPayload, SyncJobResult>): Promise<void> {
         try {
             const { accountId } = job.data;
             if (job.id) {
@@ -399,7 +423,7 @@ export class SyncWorker extends BaseWorker<any, SyncJobResult> {
         }
     }
 
-    protected async onCompleted(job: Job<any, SyncJobResult>, result: SyncJobResult): Promise<void> {
+    protected async onCompleted(job: Job<SyncAccountPayload, SyncJobResult>, result: SyncJobResult): Promise<void> {
         try {
             const { accountId } = job.data;
             if (job.id) {
@@ -421,7 +445,7 @@ export class SyncWorker extends BaseWorker<any, SyncJobResult> {
         }
     }
 
-    protected async onFailed(job: Job<any, SyncJobResult> | undefined, error: Error): Promise<void> {
+    protected async onFailed(job: Job<SyncAccountPayload, SyncJobResult> | undefined, error: Error): Promise<void> {
         try {
             if (!job) return;
             const { accountId } = job.data;
@@ -457,8 +481,9 @@ import { EmailProviderFactory } from '../../integrations/email/email.provider.fa
 import { AccountProvider } from '../../core/types/index.js';
 import { logger } from '../../shared/utils/logger.js';
 import { SyncJobResult } from '../sync.worker.js';
+import { SyncAccountPayload } from '../../core/queue/queue.service.js';
 
-export async function syncAccountProcessor(job: Job<any, SyncJobResult>): Promise<SyncJobResult> {
+export async function syncAccountProcessor(job: Job<SyncAccountPayload, SyncJobResult>): Promise<SyncJobResult> {
     const { accountId } = job.data;
     logger.info(`Processing background sync for account: ${accountId}`);
 
@@ -865,19 +890,22 @@ export class AccountsService {
 
             const jobIds: string[] = [];
             for (const account of accounts) {
-                const jobId = await QueueService.addSyncAccountJob({
-                    accountId: String(account._id),
-                    userId: account.userId,
-                    force: false,
-                }, 1);
+                const jobId = await QueueService.addSyncAccountJob(
+                    {
+                        accountId: String(account._id),
+                        userId: account.userId,
+                        force: false,
+                    },
+                    1,
+                );
 
                 if (jobId) {
                     jobIds.push(jobId);
                     await SyncJobRepository.createSyncJob({
-                        accountId: String(account._id),
+                        accountId: account._id,
                         bullJobId: jobId,
-                        status: 'PENDING',
-                        triggerType: 'manual',
+                        status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
+                        triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
                         startedAt: Date.now(),
                     });
                 }
@@ -912,18 +940,21 @@ export class AccountsService {
             }
 
             // Enqueue manual sync job with High Priority (Priority 1)
-            const jobId = await QueueService.addSyncAccountJob({
-                accountId,
-                userId: account.userId,
-                force: false,
-            }, 1);
+            const jobId = await QueueService.addSyncAccountJob(
+                {
+                    accountId,
+                    userId: account.userId,
+                    force: false,
+                },
+                1,
+            );
 
             if (jobId) {
                 await SyncJobRepository.createSyncJob({
-                    accountId,
+                    accountId: account._id,
                     bullJobId: jobId,
-                    status: 'PENDING',
-                    triggerType: 'manual',
+                    status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
+                    triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
                     startedAt: Date.now(),
                 });
             }
@@ -953,6 +984,10 @@ export class AccountsService {
 
 ```typescript
 import { syncAccountProcessor } from '../processors/sync-account.processor.js';
+import { IEmailProvider } from '@integrations/email/email.provider.js';
+import { SyncAccountPayload } from 'core/queue/queue.service.js';
+import { Job } from 'bullmq';
+import { SyncJobResult } from '../sync.worker.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderService } from '@modules/folders/folder.service.js';
@@ -964,17 +999,30 @@ jest.mock('@modules/folders/folder.service.js');
 jest.mock('@integrations/email/email.provider.factory.js');
 
 describe('syncAccountProcessor', () => {
-    let mockJob: any;
-    let mockProvider: any;
+    let mockJob: Partial<Job<SyncAccountPayload, SyncJobResult>>;
+    let mockProvider: IEmailProvider;
 
     beforeEach(() => {
         mockJob = {
-            data: { accountId: 'account-123' },
+            data: { accountId: 'account-123', userId: 'user-123' },
             id: 'job-123',
         };
 
         mockProvider = {
             fetchMessages: jest.fn(),
+            getAccessTokenFromCode: jest.fn(),
+            getUserProfileFromAccessToken: jest.fn(),
+            getMessageDetails: jest.fn(),
+            deleteEmails: jest.fn(),
+            archiveEmails: jest.fn(),
+            unreadEmails: jest.fn(),
+            starEmails: jest.fn(),
+            sendMail: jest.fn(),
+            searchContacts: jest.fn(),
+            getAllFolders: jest.fn(),
+            createFolder: jest.fn(),
+            updateFolder: jest.fn(),
+            deleteFolder: jest.fn(),
         };
 
         (EmailProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);
@@ -995,18 +1043,18 @@ describe('syncAccountProcessor', () => {
         };
 
         (AccountRepository.getAccountById as jest.Mock).mockResolvedValue(mockAccount);
-        mockProvider.fetchMessages.mockResolvedValue({
-            addedEmails: [{ id: 'email-1', accountId: 'account-123' }],
+        jest.mocked(mockProvider.fetchMessages).mockResolvedValue({
+            addedEmails: [{ providerMessageId: 'email-1', accountId: 'account-123' }],
             deletedEmailIds: ['email-old'],
             newCursor: 'cursor-new',
         });
 
-        const result = await syncAccountProcessor(mockJob);
+        const result = await syncAccountProcessor(mockJob as Job<SyncAccountPayload, SyncJobResult>);
 
         expect(AccountRepository.getAccountById).toHaveBeenCalledWith('account-123');
         expect(mockProvider.fetchMessages).toHaveBeenCalledWith('account-123', 'cursor-old');
         expect(EmailRepository.deleteManyEmails).toHaveBeenCalledWith(['email-old']);
-        expect(EmailRepository.upsertEmailsInBulk).toHaveBeenCalledWith([{ id: 'email-1', accountId: 'account-123' }]);
+        expect(EmailRepository.upsertEmailsInBulk).toHaveBeenCalledWith([{ providerMessageId: 'email-1', accountId: 'account-123' }]);
         expect(AccountRepository.updateAccount).toHaveBeenCalledWith('account-123', {
             lastSyncedAt: expect.any(Number),
             lastSyncCursor: 'cursor-new',
@@ -1024,19 +1072,20 @@ describe('syncAccountProcessor', () => {
         };
 
         (AccountRepository.getAccountById as jest.Mock).mockResolvedValue(mockAccount);
-        mockProvider.fetchMessages
+        jest.mocked(mockProvider.fetchMessages)
             .mockResolvedValueOnce(null) // Incremental returns null
             .mockResolvedValueOnce({
-                addedEmails: [{ id: 'email-2', accountId: 'account-123' }],
+                addedEmails: [{ providerMessageId: 'email-2', accountId: 'account-123' }],
+                deletedEmailIds: [],
                 newCursor: 'cursor-full-new',
             }); // Full sync returns emails
 
-        const result = await syncAccountProcessor(mockJob);
+        const result = await syncAccountProcessor(mockJob as Job<SyncAccountPayload, SyncJobResult>);
 
         expect(mockProvider.fetchMessages).toHaveBeenNthCalledWith(1, 'account-123', null);
         expect(mockProvider.fetchMessages).toHaveBeenNthCalledWith(2, 'account-123');
         expect(EmailRepository.deleteEmailsByAccountId).toHaveBeenCalledWith('account-123');
-        expect(EmailRepository.upsertEmailsInBulk).toHaveBeenCalledWith([{ id: 'email-2', accountId: 'account-123' }]);
+        expect(EmailRepository.upsertEmailsInBulk).toHaveBeenCalledWith([{ providerMessageId: 'email-2', accountId: 'account-123' }]);
         expect(AccountRepository.updateAccount).toHaveBeenCalledWith('account-123', {
             lastSyncedAt: expect.any(Number),
             lastSyncCursor: 'cursor-full-new',

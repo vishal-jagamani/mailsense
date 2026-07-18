@@ -1,22 +1,19 @@
 import { MAILSENSE_BASE_URL } from '@config';
 import { ACCOUNT_PROVIDERS } from '@constants';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
-import { FolderService } from '@modules/folders/folder.service.js';
-import { AccountProvider, AccountProviderType, SuccessAPIResponse, UpdateAPIResponse } from '@types';
+import { AccountProvider, AccountProviderType, UpdateAPIResponse } from '@types';
+import { QueueService } from 'core/queue/queue.service.js';
 import * as GmailUtils from 'integrations/gmail/gmail.utils.js';
 import * as OutlookUtils from 'integrations/outlook/outlook.utils.js';
 import { decrypt, encrypt, logger } from 'shared/utils/index.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
+import { ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE } from './account.types.js';
+import { SyncJobRepository } from './sync-job.repository.js';
 
 export class AccountsService {
-    private folderService: FolderService;
-
-    constructor() {
-        this.folderService = new FolderService();
-    }
+    constructor() {}
 
     /**
      * Fetches an account from the database by ID.
@@ -164,12 +161,34 @@ export class AccountsService {
         }
     }
 
-    async syncAccounts(userId: string): Promise<SuccessAPIResponse> {
+    async syncAccounts(userId: string): Promise<{ status: boolean; message: string; jobIds: string[] }> {
         try {
             const accounts = await AccountRepository.getAccounts({ userId, active: true });
-            if (!accounts.length) return { status: true, message: 'Accounts not found' };
-            this.syncAllAccounts(accounts);
-            return { status: true, message: 'Accounts sync started!' };
+            if (!accounts.length) return { status: true, message: 'Accounts not found', jobIds: [] };
+
+            const jobIds: string[] = [];
+            for (const account of accounts) {
+                const jobId = await QueueService.addSyncAccountJob(
+                    {
+                        accountId: String(account._id),
+                        userId: account.userId,
+                        force: false,
+                    },
+                    1,
+                );
+
+                if (jobId) {
+                    jobIds.push(jobId);
+                    await SyncJobRepository.createSyncJob({
+                        accountId: account._id,
+                        bullJobId: jobId,
+                        status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
+                        triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
+                        startedAt: Date.now(),
+                    });
+                }
+            }
+            return { status: true, message: 'Accounts sync started!', jobIds };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccounts: ${errorMessage}`, { error: err });
@@ -177,29 +196,18 @@ export class AccountsService {
         }
     }
 
-    private async syncAllAccounts(accounts: AccountDocument[]) {
+    async syncAccount(accountId: string): Promise<{ status: boolean; message: string; jobId?: string }> {
         try {
-            for (const account of accounts) {
-                await this.syncAccount(String(account._id));
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.syncAllAccounts: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async syncAccount(accountId: string): Promise<SuccessAPIResponse> {
-        try {
-            logger.info('Account Syncing Started', { accountId });
+            logger.info('Account Syncing Requested', { accountId });
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account)
+            if (!account) {
                 throw Object.assign(new Error('Account not found'), {
                     status: 404,
                     isOperational: true,
                     description: 'Given account ID does not exist',
                     suggestedAction: 'Please check the account ID',
                 });
+            }
             if (!account.active) {
                 throw Object.assign(new Error('Account is not active'), {
                     status: 400,
@@ -208,69 +216,31 @@ export class AccountsService {
                     suggestedAction: 'Please activate the account',
                 });
             }
-            this.startAccountSync(accountId, account);
-            return { status: true, message: 'Account sync started!' };
+
+            // Enqueue manual sync job with High Priority (Priority 1)
+            const jobId = await QueueService.addSyncAccountJob(
+                {
+                    accountId,
+                    userId: account.userId,
+                    force: false,
+                },
+                1,
+            );
+
+            if (jobId) {
+                await SyncJobRepository.createSyncJob({
+                    accountId: account._id,
+                    bullJobId: jobId,
+                    status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
+                    triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
+                    startedAt: Date.now(),
+                });
+            }
+
+            return { status: true, message: 'Account sync queued successfully!', jobId };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async startAccountSync(accountId: string, account: AccountDocument): Promise<void> {
-        try {
-            await this.syncAccountDetails(accountId, account);
-            await this.folderService.syncFolders(accountId);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.startAccountSync: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async syncAccountDetails(accountId: string, account: AccountDocument): Promise<UpdateAPIResponse> {
-        try {
-            const emailProvider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
-            const historyDetails = await emailProvider.fetchMessages(accountId, account.lastSyncCursor);
-
-            let newEmails: EmailInput[] | Partial<EmailInput>[] = [];
-            let newCursor: string = '';
-
-            if (historyDetails) {
-                newEmails = historyDetails.addedEmails;
-                newCursor = historyDetails.newCursor;
-                await EmailRepository.deleteManyEmails(historyDetails.deletedEmailIds);
-            } else {
-                const fullSyncResult = await emailProvider.fetchMessages(accountId);
-                if (fullSyncResult) {
-                    newEmails = fullSyncResult.addedEmails;
-                    newCursor = fullSyncResult.newCursor;
-                }
-                await EmailRepository.deleteEmailsByAccountId(accountId);
-            }
-
-            if (newEmails.length) {
-                await EmailRepository.upsertEmailsInBulk(newEmails);
-            }
-            await this.updateAccountSyncDetails(accountId, newCursor);
-            return { status: true, message: 'Account synced successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.syncAccountDetails: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async updateAccountSyncDetails(accountId: string, lastSyncCursor: string): Promise<void> {
-        try {
-            const updateAccountSyncDetails: Partial<AccountInput> = {
-                lastSyncedAt: Date.now(),
-                lastSyncCursor,
-            };
-            await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.updateAccountSyncDetails: ${errorMessage}`, { error: err });
             throw err;
         }
     }

@@ -30,8 +30,16 @@
   - `queue.registry.ts`: queue instance initialization/caching and cleanup
   - `queue.service.ts`: job enqueue helpers such as sync-account job submission
   - `redis.connection.ts`: shared Upstash Redis connection for queue processing
-  - `index.ts`: queue startup/shutdown hooks used by the server lifecycle
+  - `index.ts`: queue startup/shutdown hooks used by the server lifecycle, including sync worker startup and teardown
 - `Backend/src/core/queue/__tests__/queue.service.test.ts`: queue integration coverage for sync job enqueue flow
+
+### Workers
+
+- `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, and lifecycle event hooks
+- `Backend/src/workers/sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
+- `Backend/src/workers/processors/sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs
+- `Backend/src/workers/worker.types.ts`: shared worker result types
+- `Backend/src/workers/__tests__/sync.worker.test.ts`: coverage for incremental and full background sync processor flows
 
 ### Middleware and Request Flow
 
@@ -48,6 +56,7 @@
   - Sync one/all accounts
   - Account list/details/delete
   - Provider callback token exchange, profile fetch, and sync execution now route through `EmailProviderFactory`
+  - Sync requests now enqueue background jobs and persist sync-job tracking records
 - Emails (`Backend/src/modules/emails/*`)
   - Unified list, per-account list, email details
   - Search, delete, archive, star, unread
@@ -101,6 +110,8 @@
 
 - `Backend/src/modules/accounts/account.model.ts`
   - `Account`, `AccountMetrics`
+- `Backend/src/modules/accounts/sync-job.model.ts`
+  - `SyncJob` for queued account-sync lifecycle tracking
 - `Backend/src/modules/emails/email.model.ts`
   - `Email` with indexes on `(accountId, providerMessageId)`, date/folder access patterns
 - `Backend/src/modules/folders/folder.model.ts`
@@ -117,6 +128,7 @@
 - `Backend/src/shared/utils/common.ts`: reusable date-range helpers
 - `Backend/src/core/errors/AppError.ts`: base structured application error
 - `Backend/src/core/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
+- `Backend/src/modules/accounts/account.types.ts`: account sync status enums and sync-job lifecycle/trigger types
 
 ### API Surface (mounted at `/api`)
 
