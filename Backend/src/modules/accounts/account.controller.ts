@@ -82,8 +82,8 @@ export class AccountsController {
         try {
             const userId = req.user?.id;
             if (!userId) throw new Error('User ID is required');
-            const emails = await this.accountsService.syncAccounts(String(userId));
-            res.send(emails);
+            const response = await this.accountsService.syncAccounts(String(userId));
+            res.status(202).send(response);
         } catch (error) {
             next(error);
         }
@@ -92,8 +92,8 @@ export class AccountsController {
     public syncAccount = async (req: Request<GetAccountDetailsSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const accountId = req.params.accountId;
-            this.accountsService.syncAccount(accountId);
-            res.send(true);
+            const response = await this.accountsService.syncAccount(accountId);
+            res.status(202).send(response);
         } catch (error) {
             next(error);
         }

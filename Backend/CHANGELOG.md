@@ -21,6 +21,9 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added provider adapter classes for Gmail and Outlook to unify auth, sync, email actions, contact search, compose, and folder operations.
 - Added provider factory unit tests covering provider selection, singleton reuse, and unsupported-provider handling.
 - Added implementation planning documents for background sync phases 1 through 3 under `Backend/.agents/implementations/*`.
+- Added sync-job persistence model and repository to track queued account sync execution state, trigger type, counts, and failures.
+- Added background worker runtime under `Backend/src/workers/*` with a reusable base worker, sync worker, sync processor, and worker test coverage.
+- Added background sync phase 4 implementation planning under `Backend/.agents/implementations/background-sync-phase-4.md`.
 
 ### Changed
 - Configured Jest to resolve ES Module `.js` imports to `.ts` source files and map project-scoped TypeScript path aliases.
@@ -34,11 +37,15 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated Jest alias mapping to resolve `.js` imports for `@modules`, `@integrations`, and `@routes`.
 - Updated ESLint rules to enforce unused import cleanup with underscore-based unused-argument exceptions.
 - Renamed the lint autofix script from `lint:fix` to `lint-fix`.
+- Updated accounts sync APIs to enqueue background jobs, return `202 Accepted`, and persist job IDs for manual sync requests.
+- Updated account sync status typing to use shared enums for last-sync state and sync-job lifecycle state.
+- Updated queue startup to initialize and manage the sync worker lifecycle alongside queue registry setup and shutdown.
 
 ### Fixed
 - Fixed a compilation mismatch with Sentry's express error handler under Express 5.
 - Improved backend shutdown behavior by closing queue and Redis resources gracefully on termination signals.
 - Fixed Express not-found and error-handler signatures to align with current middleware usage without unused-parameter issues.
+- Improved sync-state updates by recording running, completed, and failed background job outcomes against both accounts and sync-job records.
 
 ## [1.4.1] - 2026-06-29
 
