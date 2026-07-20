@@ -8,6 +8,10 @@ export interface SyncAccountPayload {
     force?: boolean;
 }
 
+export interface RefreshTokenPayload {
+    accountId: string;
+}
+
 export class QueueService {
     /**
      * Enqueues a sync job for a specific user email account
@@ -24,6 +28,31 @@ export class QueueService {
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             logger.error(`❌ Failed to enqueue sync account job: ${msg}`, { error, payload });
+            throw error;
+        }
+    }
+
+    /**
+     * Enqueues a token refresh job
+     */
+    public static async addRefreshTokenJob(payload: RefreshTokenPayload): Promise<string | undefined> {
+        try {
+            const queue = getQueue(QUEUE_NAMES.REFRESH_TOKEN);
+            const jobName = `refresh:${payload.accountId}`;
+
+            const job = await queue.add(jobName, payload, {
+                attempts: 2,
+                backoff: {
+                    type: 'exponential',
+                    delay: 2000,
+                },
+            });
+
+            logger.info(`🔄 Job ${job.id} successfully added to queue ${QUEUE_NAMES.REFRESH_TOKEN}`);
+            return job.id;
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            logger.error(`❌ Failed to enqueue token refresh job: ${msg}`, { error, payload });
             throw error;
         }
     }

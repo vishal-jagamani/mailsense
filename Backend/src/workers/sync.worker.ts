@@ -1,8 +1,10 @@
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_LAST_SYNC_STATUS } from '@modules/accounts/account.types.js';
+import { ACCOUNT_LAST_SYNC_STATUS, ACCOUNT_SYNC_JOB_STATUS } from '@modules/accounts/account.types.js';
 import { SyncJobRepository } from '@modules/accounts/sync-job.repository.js';
 import { logger } from '@utils';
 import { Job } from 'bullmq';
+import { eventBus } from 'core/events/event-bus.js';
+import { SystemEvent } from 'core/events/event.types.js';
 import { QUEUE_NAMES } from 'core/queue/queue.config.js';
 import { SyncAccountPayload } from 'core/queue/queue.service.js';
 import { BaseWorker } from './base.worker.js';
@@ -51,6 +53,15 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
                 syncInProgress: false,
                 lastSyncStatus: ACCOUNT_LAST_SYNC_STATUS.SUCCESS,
                 lastSyncCompletedAt: Date.now(),
+            });
+
+            // Emit SYNC_COMPLETED event on background sync success
+            eventBus.publish(SystemEvent.SYNC_COMPLETED, {
+                accountId,
+                addedEmailsCount: result?.addedEmailsCount || 0,
+                deletedEmailsCount: result?.deletedEmailsCount || 0,
+                startedAt: job.processedOn || Date.now(),
+                completedAt: Date.now(),
             });
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);

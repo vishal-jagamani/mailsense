@@ -11,6 +11,7 @@ import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
 import { ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE } from './account.types.js';
 import { SyncJobRepository } from './sync-job.repository.js';
+import { SchedulerService } from 'core/queue/scheduler.service.js';
 
 export class AccountsService {
     constructor() {}
@@ -51,6 +52,9 @@ export class AccountsService {
 
     private async initiateAccountDeletion(accountId: string): Promise<void> {
         try {
+            // Remove repeatable job from scheduler
+            await SchedulerService.removeAccountRepeatableJob(accountId);
+
             // Delete account from db
             await AccountRepository.deleteAccount(accountId);
             // Delete emails related to this account
@@ -136,7 +140,6 @@ export class AccountsService {
             const userProfile = await emailProvider.getUserProfileFromAccessToken(access_token);
             const emailAddress = 'email' in userProfile ? userProfile.email : userProfile.mail;
             const account: Partial<AccountInput> = {
-                id: Date.now(),
                 userId: userDetails?.id,
                 provider: provider as AccountProvider,
                 emailAddress,
@@ -152,6 +155,10 @@ export class AccountsService {
                 active: true,
             };
             const savedAccount = await AccountRepository.upsertAccount(account);
+
+            // Register repeatable sync schedulers for newly authenticated accounts
+            await SchedulerService.upsertAccountRepeatableJob(String(savedAccount._id));
+
             this.syncAccount(String(savedAccount._id));
             return MAILSENSE_BASE_URL;
         } catch (err) {
@@ -248,6 +255,12 @@ export class AccountsService {
     public async enableAccount(accountId: string, active: boolean): Promise<UpdateAPIResponse> {
         try {
             await AccountRepository.updateAccount(accountId, { active });
+            if (active) {
+                await SchedulerService.upsertAccountRepeatableJob(accountId);
+            } else {
+                await SchedulerService.removeAccountRepeatableJob(accountId);
+            }
+
             return { status: true, message: `Account ${active ? 'enabled' : 'disabled'} successfully` };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);

@@ -12,7 +12,6 @@ export type AccountMetricsDocument = Document & AccountMetricsAttributes;
 
 const AccountSchema = new Schema<AccountDocument>(
     {
-        id: { type: Number, required: true, unique: true },
         userId: { type: String, required: true },
         provider: { type: String, required: true },
         emailAddress: { type: String, required: true },

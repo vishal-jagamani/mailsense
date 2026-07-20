@@ -10,6 +10,7 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 - Created queuing infrastructure using **BullMQ** connected to **Upstash Redis** (TCP/TLS).
 - Added `QueueService.addSyncAccountJob` to queue account sync tasks with priorities.
+- Added `QueueService.addRefreshTokenJob` for token-refresh background work.
 - Added graceful shutdown handlers for queues and Redis connections in `src/server.ts` matching `SIGINT` and `SIGTERM`.
 - Added test endpoint `POST /api/demo/queue-sync` for enqueuing sync jobs locally.
 - Added Jest integration test for the `QueueService` verifying Upstash connectivity.
@@ -24,6 +25,11 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added sync-job persistence model and repository to track queued account sync execution state, trigger type, counts, and failures.
 - Added background worker runtime under `Backend/src/workers/*` with a reusable base worker, sync worker, sync processor, and worker test coverage.
 - Added background sync phase 4 implementation planning under `Backend/.agents/implementations/background-sync-phase-4.md`.
+- Added dynamic scheduler service for repeatable account sync registration, update, and cleanup based on account activity and sync settings.
+- Added scheduler service tests covering repeatable job registration, rebuild, and removal flows.
+- Added token-refresh worker and refresh-token processor for background credential renewal with Redis-based locking.
+- Added internal event-system bootstrap and background sync milestone publishing support for downstream subscribers.
+- Added background sync phase 5 implementation planning and backend coding-standards guidance under `.agents`.
 
 ### Changed
 - Configured Jest to resolve ES Module `.js` imports to `.ts` source files and map project-scoped TypeScript path aliases.
@@ -40,12 +46,20 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated accounts sync APIs to enqueue background jobs, return `202 Accepted`, and persist job IDs for manual sync requests.
 - Updated account sync status typing to use shared enums for last-sync state and sync-job lifecycle state.
 - Updated queue startup to initialize and manage the sync worker lifecycle alongside queue registry setup and shutdown.
+- Updated queue startup to also initialize system event handlers, start the token-refresh worker, and synchronize repeatable schedulers on boot.
+- Updated account connect, enable/disable, and delete flows to register or remove repeatable sync schedules automatically.
+- Updated email provider contracts so Gmail and Outlook adapters expose access-token refresh capability.
+- Updated sync worker processing to skip inactive or sync-disabled accounts safely instead of failing the job.
+- Updated background sync processing to retry provider sync after inline token refresh on auth-expiry failures.
+- Updated background sync processing to publish internal email-created and sync-completed events for downstream listeners.
+- Removed the redundant numeric `id` field from newly created account payloads and account type definitions.
 
 ### Fixed
 - Fixed a compilation mismatch with Sentry's express error handler under Express 5.
 - Improved backend shutdown behavior by closing queue and Redis resources gracefully on termination signals.
 - Fixed Express not-found and error-handler signatures to align with current middleware usage without unused-parameter issues.
 - Improved sync-state updates by recording running, completed, and failed background job outcomes against both accounts and sync-job records.
+- Improved token-refresh reliability by using a Redis lock to prevent concurrent refresh collisions for the same account.
 
 ## [1.4.1] - 2026-06-29
 

@@ -6,6 +6,7 @@ import { FolderInput } from '@modules/folders/folder.model.js';
 import { OutlookOAuthAccessTokenResponse, UpdateAPIResponse } from '@types';
 import { OutlookService } from './outlook.service.js';
 import { OutlookMessageObjectFull, OutlookUserProfile } from './outlook.types.js';
+import { OutlookApi } from './outlook.api.js';
 
 export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenResponse, OutlookUserProfile, OutlookMessageObjectFull> {
     private outlookService: OutlookService;
@@ -84,5 +85,9 @@ export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenRe
 
     async deleteFolder(accountId: string, folderId: string): Promise<UpdateAPIResponse> {
         return this.outlookService.deleteFolder(accountId, folderId);
+    }
+
+    async refreshAccessToken(accountId: string): Promise<string> {
+        return OutlookApi.refreshAccessToken(accountId);
     }
 }

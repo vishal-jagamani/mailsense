@@ -1,8 +1,9 @@
-import { QueueOptions, ConnectionOptions } from 'bullmq';
+import { ConnectionOptions, QueueOptions } from 'bullmq';
 import { getRedisConnection } from './redis.connection.js';
 
 export const QUEUE_NAMES = {
     SYNC_ACCOUNT: 'sync-account',
+    REFRESH_TOKEN: 'refresh-token',
 } as const;
 
 export type QueueNameType = (typeof QUEUE_NAMES)[keyof typeof QUEUE_NAMES];

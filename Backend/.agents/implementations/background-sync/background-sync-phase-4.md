@@ -99,7 +99,7 @@ export interface SyncCompletedPayload {
 
 export interface EmailCreatedPayload {
     accountId: string;
-    email: EmailInput;
+    email: EmailInput | Partial<EmailInput>;
 }
 
 export interface SystemEventPayloads {
@@ -159,15 +159,19 @@ class EventBus {
     /**
      * Helper to sanitize and summarize payloads for safe logging
      */
-    private getPayloadSummary(event: SystemEvent, payload: any): any {
+    private getPayloadSummary<K extends SystemEvent>(
+        event: K,
+        payload: SystemEventPayloads[K]
+    ): SystemEventPayloads[SystemEvent.SYNC_COMPLETED] | { accountId: string; providerMessageId?: string; subject?: string } {
         if (event === SystemEvent.EMAIL_CREATED) {
+            const emailPayload = payload as SystemEventPayloads[SystemEvent.EMAIL_CREATED];
             return {
-                accountId: payload.accountId,
-                providerMessageId: payload.email.providerMessageId,
-                subject: payload.email.subject,
+                accountId: emailPayload.accountId,
+                providerMessageId: emailPayload.email?.providerMessageId,
+                subject: emailPayload.email?.subject,
             };
         }
-        return payload;
+        return payload as SystemEventPayloads[SystemEvent.SYNC_COMPLETED];
     }
 }
 

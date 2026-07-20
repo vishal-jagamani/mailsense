@@ -15,6 +15,7 @@ export interface IEmailProvider<TAuthToken = IEmailTAuthToken, TUserProfile = IE
     // Auth & Profile
     getAccessTokenFromCode(code: string): Promise<TAuthToken>;
     getUserProfileFromAccessToken(accessToken: string): Promise<TUserProfile>;
+    refreshAccessToken(accountId: string): Promise<string>;
 
     // Core Ingestion & Sync
     fetchMessages(accountId: string, cursor?: string): Promise<SyncResult | null>;

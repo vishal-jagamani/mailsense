@@ -1,10 +1,12 @@
 import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
+import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { GmailOAuthAccessTokenResponse, UpdateAPIResponse } from '@types';
-import { decompressString } from '@utils';
+import { decompressString, decrypt } from '@utils';
+import { GmailApi } from './gmail.client.js';
 import { GmailService } from './gmail.service.js';
 import { GmailMessageObjectFull, GmailUserProfile } from './gmail.types.js';
 
@@ -95,5 +97,13 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
 
     async deleteFolder(accountId: string, folderId: string): Promise<UpdateAPIResponse> {
         return this.gmailService.deleteLabel(accountId, folderId);
+    }
+
+    async refreshAccessToken(accountId: string): Promise<string> {
+        const account = await AccountRepository.getAccountById(accountId);
+        if (!account) {
+            throw new Error(`Account not found for token refresh: ${accountId}`);
+        }
+        return GmailApi.refreshAccessToken(accountId, decrypt(account.refreshToken));
     }
 }
