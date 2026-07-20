@@ -26,18 +26,32 @@
 ### Queue Infrastructure
 
 - `Backend/src/core/queue/*`: BullMQ/Redis queue bootstrap, queue registry, queue service, and graceful shutdown handling
-  - `queue.config.ts`: queue names and default retry/backoff behavior
+  - `queue.config.ts`: queue names and default retry/backoff behavior, including token-refresh queue registration
   - `queue.registry.ts`: queue instance initialization/caching and cleanup
-  - `queue.service.ts`: job enqueue helpers such as sync-account job submission
+  - `queue.service.ts`: job enqueue helpers for sync-account and refresh-token submission
   - `redis.connection.ts`: shared Upstash Redis connection for queue processing
-  - `index.ts`: queue startup/shutdown hooks used by the server lifecycle, including sync worker startup and teardown
+  - `scheduler.service.ts`: synchronizes BullMQ repeatable sync schedules with active/sync-enabled account settings
+  - `index.ts`: queue startup/shutdown hooks used by the server lifecycle, including event bootstrap, worker startup, scheduler sync, and teardown
 - `Backend/src/core/queue/__tests__/queue.service.test.ts`: queue integration coverage for sync job enqueue flow
+- `Backend/src/core/queue/__tests__/scheduler.service.test.ts`: scheduler coverage for repeatable sync job registration and cleanup
+
+### Events
+
+- `Backend/src/core/events/*`: internal event bus and event handlers for background sync milestones
+  - `event-bus.ts`: typed event emitter wrapper with safe subscriber execution and sanitized logging
+  - `event.types.ts`: system event names and payload contracts
+  - `handlers/email-created.handler.ts`: subscriber hook for newly indexed email events
+  - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events
+  - `index.ts`: system-event initialization entry point used during background jobs startup
+- `Backend/src/core/events/__tests__/event-bus.test.ts`: event bus coverage for publish/subscribe behavior and subscriber error isolation
 
 ### Workers
 
 - `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, and lifecycle event hooks
 - `Backend/src/workers/sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
 - `Backend/src/workers/processors/sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs
+- `Backend/src/workers/token-refresh.worker.ts`: worker for refresh-token queue processing
+- `Backend/src/workers/processors/refresh-token.processor.ts`: refreshes provider access tokens with per-account Redis locking
 - `Backend/src/workers/worker.types.ts`: shared worker result types
 - `Backend/src/workers/__tests__/sync.worker.test.ts`: coverage for incremental and full background sync processor flows
 
@@ -57,6 +71,7 @@
   - Account list/details/delete
   - Provider callback token exchange, profile fetch, and sync execution now route through `EmailProviderFactory`
   - Sync requests now enqueue background jobs and persist sync-job tracking records
+  - Account activation, deactivation, creation, and deletion now synchronize repeatable background sync schedules
 - Emails (`Backend/src/modules/emails/*`)
   - Unified list, per-account list, email details
   - Search, delete, archive, star, unread
@@ -82,7 +97,7 @@
 ### Integrations
 
 - Email provider abstraction (`Backend/src/integrations/email/*`)
-  - `email.provider.ts`: shared provider contract for OAuth, sync, email actions, compose, contact search, and folder CRUD
+  - `email.provider.ts`: shared provider contract for OAuth, token refresh, sync, email actions, compose, contact search, and folder CRUD
   - `email.provider.factory.ts`: provider selector and singleton cache for Gmail and Outlook adapters
   - `email.provider.types.ts`: shared auth/profile/send-result types used by provider implementations
   - `__tests__/provider.factory.test.ts`: factory coverage for provider selection and singleton behavior
@@ -93,7 +108,7 @@
   - Label CRUD + label sync into folders
   - Send outgoing mail and upsert sent copy locally
   - Search Google other contacts for compose recipient suggestions
-  - `gmail.provider.ts`: adapts Gmail service capabilities to the shared provider contract
+  - `gmail.provider.ts`: adapts Gmail service capabilities to the shared provider contract, including token refresh via stored refresh token
 - Outlook (`Backend/src/integrations/outlook/*`)
   - OAuth token exchange/refresh
   - Fetch profile/messages and message details
@@ -102,7 +117,7 @@
   - Folder CRUD + folder sync into folders
   - Create/send outgoing mail and upsert sent copy locally
   - Search Microsoft Graph people for compose recipient suggestions
-  - `outlook.provider.ts`: adapts Outlook service capabilities to the shared provider contract
+  - `outlook.provider.ts`: adapts Outlook service capabilities to the shared provider contract, including access-token refresh
 - Auth0 (`Backend/src/integrations/auth0/*`)
   - Management API token + user/profile/password operations
 

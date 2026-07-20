@@ -27,6 +27,7 @@ describe('syncAccountProcessor', () => {
             fetchMessages: jest.fn(),
             getAccessTokenFromCode: jest.fn(),
             getUserProfileFromAccessToken: jest.fn(),
+            refreshAccessToken: jest.fn(),
             getMessageDetails: jest.fn(),
             deleteEmails: jest.fn(),
             archiveEmails: jest.fn(),
@@ -53,6 +54,7 @@ describe('syncAccountProcessor', () => {
             _id: 'account-123',
             provider: 'gmail',
             active: true,
+            syncEnabled: true,
             lastSyncCursor: 'cursor-old',
             userId: 'user-123',
         };
@@ -82,6 +84,7 @@ describe('syncAccountProcessor', () => {
             _id: 'account-123',
             provider: 'gmail',
             active: true,
+            syncEnabled: true,
             lastSyncCursor: null,
             userId: 'user-123',
         };

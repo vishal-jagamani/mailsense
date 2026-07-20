@@ -12,7 +12,6 @@ export enum ACCOUNT_LAST_SYNC_STATUS {
 }
 
 export interface AccountAttributes {
-    id: number;
     userId: string;
     provider: string;
     emailAddress: string;
