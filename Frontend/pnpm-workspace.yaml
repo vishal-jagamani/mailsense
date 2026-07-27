@@ -5,5 +5,3 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@mailsense/types@1.1.2'
 
-overrides:
-  '@mailsense/types': link:../../mailsense-types
