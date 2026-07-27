@@ -2,11 +2,11 @@
 
 import React from 'react';
 
+import { Filter, FilterOption } from '@mailsense/types';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
-import { Filter, FilterOption } from '@shared/types';
 import EmailMenuBarOptions from './EmailMenuBarOptions';
 
 interface EmailListHeaderProps {

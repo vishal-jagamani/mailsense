@@ -1,15 +1,13 @@
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { SyncResult } from '@integrations/email/email.provider.js';
+import { ACCOUNT_PROVIDER, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderService } from '@modules/folders/folder.service.js';
-import { AccountProvider } from '@types';
 import { logger } from '@utils';
 import { Job } from 'bullmq';
 import { eventBus } from '../../core/events/event-bus.js';
-import { SystemEvent } from '../../core/events/event.types.js';
 import { RefreshTokenPayload, SyncAccountPayload } from '../../core/queue/queue.service.js';
-import { SyncJobResult } from '../worker.types.js';
 import { refreshTokenProcessor } from './refresh-token.processor.js';
 
 interface ErrorWithStatus {
@@ -60,7 +58,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
         return { addedEmailsCount: 0, deletedEmailsCount: 0 };
     }
 
-    const emailProvider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+    const emailProvider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
     const folderService = new FolderService();
 
     // 1. Sync Folders & Labels
@@ -108,7 +106,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
 
             // Emit EMAIL_CREATED for each newly indexed message
             for (const email of addedEmails) {
-                eventBus.publish(SystemEvent.EMAIL_CREATED, {
+                eventBus.publish(SYSTEM_EVENT.EMAIL_CREATED, {
                     accountId,
                     email,
                 });
@@ -154,7 +152,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
 
                 // Emit EMAIL_CREATED for each newly indexed message
                 for (const email of addedEmails) {
-                    eventBus.publish(SystemEvent.EMAIL_CREATED, {
+                    eventBus.publish(SYSTEM_EVENT.EMAIL_CREATED, {
                         accountId,
                         email,
                     });

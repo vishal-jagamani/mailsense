@@ -10,4 +10,3 @@ export function initSystemEvents(): void {
 }
 
 export * from './event-bus.js';
-export * from './event.types.js';

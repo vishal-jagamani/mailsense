@@ -1,66 +1,7 @@
+import { OutlookMessageObjectFull } from '@mailsense/types';
 import { EmailInput } from '@modules/emails/email.model.js';
 
-export interface OutlookUserProfile {
-    id: string;
-    displayName: string;
-    givenName: string;
-    surname: string;
-    mail: string;
-}
-
-type OutlookMessageEmailAddress = {
-    name: string;
-    address: string;
-};
-
-export enum OutlookMessageRemovedReason {
-    CREATED = 'created',
-    DELETED = 'deleted',
-    UPDATED = 'updated',
-}
-
-export enum OutlookFolders {
-    INBOX = 'inbox',
-    SENT = 'sentitems',
-    ARCHIVE = 'archive',
-    DRAFTS = 'drafts',
-    DELETED = 'deleteditems',
-    SPAM = 'spam',
-    OUTBOX = 'outbox',
-}
-
-export interface OutlookMessageObjectFull {
-    id: string;
-    receivedDateTime: string;
-    sentDateTime: string;
-    hasAttachments: boolean;
-    subject: string;
-    bodyPreview: string;
-    parentFolderId: string;
-    conversationId: string;
-    conversationIndex: string;
-    isRead: boolean;
-    isDraft: boolean;
-    webLink: string;
-    body: {
-        contentType: string;
-        content: string;
-    };
-    sender: { emailAddress: OutlookMessageEmailAddress };
-    from: { emailAddress: OutlookMessageEmailAddress };
-    toRecipients: { emailAddress: OutlookMessageEmailAddress }[];
-    ccRecipients: { emailAddress: OutlookMessageEmailAddress }[];
-    bccRecipients: { emailAddress: OutlookMessageEmailAddress }[];
-}
-
 // API Responses
-export interface OutlookMessagesResponse {
-    '@odata.context': string;
-    value: OutlookMessageObjectFull[];
-    '@odata.nextLink': string;
-    '@odata.deltaLink': string;
-}
-
 export interface GetOutlookMessagesResponse {
     emails: Partial<EmailInput>[];
     deltaLink: string;

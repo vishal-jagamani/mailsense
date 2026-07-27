@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
-import { AccountAttributes, AccountProviders } from '@entities/account';
+import { AccountProviders } from '@entities/account';
+import { AccountAttributes } from '@mailsense/types';
 
 export interface ProviderAccountGroup {
     provider: AccountProviders;

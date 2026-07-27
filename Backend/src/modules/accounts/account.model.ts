@@ -1,10 +1,10 @@
+import { ACCOUNT_LAST_SYNC_STATUS, AccountAttributes, AccountMetricsAttributes } from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
 import validator from 'validator';
-import { AccountAttributes, AccountMetricsAttributes, ACCOUNT_LAST_SYNC_STATUS } from './account.types.js';
 
 // ✅ Input type (plain object you pass into create)
-export type AccountInput = Omit<AccountAttributes, 'createdAt' | 'updatedAt'>;
-export type AccountMetricsInput = Omit<AccountMetricsAttributes, 'createdAt' | 'updatedAt'>;
+export type AccountInput = Omit<AccountAttributes, '_id' | 'createdAt' | 'updatedAt'>;
+export type AccountMetricsInput = Omit<AccountMetricsAttributes, '_id' | 'createdAt' | 'updatedAt'>;
 
 // ✅ Document type (what comes back from Mongo)
 export type AccountDocument = Document & AccountAttributes;

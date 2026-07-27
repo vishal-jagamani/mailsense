@@ -1,7 +1,7 @@
+import { FolderAttributes } from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
-import { FolderAttributes } from './folder.types.js';
 
-export type FolderInput = Omit<FolderAttributes, 'createdAt' | 'updatedAt'>;
+export type FolderInput = Omit<FolderAttributes, '_id' | 'createdAt' | 'updatedAt'>;
 
 export type FolderDocument = Document & FolderAttributes;
 

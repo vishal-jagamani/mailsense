@@ -1,6 +1,5 @@
-import { CreateFolderBodyParams } from '@entities/folder';
+import { CreateFolderBodyParams, UpdateAPIResponse } from '@mailsense/types';
 import { FOLDER_KEYS } from '@shared/api';
-import { UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFolder, deleteFolder, updateFolder } from './folder.api';
 

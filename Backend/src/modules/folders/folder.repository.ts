@@ -1,9 +1,21 @@
-import { FilterQuery, ProjectionType, SortOrder } from 'mongoose';
-import { Folder, FolderDocument } from './folder.model.js';
+import { AnyBulkWriteOperation, FilterQuery, ProjectionType, SortOrder } from 'mongoose';
+import { Folder, FolderDocument, FolderInput } from './folder.model.js';
 
 export class FolderRepository {
-    public static async addFoldersInBulk(folders: Partial<FolderDocument>[]): Promise<Partial<FolderDocument>[]> {
-        return await Folder.insertMany(folders);
+    public static async upsertFoldersInBulk(folders: Partial<FolderInput>[]) {
+        if (folders.length === 0) return { ok: 1 };
+        const ops: AnyBulkWriteOperation[] = folders.map((folder) => ({
+            updateOne: {
+                filter: {
+                    userId: folder.userId,
+                    accountId: folder.accountId,
+                    providerFolderId: folder.providerFolderId,
+                },
+                update: { $set: folder },
+                upsert: true,
+            },
+        }));
+        return Folder.bulkWrite(ops, { ordered: false });
     }
 
     public static async getAllFolders(
@@ -35,7 +47,7 @@ export class FolderRepository {
         return await Folder.findOne({ providerFolderId });
     }
 
-    public static async createFolder(folder: Partial<FolderDocument>): Promise<FolderDocument> {
+    public static async createFolder(folder: Partial<FolderInput>): Promise<FolderDocument> {
         return await Folder.create(folder);
     }
 

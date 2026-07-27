@@ -1,5 +1,5 @@
 import { logger } from '@utils';
-import { Job, Worker, WorkerOptions } from 'bullmq';
+import { ConnectionOptions, Job, Worker, WorkerOptions } from 'bullmq';
 import { getRedisConnection } from 'core/queue/redis.connection.js';
 
 export abstract class BaseWorker<TData, TResult> {
@@ -9,10 +9,12 @@ export abstract class BaseWorker<TData, TResult> {
 
     public start(): void {
         const connection = getRedisConnection();
+        const prefix = process.env.NODE_ENV === 'test' ? 'bull-test' : process.env.BULL_PREFIX || 'bull';
 
         const workerOptions: WorkerOptions = {
-            connection,
+            connection: connection as ConnectionOptions,
             concurrency: 2, // Safe concurrency limit for low memory container (256MB RAM)
+            prefix,
         };
 
         this.worker = new Worker<TData, TResult>(

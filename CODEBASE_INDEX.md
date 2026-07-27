@@ -4,6 +4,7 @@
 
 - `Backend/`: Node.js + Express + TypeScript + MongoDB
 - `Frontend/`: Next.js App Router + React + TypeScript + React Query + Auth0 + Zustand
+- Shared contracts are now sourced from the workspace-linked `@mailsense/types` package via local pnpm overrides in both backend and frontend.
 
 ## Backend Index (`/Backend`)
 
@@ -18,6 +19,7 @@
 - `Backend/src/core/config/env.config.ts`: validates env via Zod
 - `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis)
 - `Backend/src/core/config/db.config.ts`: Mongo connect/disconnect with pooling
+- `Backend/src/core/config/db.config.ts`: drops the stale `accounts.id_1` unique index during startup when migrating older databases
 - `Backend/src/core/config/logger.config.ts`: logger configuration
 - `Backend/src/core/config/app.config.ts`: now also exposes Upstash Redis REST-backed queue connection config
 - `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
@@ -38,8 +40,7 @@
 ### Events
 
 - `Backend/src/core/events/*`: internal event bus and event handlers for background sync milestones
-  - `event-bus.ts`: typed event emitter wrapper with safe subscriber execution and sanitized logging
-  - `event.types.ts`: system event names and payload contracts
+  - `event-bus.ts`: typed event emitter wrapper with safe subscriber execution and sanitized logging, now powered by shared event contracts from `@mailsense/types`
   - `handlers/email-created.handler.ts`: subscriber hook for newly indexed email events
   - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events
   - `index.ts`: system-event initialization entry point used during background jobs startup
@@ -72,6 +73,7 @@
   - Provider callback token exchange, profile fetch, and sync execution now route through `EmailProviderFactory`
   - Sync requests now enqueue background jobs and persist sync-job tracking records
   - Account activation, deactivation, creation, and deletion now synchronize repeatable background sync schedules
+  - Newly connected accounts are now created as active but with `syncEnabled: false` by default
 - Emails (`Backend/src/modules/emails/*`)
   - Unified list, per-account list, email details
   - Search, delete, archive, star, unread
@@ -136,14 +138,13 @@
 
 ### Shared Types / Utils
 
-- `Backend/src/core/types/index.ts`: barrel export for shared backend type modules
 - `Backend/src/core/types/express.d.ts`: extends Express request typing for validated payloads and Auth0 JWT user context
-- `Backend/src/core/types/common.types.ts`: shared enums such as `DATE_RANGE`
+- Backend module and integration contracts are now sourced from `@mailsense/types` instead of local duplicated type definition files
 - `Backend/src/shared/utils/index.ts`: barrel export for shared backend utilities
 - `Backend/src/shared/utils/common.ts`: reusable date-range helpers
 - `Backend/src/core/errors/AppError.ts`: base structured application error
 - `Backend/src/core/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
-- `Backend/src/modules/accounts/account.types.ts`: account sync status enums and sync-job lifecycle/trigger types
+- `Backend/src/modules/accounts/account.types.ts`: backend-local Mongo projection mappings that remain after moving shared contracts to `@mailsense/types`
 
 ### API Surface (mounted at `/api`)
 
@@ -212,10 +213,10 @@
 ### Frontend Architecture
 
 - `Frontend/src/entities/*`: domain entities and shared domain UI/types
-  - `entities/account/*`: account types, provider icon helpers, `AccountProviderIcon`
-  - `entities/email/*`: email list/detail/search/filter request types
-  - `entities/folder/*`: folder attributes, request options, and related component types/interfaces
-  - `entities/user/*`: signed-in user model
+  - `entities/account/*`: provider display metadata, provider icon helpers, `AccountProviderIcon`
+  - `entities/email/*`: email formatting helpers and email UI utilities
+  - `entities/folder/*`: folder UI component state/interfaces that remain frontend-specific
+  - Account, email, folder, user, filter, and settings data contracts now come from `@mailsense/types`
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
   - `features/accounts/*`: accounts page, provider grouping, account actions, account API layer
   - `features/auth/*`: login page and profile fetch query
@@ -224,6 +225,8 @@
   - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks
   - `features/settings/*`: settings page, profile page/form, password modal, account-deletion UI, settings API layer
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys
+- `Frontend/next.config.ts`: transpiles the shared `@mailsense/types` package for Next.js consumption
+- `Frontend/pnpm-workspace.yaml`: links `@mailsense/types` from the local workspace
 
 ### State and Data
 

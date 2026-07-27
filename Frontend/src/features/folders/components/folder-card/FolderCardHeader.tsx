@@ -3,7 +3,8 @@
 import { Check, Dot, X } from 'lucide-react';
 import React from 'react';
 
-import { FolderAttributes, RenameFolderState } from '@entities/folder';
+import { RenameFolderState } from '@entities/folder';
+import { FolderAttributes } from '@mailsense/types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 
 interface FolderCardHeaderProps {

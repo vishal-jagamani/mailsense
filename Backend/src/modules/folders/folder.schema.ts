@@ -1,4 +1,4 @@
-import { DATE_RANGE } from '@types';
+import { DATE_RANGE } from '@mailsense/types';
 import z from 'zod';
 
 export const getAllFoldersSchema = z.object({

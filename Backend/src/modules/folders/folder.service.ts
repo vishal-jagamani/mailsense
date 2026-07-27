@@ -1,12 +1,11 @@
+import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { ACCOUNT_PROVIDER, GetAllFoldersFilters, PaginatedDataResponse, UpdateAPIResponse } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { AccountProvider, PaginatedDataResponse, UpdateAPIResponse } from '@types';
-import { getDateRange, logger } from 'shared/utils/index.js';
 import { FilterQuery } from 'mongoose';
+import { getDateRange, logger } from 'shared/utils/index.js';
 import { FOLDER_LIST_DB_FIELD_MAPPING } from './folder.constants.js';
 import { FolderDocument } from './folder.model.js';
 import { FolderRepository } from './folder.repository.js';
-import { GetAllFoldersFilters } from './folder.types.js';
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 
 export class FolderService {
     constructor() {}
@@ -17,9 +16,9 @@ export class FolderService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             const folderInputs = await provider.getAllFolders(accountId, account.userId);
-            await FolderRepository.addFoldersInBulk(folderInputs);
+            await FolderRepository.upsertFoldersInBulk(folderInputs);
             return { status: true, message: 'Folders synced successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -33,7 +32,7 @@ export class FolderService {
         size: number,
         page: number,
         filters: GetAllFoldersFilters,
-    ): Promise<PaginatedDataResponse<FolderDocument[]>> {
+    ): Promise<PaginatedDataResponse<FolderDocument>> {
         try {
             const { searchText, accountId, dateRange } = filters;
             const accounts = await AccountRepository.getAccounts({ userId, active: true });
@@ -78,7 +77,7 @@ export class FolderService {
         }
     }
 
-    public async getAccountFolders(accountId: string): Promise<PaginatedDataResponse<FolderDocument[]>> {
+    public async getAccountFolders(accountId: string): Promise<PaginatedDataResponse<FolderDocument>> {
         try {
             const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
             if (!account) {
@@ -99,7 +98,7 @@ export class FolderService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             return provider.createFolder(account.userId, accountId, folderName);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -114,7 +113,7 @@ export class FolderService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             return provider.updateFolder(accountId, folderId, folderName);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -133,7 +132,7 @@ export class FolderService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             return provider.deleteFolder(folder.accountId, folderId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);

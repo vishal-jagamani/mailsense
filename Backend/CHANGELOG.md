@@ -7,6 +7,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-27
+
 ### Added
 - Created queuing infrastructure using **BullMQ** connected to **Upstash Redis** (TCP/TLS).
 - Added `QueueService.addSyncAccountJob` to queue account sync tasks with priorities.
@@ -30,6 +32,7 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added token-refresh worker and refresh-token processor for background credential renewal with Redis-based locking.
 - Added internal event-system bootstrap and background sync milestone publishing support for downstream subscribers.
 - Added background sync phase 5 implementation planning and backend coding-standards guidance under `.agents`.
+- Added workspace-linked `@mailsense/types` support to centralize backend data contracts with the frontend.
 
 ### Changed
 - Configured Jest to resolve ES Module `.js` imports to `.ts` source files and map project-scoped TypeScript path aliases.
@@ -53,6 +56,10 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated background sync processing to retry provider sync after inline token refresh on auth-expiry failures.
 - Updated background sync processing to publish internal email-created and sync-completed events for downstream listeners.
 - Removed the redundant numeric `id` field from newly created account payloads and account type definitions.
+- Migrated backend account, email, folder, user, event, and provider contract types to the shared `@mailsense/types` package and removed duplicated local type definitions.
+- Updated account onboarding so newly connected accounts are created with `syncEnabled: false` by default.
+- Updated backend provider, repository, controller, and service layers to consume shared enums and payload contracts from `@mailsense/types`.
+- Updated backend and workspace package configuration to resolve the shared `@mailsense/types` dependency through local pnpm overrides.
 
 ### Fixed
 - Fixed a compilation mismatch with Sentry's express error handler under Express 5.
@@ -60,6 +67,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Fixed Express not-found and error-handler signatures to align with current middleware usage without unused-parameter issues.
 - Improved sync-state updates by recording running, completed, and failed background job outcomes against both accounts and sync-job records.
 - Improved token-refresh reliability by using a Redis lock to prevent concurrent refresh collisions for the same account.
+- Added defensive ObjectId validation in account repository operations to avoid invalid-ID database lookups.
+- Added startup cleanup for the stale `accounts.id_1` unique index so older databases can migrate safely after removing the numeric account ID field.
 
 ## [1.4.1] - 2026-06-29
 
@@ -253,7 +262,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
 [1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1
 [1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0
 [1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2

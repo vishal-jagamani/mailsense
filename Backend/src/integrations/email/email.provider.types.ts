@@ -1,7 +1,12 @@
-import { GmailMessageObjectFull, GmailUserProfile } from '@integrations/gmail/gmail.types.js';
-import { OutlookMessageObjectFull, OutlookUserProfile } from '@integrations/outlook/outlook.types.js';
+import {
+    GmailMessageObjectFull,
+    GmailOAuthAccessTokenResponse,
+    GmailUserProfile,
+    OutlookMessageObjectFull,
+    OutlookOAuthAccessTokenResponse,
+    OutlookUserProfile,
+} from '@mailsense/types';
 import { EmailInput } from '@modules/emails/email.model.js';
-import { GmailOAuthAccessTokenResponse, OutlookOAuthAccessTokenResponse } from '@types';
 
 export interface EmailSyncResult {
     addedEmails: EmailInput[] | Partial<EmailInput>[];

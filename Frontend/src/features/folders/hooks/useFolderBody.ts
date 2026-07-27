@@ -1,6 +1,7 @@
 import { toast } from 'sonner';
 
-import { CreateFolderBodyParams, RenameFolderState } from '@entities/folder';
+import { RenameFolderState } from '@entities/folder';
+import { CreateFolderBodyParams } from '@mailsense/types';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { useEffect, useState } from 'react';
 import { useDeleteFolderMutation, useUpdateFolderMutation } from '../api/folder.mutation';

@@ -1,6 +1,6 @@
 import { logger } from '@utils';
 import { eventBus } from '../event-bus.js';
-import { SystemEvent } from '../event.types.js';
+import { SYSTEM_EVENT } from '@mailsense/types';
 
 jest.mock('@utils', () => ({
     logger: {
@@ -17,7 +17,7 @@ describe('EventBus', () => {
 
     it('should successfully register a subscriber and trigger it when an event is published', async () => {
         const mockHandler = jest.fn();
-        eventBus.subscribe(SystemEvent.SYNC_COMPLETED, mockHandler);
+        eventBus.subscribe(SYSTEM_EVENT.SYNC_COMPLETED, mockHandler);
 
         const payload = {
             accountId: 'account-123',
@@ -27,7 +27,7 @@ describe('EventBus', () => {
             completedAt: 2500,
         };
 
-        eventBus.publish(SystemEvent.SYNC_COMPLETED, payload);
+        eventBus.publish(SYSTEM_EVENT.SYNC_COMPLETED, payload);
 
         // Allow microtask queue to flush
         await new Promise((resolve) => setImmediate(resolve));
@@ -40,7 +40,7 @@ describe('EventBus', () => {
         const error = new Error('Database connection failed inside event subscriber');
         const mockHandler = jest.fn().mockRejectedValue(error);
 
-        eventBus.subscribe(SystemEvent.EMAIL_CREATED, mockHandler);
+        eventBus.subscribe(SYSTEM_EVENT.EMAIL_CREATED, mockHandler);
 
         const payload = {
             accountId: 'account-123',
@@ -64,7 +64,7 @@ describe('EventBus', () => {
 
         // This should not throw
         expect(() => {
-            eventBus.publish(SystemEvent.EMAIL_CREATED, payload);
+            eventBus.publish(SYSTEM_EVENT.EMAIL_CREATED, payload);
         }).not.toThrow();
 
         // Allow handler promise execution

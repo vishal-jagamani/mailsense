@@ -5,8 +5,8 @@ import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderService } from '@modules/folders/folder.service.js';
 import { Job } from 'bullmq';
 import { SyncAccountPayload } from 'core/queue/queue.service.js';
-import { SyncJobResult } from 'workers/worker.types.js';
 import { syncAccountProcessor } from '../processors/sync-account.processor.js';
+import { SyncJobResult } from '@mailsense/types';
 
 jest.mock('@modules/accounts/account.repository.js');
 jest.mock('@modules/emails/email.repository.js');

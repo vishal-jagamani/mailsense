@@ -1,8 +1,7 @@
+import { SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
 import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
-import { UpdateAPIResponse } from '@types';
 import { IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
 
 export interface SyncResult {

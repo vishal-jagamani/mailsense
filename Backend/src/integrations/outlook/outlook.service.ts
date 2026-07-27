@@ -1,10 +1,15 @@
+import {
+    OutlookMessageObjectFull,
+    OutlookOAuthAccessTokenResponse,
+    OutlookUserProfile,
+    SearchOtherContactsResponse,
+    UpdateAPIResponse,
+} from '@mailsense/types';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { OutlookOAuthAccessTokenResponse, UpdateAPIResponse } from '@types';
 import { compressString, logger } from 'shared/utils/index.js';
 import { OutlookApi } from './outlook.api.js';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_API_PARAMS, OUTLOOK_APIs } from './outlook.constants.js';
@@ -13,11 +18,8 @@ import {
     GetOutlookDeltaMessagesResponse,
     GetOutlookMessagesResponse,
     OutlookFolderObject,
-    OutlookMessageObjectFull,
-    OutlookUserProfile,
 } from './outlook.types.js';
 import * as OutlookUtils from './outlook.utils.js';
-
 export class OutlookService {
     private outlookApi: OutlookApi;
     constructor() {

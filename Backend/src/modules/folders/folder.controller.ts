@@ -1,7 +1,7 @@
+import { GetAllFoldersFilters } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
-import { FolderService } from './folder.service.js';
 import { CreateFolderSchema, GetAccountFoldersSchema, GetAllFoldersSchema, GetFolderSchema, UpdateFolderBodySchema } from './folder.schema.js';
-import { GetAllFoldersFilters } from './folder.types.js';
+import { FolderService } from './folder.service.js';
 
 export class FolderController {
     private folderService: FolderService;

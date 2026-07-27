@@ -1,6 +1,6 @@
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { ACCOUNT_PROVIDER } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { AccountProvider } from '@types';
 import { logger } from '@utils';
 import { Job } from 'bullmq';
 import { RefreshTokenPayload } from '../../core/queue/queue.service.js';
@@ -33,7 +33,7 @@ export const refreshTokenProcessor = async (job: Job<RefreshTokenPayload, { stat
                     return { status: true };
                 }
 
-                const emailProvider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                const emailProvider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
                 await emailProvider.refreshAccessToken(accountId);
                 logger.info(`🔄 Token refreshed successfully for account: ${accountId}`);
                 return { status: true };

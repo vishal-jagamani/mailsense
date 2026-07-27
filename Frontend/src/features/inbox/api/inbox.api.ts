@@ -1,9 +1,8 @@
-import { Email, FetchEmailRequestOptions, GetFiltersResponse } from '@entities/email';
+import { EmailAttributes, FetchEmailRequestOptions, GetFiltersResponse, PaginatedDataResponse, UpdateAPIResponse } from '@mailsense/types';
 import { axiosClient, EMAILS_API_ENDPOINTS } from '@shared/api';
-import { PaginatedDataResponse, UpdateAPIResponse } from '@shared/types';
 
 export async function fetchEmails(body: FetchEmailRequestOptions) {
-    const { data } = await axiosClient.post<PaginatedDataResponse<Email>>(EMAILS_API_ENDPOINTS.LIST, body);
+    const { data } = await axiosClient.post<PaginatedDataResponse<EmailAttributes>>(EMAILS_API_ENDPOINTS.LIST, body);
     return data;
 }
 
@@ -16,7 +15,7 @@ export async function deleteEmail(emailIds: string[], trash: boolean) {
     return data;
 }
 
-export async function getEmailDetails(searchText: string, userId: string): Promise<PaginatedDataResponse<Email>> {
+export async function getEmailDetails(searchText: string, userId: string): Promise<PaginatedDataResponse<EmailAttributes>> {
     const { data } = await axiosClient.post(EMAILS_API_ENDPOINTS.SEARCH, { searchText }, { headers: { userid: userId } });
     return data;
 }

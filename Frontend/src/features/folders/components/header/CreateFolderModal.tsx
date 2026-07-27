@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { AccountAttributes, AccountProviderIcon } from '@entities/account';
-import { CreateFolderBodyParams } from '@entities/folder';
+import { AccountProviderIcon } from '@entities/account';
 import { useCreateFolderMutation } from '@features/folders/api/folder.mutation';
+import { AccountAttributes, CreateFolderBodyParams } from '@mailsense/types';
 import APILoader from '@shared/components/apiLoader';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { AlertDialogFooter, AlertDialogHeader } from '@shared/ui/alert-dialog';

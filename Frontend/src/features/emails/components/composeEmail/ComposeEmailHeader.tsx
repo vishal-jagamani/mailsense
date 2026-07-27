@@ -2,9 +2,8 @@
 
 import React from 'react';
 
-import { ComposeEmailRequestBody, SearchOtherContactsResponse } from '@entities/email';
+import { APIResponse, ComposeEmailRequestBody, SearchOtherContactsResponse } from '@mailsense/types';
 import { useIsMobile } from '@shared/hooks';
-import { APIResponse } from '@shared/types';
 import { Badge } from '@shared/ui/badge';
 import { Input } from '@shared/ui/input';
 import { Separator } from '@shared/ui/separator';

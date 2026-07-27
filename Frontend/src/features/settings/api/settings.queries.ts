@@ -1,5 +1,5 @@
+import { APIResponse, ProfileSettingsDataObject } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
-import { APIResponse, ProfileSettingsDataObject } from '@shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { getUserProfileSettings } from './settings.api';
 

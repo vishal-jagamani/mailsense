@@ -1,4 +1,4 @@
-import { DATE_RANGE } from '@shared/types';
+import { DATE_RANGE } from '@mailsense/types';
 
 export const EMAILS_PAGE_SIZE = 20;
 
