@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { ComposeEmailRequestBody } from '@entities/email';
 import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
+import { ComposeEmailRequestBody } from '@mailsense/types';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useAuthStore, useComposeEmailPopupStore } from '@shared/store';

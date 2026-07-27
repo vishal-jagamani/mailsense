@@ -1,5 +1,5 @@
+import { UserDetailsObject } from '@mailsense/types';
 import { UpdateUserSchema } from '@modules/user/user.schema.js';
-import { UserDetailsObject } from '@modules/user/user.types.js';
 import { logger } from 'shared/utils/index.js';
 import { Auth0Api } from './auth0.client.js';
 import { Auth0UserDetailsResponse } from './auth0.types.js';

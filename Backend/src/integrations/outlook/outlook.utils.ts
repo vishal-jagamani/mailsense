@@ -1,8 +1,8 @@
 import { OUTLOOK_SECRETS } from '@config';
 import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
+import { FOLDER_KIND, FOLDER_ROLE, OutlookMessageObjectFull } from '@mailsense/types';
 import { FolderInput } from '@modules/folders/folder.model.js';
-import { FolderKind, FolderRole } from '@modules/folders/folder.types.js';
-import { OutlookFolderObject, OutlookMessageObjectFull } from './outlook.types.js';
+import { OutlookFolderObject } from './outlook.types.js';
 
 // Build outlook oauth access consent url
 export const buildOutlookOAuthConsentURL = async () => {
@@ -17,17 +17,17 @@ export const buildOutlookOAuthConsentURL = async () => {
     return `${OAUTH_ACCESS_REDIRECT_URI.OUTLOOK}?${params.toString()}`;
 };
 
-const getOutlookFolderRole = (displayName: string): FolderRole => {
+const getOutlookFolderRole = (displayName: string): FOLDER_ROLE => {
     const displayNameLower = displayName.toLowerCase();
 
-    if (displayNameLower === 'inbox') return FolderRole.INBOX;
-    if (displayNameLower === 'sent items' || displayNameLower === 'sentitems') return FolderRole.SENT;
-    if (displayNameLower === 'drafts') return FolderRole.DRAFTS;
-    if (displayNameLower === 'deleted items' || displayNameLower === 'deleteditems') return FolderRole.TRASH;
-    if (displayNameLower === 'junk email' || displayNameLower === 'spam') return FolderRole.SPAM;
-    if (displayNameLower === 'archive') return FolderRole.ARCHIVE;
+    if (displayNameLower === 'inbox') return FOLDER_ROLE.INBOX;
+    if (displayNameLower === 'sent items' || displayNameLower === 'sentitems') return FOLDER_ROLE.SENT;
+    if (displayNameLower === 'drafts') return FOLDER_ROLE.DRAFTS;
+    if (displayNameLower === 'deleted items' || displayNameLower === 'deleteditems') return FOLDER_ROLE.TRASH;
+    if (displayNameLower === 'junk email' || displayNameLower === 'spam') return FOLDER_ROLE.SPAM;
+    if (displayNameLower === 'archive') return FOLDER_ROLE.ARCHIVE;
 
-    return FolderRole.OTHER;
+    return FOLDER_ROLE.OTHER;
 };
 
 const isOutlookSystemFolder = (displayName: string): boolean => {
@@ -54,7 +54,7 @@ export const parseOutlookFolderObject = (accountId: string, userId: string, fold
         parentProviderFolderId: folder.parentFolderId || '',
         normalizedName: folder.displayName.toLowerCase().trim(),
         role: getOutlookFolderRole(folder.displayName),
-        kind: isOutlookSystemFolder(folder.displayName) ? FolderKind.SYSTEM : FolderKind.CUSTOM,
+        kind: isOutlookSystemFolder(folder.displayName) ? FOLDER_KIND.SYSTEM : FOLDER_KIND.CUSTOM,
         totalEmails: folder.totalItemCount || 0,
         totalUnreadEmails: folder.unreadItemCount || 0,
         totalThreads: folder.totalItemCount || 0,

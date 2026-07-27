@@ -1,27 +1,19 @@
 import { MAILSENSE_BASE_URL } from '@config';
 import { ACCOUNT_PROVIDERS } from '@constants';
-import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { ACCOUNT_PROVIDER, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, AccountProviderType, UpdateAPIResponse } from '@mailsense/types';
 import { EmailRepository } from '@modules/emails/email.repository.js';
-import { FolderService } from '@modules/folders/folder.service.js';
-import { GmailService } from 'integrations/gmail/gmail.service.js';
+import { QueueService } from 'core/queue/queue.service.js';
+import { SchedulerService } from 'core/queue/scheduler.service.js';
 import * as GmailUtils from 'integrations/gmail/gmail.utils.js';
-import { OutlookService } from 'integrations/outlook/outlook.service.js';
 import * as OutlookUtils from 'integrations/outlook/outlook.utils.js';
-import { AccountProvider, AccountProviderType, OutlookOAuthAccessTokenResponse, SuccessAPIResponse, UpdateAPIResponse } from '@types';
 import { decrypt, encrypt, logger } from 'shared/utils/index.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
+import { SyncJobRepository } from './sync-job.repository.js';
 
 export class AccountsService {
-    private gmailService: GmailService;
-    private outlookService: OutlookService;
-    private folderService: FolderService;
-
-    constructor() {
-        this.gmailService = new GmailService();
-        this.outlookService = new OutlookService();
-        this.folderService = new FolderService();
-    }
+    constructor() {}
 
     /**
      * Fetches an account from the database by ID.
@@ -59,6 +51,9 @@ export class AccountsService {
 
     private async initiateAccountDeletion(accountId: string): Promise<void> {
         try {
+            // Remove repeatable job from scheduler
+            await SchedulerService.removeAccountRepeatableJob(accountId);
+
             // Delete account from db
             await AccountRepository.deleteAccount(accountId);
             // Delete emails related to this account
@@ -105,10 +100,10 @@ export class AccountsService {
      */
     async connect(provider: string): Promise<{ url: string }> {
         try {
-            if (provider === AccountProvider.GMAIL) {
+            if (provider === ACCOUNT_PROVIDER.GMAIL) {
                 const url = await GmailUtils.buildGmailOAuthConsentURL();
                 return { url };
-            } else if (provider === AccountProvider.OUTLOOK) {
+            } else if (provider === ACCOUNT_PROVIDER.OUTLOOK) {
                 const url = await OutlookUtils.buildOutlookOAuthConsentURL();
                 return { url };
             } else {
@@ -139,58 +134,32 @@ export class AccountsService {
                 logger.error(`Error in AccountsService.callback: ${errorMessage}`, { error: err });
                 throw err;
             }
-            if (provider === AccountProvider.GMAIL) {
-                const accessTokenResponse = await this.gmailService.getAccessTokenFromCode(code);
-                const { access_token, refresh_token, expires_in, scope } = accessTokenResponse;
-                const userProfile = await this.gmailService.getUserProfileFromAccessToken(access_token);
-                // Save in db
-                const account: Partial<AccountInput> = {
-                    id: Date.now(),
-                    userId: userDetails?.id,
-                    provider: AccountProvider.GMAIL,
-                    emailAddress: userProfile?.email,
-                    userProfileDetails: userProfile,
-                    accessToken: encrypt(access_token),
-                    refreshToken: encrypt(refresh_token),
-                    accessTokenExpiry: Date.now() + expires_in * 1000,
-                    refreshTokenExpiry: expires_in,
-                    scope,
-                    syncEnabled: true,
-                    syncInterval: 60,
-                    lastSyncedAt: Date.now(),
-                    active: true,
-                };
+            const emailProvider = EmailProviderFactory.getProvider(provider as ACCOUNT_PROVIDER);
+            const { access_token, refresh_token, expires_in, scope } = await emailProvider.getAccessTokenFromCode(code);
+            const userProfile = await emailProvider.getUserProfileFromAccessToken(access_token);
+            const emailAddress = 'email' in userProfile ? userProfile.email : userProfile.mail;
+            const account: Partial<AccountInput> = {
+                userId: userDetails?.id,
+                provider: provider as ACCOUNT_PROVIDER,
+                emailAddress,
+                userProfileDetails: userProfile,
+                accessToken: encrypt(access_token),
+                refreshToken: encrypt(refresh_token),
+                accessTokenExpiry: Date.now() + expires_in * 1000,
+                refreshTokenExpiry: expires_in,
+                scope,
+                syncEnabled: false,
+                syncInterval: 60,
+                lastSyncedAt: Date.now(),
+                active: true,
+            };
+            const savedAccount = await AccountRepository.upsertAccount(account);
 
-                const savedAccount = await AccountRepository.upsertAccount(account);
-                this.syncAccount(String(savedAccount._id));
-                return MAILSENSE_BASE_URL;
-            } else if (provider === AccountProvider.OUTLOOK) {
-                const response: OutlookOAuthAccessTokenResponse = await this.outlookService.getAccessTokenFromCode(code);
-                const { access_token, refresh_token, expires_in, scope } = response;
-                const userProfile = await this.outlookService.getUserProfileFromAccessToken(access_token);
-                // Save in db
-                const account: Partial<AccountInput> = {
-                    id: Date.now(),
-                    userId: userDetails?.id,
-                    provider: AccountProvider.OUTLOOK,
-                    emailAddress: userProfile?.mail,
-                    userProfileDetails: userProfile,
-                    accessToken: encrypt(access_token),
-                    refreshToken: encrypt(refresh_token),
-                    accessTokenExpiry: Date.now() + expires_in * 1000,
-                    refreshTokenExpiry: expires_in,
-                    scope,
-                    syncEnabled: true,
-                    syncInterval: 60,
-                    lastSyncedAt: Date.now(),
-                    active: true,
-                };
-                const savedAccount = await AccountRepository.upsertAccount(account);
-                this.syncAccount(String(savedAccount._id));
-                return MAILSENSE_BASE_URL;
-            } else {
-                throw new Error('Invalid provider');
-            }
+            // Register repeatable sync schedulers for newly authenticated accounts
+            await SchedulerService.upsertAccountRepeatableJob(String(savedAccount._id));
+
+            this.syncAccount(String(savedAccount._id));
+            return MAILSENSE_BASE_URL;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.callback: ${errorMessage}`, { error: err });
@@ -198,12 +167,34 @@ export class AccountsService {
         }
     }
 
-    async syncAccounts(userId: string): Promise<SuccessAPIResponse> {
+    async syncAccounts(userId: string): Promise<{ status: boolean; message: string; jobIds: string[] }> {
         try {
             const accounts = await AccountRepository.getAccounts({ userId, active: true });
-            if (!accounts.length) return { status: true, message: 'Accounts not found' };
-            this.syncAllAccounts(accounts);
-            return { status: true, message: 'Accounts sync started!' };
+            if (!accounts.length) return { status: true, message: 'Accounts not found', jobIds: [] };
+
+            const jobIds: string[] = [];
+            for (const account of accounts) {
+                const jobId = await QueueService.addSyncAccountJob(
+                    {
+                        accountId: String(account._id),
+                        userId: account.userId,
+                        force: false,
+                    },
+                    1,
+                );
+
+                if (jobId) {
+                    jobIds.push(jobId);
+                    await SyncJobRepository.createSyncJob({
+                        accountId: String(account._id),
+                        bullJobId: jobId,
+                        status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
+                        triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
+                        startedAt: Date.now(),
+                    });
+                }
+            }
+            return { status: true, message: 'Accounts sync started!', jobIds };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccounts: ${errorMessage}`, { error: err });
@@ -211,29 +202,18 @@ export class AccountsService {
         }
     }
 
-    private async syncAllAccounts(accounts: AccountDocument[]) {
+    async syncAccount(accountId: string): Promise<{ status: boolean; message: string; jobId?: string }> {
         try {
-            for (const account of accounts) {
-                await this.syncAccount(String(account._id));
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.syncAllAccounts: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async syncAccount(accountId: string): Promise<SuccessAPIResponse> {
-        try {
-            logger.info('Account Syncing Started', { accountId });
+            logger.info('Account Syncing Requested', { accountId });
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account)
+            if (!account) {
                 throw Object.assign(new Error('Account not found'), {
                     status: 404,
                     isOperational: true,
                     description: 'Given account ID does not exist',
                     suggestedAction: 'Please check the account ID',
                 });
+            }
             if (!account.active) {
                 throw Object.assign(new Error('Account is not active'), {
                     status: 400,
@@ -242,8 +222,28 @@ export class AccountsService {
                     suggestedAction: 'Please activate the account',
                 });
             }
-            this.startAccountSync(accountId, account);
-            return { status: true, message: 'Account sync started!' };
+
+            // Enqueue manual sync job with High Priority (Priority 1)
+            const jobId = await QueueService.addSyncAccountJob(
+                {
+                    accountId,
+                    userId: account.userId,
+                    force: false,
+                },
+                1,
+            );
+
+            if (jobId) {
+                await SyncJobRepository.createSyncJob({
+                    accountId: String(account._id),
+                    bullJobId: jobId,
+                    status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
+                    triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
+                    startedAt: Date.now(),
+                });
+            }
+
+            return { status: true, message: 'Account sync queued successfully!', jobId };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.syncAccount: ${errorMessage}`, { error: err });
@@ -251,94 +251,15 @@ export class AccountsService {
         }
     }
 
-    private async startAccountSync(accountId: string, account: AccountDocument): Promise<void> {
-        try {
-            if (account.provider === AccountProvider.GMAIL) {
-                await this.syncGmailAccount(accountId, account);
-            } else if (account.provider === AccountProvider.OUTLOOK) {
-                await this.syncOutlookAccount(accountId, account);
-            } else {
-                throw new Error('Invalid provider');
-            }
-            await this.folderService.syncFolders(accountId);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.startAccountSync: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async syncGmailAccount(accountId: string, account: AccountDocument): Promise<UpdateAPIResponse> {
-        try {
-            const historyDetails = await this.gmailService.getMessagesAfterLastHistory(accountId, account.lastSyncCursor);
-            let newEmails: EmailInput[] = [];
-            let newHistoryId: string = '';
-            if (historyDetails) {
-                newEmails = historyDetails.addedMessages;
-                newHistoryId = historyDetails.newHistoryId;
-                await EmailRepository.deleteManyEmails(historyDetails.deletedMessages);
-            } else {
-                const emails = await this.gmailService.getMessages(accountId);
-                newEmails = emails.emails;
-                newHistoryId = emails.lastSyncCursor;
-                await EmailRepository.deleteEmailsByAccountId(accountId);
-            }
-            if (newEmails.length) {
-                await EmailRepository.upsertEmailsInBulk(newEmails);
-            }
-            await this.updateAccountSyncDetails(accountId, newHistoryId);
-            return { status: true, message: 'Account synced successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.getAccountEmailsForSyncingAccount: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async syncOutlookAccount(accountId: string, account: AccountDocument): Promise<UpdateAPIResponse> {
-        try {
-            const historyDetails = await this.outlookService.getMessagesAfterLastDelta(accountId, account.lastSyncCursor);
-            let newEmails: Partial<EmailInput>[] = [];
-            let newDeltaLink: string = '';
-            if (historyDetails) {
-                newEmails = historyDetails.addedEmails;
-                newDeltaLink = historyDetails.newDeltaLink;
-                await EmailRepository.deleteManyEmails(historyDetails.deletedEmailIds);
-            } else {
-                const initialEmails = await this.outlookService.getMessages(accountId);
-                newEmails = initialEmails.emails;
-                newDeltaLink = initialEmails.deltaLink;
-                await EmailRepository.deleteEmailsByAccountId(accountId);
-            }
-            if (newEmails.length) {
-                await EmailRepository.upsertEmailsInBulk(newEmails);
-            }
-            await this.updateAccountSyncDetails(accountId, newDeltaLink);
-            return { status: true, message: 'Account synced successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.syncOutlookAccount: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    private async updateAccountSyncDetails(accountId: string, lastSyncCursor: string): Promise<void> {
-        try {
-            const updateAccountSyncDetails: Partial<AccountInput> = {
-                lastSyncedAt: Date.now(),
-                lastSyncCursor,
-            };
-            await AccountRepository.updateAccount(accountId, updateAccountSyncDetails);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.updateAccountSyncDetails: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
     public async enableAccount(accountId: string, active: boolean): Promise<UpdateAPIResponse> {
         try {
             await AccountRepository.updateAccount(accountId, { active });
+            if (active) {
+                await SchedulerService.upsertAccountRepeatableJob(accountId);
+            } else {
+                await SchedulerService.removeAccountRepeatableJob(accountId);
+            }
+
             return { status: true, message: `Account ${active ? 'enabled' : 'disabled'} successfully` };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);

@@ -1,6 +1,6 @@
 import * as Sentry from '@sentry/node';
 import cors from 'cors';
-import express, { Application, NextFunction, Request, Response } from 'express';
+import express, { Application, Request, Response } from 'express';
 import path from 'path';
 
 import { MAILSENSE_BASE_URL } from '@config';
@@ -44,8 +44,8 @@ export class App {
 
     private setupNotFoundHandler(): void {
         // Handle 404 errors
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        this.expressApp.use((req: Request, res: Response, next: NextFunction) => {
+
+        this.expressApp.use((req: Request, res: Response) => {
             res.status(404).send({
                 error: {
                     code: 404,
@@ -58,7 +58,7 @@ export class App {
     }
 
     private setupErrorHandler(): void {
-        this.expressApp.use(Sentry.expressErrorHandler());
+        Sentry.setupExpressErrorHandler(this.expressApp);
         // Centralized error handler
         this.expressApp.use(errorHandler);
     }

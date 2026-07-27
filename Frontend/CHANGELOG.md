@@ -7,6 +7,19 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-27
+
+### Added
+- Added frontend workspace support for the shared `@mailsense/types` package.
+
+### Changed
+- Migrated frontend account, email, folder, filter, and settings contracts to the shared `@mailsense/types` package and removed duplicated local type definitions.
+- Updated frontend build and package configuration to transpile and locally link the shared `@mailsense/types` package.
+- Updated account, inbox, folders, compose, and settings flows to consume shared backend-aligned contract types.
+
+### Fixed
+- Improved frontend/backend contract consistency across connected accounts, inbox, folders, compose, and settings data flows.
+
 ## [1.4.1] - 2026-06-29
 
 ### Added
@@ -211,7 +224,9 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
+[1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1
 [1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0
 [1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1

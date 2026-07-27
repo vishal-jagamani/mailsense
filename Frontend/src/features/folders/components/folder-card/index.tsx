@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { CreateFolderBodyParams, FolderAttributes } from '@entities/folder';
+import { CreateFolderBodyParams, FolderAttributes } from '@mailsense/types';
 import FolderCardActions from './FolderCardActions';
 import FolderCardHeader from './FolderCardHeader';
 import FolderCardInfo from './FolderCardInfo';

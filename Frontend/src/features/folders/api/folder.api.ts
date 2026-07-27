@@ -1,6 +1,5 @@
-import { CreateFolderBodyParams, FolderAttributes, GetAllFoldersRequestOptions } from '@entities/folder';
+import { CreateFolderBodyParams, FolderAttributes, GetAllFoldersRequestOptions, PaginatedDataResponse } from '@mailsense/types';
 import { axiosClient, FOLDER_API_ENDPOINTS } from '@shared/api';
-import { PaginatedDataResponse } from '@shared/types';
 
 export async function getAllFolders(body: GetAllFoldersRequestOptions) {
     const { data } = await axiosClient.post<PaginatedDataResponse<FolderAttributes>>(FOLDER_API_ENDPOINTS.GET_ALL_FOLDERS, body);

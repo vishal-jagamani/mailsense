@@ -1,11 +1,10 @@
-import { Email, FetchEmailRequestOptions, GetFiltersResponse } from '@entities/email';
+import { EmailAttributes, FetchEmailRequestOptions, GetFiltersResponse, PaginatedDataResponse, UpdateAPIResponse } from '@mailsense/types';
 import { EMAIL_FILTERS } from '@shared/api';
-import { PaginatedDataResponse, UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { deleteEmail, fetchEmails, getEmailFilters } from './inbox.api';
 
 export const useFetchEmails = () => {
-    return useMutation<PaginatedDataResponse<Email>, Error, FetchEmailRequestOptions>({ mutationFn: (options) => fetchEmails(options) });
+    return useMutation<PaginatedDataResponse<EmailAttributes>, Error, FetchEmailRequestOptions>({ mutationFn: (options) => fetchEmails(options) });
 };
 
 export const useFetchEmailFilters = () => {

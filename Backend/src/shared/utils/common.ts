@@ -1,4 +1,4 @@
-import { DATE_RANGE } from '@types';
+import { DATE_RANGE } from '@mailsense/types';
 
 export const getDateRange = (dateRange: DATE_RANGE): { startDate: Date; endDate: Date } => {
     const now = new Date();

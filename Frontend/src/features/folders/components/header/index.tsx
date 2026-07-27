@@ -3,11 +3,11 @@
 import React from 'react';
 
 import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
+import { Filter, FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { DATE_RANGE_DROPDOWN_OPTIONS, UI_CONSTANTS } from '@shared/constants';
 import { useAuthStore } from '@shared/store';
-import { Filter, FilterOption, FilterOptionType } from '@shared/types';
 import CreateFolderModal from './CreateFolderModal';
 
 interface FolderHeaderProps {
@@ -26,7 +26,7 @@ const FolderHeader: React.FC<FolderHeaderProps> = ({ filter, onFilterChange, sea
         {
             id: 1,
             name: 'accountId',
-            type: FilterOptionType.DROPDOWN,
+            type: FILTER_OPTION_TYPE.DROPDOWN,
             label: 'Accounts',
             data:
                 accounts?.map((account) => {
@@ -43,7 +43,7 @@ const FolderHeader: React.FC<FolderHeaderProps> = ({ filter, onFilterChange, sea
             id: 2,
             name: 'dateRange',
             label: 'Date Range',
-            type: FilterOptionType.DROPDOWN,
+            type: FILTER_OPTION_TYPE.DROPDOWN,
             data: DATE_RANGE_DROPDOWN_OPTIONS.map((item) => {
                 return {
                     id: item.name,

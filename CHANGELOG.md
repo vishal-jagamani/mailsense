@@ -7,6 +7,23 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-27
+
+### Added
+- Added background account sync job tracking to support queued sync execution more reliably.
+- Added scheduled background sync support so active accounts can keep syncing automatically.
+- Newly connected accounts now start with syncing disabled by default so sync can be enabled intentionally.
+
+### Changed
+- Improved backend sync infrastructure to support future queued background processing.
+- Improved backend mail-provider handling so account sync, email actions, compose flows, contact search, and folder operations now run through a shared provider strategy layer.
+- Account sync requests now queue background jobs instead of running the full sync inline.
+- Background sync now handles token refresh more safely and emits internal events for downstream processing.
+- Improved frontend and backend data consistency by moving shared app contracts into a common types package used across accounts, inbox, folders, compose, and settings flows.
+
+### Fixed
+- Improved compatibility for existing connected-account data during the shared-type and account-schema migration.
+
 ## [1.4.1] - 2026-06-29
 
 ### Added
@@ -115,7 +132,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
+[1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1
 [1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0
 [1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1

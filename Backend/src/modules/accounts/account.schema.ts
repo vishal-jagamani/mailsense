@@ -1,9 +1,8 @@
+import { ACCOUNT_PROVIDER } from '@mailsense/types';
 import { z } from 'zod';
 
-import { AccountProvider } from '@types';
-
 export const connectAccountSchema = z.object({
-    provider: z.enum(AccountProvider),
+    provider: z.enum(ACCOUNT_PROVIDER),
 });
 
 export const getAccountDetailsSchema = z.object({

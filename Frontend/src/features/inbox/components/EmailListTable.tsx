@@ -4,7 +4,7 @@ import { Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
-import { Email } from '@entities/email';
+import { EmailAttributes } from '@mailsense/types';
 import { useIsMobile } from '@shared/hooks';
 import { Checkbox } from '@shared/ui/checkbox';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
@@ -12,7 +12,7 @@ import { formatDateToMonthDateString } from '@shared/utils/formatter';
 import { useDeleteEmail } from '../api/inbox.queries';
 
 interface EmailListTableProps {
-    data: Email[];
+    data: EmailAttributes[];
     page: number;
     selectedEmails?: string[];
     onEmailSelect?: (emailIds: string[]) => void;
@@ -24,7 +24,7 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
 
     const { mutateAsync } = useDeleteEmail();
 
-    const handleTrashIconClick = async (email: Email) => {
+    const handleTrashIconClick = async (email: EmailAttributes) => {
         await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
     };
 

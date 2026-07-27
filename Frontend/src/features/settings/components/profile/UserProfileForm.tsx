@@ -2,9 +2,9 @@
 
 import React from 'react';
 
+import { ProfileSettingsDataObject } from '@mailsense/types';
 import TextInput from '@shared/components/inputs/TextInput';
 import { useIsMobile } from '@shared/hooks';
-import { ProfileSettingsDataObject } from '@shared/types';
 import { Button } from '@shared/ui/button';
 
 interface UserProfileFormProps {

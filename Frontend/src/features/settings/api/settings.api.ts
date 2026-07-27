@@ -1,5 +1,5 @@
+import { APIResponse, ProfileSettingsDataObject, UpdateAPIResponse, UpdateUserProfileSettingsResponse } from '@mailsense/types';
 import { axiosClient } from '@shared/api';
-import { APIResponse, ProfileSettingsDataObject, UpdateAPIResponse, UpdateUserProfileSettingsResponse } from '@shared/types';
 
 export async function getUserProfileSettings() {
     const { data } = await axiosClient.get<APIResponse<ProfileSettingsDataObject>>(`/users/profile`);

@@ -1,3 +1,4 @@
+import { GetAllEmailsFilters } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import {
     ArchiveEmailBody,
@@ -10,7 +11,6 @@ import {
     UnreadEmailBody,
 } from './email.schema.js';
 import { EmailService } from './email.service.js';
-import { GetAllEmailsFilters } from './email.types.js';
 
 export class EmailController {
     private emailService: EmailService;
@@ -28,7 +28,12 @@ export class EmailController {
             }
             const sizeValue = size ? Number(size) : 10;
             const pageValue = page ? Number(page) : 1;
-            const filterValue = (filters || { accountId: undefined, dateRange: undefined, folders: undefined, unread: undefined }) as GetAllEmailsFilters;
+            const filterValue = (filters || {
+                accountId: undefined,
+                dateRange: undefined,
+                folders: undefined,
+                unread: undefined,
+            }) as GetAllEmailsFilters;
             const emails = await this.emailService.getAllEmails(userId, sizeValue, pageValue, filterValue);
             res.send(emails);
         } catch (error) {

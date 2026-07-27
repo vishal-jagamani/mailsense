@@ -3,8 +3,8 @@
 import { CircleMinus, RefreshCw } from 'lucide-react';
 import React from 'react';
 
-import { AccountAttributes } from '@entities/account';
 import { useAccountCardActions } from '@features/accounts/hooks/useAccountCardActions';
+import { AccountAttributes } from '@mailsense/types';
 import APILoader from '@shared/components/apiLoader';
 import {
     AlertDialog,

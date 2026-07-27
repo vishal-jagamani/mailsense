@@ -7,6 +7,69 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-27
+
+### Added
+- Created queuing infrastructure using **BullMQ** connected to **Upstash Redis** (TCP/TLS).
+- Added `QueueService.addSyncAccountJob` to queue account sync tasks with priorities.
+- Added `QueueService.addRefreshTokenJob` for token-refresh background work.
+- Added graceful shutdown handlers for queues and Redis connections in `src/server.ts` matching `SIGINT` and `SIGTERM`.
+- Added test endpoint `POST /api/demo/queue-sync` for enqueuing sync jobs locally.
+- Added Jest integration test for the `QueueService` verifying Upstash connectivity.
+- Added BullMQ/Redis queue infrastructure under `Backend/src/core/queue/*` for future background account sync execution.
+- Added queue lifecycle startup/shutdown hooks in server boot flow.
+- Added demo endpoint support to enqueue sync-account jobs for queue testing.
+- Added queue integration tests and background-sync implementation planning docs under `Backend/docs/plans/*`.
+- Added a shared email provider abstraction layer under `Backend/src/integrations/email/*` for connector-agnostic mail operations.
+- Added provider adapter classes for Gmail and Outlook to unify auth, sync, email actions, contact search, compose, and folder operations.
+- Added provider factory unit tests covering provider selection, singleton reuse, and unsupported-provider handling.
+- Added implementation planning documents for background sync phases 1 through 3 under `Backend/.agents/implementations/*`.
+- Added sync-job persistence model and repository to track queued account sync execution state, trigger type, counts, and failures.
+- Added background worker runtime under `Backend/src/workers/*` with a reusable base worker, sync worker, sync processor, and worker test coverage.
+- Added background sync phase 4 implementation planning under `Backend/.agents/implementations/background-sync-phase-4.md`.
+- Added dynamic scheduler service for repeatable account sync registration, update, and cleanup based on account activity and sync settings.
+- Added scheduler service tests covering repeatable job registration, rebuild, and removal flows.
+- Added token-refresh worker and refresh-token processor for background credential renewal with Redis-based locking.
+- Added internal event-system bootstrap and background sync milestone publishing support for downstream subscribers.
+- Added background sync phase 5 implementation planning and backend coding-standards guidance under `.agents`.
+- Added workspace-linked `@mailsense/types` support to centralize backend data contracts with the frontend.
+
+### Changed
+- Configured Jest to resolve ES Module `.js` imports to `.ts` source files and map project-scoped TypeScript path aliases.
+- Updated backend runtime and environment config to support Upstash Redis queue connectivity.
+- Updated Jest config and package dependencies to support the new queue architecture and alias-based test resolution.
+- Updated Sentry Express error-handler setup to the current SDK integration pattern.
+- Refactored account OAuth callback and sync flows to use the shared provider factory instead of provider-specific branching.
+- Refactored email detail retrieval, delete/archive/star/unread actions, compose flow, and contact search to execute through shared provider strategy instances.
+- Refactored folder sync and folder create/update/delete flows to use provider-managed folder operations instead of direct Gmail/Outlook service wiring.
+- Updated test env loading to fall back to `.env.local` when `.env.test` is not present.
+- Updated Jest alias mapping to resolve `.js` imports for `@modules`, `@integrations`, and `@routes`.
+- Updated ESLint rules to enforce unused import cleanup with underscore-based unused-argument exceptions.
+- Renamed the lint autofix script from `lint:fix` to `lint-fix`.
+- Updated accounts sync APIs to enqueue background jobs, return `202 Accepted`, and persist job IDs for manual sync requests.
+- Updated account sync status typing to use shared enums for last-sync state and sync-job lifecycle state.
+- Updated queue startup to initialize and manage the sync worker lifecycle alongside queue registry setup and shutdown.
+- Updated queue startup to also initialize system event handlers, start the token-refresh worker, and synchronize repeatable schedulers on boot.
+- Updated account connect, enable/disable, and delete flows to register or remove repeatable sync schedules automatically.
+- Updated email provider contracts so Gmail and Outlook adapters expose access-token refresh capability.
+- Updated sync worker processing to skip inactive or sync-disabled accounts safely instead of failing the job.
+- Updated background sync processing to retry provider sync after inline token refresh on auth-expiry failures.
+- Updated background sync processing to publish internal email-created and sync-completed events for downstream listeners.
+- Removed the redundant numeric `id` field from newly created account payloads and account type definitions.
+- Migrated backend account, email, folder, user, event, and provider contract types to the shared `@mailsense/types` package and removed duplicated local type definitions.
+- Updated account onboarding so newly connected accounts are created with `syncEnabled: false` by default.
+- Updated backend provider, repository, controller, and service layers to consume shared enums and payload contracts from `@mailsense/types`.
+- Updated backend and workspace package configuration to resolve the shared `@mailsense/types` dependency through local pnpm overrides.
+
+### Fixed
+- Fixed a compilation mismatch with Sentry's express error handler under Express 5.
+- Improved backend shutdown behavior by closing queue and Redis resources gracefully on termination signals.
+- Fixed Express not-found and error-handler signatures to align with current middleware usage without unused-parameter issues.
+- Improved sync-state updates by recording running, completed, and failed background job outcomes against both accounts and sync-job records.
+- Improved token-refresh reliability by using a Redis lock to prevent concurrent refresh collisions for the same account.
+- Added defensive ObjectId validation in account repository operations to avoid invalid-ID database lookups.
+- Added startup cleanup for the stale `accounts.id_1` unique index so older databases can migrate safely after removing the numeric account ID field.
+
 ## [1.4.1] - 2026-06-29
 
 ### Added
@@ -199,7 +262,9 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
+[1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1
 [1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0
 [1.3.2]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.2
 [1.3.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.3.1

@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
+import { GmailApi } from '@integrations/gmail/gmail.client.js';
+import { ACCOUNT_PROVIDER } from '@mailsense/types';
 import { authMiddleware } from '@middlewares';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { GmailApi } from '@integrations/gmail/gmail.client.js';
 import { OutlookApi } from 'integrations/outlook/outlook.api.js';
-import { AccountProvider } from '@types';
 import { decrypt } from 'shared/utils/index.js';
 
 const router = Router();
@@ -24,9 +24,9 @@ router.get('/getAccountAccessToken', async (req, res) => {
         return res.status(404).send({ error: 'Account not found' });
     }
     let accessToken;
-    if (account.provider === AccountProvider.GMAIL) {
+    if (account.provider === ACCOUNT_PROVIDER.GMAIL) {
         accessToken = await GmailApi.fetchAccessToken(String(accountId));
-    } else if (account.provider === AccountProvider.OUTLOOK) {
+    } else if (account.provider === ACCOUNT_PROVIDER.OUTLOOK) {
         accessToken = await OutlookApi.fetchAccessToken(String(accountId));
     }
     res.send({ accessToken });

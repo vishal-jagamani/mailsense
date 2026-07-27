@@ -1,27 +1,30 @@
 import { AxiosApiError } from '@errors';
+import {
+    GMAIL_LABELS,
+    GmailHistoryResponse,
+    GmailLabel,
+    GmailMessageObjectFull,
+    GmailMessages,
+    GmailOAuthAccessTokenResponse,
+    GmailUserProfile,
+    SearchOtherContactsResponse,
+    UpdateAPIResponse,
+} from '@mailsense/types';
 import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/account.constants.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { GmailOAuthAccessTokenResponse, UpdateAPIResponse } from '@types';
 import axios from 'axios';
 import { BatchProcessor, compressString, logger } from 'shared/utils/index.js';
 import { GmailApi } from './gmail.client.js';
 import {
     ExtractMessageChangesResponse,
     GetGmailMessagesResponse,
-    GMAIL_LABELS,
-    GmailHistoryResponse,
-    GmailLabel,
     GmailMessage,
-    GmailMessageObjectFull,
-    GmailMessages,
     GmailParsedEmailResult,
-    GmailUserProfile,
     MessagesAfterLastHistoryResponse,
 } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
