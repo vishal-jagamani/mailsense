@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { AccountAttributes } from '@entities/account';
+import { AccountAttributes } from '@mailsense/types';
 import { UI_CONSTANTS } from '@shared/constants';
 import { useEnableAccountMutation, useRemoveAccountMutation, useSyncAccountMutation } from '../api/accounts.mutations';
 

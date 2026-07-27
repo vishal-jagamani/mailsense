@@ -1,6 +1,5 @@
-import { FolderAttributes, GetAllFoldersRequestOptions } from '@entities/folder';
+import { FolderAttributes, GetAllFoldersRequestOptions, PaginatedDataResponse } from '@mailsense/types';
 import { FOLDER_KEYS } from '@shared/api';
-import { PaginatedDataResponse } from '@shared/types';
 import { useQuery } from '@tanstack/react-query';
 import { getAllFolders, getFolderDetails } from './folder.api';
 

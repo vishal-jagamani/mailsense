@@ -1,21 +1,18 @@
 import { AxiosRequestConfig } from 'axios';
 
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { OutlookOAuthAccessTokenResponse } from '@types';
-import { apiRequest, decrypt, encrypt, logger } from 'shared/utils/index.js';
-import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
+import { OUTLOOK_SECRETS } from '@config';
+import { OAUTH_ACCESS_TOKEN_URI } from '@constants';
 import {
-    GetDeltaMessageChangesResponse,
-    OutlookFolderObject,
-    OutlookFolders,
-    OutlookFoldersResponse,
+    OUTLOOK_FOLDERS,
     OutlookMessageObjectFull,
     OutlookMessagesResponse,
-    OutlookPeopleSearchResponse,
+    OutlookOAuthAccessTokenResponse,
     OutlookUserProfile,
-} from './outlook.types.js';
-import { OAUTH_ACCESS_TOKEN_URI } from '@constants';
-import { OUTLOOK_SECRETS } from '@config';
+} from '@mailsense/types';
+import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { apiRequest, decrypt, encrypt, logger } from 'shared/utils/index.js';
+import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
+import { GetDeltaMessageChangesResponse, OutlookFolderObject, OutlookFoldersResponse, OutlookPeopleSearchResponse } from './outlook.types.js';
 
 export class OutlookApi {
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
@@ -170,7 +167,7 @@ export class OutlookApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 data: {
-                    destinationId: OutlookFolders.DELETED,
+                    destinationId: OUTLOOK_FOLDERS.DELETED,
                 },
             };
             const response = await apiRequest<OutlookMessageObjectFull>(options);
@@ -211,7 +208,7 @@ export class OutlookApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 data: {
-                    destinationId: OutlookFolders.ARCHIVE,
+                    destinationId: OUTLOOK_FOLDERS.ARCHIVE,
                 },
             };
             const response = await apiRequest<OutlookMessageObjectFull>(options);
@@ -233,7 +230,7 @@ export class OutlookApi {
                     Authorization: `Bearer ${accessToken}`,
                 },
                 data: {
-                    destinationId: OutlookFolders.INBOX,
+                    destinationId: OUTLOOK_FOLDERS.INBOX,
                 },
             };
             const response = await apiRequest<OutlookMessageObjectFull>(options);

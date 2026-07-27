@@ -2,10 +2,10 @@ import { AxiosRequestConfig } from 'axios';
 
 import { AUTH0_API_SECRETS } from '@config';
 import { UpdateUserSchema } from '@modules/user/user.schema.js';
-import { UserDetailsObject } from '@modules/user/user.types.js';
 import { apiRequest, logger } from 'shared/utils/index.js';
 import { AUTH0_API_AUDIENCE, AUTH0_API_TOKEN_URI, AUTH0_APIs } from './auth0.constants.js';
 import { Auth0AccessTokenResponse, Auth0UserDetailsResponse } from './auth0.types.js';
+import { UserDetailsObject } from '@mailsense/types';
 
 export class Auth0Api {
     private async fetchAccessToken(): Promise<Auth0AccessTokenResponse> {

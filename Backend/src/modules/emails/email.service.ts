@@ -1,16 +1,27 @@
 import { FilterQuery } from 'mongoose';
 
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { GMAIL_LABELS } from '@integrations/gmail/gmail.types.js';
+import {
+    ACCOUNT_PROVIDER,
+    APIResponse,
+    DATE_RANGE,
+    GetAllEmailsFilters,
+    GetEmailsResponse,
+    GetFiltersResponse,
+    GMAIL_LABELS,
+    PaginatedDataResponse,
+    SearchEmailsParams,
+    SearchOtherContactsResponse,
+    SuccessAPIResponse,
+    UpdateAPIResponse,
+} from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { AccountProvider, APIResponse, DATE_RANGE, GetEmailsResponse, PaginatedDataResponse, SuccessAPIResponse, UpdateAPIResponse } from '@types';
 import { decompressString, logger } from 'shared/utils/index.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
-import { GetAllEmailsFilters, GetFiltersResponse, SearchEmailsParams, SearchOtherContactsResponse } from './email.types.js';
 
 export class EmailService {
     constructor() {}
@@ -22,7 +33,7 @@ export class EmailService {
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
-            const outlookAccounts = accounts.filter((account) => account.provider === AccountProvider.OUTLOOK);
+            const outlookAccounts = accounts.filter((account) => account.provider === ACCOUNT_PROVIDER.OUTLOOK);
             let folderIds: string[] = [];
             if (outlookAccounts.length) {
                 const folders = await FolderRepository.getAllFolders(
@@ -170,7 +181,7 @@ export class EmailService {
             if (!email) throw new Error('Email not found');
             const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
             if (!account) throw new Error('Account not found');
-            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             return provider.getMessageDetails(email.accountId, email.providerMessageId, email);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -179,7 +190,7 @@ export class EmailService {
         }
     }
 
-    public async searchEmails(params: SearchEmailsParams): Promise<PaginatedDataResponse<EmailDocument[]>> {
+    public async searchEmails(params: SearchEmailsParams): Promise<PaginatedDataResponse<EmailDocument>> {
         try {
             const { userId, searchText, size, page } = params;
             const accounts = await AccountRepository.getAccounts({ userId, active: true });
@@ -211,7 +222,7 @@ export class EmailService {
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
-                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
                 await provider.deleteEmails(
                     emails.map((email) => email.providerMessageId),
                     accountId,
@@ -236,7 +247,7 @@ export class EmailService {
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
-                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
                 await provider.archiveEmails(
                     emails.map((email) => email.providerMessageId),
                     accountId,
@@ -261,7 +272,7 @@ export class EmailService {
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
-                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
                 await provider.starEmails(
                     emails.map((email) => ({ id: String(email._id), providerMessageId: email.providerMessageId })),
                     accountId,
@@ -286,7 +297,7 @@ export class EmailService {
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
                 if (!account || !emails) continue;
-                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
                 await provider.unreadEmails(
                     emails.map((email) => email.providerMessageId),
                     accountId,
@@ -307,7 +318,7 @@ export class EmailService {
             if (!account) {
                 throw new Error('Account not found');
             }
-            const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             await provider.sendMail(composeEmailData);
             return { status: true, message: 'Email composed successfully' };
         } catch (err) {
@@ -324,7 +335,7 @@ export class EmailService {
                 return { status: false, message: 'No accounts found', data: [] };
             }
             const contacts = accounts.map((account) => {
-                const provider = EmailProviderFactory.getProvider(account.provider as AccountProvider);
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
                 return provider.searchContacts(account._id.toString(), searchText).catch(() => []);
             });
             const results = await Promise.all(contacts);

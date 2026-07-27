@@ -1,11 +1,10 @@
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 
-import { GetAllFoldersRequestOptions } from '@entities/folder';
+import { Filter, GetAllFoldersRequestOptions } from '@mailsense/types';
 import { EMAILS_PAGE_SIZE, HOME_ROUTES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useAuthStore, useBreadcrumbStore } from '@shared/store';
-import { Filter } from '@shared/types';
 import { toast } from 'sonner';
 import { useGetAllFolders } from '../api/folder.queries';
 

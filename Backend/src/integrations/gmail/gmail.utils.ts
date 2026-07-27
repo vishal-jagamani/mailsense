@@ -1,9 +1,16 @@
 import { GMAIL_SECRETS } from '@config';
 import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
+import {
+    FOLDER_KIND,
+    FOLDER_ROLE,
+    GMAIL_LABEL_LABEL_LIST_VISIBILITY,
+    GMAIL_LABEL_TYPE,
+    GMAIL_LABELS,
+    GmailLabel,
+    GmailMessageObjectFull,
+} from '@mailsense/types';
 import { FolderDocument } from '@modules/folders/folder.model.js';
-import { FolderKind, FolderRole } from '@modules/folders/folder.types.js';
 import { htmlToText } from 'html-to-text';
-import { GMAIL_LABELS, GmailLabel, GmailLabelLabelListVisibility, GmailLabelType, GmailMessageObjectFull } from './gmail.types.js';
 
 // Build gmail oauth access consent url
 export const buildGmailOAuthConsentURL = async () => {
@@ -46,20 +53,20 @@ const decodeBase64Url = (data: string): string => {
     return Buffer.from(normalized, 'base64').toString('utf-8');
 };
 
-const getGmailLabelRole = (labelId: string, labelName: string): FolderRole => {
+const getGmailLabelRole = (labelId: string, labelName: string): FOLDER_ROLE => {
     const labelIdUpper = labelId.toUpperCase();
     const labelNameUpper = labelName.toUpperCase();
 
-    if (labelIdUpper === GMAIL_LABELS.INBOX) return FolderRole.INBOX;
-    if (labelIdUpper === 'SENT') return FolderRole.SENT; // Gmail uses 'SENT' as label ID
-    if (labelIdUpper === 'DRAFT') return FolderRole.DRAFTS;
-    if (labelIdUpper === GMAIL_LABELS.TRASH) return FolderRole.TRASH;
-    if (labelIdUpper === GMAIL_LABELS.SPAM) return FolderRole.SPAM;
-    if (labelIdUpper === GMAIL_LABELS.STARRED) return FolderRole.STARRED;
-    if (labelIdUpper === GMAIL_LABELS.IMPORTANT) return FolderRole.IMPORTANT;
-    if (labelNameUpper.includes('ARCHIVE') || labelNameUpper.includes('ALL MAIL')) return FolderRole.ARCHIVE;
+    if (labelIdUpper === GMAIL_LABELS.INBOX) return FOLDER_ROLE.INBOX;
+    if (labelIdUpper === 'SENT') return FOLDER_ROLE.SENT; // Gmail uses 'SENT' as label ID
+    if (labelIdUpper === 'DRAFT') return FOLDER_ROLE.DRAFTS;
+    if (labelIdUpper === GMAIL_LABELS.TRASH) return FOLDER_ROLE.TRASH;
+    if (labelIdUpper === GMAIL_LABELS.SPAM) return FOLDER_ROLE.SPAM;
+    if (labelIdUpper === GMAIL_LABELS.STARRED) return FOLDER_ROLE.STARRED;
+    if (labelIdUpper === GMAIL_LABELS.IMPORTANT) return FOLDER_ROLE.IMPORTANT;
+    if (labelNameUpper.includes('ARCHIVE') || labelNameUpper.includes('ALL MAIL')) return FOLDER_ROLE.ARCHIVE;
 
-    return FolderRole.OTHER;
+    return FOLDER_ROLE.OTHER;
 };
 
 export const parseGmailLabelObject = (accountId: string, userId: string, gmailLabel: GmailLabel): Partial<FolderDocument> => {
@@ -71,13 +78,13 @@ export const parseGmailLabelObject = (accountId: string, userId: string, gmailLa
         parentProviderFolderId: '',
         normalizedName: gmailLabel.name.toLowerCase().trim(),
         role: getGmailLabelRole(gmailLabel.id, gmailLabel.name),
-        kind: gmailLabel.type === GmailLabelType.SYSTEM ? FolderKind.SYSTEM : FolderKind.CUSTOM,
+        kind: gmailLabel.type === GMAIL_LABEL_TYPE.SYSTEM ? FOLDER_KIND.SYSTEM : FOLDER_KIND.CUSTOM,
         totalEmails: gmailLabel.messagesTotal || 0,
         totalUnreadEmails: gmailLabel.messagesUnread || 0,
         totalThreads: gmailLabel.threadsTotal || 0,
         totalUnreadThreads: gmailLabel.threadsUnread || 0,
         totalChildFolders: 0,
-        isHidden: gmailLabel.labelListVisibility === GmailLabelLabelListVisibility.LABEL_HIDE,
+        isHidden: gmailLabel.labelListVisibility === GMAIL_LABEL_LABEL_LIST_VISIBILITY.LABEL_HIDE,
         color: {
             text: gmailLabel.color?.textColor || '',
             background: gmailLabel.color?.backgroundColor || '',

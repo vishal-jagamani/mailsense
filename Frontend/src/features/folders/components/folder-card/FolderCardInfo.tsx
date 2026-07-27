@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { FolderAttributes } from '@entities/folder';
+import { FolderAttributes } from '@mailsense/types';
 import { Separator } from '@shared/ui/separator';
 import { formatEpochTimeToString } from '@shared/utils/formatter';
 

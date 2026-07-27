@@ -26,8 +26,10 @@ export const DEFAULT_JOB_OPTIONS = {
 
 // BullMQ Queue Configuration
 export function getQueueConfig(connection?: ConnectionOptions): QueueOptions {
+    const prefix = process.env.NODE_ENV === 'test' ? 'bull-test' : process.env.BULL_PREFIX || 'bull';
     return {
-        connection: connection || getRedisConnection(),
+        connection: (connection || getRedisConnection()) as ConnectionOptions,
         defaultJobOptions: DEFAULT_JOB_OPTIONS,
+        prefix,
     };
 }

@@ -2,13 +2,13 @@
 
 import React from 'react';
 
-import { AccountAttributes } from '@entities/account';
+import { AccountAttributes } from '@mailsense/types';
 import EmailMenuBarOptions from '@features/inbox/components/EmailMenuBarOptions';
+import { Filter, FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { DATE_RANGE_DROPDOWN_OPTIONS, UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
-import { Filter, FilterOption, FilterOptionType } from '@shared/types';
 
 interface FolderEmailListHeaderProps {
     searchValue: string;
@@ -31,7 +31,7 @@ const FolderEmailListHeader: React.FC<FolderEmailListHeaderProps> = (props) => {
         {
             id: 1,
             name: 'accountId',
-            type: FilterOptionType.DROPDOWN,
+            type: FILTER_OPTION_TYPE.DROPDOWN,
             label: 'Accounts',
             data:
                 accounts?.map((account) => {
@@ -48,7 +48,7 @@ const FolderEmailListHeader: React.FC<FolderEmailListHeaderProps> = (props) => {
             id: 2,
             name: 'dateRange',
             label: 'Date Range',
-            type: FilterOptionType.DROPDOWN,
+            type: FILTER_OPTION_TYPE.DROPDOWN,
             data: DATE_RANGE_DROPDOWN_OPTIONS.map((item) => {
                 return {
                     id: item.name,

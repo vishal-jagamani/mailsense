@@ -1,0 +1,2 @@
+overrides:
+  '@mailsense/types': link:../../mailsense-types

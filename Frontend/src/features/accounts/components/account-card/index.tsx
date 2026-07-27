@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { AccountAttributes, AccountProviderIcon } from '@entities/account';
+import { AccountProviderIcon } from '@entities/account';
+import { AccountAttributes } from '@mailsense/types';
 import AccountCardActionButtons from './AccountCardActionButtons';
 
 interface AccountCardProps {

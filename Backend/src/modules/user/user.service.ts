@@ -1,11 +1,10 @@
+import { APIResponse, UpdateAPIResponse, UserDetailsObject } from '@mailsense/types';
 import { Auth0Service } from 'integrations/auth0/auth0.service.js';
 import { Auth0UserDetailsResponse } from 'integrations/auth0/auth0.types.js';
-import { APIResponse, UpdateAPIResponse } from '@types';
 import { decrypt } from 'shared/utils/index.js';
 import { UserDocument, UserInput } from './user.model.js';
 import { UserRepository } from './user.repository.js';
 import { ChangePasswordSchema, UpdateUserSchema } from './user.schema.js';
-import { UserDetailsObject } from './user.types.js';
 
 export class UserService {
     private auth0Service: Auth0Service;

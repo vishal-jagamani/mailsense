@@ -1,7 +1,7 @@
+import { EmailAttributes } from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
-import { EmailAttributes } from './email.types.js';
 
-export type EmailInput = Omit<EmailAttributes, 'createdAt' | 'updatedAt'>;
+export type EmailInput = Omit<EmailAttributes, '_id' | 'createdAt' | 'updatedAt'>;
 
 export type EmailDocument = Document & EmailAttributes;
 

@@ -5,6 +5,7 @@ import React, { Suspense } from 'react';
 import EmailListTable from '@features/inbox/components/EmailListTable';
 import EmailMenuBarOptions from '@features/inbox/components/EmailMenuBarOptions';
 import { useInboxPage } from '@features/inbox/hooks';
+import { Filter } from '@mailsense/types';
 import APILoader from '@shared/components/apiLoader';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import Loader from '@shared/components/loader';
@@ -12,7 +13,6 @@ import PaginationComponent from '@shared/components/table/Pagination';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
-import { Filter } from '@shared/types';
 
 const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     const isMobile = useIsMobile();

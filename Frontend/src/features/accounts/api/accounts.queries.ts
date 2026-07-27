@@ -1,6 +1,6 @@
-import { AccountAttributes, AccountProviders } from '@entities/account';
+import { AccountProviders } from '@entities/account';
+import { AccountAttributes, UpdateAPIResponse } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
-import { UpdateAPIResponse } from '@shared/types';
 import { useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, syncAllAccounts } from './accounts.api';

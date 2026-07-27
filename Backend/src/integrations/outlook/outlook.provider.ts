@@ -1,12 +1,16 @@
 import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
+import {
+    OutlookMessageObjectFull,
+    OutlookOAuthAccessTokenResponse,
+    OutlookUserProfile,
+    SearchOtherContactsResponse,
+    UpdateAPIResponse,
+} from '@mailsense/types';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { SearchOtherContactsResponse } from '@modules/emails/email.types.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
-import { OutlookOAuthAccessTokenResponse, UpdateAPIResponse } from '@types';
-import { OutlookService } from './outlook.service.js';
-import { OutlookMessageObjectFull, OutlookUserProfile } from './outlook.types.js';
 import { OutlookApi } from './outlook.api.js';
+import { OutlookService } from './outlook.service.js';
 
 export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenResponse, OutlookUserProfile, OutlookMessageObjectFull> {
     private outlookService: OutlookService;

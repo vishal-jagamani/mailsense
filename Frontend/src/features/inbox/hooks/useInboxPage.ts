@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { Email } from '@entities/email';
 import { useGetAccountDetailsQuery } from '@features/accounts/api/accounts.queries';
+import { EmailAttributes, Filter, FILTER_OPTION_TYPE, FilterOption, PaginatedDataResponse } from '@mailsense/types';
 import { DATE_RANGE_DROPDOWN_OPTIONS, EMAILS_PAGE_SIZE, MESSAGES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useAuthStore, useBreadcrumbStore } from '@shared/store';
-import { Filter, FilterOption, FilterOptionType, PaginatedDataResponse } from '@shared/types';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { useFetchEmailFilters, useFetchEmails } from '../api/inbox.queries';
 
 interface useInboxPageReturnParams {
-    emails: { data: PaginatedDataResponse<Email> | null; fetchEmailsData: () => void; isLoadingEmails: boolean; isEmailError: boolean };
+    emails: { data: PaginatedDataResponse<EmailAttributes> | null; fetchEmailsData: () => void; isLoadingEmails: boolean; isEmailError: boolean };
     emailFilterOptions: { data: FilterOption[] | undefined; isLoading: boolean };
     actions: {
         handleResetSelection: () => void;
@@ -44,7 +43,7 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
     });
     const [pageSize, setPageSize] = useState(EMAILS_PAGE_SIZE);
     const [searchValue, setSearchValue] = useState('');
-    const [emailsData, setEmailsData] = useState<PaginatedDataResponse<Email> | null>(null);
+    const [emailsData, setEmailsData] = useState<PaginatedDataResponse<EmailAttributes> | null>(null);
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
     const [errorShown, setErrorShown] = useState<boolean>(false);
     const [emailFilterOptions, setEmailFilterOptions] = useState<FilterOption[]>();
@@ -118,7 +117,7 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
                           {
                               id: 1,
                               name: 'accountId',
-                              type: FilterOptionType.DROPDOWN,
+                              type: FILTER_OPTION_TYPE.DROPDOWN,
                               label: 'Accounts',
                               data:
                                   emailFilters?.accounts.map((account) => {
@@ -137,7 +136,7 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
                     id: 2,
                     name: 'folders',
                     label: 'Folders',
-                    type: FilterOptionType.DROPDOWN,
+                    type: FILTER_OPTION_TYPE.DROPDOWN,
                     data: emailFilters?.folders.map((folder) => {
                         return {
                             id: folder.id,
@@ -151,7 +150,7 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
                     id: 3,
                     name: 'dateRange',
                     label: 'Date Range',
-                    type: FilterOptionType.DROPDOWN,
+                    type: FILTER_OPTION_TYPE.DROPDOWN,
                     data: DATE_RANGE_DROPDOWN_OPTIONS.map((item) => {
                         return {
                             id: item.name,
@@ -165,7 +164,7 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
                     id: 4,
                     name: 'unread',
                     label: 'Unread',
-                    type: FilterOptionType.TOGGLE,
+                    type: FILTER_OPTION_TYPE.TOGGLE,
                     data: {
                         id: 'unread',
                         name: 'unread',

@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { SyncJob, SyncJobDocument, SyncJobInput } from './sync-job.model.js';
 
 export class SyncJobRepository {
@@ -14,6 +15,9 @@ export class SyncJobRepository {
     }
 
     public static async getLatestSyncJobForAccount(accountId: string): Promise<SyncJobDocument | null> {
+        if (!Types.ObjectId.isValid(accountId)) {
+            return null;
+        }
         return SyncJob.findOne({ accountId }).sort({ startedAt: -1 });
     }
 }

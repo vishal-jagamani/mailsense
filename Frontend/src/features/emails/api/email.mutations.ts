@@ -1,6 +1,5 @@
-import { ComposeEmailRequestBody, SearchOtherContactsResponse } from '@entities/email';
+import { APIResponse, ComposeEmailRequestBody, SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
 import { EMAILS, QUERY_KEYS } from '@shared/api';
-import { APIResponse, UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { composeEmail, searchOtherContacts, starEmail, unreadEmail } from './email.api';
 

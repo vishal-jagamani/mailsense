@@ -1,3 +1,4 @@
+import { GetAllEmailsFilters } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import {
     ArchiveEmailBody,
@@ -10,7 +11,6 @@ import {
     UnreadEmailBody,
 } from './email.schema.js';
 import { EmailService } from './email.service.js';
-import { GetAllEmailsFilters } from './email.types.js';
 
 export class EmailController {
     private emailService: EmailService;

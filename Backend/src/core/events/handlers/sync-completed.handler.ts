@@ -1,9 +1,9 @@
+import { SyncCompletedPayload, SYSTEM_EVENT } from '@mailsense/types';
 import { logger } from '@utils';
 import { eventBus } from '../event-bus.js';
-import { SyncCompletedPayload, SystemEvent } from '../event.types.js';
 
 export function registerSyncCompletedHandler(): void {
-    eventBus.subscribe(SystemEvent.SYNC_COMPLETED, async (payload: SyncCompletedPayload) => {
+    eventBus.subscribe(SYSTEM_EVENT.SYNC_COMPLETED, async (payload: SyncCompletedPayload) => {
         logger.info(`[Stub Subscriber] Sync Completed for account: ${payload.accountId}`, {
             addedCount: payload.addedEmailsCount,
             deletedCount: payload.deletedEmailsCount,

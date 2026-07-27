@@ -1,17 +1,16 @@
 import { MAILSENSE_BASE_URL } from '@config';
 import { ACCOUNT_PROVIDERS } from '@constants';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { ACCOUNT_PROVIDER, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, AccountProviderType, UpdateAPIResponse } from '@mailsense/types';
 import { EmailRepository } from '@modules/emails/email.repository.js';
-import { AccountProvider, AccountProviderType, UpdateAPIResponse } from '@types';
 import { QueueService } from 'core/queue/queue.service.js';
+import { SchedulerService } from 'core/queue/scheduler.service.js';
 import * as GmailUtils from 'integrations/gmail/gmail.utils.js';
 import * as OutlookUtils from 'integrations/outlook/outlook.utils.js';
 import { decrypt, encrypt, logger } from 'shared/utils/index.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
-import { ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE } from './account.types.js';
 import { SyncJobRepository } from './sync-job.repository.js';
-import { SchedulerService } from 'core/queue/scheduler.service.js';
 
 export class AccountsService {
     constructor() {}
@@ -101,10 +100,10 @@ export class AccountsService {
      */
     async connect(provider: string): Promise<{ url: string }> {
         try {
-            if (provider === AccountProvider.GMAIL) {
+            if (provider === ACCOUNT_PROVIDER.GMAIL) {
                 const url = await GmailUtils.buildGmailOAuthConsentURL();
                 return { url };
-            } else if (provider === AccountProvider.OUTLOOK) {
+            } else if (provider === ACCOUNT_PROVIDER.OUTLOOK) {
                 const url = await OutlookUtils.buildOutlookOAuthConsentURL();
                 return { url };
             } else {
@@ -135,13 +134,13 @@ export class AccountsService {
                 logger.error(`Error in AccountsService.callback: ${errorMessage}`, { error: err });
                 throw err;
             }
-            const emailProvider = EmailProviderFactory.getProvider(provider as AccountProvider);
+            const emailProvider = EmailProviderFactory.getProvider(provider as ACCOUNT_PROVIDER);
             const { access_token, refresh_token, expires_in, scope } = await emailProvider.getAccessTokenFromCode(code);
             const userProfile = await emailProvider.getUserProfileFromAccessToken(access_token);
             const emailAddress = 'email' in userProfile ? userProfile.email : userProfile.mail;
             const account: Partial<AccountInput> = {
                 userId: userDetails?.id,
-                provider: provider as AccountProvider,
+                provider: provider as ACCOUNT_PROVIDER,
                 emailAddress,
                 userProfileDetails: userProfile,
                 accessToken: encrypt(access_token),
@@ -149,7 +148,7 @@ export class AccountsService {
                 accessTokenExpiry: Date.now() + expires_in * 1000,
                 refreshTokenExpiry: expires_in,
                 scope,
-                syncEnabled: true,
+                syncEnabled: false,
                 syncInterval: 60,
                 lastSyncedAt: Date.now(),
                 active: true,
@@ -187,7 +186,7 @@ export class AccountsService {
                 if (jobId) {
                     jobIds.push(jobId);
                     await SyncJobRepository.createSyncJob({
-                        accountId: account._id,
+                        accountId: String(account._id),
                         bullJobId: jobId,
                         status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
                         triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
@@ -236,7 +235,7 @@ export class AccountsService {
 
             if (jobId) {
                 await SyncJobRepository.createSyncJob({
-                    accountId: account._id,
+                    accountId: String(account._id),
                     bullJobId: jobId,
                     status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
                     triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,

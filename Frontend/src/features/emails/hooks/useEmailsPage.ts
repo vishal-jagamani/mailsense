@@ -6,15 +6,14 @@ import { HOME_ROUTES } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
 import { useUnreadEmailMutation } from '../api/email.mutations';
 import { useGetEmailDetailsQuery } from '../api/email.queries';
-import { Email } from '@entities/email';
-import { UpdateAPIResponse } from '@shared/types';
+import { UpdateAPIResponse, EmailAttributes } from '@mailsense/types';
 
 interface useEmailsPageReturnParams {
     account: {
         isLoadingAccount: boolean;
     };
     email: {
-        data: Email | undefined;
+        data: EmailAttributes | undefined;
         isLoadingEmail: boolean;
     };
     unreadEmail: {

@@ -1,4 +1,4 @@
-import { FilterQuery, ProjectionType } from 'mongoose';
+import { FilterQuery, ProjectionType, Types } from 'mongoose';
 import { Account, AccountDocument, AccountInput, AccountMetrics, AccountMetricsDocument, AccountMetricsInput } from './account.model.js';
 
 export class AccountRepository {
@@ -21,18 +21,30 @@ export class AccountRepository {
     }
 
     public static async getAccountById(id: string, fields?: ProjectionType<AccountDocument>) {
+        if (!Types.ObjectId.isValid(id)) {
+            return null;
+        }
         return await Account.findById(id, fields);
     }
 
     public static async updateAccountAccessToken(id: string, accessToken: string, accessTokenExpiry: number) {
+        if (!Types.ObjectId.isValid(id)) {
+            return null;
+        }
         return await Account.findByIdAndUpdate(id, { accessToken, accessTokenExpiry }, { new: true });
     }
 
     public static async updateAccount(id: string, data: Partial<AccountInput>) {
+        if (!Types.ObjectId.isValid(id)) {
+            return null;
+        }
         return await Account.findByIdAndUpdate(id, data, { new: true });
     }
 
     public static async deleteAccount(id: string) {
+        if (!Types.ObjectId.isValid(id)) {
+            return null;
+        }
         return await Account.findByIdAndDelete(id);
     }
 

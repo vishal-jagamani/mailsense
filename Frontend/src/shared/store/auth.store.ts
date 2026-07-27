@@ -1,4 +1,4 @@
-import { User } from '@entities/user';
+import { User } from '@mailsense/types';
 import { create } from 'zustand';
 
 interface AuthState {

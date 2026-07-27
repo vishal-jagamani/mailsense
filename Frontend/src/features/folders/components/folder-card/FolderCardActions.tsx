@@ -3,7 +3,8 @@
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
-import { FolderAttributes, RenameFolderState } from '@entities/folder';
+import { RenameFolderState } from '@entities/folder';
+import { FolderAttributes } from '@mailsense/types';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { Ellipsis, FolderOpenDot, Pen, RefreshCw, Trash } from 'lucide-react';

@@ -1,5 +1,5 @@
+import { UpdateAPIResponse } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
-import { UpdateAPIResponse } from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { connectAccount, enableAccount, removeAccount, syncAccount } from './accounts.api';
 

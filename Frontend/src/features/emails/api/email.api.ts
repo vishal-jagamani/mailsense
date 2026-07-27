@@ -1,8 +1,7 @@
-import { ComposeEmailRequestBody, Email, SearchOtherContactsResponse } from '@entities/email';
+import { APIResponse, ComposeEmailRequestBody, EmailAttributes, SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
 import { axiosClient, EMAILS_API_ENDPOINTS } from '@shared/api';
-import { APIResponse, UpdateAPIResponse } from '@shared/types';
 
-export async function getEmailDetails(emailId: string): Promise<Email> {
+export async function getEmailDetails(emailId: string): Promise<EmailAttributes> {
     const { data } = await axiosClient.get(EMAILS_API_ENDPOINTS.DETAILS(emailId));
     return data;
 }

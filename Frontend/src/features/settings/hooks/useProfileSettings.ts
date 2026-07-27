@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
+import { ProfileSettingsDataObject } from '@mailsense/types';
 import { MESSAGES } from '@shared/constants';
 import { useAuthStore } from '@shared/store';
-import { ProfileSettingsDataObject } from '@shared/types';
 import { useUpdateProfileMutation } from '../api/settings.mutation';
 import { useGetProfileQuery } from '../api/settings.queries';
 

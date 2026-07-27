@@ -2,7 +2,8 @@
 
 import React from 'react';
 
-import { AccountAttributes, AccountProviderIcon } from '@entities/account';
+import { AccountProviderIcon } from '@entities/account';
+import { AccountAttributes } from '@mailsense/types';
 import { useIsMobile } from '@shared/hooks';
 import { Button } from '@shared/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
@@ -37,7 +38,7 @@ const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({ accountsData, c
                                         <SelectItem key={index + 1} value={item?._id} className="text-xs">
                                             <AccountProviderIcon provider={item.provider} className="size-4" />
                                             {item?.emailAddress}
-                                        </SelectItem>
+                                        </SelectItem> 
                                     );
                                 })}
                         </SelectContent>

@@ -1,15 +1,13 @@
+import { ACCOUNT_LAST_SYNC_STATUS, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { ACCOUNT_LAST_SYNC_STATUS, ACCOUNT_SYNC_JOB_STATUS } from '@modules/accounts/account.types.js';
 import { SyncJobRepository } from '@modules/accounts/sync-job.repository.js';
 import { logger } from '@utils';
 import { Job } from 'bullmq';
 import { eventBus } from 'core/events/event-bus.js';
-import { SystemEvent } from 'core/events/event.types.js';
 import { QUEUE_NAMES } from 'core/queue/queue.config.js';
 import { SyncAccountPayload } from 'core/queue/queue.service.js';
 import { BaseWorker } from './base.worker.js';
 import { syncAccountProcessor } from './processors/sync-account.processor.js';
-import { SyncJobResult } from './worker.types.js';
 
 export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
     protected queueName = QUEUE_NAMES.SYNC_ACCOUNT;
@@ -22,10 +20,21 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
         try {
             const { accountId } = job.data;
             if (job.id) {
-                await SyncJobRepository.updateSyncJob(job.id, {
-                    status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
-                    startedAt: Date.now(),
-                });
+                const existingJob = await SyncJobRepository.getSyncJobByBullId(job.id);
+                if (!existingJob) {
+                    await SyncJobRepository.createSyncJob({
+                        accountId: accountId,
+                        bullJobId: job.id,
+                        status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
+                        triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.SCHEDULED,
+                        startedAt: Date.now(),
+                    });
+                } else {
+                    await SyncJobRepository.updateSyncJob(job.id, {
+                        status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
+                        startedAt: Date.now(),
+                    });
+                }
             }
             await AccountRepository.updateAccount(accountId, {
                 syncInProgress: true,
@@ -56,7 +65,7 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
             });
 
             // Emit SYNC_COMPLETED event on background sync success
-            eventBus.publish(SystemEvent.SYNC_COMPLETED, {
+            eventBus.publish(SYSTEM_EVENT.SYNC_COMPLETED, {
                 accountId,
                 addedEmailsCount: result?.addedEmailsCount || 0,
                 deletedEmailsCount: result?.deletedEmailsCount || 0,

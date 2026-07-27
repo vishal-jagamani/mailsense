@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import React from 'react';
 
-import { FolderAttributes } from '@entities/folder';
+import { FolderAttributes } from '@mailsense/types';
 import { Checkbox } from '@radix-ui/react-checkbox';
 import { useIsMobile } from '@shared/hooks';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';

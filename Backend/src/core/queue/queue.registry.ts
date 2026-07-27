@@ -1,4 +1,4 @@
-import { Queue } from 'bullmq';
+import { ConnectionOptions, Queue } from 'bullmq';
 import { logger } from '../../shared/utils/logger.js';
 import { QUEUE_NAMES, getQueueConfig } from './queue.config.js';
 import { getRedisConnection } from './redis.connection.js';
@@ -17,7 +17,7 @@ export function initQueueRegistry(): void {
             logger.info(`📦 Initializing BullMQ Queue: ${name}`);
             const queue = new Queue(name, {
                 ...queueConfig,
-                connection,
+                connection: connection as ConnectionOptions,
             });
             registry.set(name, queue);
         }

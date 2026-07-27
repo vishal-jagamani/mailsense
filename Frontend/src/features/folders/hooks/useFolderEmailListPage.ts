@@ -3,13 +3,12 @@ import { toast } from 'sonner';
 
 import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
 import { useFetchEmails } from '@features/inbox/api/inbox.queries';
+import { EmailAttributes, Filter, PaginatedDataResponse } from '@mailsense/types';
 import { EMAILS_PAGE_SIZE, MESSAGES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useAuthStore, useBreadcrumbStore } from '@shared/store';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useGetFolderQuery } from '../api/folder.queries';
-import { Filter, PaginatedDataResponse } from '@shared/types';
-import { Email } from '@entities/email';
 
 export const useFolderEmailListPage = (folderId: string) => {
     const router = useRouter();
@@ -22,7 +21,7 @@ export const useFolderEmailListPage = (folderId: string) => {
     });
     const [pageSize, setPageSize] = useState(EMAILS_PAGE_SIZE);
     const [searchValue, setSearchValue] = useState('');
-    const [emailsData, setEmailsData] = useState<PaginatedDataResponse<Email> | null>(null);
+    const [emailsData, setEmailsData] = useState<PaginatedDataResponse<EmailAttributes> | null>(null);
     const debouncedSearchValue = UseDebounceQuery({ text: searchValue, delay: 500 });
     const [errorShown, setErrorShown] = useState<boolean>(false);
     const [filter, setFilter] = useState<Filter | null>(null);
