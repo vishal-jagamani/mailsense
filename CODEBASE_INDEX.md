@@ -4,7 +4,7 @@
 
 - `Backend/`: Node.js + Express + TypeScript + MongoDB
 - `Frontend/`: Next.js App Router + React + TypeScript + React Query + Auth0 + Zustand
-- Shared contracts are now sourced from the workspace-linked `@mailsense/types` package via local pnpm overrides in both backend and frontend.
+- Shared contracts are now sourced from `@mailsense/types`; the frontend keeps a local workspace link while the backend no longer carries its own `pnpm-workspace.yaml` override.
 
 ## Backend Index (`/Backend`)
 
@@ -24,6 +24,7 @@
 - `Backend/src/core/config/app.config.ts`: now also exposes Upstash Redis REST-backed queue connection config
 - `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
 - `Backend/src/core/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
+- `Backend/package.json`: backend package metadata is currently on the `2.0.1` release line
 
 ### Queue Infrastructure
 
