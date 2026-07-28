@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  '@mailsense/types': link:../../mailsense-types
-
 importers:
 
   .:
