@@ -1,6 +1,6 @@
 import { EmailAttributes, FetchEmailRequestOptions, GetFiltersResponse, PaginatedDataResponse, UpdateAPIResponse } from '@mailsense/types';
-import { EMAIL_FILTERS } from '@shared/api';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { EMAIL_FILTERS, EMAILS } from '@shared/api';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { deleteEmail, fetchEmails, getEmailFilters } from './inbox.api';
 
 export const useFetchEmails = () => {
@@ -12,7 +12,11 @@ export const useFetchEmailFilters = () => {
 };
 
 export const useDeleteEmail = () => {
+    const queryClient = useQueryClient();
     return useMutation<UpdateAPIResponse, Error, { emailIds: string[]; trash: boolean }>({
         mutationFn: ({ emailIds, trash }) => deleteEmail(emailIds, trash),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [EMAILS] });
+        },
     });
 };

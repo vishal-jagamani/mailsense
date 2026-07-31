@@ -10,11 +10,33 @@ type ConnectAccountResult = Awaited<ReturnType<typeof connectAccount>>;
 type Options = Omit<UseQueryOptions<ConnectAccountResult, Error, ConnectAccountResult, [string, string]>, 'queryKey' | 'queryFn'>;
 
 export const useGetAccountsQuery = (userId: string, options?: Options): UseQueryResult<AccountAttributes[]> => {
-    return useQuery({ queryKey: [QUERY_KEYS.ACCOUNTS, userId], queryFn: () => getAccounts(), ...options });
+    return useQuery({
+        queryKey: [QUERY_KEYS.ACCOUNTS, userId],
+        queryFn: () => getAccounts(),
+        refetchInterval: (query) => {
+            const data = query.state.data as AccountAttributes[] | undefined;
+            if (Array.isArray(data) && data.some((acc) => acc.syncInProgress)) {
+                return 3000;
+            }
+            return false;
+        },
+        ...options,
+    });
 };
 
 export const useGetAccountDetailsQuery = (accountId: string, options?: Options): UseQueryResult<AccountAttributes> => {
-    return useQuery({ queryKey: [QUERY_KEYS.ACCOUNTS, accountId], queryFn: () => getAccountDetails(accountId), ...options });
+    return useQuery({
+        queryKey: [QUERY_KEYS.ACCOUNTS, accountId],
+        queryFn: () => getAccountDetails(accountId),
+        refetchInterval: (query) => {
+            const data = query.state.data as AccountAttributes | undefined;
+            if (data?.syncInProgress) {
+                return 3000;
+            }
+            return false;
+        },
+        ...options,
+    });
 };
 
 export const useAccountQuery = (provider: string, options?: Options) => {

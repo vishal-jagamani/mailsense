@@ -1,7 +1,7 @@
 import { UpdateAPIResponse } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { connectAccount, enableAccount, removeAccount, syncAccount } from './accounts.api';
+import { connectAccount, enableAccount, removeAccount, syncAccount, updateAccountSettings } from './accounts.api';
 
 export const useConnectAccountMutation = () => {
     return useMutation<Awaited<ReturnType<typeof connectAccount>>, Error, string>({
@@ -40,4 +40,17 @@ export const useRemoveAccountMutation = () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNT_PROVIDERS] });
         },
     });
+};
+
+export const useUpdateAccountSettingsMutation = () => {
+    const queryClient = useQueryClient();
+    return useMutation<UpdateAPIResponse, Error, { accountId: string; settings: { syncEnabled?: boolean; syncInterval?: number; active?: boolean } }>(
+        {
+            mutationFn: ({ accountId, settings }) => updateAccountSettings(accountId, settings),
+            onSuccess: () => {
+                queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });
+                queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_SYNC_SETTINGS] });
+            },
+        },
+    );
 };

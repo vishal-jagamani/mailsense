@@ -41,7 +41,13 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                         />
                     </div>
                     <div className={`flex w-full flex-col ${isMobile ? 'h-[calc(100vh-200px)]' : 'h-[calc(100vh-150px)]'}`}>
-                        <EmailListTable data={emailsData?.data || []} page={page} selectedEmails={selectedEmails} onEmailSelect={handleEmailSelect} />
+                        <EmailListTable
+                            data={emailsData?.data || []}
+                            page={page}
+                            selectedEmails={selectedEmails}
+                            onEmailSelect={handleEmailSelect}
+                            onDeleteSuccess={fetchEmailsData}
+                        />
                     </div>
                     <PaginationComponent
                         total={emailsData?.total || 0}

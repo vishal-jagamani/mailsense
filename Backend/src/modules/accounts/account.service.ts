@@ -11,6 +11,7 @@ import { decrypt, encrypt, logger } from 'shared/utils/index.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
 import { SyncJobRepository } from './sync-job.repository.js';
+import { UpdateAccountSettingsSchema } from './account.schema.js';
 
 export class AccountsService {
     constructor() {}
@@ -264,6 +265,24 @@ export class AccountsService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.enableAccount: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async updateAccountSettings(accountId: string, settings: UpdateAccountSettingsSchema): Promise<UpdateAPIResponse> {
+        try {
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) throw new Error('Account not found');
+
+            await AccountRepository.updateAccount(accountId, settings);
+
+            // Re-evaluates schedule in BullMQ
+            await SchedulerService.upsertAccountRepeatableJob(accountId);
+
+            return { status: true, message: 'Account settings updated successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.updateAccountSettings: ${errorMessage}`, { error: err });
             throw err;
         }
     }

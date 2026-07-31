@@ -1,5 +1,3 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-
 export const AUTH0_URLS = {
     LOGIN: '/auth/login',
     LOGOUT: '/auth/logout',
@@ -20,13 +18,14 @@ export const ACCOUNTS_API_ENDPOINTS = {
     SYNC_ALL: '/accounts/sync-all',
     DELETE: (accountId: string) => `/accounts/${accountId}`,
     ENABLE: (accountId: string) => `/accounts/enable/${accountId}`,
+    UPDATE_SETTINGS: (accountId: string) => `/accounts/settings/${accountId}`,
 } as const;
 
 export const EMAILS_API_ENDPOINTS = {
     LIST: '/emails/list',
     SEARCH: '/emails/search',
     FILTERS: '/emails/filters',
-    DELETE: '/emails',
+    DELETE: '/emails/delete',
     DETAILS: (emailId: string) => `/emails/details/${emailId}`,
     ARCHIVE: '/emails/archive',
     STAR: '/emails/star',
@@ -43,4 +42,5 @@ export const FOLDER_API_ENDPOINTS = {
 export const SETTINGS_API_ENDPOINTS = {
     USERS: '/users',
     CHANGE_PASSWORD: '/users/change-password',
+    USER_SETTINGS: '/users/settings',
 } as const;

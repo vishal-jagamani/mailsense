@@ -4,7 +4,7 @@
 
 - `Backend/`: Node.js + Express + TypeScript + MongoDB
 - `Frontend/`: Next.js App Router + React + TypeScript + React Query + Auth0 + Zustand
-- Shared contracts are now sourced from `@mailsense/types`; the frontend keeps a local workspace link while the backend no longer carries its own `pnpm-workspace.yaml` override.
+- Shared contracts are sourced from `@mailsense/types`, with local workspace/package-manager config present in both `Backend/` and `Frontend/`.
 
 ## Backend Index (`/Backend`)
 
@@ -33,7 +33,7 @@
   - `queue.registry.ts`: queue instance initialization/caching and cleanup
   - `queue.service.ts`: job enqueue helpers for sync-account and refresh-token submission
   - `redis.connection.ts`: shared Upstash Redis connection for queue processing
-  - `scheduler.service.ts`: synchronizes BullMQ repeatable sync schedules with active/sync-enabled account settings
+  - `scheduler.service.ts`: synchronizes BullMQ repeatable sync schedules with active/sync-enabled account settings and user-level sync preferences
   - `index.ts`: queue startup/shutdown hooks used by the server lifecycle, including event bootstrap, worker startup, scheduler sync, and teardown
 - `Backend/src/core/queue/__tests__/queue.service.test.ts`: queue integration coverage for sync job enqueue flow
 - `Backend/src/core/queue/__tests__/scheduler.service.test.ts`: scheduler coverage for repeatable sync job registration and cleanup
@@ -71,6 +71,7 @@
   - Connect/callback OAuth for Gmail/Outlook
   - Sync one/all accounts
   - Account list/details/delete
+  - Account-level sync settings update endpoint for `syncEnabled`, `syncInterval`, and related scheduler refresh
   - Provider callback token exchange, profile fetch, and sync execution now route through `EmailProviderFactory`
   - Sync requests now enqueue background jobs and persist sync-job tracking records
   - Account activation, deactivation, creation, and deletion now synchronize repeatable background sync schedules
@@ -91,6 +92,7 @@
 - Users (`Backend/src/modules/user/*`)
   - Session-scoped user/profile fetch/update
   - Change password via Auth0 Management API
+  - User sync settings fetch/update endpoints for global account background-sync preferences
 - Demo (`Backend/src/modules/demo/*`)
   - Cat fact sample endpoint
   - Queue-sync demo endpoint for manually enqueuing sync-account jobs
@@ -136,6 +138,7 @@
   - `Folder` with provider folder identity + counts/role metadata
 - `Backend/src/modules/user/user.model.ts`
   - `User` indexed by `auth0UserId`
+  - `UserSettingsModel` for persisted account sync preferences per user
 
 ### Shared Types / Utils
 
@@ -157,11 +160,14 @@
   - `GET /users/profile`
   - `PUT /users/profile`
   - `PATCH /users/change-password`
+  - `GET /users/settings`
+  - `PATCH /users/settings`
 - Accounts:
   - `GET /accounts/providers/list`
   - `GET /accounts/list/all`
   - `GET /accounts/:accountId`
   - `DELETE /accounts/:accountId`
+  - `PATCH /accounts/settings/:accountId`
   - `GET /accounts/connect/:provider`
   - `GET /accounts/callback/:provider`
   - `GET /accounts/sync-all`
@@ -219,12 +225,12 @@
   - `entities/folder/*`: folder UI component state/interfaces that remain frontend-specific
   - Account, email, folder, user, filter, and settings data contracts now come from `@mailsense/types`
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
-  - `features/accounts/*`: accounts page, provider grouping, account actions, account API layer
+  - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer
   - `features/auth/*`: login page and profile fetch query
   - `features/emails/*`: email details page, compose flow, rich-text editor, delete modal, email actions, email API layer
   - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer, folder action hooks
-  - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks
-  - `features/settings/*`: settings page, profile page/form, password modal, account-deletion UI, settings API layer
+  - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks with sync-aware refresh behavior
+  - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys
 - `Frontend/next.config.ts`: transpiles the shared `@mailsense/types` package for Next.js consumption
 - `Frontend/pnpm-workspace.yaml`: links `@mailsense/types` from the local workspace
@@ -243,6 +249,7 @@
   - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:
   - query keys in `Frontend/src/shared/api/query-keys.ts`
+  - includes `USER_SYNC_SETTINGS` for account background-sync preferences
   - feature-level queries and mutations under `features/*/api/*.queries.ts`, `features/*/api/*.mutation.ts`, and `features/*/api/*.mutations.ts`
 - Axios clients:
   - `Frontend/src/shared/api/client.ts`
@@ -265,7 +272,7 @@
 - `Frontend/src/shared/types/sidebar.types.ts`: shared sidebar navigation item and project typing
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
 - `Frontend/src/shared/constants/email.ts`: email list pagination and date-range dropdown options backed by email entity enums
-- `Frontend/src/shared/api/endpoints.ts`: centralized API base URL, Auth0 route helpers, and backend endpoint constants
+- `Frontend/src/shared/api/endpoints.ts`: centralized Auth0 route helpers and backend endpoint constants, including account sync-settings and user settings endpoints
 
 ## End-to-End Flow Summary
 

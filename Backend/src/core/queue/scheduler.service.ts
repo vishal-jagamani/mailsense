@@ -1,4 +1,6 @@
+import { ACCOUNT_SYNC_MODE } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { UserSettingsRepository } from '@modules/user/user-settings.repository.js';
 import { logger } from '@utils';
 import { QUEUE_NAMES } from './queue.config.js';
 import { getQueue } from './queue.registry.js';
@@ -11,63 +13,18 @@ export class SchedulerService {
     public static async init(): Promise<void> {
         try {
             logger.info('⏰ Syncing background schedules with MongoDB...');
-            const queue = getQueue(QUEUE_NAMES.SYNC_ACCOUNT);
-
-            // Fetch current repeatability states in BullMQ
-            const jobSchedulers = await queue.getJobSchedulers();
-
-            // Fetch active/sync-enabled accounts from MongoDB
             const accounts = await AccountRepository.getAccounts({ active: true, syncEnabled: true });
-            const activeAccountIds = new Set(accounts.map((acc) => String(acc._id)));
 
-            // 1. Remove jobs that no longer match active criteria or whose intervals changed
-            for (const scheduler of jobSchedulers) {
-                if (!scheduler.name.startsWith('sync:')) {
-                    continue;
-                }
-                const accountId = scheduler.name.replace('sync:', '');
-
-                if (!accountId || !activeAccountIds.has(accountId)) {
-                    logger.info(`⏰ Removing deprecated repeatable job key ${scheduler.key} for account: ${accountId}`);
-                    await queue.removeJobScheduler(scheduler.key);
-                    continue;
-                }
-
-                const account = accounts.find((acc) => String(acc._id) === accountId);
-                if (account) {
-                    const expectedIntervalMs = account.syncInterval * 60 * 1000;
-                    if (scheduler.every !== expectedIntervalMs) {
-                        logger.info(`⏰ Interval shift detected for account: ${accountId}. Rebuilding scheduler.`);
-                        await queue.removeJobScheduler(scheduler.key);
-                    }
-                }
-            }
-
-            // 2. Register/Ensure repeatable jobs exist for all active accounts
             for (const account of accounts) {
-                const accountId = String(account._id);
-                const intervalMs = account.syncInterval * 60 * 1000;
+                const userSettingsDoc = await UserSettingsRepository.getUserSettings(account.userId);
+                const globalAutoSync = userSettingsDoc?.account?.syncSettings?.globalAutoSync ?? true;
 
-                const alreadyRegistered = jobSchedulers.some((scheduler) => {
-                    if (!scheduler.name.startsWith('sync:')) {
-                        return false;
-                    }
-                    const rAccountId = scheduler.name.replace('sync:', '');
-                    return rAccountId === accountId && scheduler.every === intervalMs;
-                });
-
-                if (!alreadyRegistered) {
-                    logger.info(`⏰ Registering repeatable sync for account: ${accountId} (Every ${account.syncInterval} mins)`);
-                    await queue.add(
-                        `sync:${accountId}`,
-                        { accountId, userId: account.userId, force: false },
-                        {
-                            repeat: { every: intervalMs },
-                            jobId: `repeat:${accountId}`,
-                            priority: 2, // Auto-scheduled runs at lower priority
-                        },
-                    );
+                if (!globalAutoSync) {
+                    await this.removeAccountRepeatableJob(String(account._id));
+                    continue;
                 }
+
+                await this.upsertAccountRepeatableJob(String(account._id));
             }
             logger.info('⏰ Background schedules synchronized successfully');
         } catch (error) {
@@ -88,9 +45,23 @@ export class SchedulerService {
                 return;
             }
 
+            const userSettingsDoc = await UserSettingsRepository.getUserSettings(account.userId);
+            const syncSettings = userSettingsDoc?.account?.syncSettings;
+            const globalAutoSync = syncSettings?.globalAutoSync ?? true;
+            if (!globalAutoSync) {
+                await this.removeAccountRepeatableJob(accountId);
+                return;
+            }
+
             const queue = getQueue(QUEUE_NAMES.SYNC_ACCOUNT);
             const jobSchedulers = await queue.getJobSchedulers();
-            const intervalMs = account.syncInterval * 60 * 1000;
+
+            let intervalMinutes = account.syncInterval;
+            if (syncSettings?.syncMode === ACCOUNT_SYNC_MODE.SAME_FOR_ALL && syncSettings.globalSyncInterval) {
+                intervalMinutes = syncSettings.globalSyncInterval;
+            }
+
+            const intervalMs = intervalMinutes * 60 * 1000;
 
             for (const scheduler of jobSchedulers) {
                 if (!scheduler.name.startsWith('sync:')) {
@@ -102,7 +73,7 @@ export class SchedulerService {
                 }
             }
 
-            logger.info(`⏰ Registering/Updating repeatable sync: ${accountId} (Every ${account.syncInterval} mins)`);
+            logger.info(`⏰ Registering/Updating repeatable sync: ${accountId} (Every ${intervalMinutes} mins)`);
             await queue.add(
                 `sync:${accountId}`,
                 { accountId, userId: account.userId, force: false },
@@ -140,6 +111,23 @@ export class SchedulerService {
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             logger.error(`❌ Failed to delete repeatable sync job: ${msg}`, { error, accountId });
+            throw error;
+        }
+    }
+
+    /**
+     * Remove all repeatable sync jobs belonging to a specific user
+     */
+    public static async removeAllUserRepeatableJobs(userId: string): Promise<void> {
+        try {
+            const accounts = await AccountRepository.getAccounts({ userId });
+            for (const account of accounts) {
+                await this.removeAccountRepeatableJob(String(account._id));
+            }
+            logger.info(`⏰ Removed all repeatable sync jobs for user: ${userId}`);
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            logger.error(`❌ Failed to remove user repeatable jobs: ${msg}`, { error, userId });
             throw error;
         }
     }

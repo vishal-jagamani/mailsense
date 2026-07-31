@@ -10,9 +10,9 @@ The implementation is broken down into five sequential, testable phases.
 
 | Phase | Title | Core Focus |
 |---|---|---|
-| **Phase 1** | Backend Settings Schemas & Dynamic Schedulers | Extend `User` schema with `syncSettings`, add global and per-account settings API endpoints, and update `SchedulerService` in BullMQ. |
-| **Phase 2** | Frontend Entity Types & Query Polling | Extend [account.types.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/entities/account/model/account.types.ts) and add TanStack Query auto-polling triggers in [accounts.queries.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/accounts/api/accounts.queries.ts). |
-| **Phase 3** | Centralized Account Settings Tab (`/settings/account`) | Enable tabs in Settings page [index.tsx](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/settings/pages/index.tsx) and build `AccountSyncSettings` page with global auto-sync and mode selectors. |
+| **Phase 1** | Backend Settings Schemas & Dynamic Schedulers | Keep `User` schema clean (auth/identity only) and create dedicated `UserSettings` schema/model (`usersettings` collection), source contracts from `@mailsense/types`, add `GET /api/user/settings` & `PATCH /api/user/settings`, and update `SchedulerService` in BullMQ. |
+| **Phase 2** | Frontend Entity Types & Query Polling | Import `UserSettings`, `UserAccountSyncSettings`, `ACCOUNT_SYNC_MODE`, and `AccountAttributes` from `@mailsense/types` in [account.types.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/entities/account/model/account.types.ts) and add TanStack Query auto-polling in [accounts.queries.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/accounts/api/accounts.queries.ts). |
+| **Phase 3** | Centralized Account Settings Tab (`/settings/account`) | Enable tabs in Settings page [index.tsx](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/settings/pages/index.tsx) and build `AccountSyncSettings` page with global auto-sync and mode selectors using `@mailsense/types`. |
 | **Phase 4** | Card Quick Action & UI Polish (`/accounts`) | Build [AccountSettingsModal.tsx](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/accounts/components/account-card/AccountSettingsModal.tsx), update [useAccountCardActions.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/accounts/hooks/useAccountCardActions.ts), and add gear icon to [AccountCardActionButtons.tsx](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/accounts/components/account-card/AccountCardActionButtons.tsx). |
 | **Phase 5** | Inbox Real-Time Refresh | Enable 10s polling for emails in [useInboxPage.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/hooks/useInboxPage.ts) during background sync and render progress banner in [index.tsx](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/pages/index.tsx). |
 
@@ -21,44 +21,49 @@ The implementation is broken down into five sequential, testable phases.
 ## Detailed Phases
 
 ### Phase 1: Backend Settings Schemas & Dynamic Schedulers
-* **Objective**: Add `syncSettings` schema attributes to the Backend `User` model, create API endpoints for global user sync settings and individual account settings, and wire `SchedulerService` for bulk or per-account BullMQ job rescheduling.
+* **Objective**: Maintain clean `User` schema (auth/identity only) and create a dedicated `UserSettings` Mongoose model/collection sourcing contracts from `@mailsense/types`, create unified `GET /api/user/settings` and `PATCH /api/user/settings` API endpoints, and wire `SchedulerService` for BullMQ job rescheduling when account sync settings change.
 
 #### Implementation Checklist
+- [ ] **Types Alignment**:
+  - Source `UserSettings`, `UserAccountSettings`, `UserAccountSyncSettings`, `ACCOUNT_SYNC_MODE`, `APIResponse`, and `UpdateAPIResponse` from `@mailsense/types`.
 - [ ] **Database Schema Updates**:
-  - Add `syncSettings` sub-document to `UserSchema` in [user.model.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.model.ts) (`globalAutoSync`, `syncMode`, `globalSyncInterval`, `defaultSyncInterval`).
-- [ ] **Global User Settings Endpoints**:
-  - Add `getUserSyncSettings` and `updateUserSyncSettings` in [user.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.service.ts).
-  - Expose `GET /api/user/sync-settings` and `PATCH /api/user/sync-settings` in [user.routes.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.routes.ts).
+  - Keep [user.model.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.model.ts) focused strictly on user identity (`auth0UserId`, `name`, `email`).
+  - Create dedicated `UserSettings` model in `user-settings.model.ts` (`usersettings` collection linked by `userId` index) with `account.syncSettings` (`globalAutoSync`, `syncMode: ACCOUNT_SYNC_MODE`, `globalSyncInterval`, `defaultSyncInterval`).
+- [ ] **Unified User Settings Endpoints**:
+  - Add `getUserSettings` and `updateUserSettings` in [user.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.service.ts).
+  - Expose `GET /api/user/settings` and `PATCH /api/user/settings` in [user.routes.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.routes.ts).
 - [ ] **Account Settings Endpoint**:
   - Add `updateAccountSettingsSchema` in [account.schema.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.schema.ts).
   - Register route `PATCH /api/accounts/settings/:accountId` in [account.routes.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.routes.ts).
 - [ ] **Scheduler Integration**:
-  - Update `SchedulerService` to remove all user jobs if `globalAutoSync: false` or bulk-update intervals if `syncMode: 'SAME_FOR_ALL'`.
+  - Update `SchedulerService` to remove all user jobs if `globalAutoSync: false` or bulk-update intervals if `syncMode: ACCOUNT_SYNC_MODE.SAME_FOR_ALL`.
 
-#### Files to Modify
-* `Backend/src/modules/user/user.model.ts`
-* `Backend/src/modules/user/user.types.ts`
-* `Backend/src/modules/user/user.service.ts`
-* `Backend/src/modules/user/user.controller.ts`
-* `Backend/src/modules/user/user.routes.ts`
-* `Backend/src/modules/accounts/account.schema.ts`
-* `Backend/src/modules/accounts/account.service.ts`
-* `Backend/src/modules/accounts/account.controller.ts`
-* `Backend/src/modules/accounts/account.routes.ts`
-* `Backend/src/core/queue/scheduler.service.ts`
+#### Files to Create / Modify
+* **Files to Create**:
+  - `Backend/src/modules/user/user-settings.model.ts`
+* **Files to Modify**:
+  - `Backend/src/modules/user/user.model.ts`
+  - `Backend/src/modules/user/user.types.ts`
+  - `Backend/src/modules/user/user.service.ts`
+  - `Backend/src/modules/user/user.controller.ts`
+  - `Backend/src/modules/user/user.routes.ts`
+  - `Backend/src/modules/accounts/account.schema.ts`
+  - `Backend/src/modules/accounts/account.service.ts`
+  - `Backend/src/modules/accounts/account.controller.ts`
+  - `Backend/src/modules/accounts/account.routes.ts`
+  - `Backend/src/core/queue/scheduler.service.ts`
 
 #### Acceptance Criteria
-1. `PATCH /api/user/sync-settings` updates MongoDB and updates BullMQ schedulers.
+1. `PATCH /api/user/settings` updates MongoDB and updates BullMQ schedulers when sync settings are modified.
 2. `PATCH /api/accounts/settings/:accountId` updates individual account intervals and reschedules BullMQ repeatable jobs.
 
 ---
 
 ### Phase 2: Frontend Entity Types & Query Polling
-* **Objective**: Define frontend sync settings interfaces and configure automatic React Query polling on the account list while sync tasks run.
+* **Objective**: Re-export shared sync settings interfaces and account attributes from `@mailsense/types` and configure automatic React Query polling on the account list while sync tasks run.
 
 #### Implementation Checklist
-- [ ] Update `AccountAttributes` in [account.types.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/entities/account/model/account.types.ts) to include `syncInProgress`, `lastSyncStatus`, `lastSyncError`, `lastSyncStartedAt`, `lastSyncCompletedAt`.
-- [ ] Add `UserSyncSettings` and `UpdateUserSyncSettingsPayload` interfaces in [account.types.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/entities/account/model/account.types.ts).
+- [ ] Re-export `AccountAttributes`, `UserSyncSettings`, `ACCOUNT_SYNC_MODE`, and `ACCOUNT_LAST_SYNC_STATUS` from `@mailsense/types` in [account.types.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/entities/account/model/account.types.ts).
 - [ ] Update `useGetAccountsQuery` in [accounts.queries.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/accounts/api/accounts.queries.ts) to use a dynamic `refetchInterval` (3s polling when any account has `syncInProgress === true`, `false` otherwise).
 - [ ] Update `useGetAccountDetailsQuery` in [accounts.queries.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/accounts/api/accounts.queries.ts) with similar polling logic.
 
