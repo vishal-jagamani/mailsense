@@ -7,6 +7,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-31
+
+### Added
+- Added account sync controls in Settings so users can enable or pause background sync and choose shared or per-account sync frequency.
+- Added per-account sync settings from Connected Accounts, including mailbox-level auto-sync and sync frequency controls.
+
+### Changed
+- Unified inbox now shows when background sync is running and refreshes email results automatically while new mail is being fetched.
+- Connected account cards now show clearer sync status, including sync progress, failed sync warnings, and never-synced state.
+
+### Fixed
+- Fixed inbox list refresh after single-email delete actions so changes appear immediately.
+- Fixed profile settings form handling when optional phone number data is missing.
+
 ## [2.0.1] - 2026-07-28
 
 ### Changed
@@ -137,7 +151,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.0
+[2.0.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.1
 [2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
 [1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1
 [1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0

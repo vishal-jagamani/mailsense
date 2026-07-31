@@ -23,13 +23,16 @@ export const useProfileSettings = () => {
     useEffect(() => {
         if (userProfileData?.data) {
             setProfileSettingsData({
-                nickname: userProfileData?.data.nickname,
-                name: userProfileData?.data.name,
-                picture: userProfileData?.data.picture,
-                email: userProfileData?.data.email,
-                email_verified: userProfileData?.data.email_verified,
-                sub: userProfileData?.data.sub,
-                user_metadata: userProfileData?.data?.user_metadata,
+                nickname: userProfileData?.data.nickname ?? '',
+                name: userProfileData?.data.name ?? '',
+                picture: userProfileData?.data.picture ?? '',
+                email: userProfileData?.data.email ?? '',
+                email_verified: userProfileData?.data.email_verified ?? false,
+                sub: userProfileData?.data.sub ?? '',
+                user_metadata: {
+                    ...userProfileData?.data?.user_metadata,
+                    phone_number: (userProfileData?.data?.user_metadata as { phone_number?: string })?.phone_number ?? '',
+                },
             });
         }
     }, [userProfileData]);

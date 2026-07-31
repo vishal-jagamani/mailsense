@@ -3,7 +3,13 @@ import { Router } from 'express';
 import { authMiddleware, validate } from '@middlewares';
 import { handleRequest } from 'shared/utils/index.js';
 import { AccountsController } from './account.controller.js';
-import { connectAccountSchema, deleteAccountSchema, enableAccountSchema, getAccountDetailsSchema } from './account.schema.js';
+import {
+    connectAccountSchema,
+    deleteAccountSchema,
+    enableAccountSchema,
+    getAccountDetailsSchema,
+    updateAccountSettingsSchema,
+} from './account.schema.js';
 
 const router = Router();
 
@@ -31,6 +37,12 @@ router.patch(
     '/enable/:accountId',
     validate({ params: getAccountDetailsSchema, body: enableAccountSchema }),
     handleRequest(accountsController.enableAccount),
+);
+
+router.patch(
+    '/settings/:accountId',
+    validate({ params: getAccountDetailsSchema, body: updateAccountSettingsSchema }),
+    handleRequest(accountsController.updateAccountSettings),
 );
 
 export default router;

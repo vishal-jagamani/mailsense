@@ -41,7 +41,7 @@ const UserProfileForm: React.FC<UserProfileFormProps> = ({ formData, setFormData
                 <TextInput
                     type="tel"
                     label="Phone Number"
-                    value={formData.user_metadata.phone_number}
+                    value={formData.user_metadata?.phone_number ?? ''}
                     onChange={(value) =>
                         setFormData({
                             ...formData,

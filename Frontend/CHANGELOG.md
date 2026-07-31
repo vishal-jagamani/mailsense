@@ -7,6 +7,20 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-31
+
+### Added
+- Added an Account settings tab with global background sync controls and connected-account sync status overview.
+- Added account-level sync settings modal controls from connected account cards for mailbox-specific auto-sync and sync frequency updates.
+
+### Changed
+- Unified inbox now shows active background sync state and refreshes email results automatically while syncing is in progress.
+- Connected account cards now surface failed sync warnings, never-synced state, and live sync progress more clearly.
+
+### Fixed
+- Fixed email list refresh after delete actions from inbox and folder mail views.
+- Fixed profile settings form rendering when phone number metadata is missing.
+
 ## [2.0.0] - 2026-07-27
 
 ### Added
@@ -224,7 +238,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.0
 [2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
 [1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1
 [1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { Suspense } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 import APILoader from '@shared/components/apiLoader';
 import Loader from '@shared/components/loader';
@@ -17,7 +18,7 @@ const InboxPage: React.FC = () => {
         emails: { data: emailsData, fetchEmailsData, isLoadingEmails },
         emailFilterOptions: { data: emailFilterOptions, isLoading: isLoadingEmailFilters },
         actions: { handleEmailSelect, handlePageSizeChange, handleResetPage, handleResetSelection },
-        states: { selectedEmails, page, pageSize, searchValue, filter },
+        states: { selectedEmails, page, pageSize, searchValue, filter, isSyncingInProgress },
         setters: { setPage, setSearchValue, setFilter },
     } = useInboxPage();
 
@@ -37,8 +38,25 @@ const InboxPage: React.FC = () => {
                         emailFilterOptions={emailFilterOptions || []}
                         fetchEmailsData={fetchEmailsData}
                     />
+
+                    {/* Active Background Sync Banner */}
+                    {isSyncingInProgress && (
+                        <div className="flex w-full items-center justify-between rounded-lg border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-xs font-medium text-blue-600 dark:bg-blue-950/40 dark:text-blue-400">
+                            <div className="flex items-center gap-2">
+                                <RefreshCw className="size-3.5 animate-spin" />
+                                <span>Background sync in progress... new emails will load automatically.</span>
+                            </div>
+                        </div>
+                    )}
+
                     <div className={`flex w-full flex-col ${isMobile ? 'h-[calc(100vh-220px)]' : 'h-[calc(100vh-150px)]'}`}>
-                        <EmailListTable data={emailsData?.data || []} page={page} selectedEmails={selectedEmails} onEmailSelect={handleEmailSelect} />
+                        <EmailListTable
+                            data={emailsData?.data || []}
+                            page={page}
+                            selectedEmails={selectedEmails}
+                            onEmailSelect={handleEmailSelect}
+                            onDeleteSuccess={fetchEmailsData}
+                        />
                     </div>
                     <PaginationComponent
                         total={emailsData?.total || 0}

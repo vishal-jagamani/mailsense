@@ -62,37 +62,62 @@ Based on industry best practices (Superhuman, Shortwave, Outlook Web) and MailSe
 
 ### 2. Backend Data Schema & BullMQ Rescheduling
 
-#### A. User Document (`User` Model / `UserSettings`)
-Add `syncSettings` to the backend `User` schema:
+#### A. Dedicated `UserSettings` Schema & `@mailsense/types` Alignment
+To ensure single-responsibility and clean separation of concerns, the **`User` MongoDB collection contains only user profile and auth details** (`auth0UserId`, `name`, `email`).
+
+All user settings are persisted in a **dedicated `UserSettings` MongoDB collection** (`usersettings`), linked via `userId: string` with a unique index.
+
+Common contracts in `@mailsense/types`:
 ```typescript
-export interface UserSyncSettings {
+import { BaseEntity } from '../common/common.interfaces.js';
+import { ACCOUNT_SYNC_MODE } from './user.enums.js';
+
+export interface UserAccountSyncSettings {
     globalAutoSync: boolean;
-    syncMode: 'SAME_FOR_ALL' | 'CUSTOM_PER_ACCOUNT';
+    syncMode: ACCOUNT_SYNC_MODE; // SAME_FOR_ALL | CUSTOM_PER_ACCOUNT
     globalSyncInterval: number; // in minutes (5, 10, 15, 30, 60, 360, 720, 1440)
-    defaultSyncInterval: number;
+    defaultSyncInterval: number; // in minutes
+}
+
+export interface UserAccountSettings {
+    syncSettings: UserAccountSyncSettings;
+    // Future additions: defaultAccountId?, emailSignature?, etc.
+}
+
+export interface UserSettings extends BaseEntity {
+    userId: string;
+    account: UserAccountSettings;
+    // Future additions: appearance?: UserAppearanceSettings, privacy?: UserPrivacySettings, etc.
 }
 ```
 
-#### B. Account Document (`Account` Model)
-Per-account settings persisted in MongoDB:
+#### B. Unified REST API Endpoints (`/api/user/settings`)
+Instead of single-feature endpoints (`/api/user/sync-settings`), we expose a **unified User Settings REST API**:
+- **`GET /api/user/settings`**: Retrieves the `UserSettings` document for the authenticated user from the `UserSettings` collection.
+- **`PATCH /api/user/settings`**: Accepts deep partial updates (e.g., `{ account: { syncSettings: { globalAutoSync: false } } }`). Updates the `UserSettings` collection and triggers BullMQ rescheduling when `account.syncSettings` is modified.
+
+#### C. Account Document (`Account` Model / `AccountAttributes`)
+Per-account settings & execution status sourced from `AccountAttributes` in `@mailsense/types`:
 ```typescript
+import { ACCOUNT_LAST_SYNC_STATUS } from '@mailsense/types';
+
 syncEnabled: boolean;
 syncInterval: number; // in minutes
 active: boolean;
-syncInProgress: boolean;
-lastSyncStatus?: 'PENDING' | 'SUCCESS' | 'FAILED';
+syncInProgress?: boolean;
+lastSyncStatus?: ACCOUNT_LAST_SYNC_STATUS; // PENDING | SUCCESS | FAILED
 lastSyncError?: string;
 lastSyncStartedAt?: number;
 lastSyncCompletedAt?: number;
 ```
 
-#### C. Rescheduling Execution Flow
-1. When **Global Auto-Sync** is toggled `false`:
+#### D. Rescheduling Execution Flow
+1. When **Global Auto-Sync** is toggled `false` via `PATCH /api/user/settings`:
    - Backend calls `SchedulerService.removeAllUserRepeatableJobs(userId)` to remove all BullMQ repeatable jobs for the user's accounts.
 2. When **Sync Mode** is set to `SAME_FOR_ALL` with interval `X`:
    - Backend updates all accounts of the user to `syncInterval = X`.
    - Calls `SchedulerService.upsertAccountRepeatableJob(accountId)` for each account to update BullMQ job schedulers.
-3. When an **Individual Account Setting** is updated:
+3. When an **Individual Account Setting** is updated (`PATCH /api/accounts/settings/:accountId`):
    - Backend updates the `Account` document.
    - Calls `SchedulerService.upsertAccountRepeatableJob(accountId)`, which replaces the previous repeatable schedule in BullMQ with the new interval.
 
@@ -102,6 +127,8 @@ lastSyncCompletedAt?: number;
 
 In [accounts.queries.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/accounts/api/accounts.queries.ts), `useGetAccountsQuery` implements a dynamic `refetchInterval`:
 ```typescript
+import { AccountAttributes } from '@mailsense/types';
+
 refetchInterval: (query) => {
     const data = query.state.data as AccountAttributes[] | undefined;
     if (Array.isArray(data) && data.some((acc) => acc.syncInProgress)) {
@@ -115,22 +142,33 @@ refetchInterval: (query) => {
 
 ## 3. Proposed Changes & File-Level Plan
 
+### Component: Shared Types Package (`@mailsense/types`)
+
+#### [MODIFY] Shared Types (`@mailsense/types`)
+* Export `UserSettings`, `UserAccountSettings`, `UserAccountSyncSettings`, `ACCOUNT_SYNC_MODE` enum, and settings response payload DTOs from `@mailsense/types` for direct consumption by both `Frontend` and `Backend`.
+
+---
+
 ### Component: Backend Modules
 
-#### [MODIFY] [user.model.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.model.ts) & [user.types.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.types.ts)
-* Add `syncSettings` sub-document schema to `User` model:
+#### [MODIFY] [user.model.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.model.ts) & [NEW] [user-settings.model.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user-settings.model.ts)
+* `user.model.ts`: Keep `UserSchema` focused strictly on user identity and auth details (`auth0UserId`, `name`, `email`).
+* `user-settings.model.ts`: Create dedicated `UserSettings` Mongoose model (`usersettings` collection) linked by `userId`:
 ```typescript
-syncSettings: {
-    globalAutoSync: { type: Boolean, default: true },
-    syncMode: { type: String, enum: ['SAME_FOR_ALL', 'CUSTOM_PER_ACCOUNT'], default: 'CUSTOM_PER_ACCOUNT' },
-    globalSyncInterval: { type: Number, default: 15 },
-    defaultSyncInterval: { type: Number, default: 15 },
-}
+const UserSettingsSchema = new Schema<UserSettingsDocument>(
+    {
+        userId: { type: String, required: true, index: true, unique: true },
+        account: { type: UserAccountSettingsSchema, default: () => ({}) },
+    },
+    { timestamps: true, versionKey: false },
+);
+
+export const UserSettingsModel = model<UserSettingsDocument>('UserSettings', UserSettingsSchema);
 ```
 
 #### [MODIFY] [user.routes.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.routes.ts) & [user.controller.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.controller.ts)
-* Add `GET /api/user/sync-settings` to fetch user global settings.
-* Add `PATCH /api/user/sync-settings` to update global settings and trigger `SchedulerService` sync.
+* Expose `GET /api/user/settings` to fetch full user settings object.
+* Expose `PATCH /api/user/settings` to handle partial updates for user settings (including `account.syncSettings`) and trigger `SchedulerService` sync.
 
 #### [MODIFY] [account.schema.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.schema.ts), [account.routes.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.routes.ts) & [account.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.service.ts)
 * Add `PATCH /api/accounts/settings/:accountId` endpoint to update individual account `syncEnabled`, `syncInterval`, and `active` state, invoking `SchedulerService.upsertAccountRepeatableJob`.
@@ -140,18 +178,17 @@ syncSettings: {
 ### Component: Frontend Entities Layer
 
 #### [MODIFY] [account.types.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/entities/account/model/account.types.ts)
-* Extend `AccountAttributes` with background status fields (`syncInProgress`, `lastSyncStatus`, `lastSyncError`, `lastSyncStartedAt`, `lastSyncCompletedAt`).
-* Define `UserSyncSettings` and `UpdateUserSyncSettingsPayload` interfaces.
+* Re-export `AccountAttributes`, `UserSettings`, `UserAccountSyncSettings`, `ACCOUNT_SYNC_MODE`, and `ACCOUNT_LAST_SYNC_STATUS` directly from `@mailsense/types` instead of redefining local duplicated types.
 
 ---
 
 ### Component: Frontend Settings Feature Layer
 
 #### [MODIFY] [settings.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/shared/constants/settings.ts)
-* Ensure `SETTINGS_OPTIONS` includes the **Account** settings tab.
+* Ensure `SETTINGS_OPTIONS` includes the **Account** settings tab (`/settings/account`).
 
 #### [MODIFY] [index.tsx (Settings Page)](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/settings/pages/index.tsx)
-* Enable Radix `Tabs` UI for switching between **Profile** (`/settings/profile`) and **Account Sync** (`/settings/account`).
+* Render Radix `Tabs` UI for switching between **Profile** (`/settings/profile`) and **Account Sync** (`/settings/account`).
 
 #### [NEW] [AccountSyncSettings.tsx](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/settings/pages/account/index.tsx)
 * Main page component for `/settings/account` featuring:
@@ -159,7 +196,7 @@ syncSettings: {
   - **Connected Accounts Management Table/Card**: Rows for each account with provider icon, email, `syncEnabled` switch, `syncInterval` dropdown, last synced time, and manual sync trigger button.
 
 #### [NEW] [settings.api.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/settings/api/settings.api.ts) & [settings.queries.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/settings/api/settings.queries.ts)
-* API client functions and TanStack Query hooks for `getUserSyncSettings` and `useUpdateUserSyncSettingsMutation`.
+* API client functions and TanStack Query hooks for `getUserSettings` (`GET /api/user/settings`) and `useUpdateUserSettingsMutation` (`PATCH /api/user/settings`).
 
 ---
 
