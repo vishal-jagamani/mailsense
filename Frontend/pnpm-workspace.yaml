@@ -1,6 +1,6 @@
 allowBuilds:
-  sharp: false
-  unrs-resolver: false
+    sharp: false
+    unrs-resolver: false
 
 minimumReleaseAgeExclude:
-  - '@mailsense/types@1.1.3'
+    - '@mailsense/types@1.1.4'
