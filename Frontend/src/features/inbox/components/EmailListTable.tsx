@@ -3,6 +3,7 @@
 import { Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { toast } from 'sonner';
 
 import { EmailAttributes } from '@mailsense/types';
 import { useIsMobile } from '@shared/hooks';
@@ -16,16 +17,27 @@ interface EmailListTableProps {
     page: number;
     selectedEmails?: string[];
     onEmailSelect?: (emailIds: string[]) => void;
+    onDeleteSuccess?: () => void;
 }
 
-const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEmails, onEmailSelect }) => {
+const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEmails, onEmailSelect, onDeleteSuccess }) => {
     const isMobile = useIsMobile();
     const router = useRouter();
 
     const { mutateAsync } = useDeleteEmail();
 
     const handleTrashIconClick = async (email: EmailAttributes) => {
-        await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
+        try {
+            const res = await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
+            if (res && res.status) {
+                toast.success('Email deleted successfully', { duration: 3000 });
+                onDeleteSuccess?.();
+            } else {
+                toast.error('Failed to delete email', { duration: 3000 });
+            }
+        } catch {
+            toast.error('Error deleting email', { duration: 3000 });
+        }
     };
 
     return (

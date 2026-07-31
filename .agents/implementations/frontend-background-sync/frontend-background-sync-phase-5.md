@@ -1,3 +1,49 @@
+# Frontend Background Sync - Phase 5 Implementation Plan
+
+This document details the step-by-step implementation for **Phase 5: Inbox Real-Time Refresh & Progress Banner** of the MailSense Frontend Background Sync system.
+
+---
+
+## Goal Description
+
+Provide real-time email list updates and visual feedback in the Inbox view while background synchronization tasks are processing. This phase updates `useInboxPage` to detect active sync tasks (`syncInProgress === true`) across connected mailboxes, sets up an automated 10-second refetch interval during active background syncs, and renders a top progress banner under the inbox header informing users that new emails will load automatically.
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Real-Time Inbox Synchronization & Visual Banner**
+> - **Automated Email Refetching**: While any mailbox has `syncInProgress === true`, `useInboxPage` polls `fetchEmailsData()` every 10 seconds (10,000 ms), seamlessly updating the email table without resetting user selections or page pagination.
+> - **Visual Sync Banner**: Render a non-intrusive status banner (*"Background sync in progress... new emails will load automatically."*) with a spinning `RefreshCw` icon at the top of the Inbox table.
+
+---
+
+## Proposed Changes
+
+### Component: Frontend Inbox Feature Layer (`src/features/inbox/`)
+
+#### [MODIFY] [useInboxPage.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/hooks/useInboxPage.ts)
+- Import `useGetAccountsQuery` from `@features/accounts/api/accounts.queries`.
+- Compute `isSyncingInProgress` from `accountsData` (or single `accountData` if `accountId` is active).
+- Add `useEffect` timer interval to invoke `fetchEmailsData()` every 10 seconds while `isSyncingInProgress === true`.
+- Expose `isSyncingInProgress` in return parameters.
+
+#### [MODIFY] [index.tsx (Inbox Page)](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/pages/index.tsx)
+- Render top active background sync banner under `EmailListHeader` when `isSyncingInProgress === true`.
+
+#### [MODIFY] [index.tsx (Account Inbox Page)](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/pages/account-inbox/index.tsx)
+- Render top active background sync banner under `EmailListHeader` when `isSyncingInProgress === true`.
+
+---
+
+## File Contents
+
+Below are the complete file modifications required for Phase 5 implementation.
+
+### 1. `src/features/inbox/hooks/useInboxPage.ts`
+
+```typescript
 import { useCallback, useEffect, useState } from 'react';
 
 import { useGetAccountDetailsQuery, useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
@@ -230,3 +276,110 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
         setters: { setSearchValue, setFilter, setPage },
     };
 };
+```
+
+---
+
+### 2. `src/features/inbox/pages/index.tsx`
+
+```tsx
+'use client';
+
+import React, { Suspense } from 'react';
+import { RefreshCw } from 'lucide-react';
+
+import APILoader from '@shared/components/apiLoader';
+import Loader from '@shared/components/loader';
+import PaginationComponent from '@shared/components/table/Pagination';
+import { useIsMobile } from '@shared/hooks';
+import EmailListHeader from '../components/EmailListHeader';
+import EmailListTable from '../components/EmailListTable';
+import { useInboxPage } from '../hooks';
+
+const InboxPage: React.FC = () => {
+    const isMobile = useIsMobile();
+
+    const {
+        emails: { data: emailsData, fetchEmailsData, isLoadingEmails },
+        emailFilterOptions: { data: emailFilterOptions, isLoading: isLoadingEmailFilters },
+        actions: { handleEmailSelect, handlePageSizeChange, handleResetPage, handleResetSelection },
+        states: { selectedEmails, page, pageSize, searchValue, filter, isSyncingInProgress },
+        setters: { setPage, setSearchValue, setFilter },
+    } = useInboxPage();
+
+    return (
+        <>
+            <div className="flex items-center justify-center gap-4 px-4 py-2">
+                <div className="flex h-full w-full flex-col items-center justify-center gap-4">
+                    <APILoader show={isLoadingEmails || isLoadingEmailFilters} />
+                    <EmailListHeader
+                        searchValue={searchValue}
+                        setSearchValue={setSearchValue}
+                        filter={filter}
+                        setFilter={setFilter}
+                        selectedEmails={selectedEmails}
+                        handleResetSelection={handleResetSelection}
+                        handleResetPage={handleResetPage}
+                        emailFilterOptions={emailFilterOptions || []}
+                        fetchEmailsData={fetchEmailsData}
+                    />
+
+                    {/* Active Background Sync Banner */}
+                    {isSyncingInProgress && (
+                        <div className="flex w-full items-center justify-between rounded-lg bg-blue-500/10 px-4 py-2 text-xs font-medium text-blue-600 dark:bg-blue-950/40 dark:text-blue-400 border border-blue-500/20">
+                            <div className="flex items-center gap-2">
+                                <RefreshCw className="size-3.5 animate-spin" />
+                                <span>Background sync in progress... new emails will load automatically.</span>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className={`flex w-full flex-col ${isMobile ? 'h-[calc(100vh-220px)]' : 'h-[calc(100vh-150px)]'}`}>
+                        <EmailListTable
+                            data={emailsData?.data || []}
+                            page={page}
+                            selectedEmails={selectedEmails}
+                            onEmailSelect={handleEmailSelect}
+                            onDeleteSuccess={fetchEmailsData}
+                        />
+                    </div>
+                    <PaginationComponent
+                        total={emailsData?.total || 0}
+                        currentPage={page}
+                        onPageChange={setPage}
+                        onPageSizeChange={handlePageSizeChange}
+                        pageSize={pageSize}
+                    />
+                </div>
+            </div>
+        </>
+    );
+};
+
+const InboxPageWrapper = () => (
+    <Suspense fallback={<Loader />}>
+        <InboxPage />
+    </Suspense>
+);
+
+export default InboxPageWrapper;
+```
+
+---
+
+## Verification Plan
+
+### Automated Verification
+1. Run TypeScript check in Frontend:
+   ```bash
+   pnpm type-check
+   ```
+2. Run ESLint check in Frontend:
+   ```bash
+   pnpm lint
+   ```
+
+### Manual Verification
+1. Trigger background sync -> Open `/inbox` page -> Verify active sync banner (*"Background sync in progress... new emails will load automatically."*) appears cleanly.
+2. Wait 10 seconds during active sync -> Verify network tab shows `POST /emails/list` auto-fetching emails every 10 seconds until sync finishes.
+3. Once sync completes -> Verify banner disappears automatically and polling stops.

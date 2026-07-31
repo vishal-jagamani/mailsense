@@ -1,8 +1,9 @@
-import { APIResponse, ProfileSettingsDataObject, UpdateAPIResponse, UpdateUserProfileSettingsResponse } from '@mailsense/types';
+import { APIResponse, ProfileSettingsDataObject, UpdateAPIResponse, UpdateUserProfileSettingsResponse, UserSettings } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
-import { } from '@shared/types';
+import {} from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { changeUserPassword, updateUserProfileSettings } from './settings.api';
+import { changeUserPassword, updateUserProfileSettings, updateUserSettings } from './settings.api';
+import { toast } from 'sonner';
 
 export const useUpdateProfileMutation = () => {
     const queryClient = useQueryClient();
@@ -20,6 +21,22 @@ export const useChangePasswordMutation = () => {
         mutationFn: (data) => changeUserPassword(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_PROFILE_SETTINGS] });
+        },
+    });
+};
+
+export const useUpdateUserSettingsMutation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (payload: Partial<UserSettings>) => updateUserSettings(payload),
+        onSuccess: () => {
+            toast.success('Sync settings updated successfully');
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_SYNC_SETTINGS] });
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to update sync settings');
         },
     });
 };

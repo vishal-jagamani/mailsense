@@ -15,6 +15,7 @@ export abstract class BaseWorker<TData, TResult> {
             connection: connection as ConnectionOptions,
             concurrency: 2, // Safe concurrency limit for low memory container (256MB RAM)
             prefix,
+            lockDuration: 300000, // 5 minutes to prevent lock expiration during long sync/network calls
         };
 
         this.worker = new Worker<TData, TResult>(

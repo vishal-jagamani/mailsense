@@ -7,10 +7,13 @@ import { useEnableAccountMutation, useRemoveAccountMutation, useSyncAccountMutat
 
 export const useAccountCardActions = (account: AccountAttributes) => {
     const [accountEnabled, setAccountEnabled] = useState(account.active);
+    const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
 
     const { mutateAsync: removeAccount, isPending: isRemovingAccount, error: removeAccountError } = useRemoveAccountMutation();
-    const { mutateAsync: syncAccount, isPending: isSyncingAccount, error: syncAccountError } = useSyncAccountMutation();
+    const { mutateAsync: syncAccount, isPending: isSyncingMutationPending, error: syncAccountError } = useSyncAccountMutation();
     const { mutate: enableAccount, isPending: isEnablingAccount, data: enableAccountData, error: enableAccountError } = useEnableAccountMutation();
+
+    const isSyncingAccount = Boolean(account.syncInProgress || isSyncingMutationPending);
 
     useEffect(() => {
         setAccountEnabled(account.active);
@@ -45,6 +48,8 @@ export const useAccountCardActions = (account: AccountAttributes) => {
         toggleAccountEnabled,
         syncCurrentAccount,
         removeCurrentAccount,
+        isSettingsModalOpen,
+        setIsSettingsModalOpen,
         isEnablingAccount,
         isSyncingAccount,
         isRemovingAccount,

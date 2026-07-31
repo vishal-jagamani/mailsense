@@ -1,10 +1,10 @@
 'use client';
 
-import { CircleMinus, RefreshCw } from 'lucide-react';
+import { AlertTriangle, CircleMinus, RefreshCw, Settings } from 'lucide-react';
 import React from 'react';
 
 import { useAccountCardActions } from '@features/accounts/hooks/useAccountCardActions';
-import { AccountAttributes } from '@mailsense/types';
+import { ACCOUNT_LAST_SYNC_STATUS, AccountAttributes } from '@mailsense/types';
 import APILoader from '@shared/components/apiLoader';
 import {
     AlertDialog,
@@ -20,16 +20,27 @@ import {
 import { Switch } from '@shared/ui/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { formatEpochTimeToString } from '@shared/utils/formatter';
+import AccountSettingsModal from './AccountSettingsModal';
 
 interface AccountCardActionButtonsProps {
     account: AccountAttributes;
 }
 
 const AccountCardActionButtons: React.FC<AccountCardActionButtonsProps> = ({ account }) => {
-    const { accountEnabled, toggleAccountEnabled, syncCurrentAccount, removeCurrentAccount, isEnablingAccount, isSyncingAccount, isRemovingAccount } =
-        useAccountCardActions(account);
+    const {
+        accountEnabled,
+        toggleAccountEnabled,
+        syncCurrentAccount,
+        removeCurrentAccount,
+        isSettingsModalOpen,
+        setIsSettingsModalOpen,
+        isEnablingAccount,
+        isSyncingAccount,
+        isRemovingAccount,
+    } = useAccountCardActions(account);
 
-    const isBusy = isEnablingAccount || isSyncingAccount || isRemovingAccount;
+    const isBusy = isEnablingAccount || isRemovingAccount;
+    const isSyncFailed = account.lastSyncStatus === ACCOUNT_LAST_SYNC_STATUS.FAILED;
 
     return (
         <div className="flex w-full flex-col gap-1">
@@ -46,19 +57,47 @@ const AccountCardActionButtons: React.FC<AccountCardActionButtonsProps> = ({ acc
                 </Tooltip>
             </div>
             <div className="relative flex w-full items-center justify-between text-nowrap">
-                <p className="text-muted-foreground text-xs font-semibold">
-                    {isSyncingAccount ? (
-                        <span className="animate-pulse text-green-500 delay-100">Syncing...</span>
-                    ) : (
-                        `Last synced ${formatEpochTimeToString(account.lastSyncedAt)} ago`
+                <div className="flex items-center gap-1.5">
+                    <p className="text-muted-foreground text-xs font-semibold">
+                        {isSyncingAccount ? (
+                            <span className="animate-pulse text-green-500 delay-100">Syncing...</span>
+                        ) : account.lastSyncedAt ? (
+                            `Last synced ${formatEpochTimeToString(account.lastSyncedAt)} ago`
+                        ) : (
+                            'Never synced'
+                        )}
+                    </p>
+                    {isSyncFailed && (
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <AlertTriangle size={14} className="text-amber-500 hover:cursor-pointer" />
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="bg-destructive text-destructive-foreground max-w-xs">
+                                <p className="text-xs font-medium">{account.lastSyncError || 'Background sync failed. Click sync to retry.'}</p>
+                            </TooltipContent>
+                        </Tooltip>
                     )}
-                </p>
+                </div>
+
                 <div className="flex gap-2">
+                    <Tooltip>
+                        <TooltipTrigger>
+                            <Settings
+                                size={16}
+                                className="text-muted-foreground hover:text-foreground transition-colors hover:cursor-pointer"
+                                onClick={() => setIsSettingsModalOpen(true)}
+                            />
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                            <p className="text-md font-semibold">Account Settings</p>
+                        </TooltipContent>
+                    </Tooltip>
+
                     <Tooltip>
                         <TooltipTrigger>
                             <RefreshCw
                                 size={16}
-                                className={isSyncingAccount ? 'animate-spin hover:cursor-pointer' : 'hover:cursor-pointer'}
+                                className={isSyncingAccount ? 'text-primary animate-spin hover:cursor-pointer' : 'hover:cursor-pointer'}
                                 onClick={syncCurrentAccount}
                             />
                         </TooltipTrigger>
@@ -66,6 +105,7 @@ const AccountCardActionButtons: React.FC<AccountCardActionButtonsProps> = ({ acc
                             <p className="text-md font-semibold">{isSyncingAccount ? 'Syncing' : 'Sync'}</p>
                         </TooltipContent>
                     </Tooltip>
+
                     <Tooltip>
                         <TooltipTrigger>
                             <AlertDialog>
@@ -98,6 +138,8 @@ const AccountCardActionButtons: React.FC<AccountCardActionButtonsProps> = ({ acc
                     </Tooltip>
                 </div>
             </div>
+
+            <AccountSettingsModal account={account} open={isSettingsModalOpen} onOpenChange={setIsSettingsModalOpen} />
         </div>
     );
 };

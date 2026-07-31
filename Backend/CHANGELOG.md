@@ -7,6 +7,22 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-07-31
+
+### Added
+
+- Added user sync-settings APIs to store global auto-sync preferences, sync mode, and shared sync interval settings.
+- Added account-level sync settings updates so each connected mailbox can enable or pause background sync and adjust its interval.
+
+### Changed
+
+- Updated repeatable background sync scheduling to respect user-level sync preferences, including global auto-sync disable and same-for-all interval mode.
+- Updated background sync worker locking to better support longer-running provider sync operations.
+
+### Fixed
+
+- Fixed repeatable sync scheduling so account jobs are removed when user-level auto-sync is turned off.
+
 ## [2.0.1] - 2026-07-28
 
 ### Changed
@@ -295,7 +311,9 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.0
+[2.0.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.1
 [2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
 [1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1
 [1.4.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.0

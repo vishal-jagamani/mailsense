@@ -2,10 +2,12 @@
 
 import React, { Suspense, useEffect } from 'react';
 
-import { ROUTES } from '@shared/constants';
+import { ROUTES, SETTINGS_OPTIONS } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import { Loader } from 'lucide-react';
 import ProfileSettings from './profile';
+import AccountSettings from './account';
 
 interface SettingsPageProps {
     setting: string;
@@ -20,7 +22,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ setting }) => {
 
     return (
         <>
-            {/* <Tabs defaultValue="profile">
+            <Tabs defaultValue="profile" className="-mt-8">
                 <TabsList>
                     {SETTINGS_OPTIONS.map((option) => (
                         <TabsTrigger key={option.id} value={option.name} className="hover:cursor-pointer">
@@ -32,8 +34,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ setting }) => {
                 <TabsContent value="profile">
                     <ProfileSettings />
                 </TabsContent>
-            </Tabs> */}
-            <ProfileSettings />
+                <TabsContent value="account">
+                    <AccountSettings />
+                </TabsContent>
+            </Tabs>
+            {/* <ProfileSettings /> */}
         </>
     );
 };
