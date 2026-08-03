@@ -23,16 +23,12 @@ class EnvConfig {
     public readonly OUTLOOK_CLIENT_SECRET: string;
     public readonly OUTLOOK_REDIRECT_URI: string;
     // Jobs/Queues secrets
-    public readonly REDIS_HOST: string;
-    public readonly REDIS_PORT: number;
-    public readonly REDIS_PASSWORD: string;
+    public readonly REDIS_URL: string;
     // Auth0 API Secrets
     public readonly AUTH0_API_CLIENT_ID: string;
     public readonly AUTH0_API_CLIENT_SECRET: string;
     public readonly AUTH0_API_BASE_URL: string;
     public readonly SENTRY_DSN: string;
-    public readonly UPSTASH_REDIS_REST_URL: string;
-    public readonly UPSTASH_REDIS_REST_TOKEN: string;
 
     constructor() {
         dotenv?.config();
@@ -71,17 +67,12 @@ class EnvConfig {
             OUTLOOK_CLIENT_SECRET: z.string(),
             OUTLOOK_REDIRECT_URI: z.string(),
             // Jobs/Queues secrets
-            REDIS_HOST: z.string(),
-            REDIS_PORT: z.coerce.number().default(6379),
-            REDIS_PASSWORD: z.string(),
+            REDIS_URL: z.string(),
             // Auth0 API Secrets
             AUTH0_API_CLIENT_ID: z.string(),
             AUTH0_API_CLIENT_SECRET: z.string(),
             AUTH0_API_BASE_URL: z.string(),
             SENTRY_DSN: z.string(),
-            // Upstash redis secrets
-            UPSTASH_REDIS_REST_URL: z.string(),
-            UPSTASH_REDIS_REST_TOKEN: z.string(),
         });
 
         const result = schema.safeParse(process.env);
@@ -110,17 +101,12 @@ class EnvConfig {
         this.OUTLOOK_CLIENT_SECRET = data.OUTLOOK_CLIENT_SECRET;
         this.OUTLOOK_REDIRECT_URI = data.OUTLOOK_REDIRECT_URI;
         // Jobs/Queues secrets
-        this.REDIS_HOST = data.REDIS_HOST;
-        this.REDIS_PORT = data.REDIS_PORT;
-        this.REDIS_PASSWORD = data.REDIS_PASSWORD;
+        this.REDIS_URL = data.REDIS_URL;
         // Auth0 API secrets
         this.AUTH0_API_CLIENT_ID = data.AUTH0_API_CLIENT_ID;
         this.AUTH0_API_CLIENT_SECRET = data.AUTH0_API_CLIENT_SECRET;
         this.AUTH0_API_BASE_URL = data.AUTH0_API_BASE_URL;
         this.SENTRY_DSN = data.SENTRY_DSN;
-        // Upstash redis secrets
-        this.UPSTASH_REDIS_REST_URL = data.UPSTASH_REDIS_REST_URL;
-        this.UPSTASH_REDIS_REST_TOKEN = data.UPSTASH_REDIS_REST_TOKEN;
     }
 }
 

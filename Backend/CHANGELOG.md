@@ -7,6 +7,18 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-08-03
+
+### Changed
+
+- Standardized backend queue Redis configuration around a single `REDIS_URL` connection setting for BullMQ and `ioredis`.
+- Updated backend package manager metadata to `pnpm@11.18.0`.
+
+### Fixed
+
+- Improved Redis connection compatibility for standard Redis URL-based deployments, with `SERVICE_URI` fallback support.
+- Improved Redis client lifecycle handling with clearer ready/reconnect/close logging and safer shutdown behavior.
+
 ## [2.1.0] - 2026-07-31
 
 ### Added
@@ -311,7 +323,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.1
 [2.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.0
 [2.0.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.1
 [2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
