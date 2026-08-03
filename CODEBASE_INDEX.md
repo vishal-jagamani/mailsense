@@ -21,10 +21,11 @@
 - `Backend/src/core/config/db.config.ts`: Mongo connect/disconnect with pooling
 - `Backend/src/core/config/db.config.ts`: drops the stale `accounts.id_1` unique index during startup when migrating older databases
 - `Backend/src/core/config/logger.config.ts`: logger configuration
-- `Backend/src/core/config/app.config.ts`: now also exposes Upstash Redis REST-backed queue connection config
+- `Backend/src/core/config/app.config.ts`: exposes the backend Redis connection URL config used by BullMQ and `ioredis`
 - `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
+- `Backend/src/core/config/env.config.ts`: validates queue/runtime Redis configuration through `REDIS_URL`
 - `Backend/src/core/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
-- `Backend/package.json`: backend package metadata is currently on the `2.0.1` release line
+- `Backend/package.json`: backend package metadata currently uses `pnpm@11.18.0`
 
 ### Queue Infrastructure
 
@@ -32,7 +33,7 @@
   - `queue.config.ts`: queue names and default retry/backoff behavior, including token-refresh queue registration
   - `queue.registry.ts`: queue instance initialization/caching and cleanup
   - `queue.service.ts`: job enqueue helpers for sync-account and refresh-token submission
-  - `redis.connection.ts`: shared Upstash Redis connection for queue processing
+  - `redis.connection.ts`: shared Redis connection for queue processing using `REDIS_URL` with `SERVICE_URI` fallback, reconnect handling, and graceful shutdown
   - `scheduler.service.ts`: synchronizes BullMQ repeatable sync schedules with active/sync-enabled account settings and user-level sync preferences
   - `index.ts`: queue startup/shutdown hooks used by the server lifecycle, including event bootstrap, worker startup, scheduler sync, and teardown
 - `Backend/src/core/queue/__tests__/queue.service.test.ts`: queue integration coverage for sync job enqueue flow
