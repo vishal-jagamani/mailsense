@@ -24,7 +24,7 @@
     "license": "ISC",
     "packageManager": "pnpm@11.18.0",
     "dependencies": {
-        "@mailsense/types": "link:../../mailsense-types",
+        "@mailsense/types": "^1.1.4",
         "@sentry/node": "^10.68.0",
         "axios": "^1.18.1",
         "bullmq": "^5.81.2",
