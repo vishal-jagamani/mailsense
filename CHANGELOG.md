@@ -7,6 +7,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-08-03
+
+### Changed
+- Improved backend background-sync infrastructure compatibility by standardizing Redis connection configuration for deployed environments.
+
+### Fixed
+- Improved Redis connection shutdown and reconnect handling for background sync services.
+
 ## [2.1.0] - 2026-07-31
 
 ### Added
@@ -151,7 +159,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.1
 [2.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.0
 [2.0.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.1
 [2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0

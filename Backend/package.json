@@ -22,7 +22,7 @@
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "packageManager": "pnpm@10.19.0",
+    "packageManager": "pnpm@11.18.0",
     "dependencies": {
         "@mailsense/types": "link:../../mailsense-types",
         "@sentry/node": "^10.68.0",

@@ -1,45 +1,55 @@
-import { UPSTASH_REDIS_CONFIG } from '@config';
+import { REDIS_CONFIG } from '@config';
 import { logger } from '@utils';
 import { Redis, RedisOptions } from 'ioredis';
 
 let redisInstance: Redis | null = null;
 
 /**
- * Parses Upstash HTTP REST config to build standard TCP TLS Redis options
+ * Builds standard ioredis options for Aiven / standard Redis (with Upstash fallback)
  */
-export const getUpstashRedisOptions = (): RedisOptions => {
-    const { url, token } = UPSTASH_REDIS_CONFIG;
-    if (!url || !token) {
-        throw new Error('❌ Missing UPSTASH_REDIS_REST_URL or UPSTASH_REDIS_REST_TOKEN config');
-    }
-    const host = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
-
-    return {
-        host,
-        port: 6379,
-        password: token,
-        tls: {},
-        maxRetriesPerRequest: null,
-        lazyConnect: true,
-    };
-};
+export const getRedisOptions = (): RedisOptions => ({
+    lazyConnect: true,
+    maxRetriesPerRequest: null,
+    retryStrategy: (times) => Math.min(100 * 2 ** times, 5000),
+});
 
 /**
  * Returns a shared Redis connection client for BullMQ
  */
 export const getRedisConnection = (): Redis => {
-    if (!redisInstance) {
-        const options = getUpstashRedisOptions();
-        logger.info(`🔌 Connecting to Upstash Redis at ${options.host}:${options.port}...`);
-
-        redisInstance = new Redis(options);
-        redisInstance.on('connect', () => {
-            logger.info('✅ Connected to Upstash Redis successfully');
-        });
-        redisInstance.on('error', (err) => {
-            logger.error(`❌ Upstash Redis client connection error: ${err.message}`, { error: err });
-        });
+    if (redisInstance) {
+        return redisInstance;
     }
+
+    const redisUrl = REDIS_CONFIG.url || process.env.SERVICE_URI;
+
+    if (!redisUrl) {
+        throw new Error('Redis connection URL is missing. Please configure REDIS_URL or SERVICE_URI.');
+    }
+
+    logger.info(`🔌 Connecting to Redis`);
+
+    redisInstance = new Redis(redisUrl, getRedisOptions());
+
+    redisInstance.on('connect', () => {
+        logger.info('✅ Connected to Redis successfully');
+    });
+
+    redisInstance.on('ready', () => {
+        logger.info('✅ Redis client is ready.');
+    });
+
+    redisInstance.on('reconnecting', () => {
+        logger.warn('⚠️ Redis client reconnecting...');
+    });
+
+    redisInstance.on('end', () => {
+        logger.warn('⚠️ Redis connection closed.');
+    });
+
+    redisInstance.on('error', (err) => {
+        logger.error(`❌ Redis client connection error: ${err.message}`, { error: err });
+    });
 
     return redisInstance!;
 };
@@ -48,10 +58,23 @@ export const getRedisConnection = (): Redis => {
  * Closes the active Redis connection
  */
 export const closeRedisConnection = async (): Promise<void> => {
-    if (redisInstance) {
-        logger.info('🔌 Closing Upstash Redis connection...');
-        await redisInstance.quit();
-        redisInstance = null;
-        logger.info('✅ Upstash Redis connection closed successfully');
+    if (!redisInstance) {
+        return;
     }
+
+    logger.info('🔌 Closing Redis connection...');
+
+    try {
+        await redisInstance.quit();
+    } catch (error) {
+        logger.warn('⚠️ Graceful Redis shutdown failed. Forcing disconnect.', {
+            error,
+        });
+
+        redisInstance.disconnect();
+    } finally {
+        redisInstance = null;
+    }
+
+    logger.info('✅ Redis connection closed successfully');
 };

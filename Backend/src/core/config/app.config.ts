@@ -47,12 +47,5 @@ export const OUTLOOK_SECRETS = {
 };
 
 export const REDIS_CONFIG = {
-    host: ENV.REDIS_HOST,
-    port: ENV.REDIS_PORT,
-    password: ENV.REDIS_PASSWORD,
-};
-
-export const UPSTASH_REDIS_CONFIG = {
-    url: ENV.UPSTASH_REDIS_REST_URL,
-    token: ENV.UPSTASH_REDIS_REST_TOKEN,
+    url: ENV.REDIS_URL,
 };
