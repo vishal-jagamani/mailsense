@@ -2,19 +2,24 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useGetAccountDetailsQuery } from '@features/accounts/api/accounts.queries';
+import { AccountAttributes, EmailAttributes, GetThreadResponse, UpdateAPIResponse } from '@mailsense/types';
 import { HOME_ROUTES } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
 import { useUnreadEmailMutation } from '../api/email.mutations';
-import { useGetEmailDetailsQuery } from '../api/email.queries';
-import { UpdateAPIResponse, EmailAttributes } from '@mailsense/types';
+import { useGetEmailDetailsQuery, useGetThreadQuery } from '../api/email.queries';
 
 interface useEmailsPageReturnParams {
     account: {
+        data: AccountAttributes | undefined;
         isLoadingAccount: boolean;
     };
     email: {
         data: EmailAttributes | undefined;
         isLoadingEmail: boolean;
+    };
+    thread: {
+        data: GetThreadResponse | undefined;
+        isLoadingThread: boolean;
     };
     unreadEmail: {
         trigger: (emailIds: string[], unread: boolean) => void;
@@ -36,6 +41,7 @@ export const useEmailsPage = (accountId: string, emailId: string): useEmailsPage
 
     const { data: accountData, isLoading: isLoadingAccount } = useGetAccountDetailsQuery(accountId, { enabled: !!accountId });
     const { data: emailData, isLoading: isLoadingEmail } = useGetEmailDetailsQuery(emailId, { enabled: !!emailId });
+    const { data: threadData, isLoading: isLoadingThread } = useGetThreadQuery(emailId, { enabled: !!emailId });
     const { mutate: unreadEmail, isPending: unreadEmailLoading, data: unreadEmailSuccess } = useUnreadEmailMutation();
 
     useEffect(() => {
@@ -67,8 +73,9 @@ export const useEmailsPage = (accountId: string, emailId: string): useEmailsPage
     }, [emailData, unreadEmailSuccess, isManualUnreadOperation, page, router]);
 
     return {
-        account: { isLoadingAccount },
+        account: { data: accountData, isLoadingAccount },
         email: { data: emailData, isLoadingEmail },
+        thread: { data: threadData, isLoadingThread },
         unreadEmail: {
             trigger: (emailIds: string[], unread: boolean) => unreadEmail({ emailIds, unread }),
             unreadEmailLoading,

@@ -189,4 +189,17 @@ export class EmailController {
             next(error);
         }
     };
+
+    public getThread = async (req: Request<{ emailId: string }>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailId } = req.params;
+            if (!emailId) {
+                throw new Error('Email ID is required');
+            }
+            const threadData = await this.emailService.getThread(emailId);
+            res.send(threadData);
+        } catch (error) {
+            next(error);
+        }
+    };
 }

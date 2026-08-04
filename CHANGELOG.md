@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+- Added thread-aware email detail view so conversations with multiple messages can be read as a single thread.
+
+### Changed
+- Inbox and account email lists now group conversation emails together and show the number of messages in each thread.
+
 ## [2.1.1] - 2026-08-03
 
 ### Changed

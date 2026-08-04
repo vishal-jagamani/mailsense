@@ -79,10 +79,12 @@
   - Newly connected accounts are now created as active but with `syncEnabled: false` by default
 - Emails (`Backend/src/modules/emails/*`)
   - Unified list, per-account list, email details
+  - Thread details endpoint for conversation view by email ID
   - Search, delete, archive, star, unread
   - Compose/send mail through Gmail and Outlook providers
   - Search recipient suggestions across connected provider contacts
   - Supports account/date/folder-based filtering
+  - Mailbox list responses now support thread-grouped conversation summaries with per-thread counts
   - Uses provider APIs + DB projection/sorting
   - Provider-specific email details and mail actions now dispatch through shared provider strategy instances
 - Folders (`Backend/src/modules/folders/*`)
@@ -178,6 +180,7 @@
   - `GET /emails/filters`
   - `GET /emails/list/:accountId`
   - `GET /emails/details/:emailId`
+  - `GET /emails/thread/:emailId`
   - `POST /emails/search`
   - `POST /emails/compose`
   - `POST /emails/searchOtherContacts`
@@ -228,7 +231,7 @@
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
   - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer
   - `features/auth/*`: login page and profile fetch query
-  - `features/emails/*`: email details page, compose flow, rich-text editor, delete modal, email actions, email API layer
+  - `features/emails/*`: email details page, thread view, compose flow, rich-text editor, delete modal, email actions, email API layer
   - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer, folder action hooks
   - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks with sync-aware refresh behavior
   - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer
@@ -274,6 +277,7 @@
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
 - `Frontend/src/shared/constants/email.ts`: email list pagination and date-range dropdown options backed by email entity enums
 - `Frontend/src/shared/api/endpoints.ts`: centralized Auth0 route helpers and backend endpoint constants, including account sync-settings and user settings endpoints
+- `Frontend/src/shared/utils/emails.ts`: shared email display-formatting helpers such as recipient label formatting for thread headers
 
 ## End-to-End Flow Summary
 

@@ -32,6 +32,7 @@ export const EMAILS_API_ENDPOINTS = {
     UNREAD: '/emails/unread',
     COMPOSE: '/emails/compose',
     SEARCH_OTHER_CONTACTS: '/emails/searchOtherContacts',
+    THREAD: (emailId: string) => `/emails/thread/${emailId}`,
 } as const;
 
 export const FOLDER_API_ENDPOINTS = {

@@ -115,7 +115,14 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                                     ) : (
                                         <>
                                             <TableCell className="w-44">
-                                                {email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}
+                                                <div className="flex items-center gap-1.5 truncate">
+                                                    <span className="truncate">{email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}</span>
+                                                    {email.threadCount && email.threadCount > 1 ? (
+                                                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                                            {email.threadCount}
+                                                        </span>
+                                                    ) : null}
+                                                </div>
                                             </TableCell>
                                             <TableCell className="max-w-60 truncate">
                                                 {email.subject} - <span className="text-muted-foreground">{email.bodyPlain}</span>

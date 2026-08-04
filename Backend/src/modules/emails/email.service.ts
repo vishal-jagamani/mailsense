@@ -8,6 +8,7 @@ import {
     GetAllEmailsFilters,
     GetEmailsResponse,
     GetFiltersResponse,
+    GetThreadResponse,
     GMAIL_LABELS,
     PaginatedDataResponse,
     SearchEmailsParams,
@@ -58,14 +59,8 @@ export class EmailService {
                     }),
                 ...(unread && { isRead: false }),
             };
-            const emails = await EmailRepository.getEmails(
-                searchQuery,
-                size,
-                page,
-                EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection,
-                EMAIL_LIST_DB_FIELD_MAPPING.SORT.sort,
-            );
-            const total = await EmailRepository.countDocuments(searchQuery);
+            const emails = await EmailRepository.getGroupedEmails(searchQuery, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            const total = await EmailRepository.countGroupedThreads(searchQuery);
             const data = emails.map((email) => ({
                 _id: email._id.toString(),
                 subject: email.subject,
@@ -74,6 +69,8 @@ export class EmailService {
                 isRead: email.isRead,
                 providerMessageId: email.providerMessageId,
                 accountId: email.accountId,
+                threadId: email.threadId,
+                threadCount: email.threadCount || 1,
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -119,14 +116,8 @@ export class EmailService {
 
     public async getEmails(accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
         try {
-            const emails = await EmailRepository.getEmailsByAccountId(
-                accountId,
-                size,
-                page,
-                EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection,
-                EMAIL_LIST_DB_FIELD_MAPPING.SORT.sort,
-            );
-            const total = await EmailRepository.countDocuments([accountId]);
+            const emails = await EmailRepository.getGroupedEmails({ accountId }, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            const total = await EmailRepository.countGroupedThreads({ accountId });
             const data = emails.map((email) => ({
                 _id: email._id.toString(),
                 subject: email.subject,
@@ -134,6 +125,8 @@ export class EmailService {
                 receivedAt: email.receivedAt,
                 providerMessageId: email.providerMessageId,
                 accountId: email.accountId,
+                threadId: email.threadId,
+                threadCount: email.threadCount || 1,
                 isRead: email.isRead,
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
@@ -347,5 +340,27 @@ export class EmailService {
             logger.error(`Error in EmailService.searchOtherContacts: ${errorMessage}`, { error: err });
             throw err;
         }
+    }
+
+    public async getThread(emailId: string): Promise<GetThreadResponse> {
+        const email = await EmailRepository.getEmail(emailId);
+        if (!email) {
+            throw new Error('Email not found');
+        }
+
+        const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
+
+        const decompressedThread = threadEmails.map((item) => ({
+            ...item,
+            _id: item._id.toString(),
+            body: item.body ? decompressString(item.body) : '',
+            bodyHtml: item.bodyHtml ? decompressString(item.bodyHtml) : '',
+            bodyPlain: item.bodyPlain ? decompressString(item.bodyPlain) : '',
+        }));
+
+        return {
+            thread: decompressedThread,
+            threadId: email.threadId,
+        };
     }
 }
