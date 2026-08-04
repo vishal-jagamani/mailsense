@@ -43,4 +43,6 @@ router.post('/compose', validate({ body: composeEmailSchema }), handleRequest(em
 
 router.post('/searchOtherContacts', validate({ body: searchOtherContactsSchema }), handleRequest(emailController.searchOtherContacts));
 
+router.get('/thread/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getThread));
+
 export default router;

@@ -8,6 +8,7 @@ import { Separator } from '@shared/ui/separator';
 import EmailBodyPreview from '../components/EmailBodyPreview';
 import EmailHeader from '../components/EmailHeader';
 import EmailMenuBarOptions from '../components/EmailMenuBarOptions';
+import ThreadView from '../components/thread-view';
 import { useEmailsPage } from '../hooks';
 
 interface EmailPageProps {
@@ -17,20 +18,21 @@ interface EmailPageProps {
 
 const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
     const {
-        account: { isLoadingAccount },
+        account: { data: accountData, isLoadingAccount },
         email: { data: emailData, isLoadingEmail },
+        thread: { data: threadData, isLoadingThread },
         unreadEmail: { unreadEmailLoading },
         setter: { setIsManualUnreadOperation },
     } = useEmailsPage(account, email);
 
-    if (isLoadingAccount || isLoadingEmail) {
+    if (isLoadingAccount || isLoadingEmail || isLoadingThread) {
         return <Loader />;
     }
 
     return (
         <>
             <div className="flex h-full w-full px-4 py-2 pb-16 md:pb-12">
-                <div className="bg-sidebar relative flex h-full w-full flex-col overflow-hidden rounded-md">
+                <div className="bg-sidebar relative flex h-full w-full flex-col overflow-y-auto rounded-md">
                     <APILoader show={unreadEmailLoading} />
                     <EmailMenuBarOptions
                         accountId={account}
@@ -39,7 +41,11 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
                     />
                     <Separator orientation="horizontal" />
                     <EmailHeader accountId={account} email={emailData} />
-                    <EmailBodyPreview html={emailData?.bodyHtml} plain={emailData?.bodyPlain} />
+                    {threadData?.thread && threadData.thread.length > 1 ? (
+                        <ThreadView account={accountData} emails={threadData.thread} />
+                    ) : (
+                        <EmailBodyPreview html={emailData?.bodyHtml} plain={emailData?.bodyPlain} />
+                    )}
                 </div>
             </div>
         </>

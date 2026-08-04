@@ -2,3 +2,5 @@ allowBuilds:
   esbuild: true
   msgpackr-extract: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@mailsense/types@1.2.0'

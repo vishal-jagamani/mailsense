@@ -1,8 +1,13 @@
-import { APIResponse, ComposeEmailRequestBody, EmailAttributes, SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
+import { APIResponse, ComposeEmailRequestBody, EmailAttributes, GetThreadResponse, SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
 import { axiosClient, EMAILS_API_ENDPOINTS } from '@shared/api';
 
 export async function getEmailDetails(emailId: string): Promise<EmailAttributes> {
     const { data } = await axiosClient.get(EMAILS_API_ENDPOINTS.DETAILS(emailId));
+    return data;
+}
+
+export async function getThread(emailId: string): Promise<GetThreadResponse> {
+    const { data } = await axiosClient.get(EMAILS_API_ENDPOINTS.THREAD(emailId));
     return data;
 }
 

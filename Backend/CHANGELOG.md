@@ -7,6 +7,17 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Added `GET /emails/thread/:emailId` to return the full conversation thread for an email.
+- Added backend thread-summary aggregation support for grouped inbox and account email listing.
+
+### Changed
+
+- Updated email list APIs to group results by thread so mailbox listings return one entry per conversation with thread counts.
+- Updated email repository query flow to use Mongo aggregation for thread grouping, per-thread counts, and chronological thread fetches.
+- Updated backend workspace and dependency metadata for the current shared package and lockfile setup.
+
 ## [2.1.1] - 2026-08-03
 
 ### Changed
