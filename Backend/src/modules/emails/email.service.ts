@@ -49,8 +49,9 @@ export class EmailService {
                 );
                 folderIds = folders.map((folder) => folder.providerFolderId);
             }
+            const targetAccountIds = accountId?.length ? accountId.map(String) : accounts.map((account) => String(account._id));
             const searchQuery: FilterQuery<EmailDocument> = {
-                accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
+                accountId: { $in: targetAccountIds },
                 folders: folders ? { $in: folders } : { $nin: [GMAIL_LABELS.TRASH, GMAIL_LABELS.SPAM, GMAIL_LABELS.SENT, ...folderIds] },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
                 ...(dateRange &&
@@ -71,6 +72,7 @@ export class EmailService {
                 accountId: email.accountId,
                 threadId: email.threadId,
                 threadCount: email.threadCount || 1,
+                attachments: email.attachments || [],
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -128,6 +130,7 @@ export class EmailService {
                 threadId: email.threadId,
                 threadCount: email.threadCount || 1,
                 isRead: email.isRead,
+                attachments: email.attachments || [],
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -171,6 +174,7 @@ export class EmailService {
     public async getEmail(emailId: string): Promise<EmailDocument | EmailInput | null> {
         try {
             const email = await EmailRepository.getEmail(emailId);
+            console.log('🚀 ~ EmailService ~ getEmail ~ email:', email);
             if (!email) throw new Error('Email not found');
             const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
             if (!account) throw new Error('Account not found');
@@ -343,24 +347,58 @@ export class EmailService {
     }
 
     public async getThread(emailId: string): Promise<GetThreadResponse> {
-        const email = await EmailRepository.getEmail(emailId);
-        if (!email) {
-            throw new Error('Email not found');
+        try {
+            const email = await EmailRepository.getEmail(emailId);
+            if (!email) {
+                throw new Error('Email not found');
+            }
+
+            const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
+
+            const decompressedThread = threadEmails.map((item) => ({
+                ...item,
+                _id: item._id.toString(),
+                bodyHtml: item.bodyHtml ? decompressString(item.bodyHtml) : '',
+                bodyPlain: item.bodyPlain ? decompressString(item.bodyPlain) : '',
+            }));
+
+            return {
+                thread: decompressedThread,
+                threadId: email.threadId,
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getThread: ${errorMessage}`, { error: err });
+            throw err;
         }
+    }
 
-        const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
+    public async downloadAttachment(emailId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        try {
+            const email = await EmailRepository.getEmail(emailId);
+            if (!email) {
+                throw new Error('Email not found');
+            }
 
-        const decompressedThread = threadEmails.map((item) => ({
-            ...item,
-            _id: item._id.toString(),
-            body: item.body ? decompressString(item.body) : '',
-            bodyHtml: item.bodyHtml ? decompressString(item.bodyHtml) : '',
-            bodyPlain: item.bodyPlain ? decompressString(item.bodyPlain) : '',
-        }));
+            const account = await AccountRepository.getAccountById(email.accountId);
+            if (!account) {
+                throw new Error('Account not found');
+            }
 
-        return {
-            thread: decompressedThread,
-            threadId: email.threadId,
-        };
+            const attachment = (email.attachments || []).find((att) => att.attachmentId === attachmentId);
+
+            const provider = EmailProviderFactory.getProvider(account.provider);
+            const result = await provider.getAttachment(email.accountId, email.providerMessageId, attachmentId);
+
+            return {
+                data: result.data,
+                mimeType: attachment?.mimeType || result.mimeType || 'application/octet-stream',
+                filename: attachment?.filename || result.filename || 'attachment',
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.downloadAttachment: ${errorMessage}`, { error: err });
+            throw err;
+        }
     }
 }

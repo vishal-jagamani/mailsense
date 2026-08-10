@@ -5,6 +5,7 @@ import React, { Suspense } from 'react';
 import APILoader from '@shared/components/apiLoader';
 import Loader from '@shared/components/loader';
 import { Separator } from '@shared/ui/separator';
+import AttachmentList from '../components/attachments';
 import EmailBodyPreview from '../components/EmailBodyPreview';
 import EmailHeader from '../components/EmailHeader';
 import EmailMenuBarOptions from '../components/EmailMenuBarOptions';
@@ -44,7 +45,12 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
                     {threadData?.thread && threadData.thread.length > 1 ? (
                         <ThreadView account={accountData} emails={threadData.thread} />
                     ) : (
-                        <EmailBodyPreview html={emailData?.bodyHtml} plain={emailData?.bodyPlain} />
+                        <>
+                            <EmailBodyPreview html={emailData?.bodyHtml} plain={emailData?.bodyPlain} />
+                            {emailData?.attachments && emailData.attachments.length > 0 && (
+                                <AttachmentList emailId={String(emailData._id)} attachments={emailData.attachments} />
+                            )}
+                        </>
                     )}
                 </div>
             </div>

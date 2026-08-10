@@ -4,6 +4,7 @@ import { OUTLOOK_SECRETS } from '@config';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants';
 import {
     OUTLOOK_FOLDERS,
+    OutlookAttachmentObject,
     OutlookMessageObjectFull,
     OutlookMessagesResponse,
     OutlookOAuthAccessTokenResponse,
@@ -451,6 +452,45 @@ export class OutlookApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookApi.searchContacts: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getMessageAttachments(accountId: string, messageId: string): Promise<OutlookAttachmentObject[]> {
+        try {
+            const accessToken = await OutlookApi.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.ATTACHMENTS(messageId)}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<{ value: OutlookAttachmentObject[] }>(options);
+            return response?.value || [];
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.getMessageAttachments: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<Buffer> {
+        try {
+            const accessToken = await OutlookApi.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.ATTACHMENT(messageId, attachmentId)}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                responseType: 'arraybuffer',
+            };
+            const response = await apiRequest<Buffer>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.getAttachment: ${errorMessage}`, { error: err });
             throw err;
         }
     }

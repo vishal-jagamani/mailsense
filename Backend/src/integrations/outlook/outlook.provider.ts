@@ -1,12 +1,13 @@
 import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
 import {
+    EmailAttributes,
     OutlookMessageObjectFull,
     OutlookOAuthAccessTokenResponse,
     OutlookUserProfile,
     SearchOtherContactsResponse,
     UpdateAPIResponse,
 } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { OutlookApi } from './outlook.api.js';
@@ -46,8 +47,12 @@ export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenRe
         }
     }
 
-    async getMessageDetails(accountId: string, emailId: string): Promise<EmailInput> {
-        return this.outlookService.getMessageDetails(accountId, emailId);
+    async getMessageDetails(accountId: string, emailId: string, dbEmail?: EmailDocument): Promise<EmailAttributes | EmailInput> {
+        return this.outlookService.getMessageDetails(accountId, emailId, dbEmail);
+    }
+
+    async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        return this.outlookService.getAttachment(accountId, messageId, attachmentId);
     }
 
     async deleteEmails(emailIds: string[], accountId: string, trash?: boolean): Promise<void> {

@@ -2,7 +2,7 @@
 
 > **Target Version:** `@mailsense/types` `v1.2.0`
 > **Status:** COMPLETED
-> **Last Updated:** 2026-08-04
+> **Last Updated:** 2026-08-09
 
 ---
 
@@ -209,7 +209,112 @@ export interface DraftListDTO extends BaseEntity {
 
 ---
 
-### 2.4 Component: Module Exports & Build Config (`src/drafts/index.ts`, `src/index.ts`, `package.json`, `tsup.config.ts`)
+### 2.4 Component: `src/attachments/attachments.interfaces.ts` (Phase 2 - Staging & Send Flow)
+
+#### [NEW] `StagedAttachmentAttributes` (Phase 2)
+
+Entity interface representing staged attachment metadata in MongoDB and Cloudflare R2 before email dispatch.
+
+```typescript
+import { BaseEntity } from '../common/index.js';
+
+export interface StagedAttachmentAttributes extends BaseEntity {
+    userId: string;
+    accountId: string;
+    r2Key: string;
+    filename: string;
+    mimeType: string;
+    size: number;
+    isInline?: boolean;
+    contentId?: string;
+    status: 'STAGED' | 'ATTACHED' | 'EXPIRED';
+    expiresAt: Date;
+}
+```
+
+#### [NEW] `UploadAttachmentResponse` (Phase 2)
+
+Response payload for `POST /api/attachments/upload` endpoint.
+
+```typescript
+export interface UploadAttachmentResponse {
+    success: boolean;
+    attachment: {
+        attachmentId: string;
+        filename: string;
+        mimeType: string;
+        size: number;
+        createdAt: Date;
+    };
+}
+```
+
+#### [NEW] `DeleteStagedAttachmentResponse` (Phase 2)
+
+Response payload for `DELETE /api/attachments/:attachmentId` endpoint.
+
+```typescript
+export interface DeleteStagedAttachmentResponse {
+    success: boolean;
+    message: string;
+}
+```
+
+#### [MODIFY] `SendEmailRequestBody` (Phase 2)
+
+Updated compose payload supporting staged `attachmentIds`.
+
+```typescript
+export interface SendEmailRequestBody {
+    accountId: string;
+    to: string[];
+    cc?: string[];
+    bcc?: string[];
+    subject: string;
+    body: string;
+    inReplyTo?: string;
+    attachmentIds?: string[]; // Phase 2: Array of staged attachment IDs
+}
+```
+
+---
+
+### 2.5 Component: `src/providers/outlook.interfaces.ts` (Phase 2)
+
+#### [MODIFY] `OutlookAttachmentObject` (Phase 2)
+
+Microsoft Graph API attachment object interface supporting file attachment metadata and Base64 `contentBytes`.
+
+```typescript
+export interface OutlookAttachmentObject {
+    id?: string;
+    '@odata.type'?: string;
+    '@odata.mediaContentType'?: string;
+    name: string;
+    contentType: string;
+    size: number;
+    isInline: boolean;
+    contentId?: string | null;
+    contentBytes?: string;
+}
+```
+
+#### [NEW] `OutlookUploadSessionResponse` (Phase 2)
+
+Response payload from Microsoft Graph API `POST /me/messages/{id}/attachments/createUploadSession`.
+
+```typescript
+export interface OutlookUploadSessionResponse {
+    '@odata.context': string;
+    expirationDateTime: string;
+    nextExpectedRanges: string[];
+    uploadUrl: string;
+}
+```
+
+---
+
+### 2.6 Component: Module Exports & Build Config (`src/drafts/index.ts`, `src/attachments/index.ts`, `src/index.ts`, `package.json`, `tsup.config.ts`)
 
 #### [NEW] [src/drafts/index.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/src/drafts/index.ts) (Phase 4)
 
@@ -217,10 +322,17 @@ export interface DraftListDTO extends BaseEntity {
 export * from './drafts.interfaces.js';
 ```
 
-#### [MODIFY] [src/index.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/src/index.ts) (Phase 4)
+#### [NEW] [src/attachments/index.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/src/attachments/index.ts) (Phase 2)
+
+```typescript
+export * from './attachments.interfaces.js';
+```
+
+#### [MODIFY] [src/index.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/src/index.ts) (Phases 2 & 4)
 
 ```typescript
 export * from './accounts/index.js';
+export * from './attachments/index.js';
 export * from './common/index.js';
 export * from './drafts/index.js';
 export * from './emails/index.js';
@@ -234,8 +346,8 @@ export * from './workers/index.js';
 #### [MODIFY] [package.json](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/package.json) & [tsup.config.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/tsup.config.ts)
 
 - Version set to `1.2.0`.
-- Registered `./drafts` export subpath in `package.json`.
-- Added `'src/drafts/index.ts'` entrypoint in `tsup.config.ts`.
+- Registered `./drafts` and `./attachments` export subpaths in `package.json`.
+- Added `'src/drafts/index.ts'` and `'src/attachments/index.ts'` entrypoints in `tsup.config.ts`.
 
 ---
 

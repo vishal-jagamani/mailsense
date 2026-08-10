@@ -8,11 +8,15 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [Unreleased]
 
 ### Added
+- Added attachment download support in email details and threaded conversation view.
+- Added image attachment preview support directly from email detail attachments.
 - Added thread-view rendering in email details for conversations with multiple messages.
 - Added thread count badges in email list rows to show how many messages belong to a conversation.
+- Added attachment indicator badges in email list rows.
 
 ### Changed
 - Updated email detail data loading to fetch thread data alongside single-email details.
+- Updated email detail and thread rendering to show attachment lists for messages that include files.
 - Updated frontend email feature wiring to use the new thread endpoint and shared email-recipient formatting helper.
 - Updated frontend workspace and dependency metadata for the current shared package and lockfile setup.
 

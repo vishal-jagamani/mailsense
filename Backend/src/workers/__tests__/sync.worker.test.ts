@@ -35,6 +35,7 @@ describe('syncAccountProcessor', () => {
             starEmails: jest.fn(),
             sendMail: jest.fn(),
             searchContacts: jest.fn(),
+            getAttachment: jest.fn(),
             getAllFolders: jest.fn(),
             createFolder: jest.fn(),
             updateFolder: jest.fn(),

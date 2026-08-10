@@ -202,4 +202,23 @@ export class EmailController {
             next(error);
         }
     };
+
+    public downloadAttachment = async (
+        req: Request<{ emailId: string; attachmentId: string }>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const { emailId, attachmentId } = req.params;
+            if (!emailId || !attachmentId) {
+                throw new Error('Email ID and Attachment ID are required');
+            }
+            const attachment = await this.emailService.downloadAttachment(emailId, attachmentId);
+            res.setHeader('Content-Type', attachment.mimeType);
+            res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
+            res.send(attachment.data);
+        } catch (error) {
+            next(error);
+        }
+    };
 }

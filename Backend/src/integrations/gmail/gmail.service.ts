@@ -168,7 +168,7 @@ export class GmailService {
     }
 
     private transformGmailMessageToEmailInput(emailDetails: GmailMessageObjectFull, accountId: string): EmailInput {
-        const headers = emailDetails.payload.headers.reduce(
+        const headers = (emailDetails.payload?.headers || []).reduce(
             (acc, header) => {
                 acc[header.name.toLowerCase()] = header.value;
                 return acc;
@@ -186,12 +186,13 @@ export class GmailService {
             cc: headers.cc || '',
             bcc: headers.bcc || '',
             subject: headers.subject || '',
-            body: emailDetails.payload.body.data || '',
+            body: emailDetails.payload?.body?.data || '',
             bodyHtml: compressString(htmlBody || ''),
             bodyPlain: compressString(plainTextBody),
             receivedAt,
             isRead: !emailDetails.labelIds.includes(GMAIL_LABELS.UNREAD),
             folders: emailDetails.labelIds,
+            attachments: GmailUtils.extractGmailAttachments(emailDetails.payload),
         };
     }
 
@@ -378,6 +379,20 @@ export class GmailService {
                     })
                     .filter((contact) => contact.email !== '') || [];
             return contacts;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.searchContacts: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async getAttachment(
+        accountId: string,
+        messageId: string,
+        attachmentId: string,
+    ): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        try {
+            return await GmailApi.getAttachment(accountId, messageId, attachmentId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.searchContacts: ${errorMessage}`, { error: err });

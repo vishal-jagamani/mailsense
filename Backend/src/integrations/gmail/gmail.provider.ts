@@ -87,6 +87,10 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
         return this.gmailService.searchContacts(accountId, searchText);
     }
 
+    async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        return this.gmailService.getAttachment(accountId, messageId, attachmentId);
+    }
+
     async getAllFolders(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {
         return this.gmailService.getAllLabels(accountId, userId);
     }

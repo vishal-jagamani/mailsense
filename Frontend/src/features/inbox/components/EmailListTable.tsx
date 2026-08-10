@@ -10,6 +10,7 @@ import { useIsMobile } from '@shared/hooks';
 import { Checkbox } from '@shared/ui/checkbox';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
 import { formatDateToMonthDateString } from '@shared/utils/formatter';
+import AttachmentBadge from '@features/emails/components/AttachmentBadge';
 import { useDeleteEmail } from '../api/inbox.queries';
 
 interface EmailListTableProps {
@@ -122,6 +123,7 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                                                             {email.threadCount}
                                                         </span>
                                                     ) : null}
+                                                    <AttachmentBadge count={email.attachments?.length} />
                                                 </div>
                                             </TableCell>
                                             <TableCell className="max-w-60 truncate">

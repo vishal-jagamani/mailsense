@@ -7,8 +7,11 @@ export const OUTLOOK_APIs = {
     MESSAGES: '/me/mailFolders/Inbox/messages',
     MESSAGES_DELTA: '/me/mailFolders/Inbox/messages/delta',
     FOLDERS: '/me/mailFolders',
+    ATTACHMENTS: (messageId: string) => `/me/messages/${messageId}/attachments`,
+    ATTACHMENT: (messageId: string, attachmentId: string) => `/me/messages/${messageId}/attachments/${attachmentId}/$value`,
 };
 
 export const OUTLOOK_API_PARAMS = {
-    DELTA_MESSAGES_FIELD: 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,bodyPreview,conversationId',
+    DELTA_MESSAGES_FIELD:
+        'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,bodyPreview,conversationId,hasAttachments,attachments,body',
 };

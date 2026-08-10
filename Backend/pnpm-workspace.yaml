@@ -1,6 +1,6 @@
 allowBuilds:
-  esbuild: true
-  msgpackr-extract: true
-  unrs-resolver: true
+    esbuild: true
+    msgpackr-extract: true
+    unrs-resolver: true
 minimumReleaseAgeExclude:
-  - '@mailsense/types@1.2.0'
+    - '@mailsense/types@1.3.1'

@@ -10,12 +10,17 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 
 - Added `GET /emails/thread/:emailId` to return the full conversation thread for an email.
+- Added `GET /emails/attachment/:emailId/:attachmentId` to download message attachments through provider-backed retrieval.
 - Added backend thread-summary aggregation support for grouped inbox and account email listing.
+- Added attachment metadata persistence on emails, including filename, MIME type, size, inline state, and content ID.
+- Added provider attachment retrieval support for both Gmail and Outlook integrations.
 
 ### Changed
 
 - Updated email list APIs to group results by thread so mailbox listings return one entry per conversation with thread counts.
 - Updated email repository query flow to use Mongo aggregation for thread grouping, per-thread counts, and chronological thread fetches.
+- Updated Gmail and Outlook email parsing to capture attachment metadata during sync and detail retrieval.
+- Updated email detail and thread responses to include attachment data for frontend rendering and downloads.
 - Updated backend workspace and dependency metadata for the current shared package and lockfile setup.
 
 ## [2.1.1] - 2026-08-03

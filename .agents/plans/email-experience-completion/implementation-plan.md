@@ -2,8 +2,8 @@
 
 > **Phase:** Phase 1 (from MailSense Development Roadmap) · **Release Target:** v3.0.0
 > **Priority:** 🔴 HIGH — Core email features required for daily-driver usage
-> **Status:** IN PROGRESS (Phase 1 COMPLETED)
-> **Created:** 2026-08-01 · **Last Updated:** 2026-08-04
+> **Status:** IN PROGRESS (Phases 1 & 2 COMPLETED)
+> **Created:** 2026-08-01 · **Last Updated:** 2026-08-07
 
 ---
 
@@ -688,24 +688,31 @@ EmailSchema.index({ accountId: 1, 'attachments.0': 1 }, { sparse: true });
 
 ---
 
-### Phase 2: Attachments (Preview & Download Proxy)
+### Phase 2: Attachments (Preview, Download Proxy & Staging Send Flow)
 
-**Objective:** Parse attachment metadata on sync and serve attachment file streams.
+**Objective:** Parse attachment metadata on sync, serve attachment file streams, and enable sending email attachments staged via Cloudflare R2.
 **Estimated Effort:** Medium-High
 
 #### Tasks
 
-- [x] Update `@mailsense/types` with `EmailAttachment` interface.
-- [ ] Update `EmailSchema` with `attachments` field and sparse index.
-- [ ] Modify `GmailService` and `OutlookService` sync parsers to capture attachment metadata.
-- [ ] Implement `getAttachment` in `GmailClient`, `OutlookApi`, and `EmailProvider`.
-- [ ] Add `GET /api/emails/attachment/:emailId/:attachmentId` proxy endpoint in backend.
-- [ ] Create `AttachmentList.tsx` and `AttachmentBadge.tsx` components in frontend.
+- [x] Update `@mailsense/types` with `EmailAttachment` and `OutlookAttachmentObject` interfaces.
+- [x] Update `EmailSchema` with `attachments` field and sparse index.
+- [x] Modify `GmailService` and `OutlookService` sync parsers to capture attachment metadata (including Outlook Graph API `hasAttachments` fetching via `OutlookApi.getMessageAttachments`).
+- [x] Implement `getAttachment` in `GmailClient`, `OutlookApi`, and `EmailProvider`.
+- [x] Add `GET /api/emails/attachment/:emailId/:attachmentId` proxy endpoint in backend.
+- [x] Create `AttachmentList.tsx` and `AttachmentBadge.tsx` components in frontend.
+- [x] Design Cloudflare R2 staging bucket integration (`mailsense-attachments-staging`) and `StagedAttachmentModel` schema.
+- [x] Design Base64URL MIME generator for Gmail send (`users.messages.send`) and Graph API small/large chunked upload session for Outlook (`createUploadSession`).
+- [x] Add `POST /api/attachments/upload` and updated `POST /api/emails/send` API contracts.
 
 #### Files to Create
 
-- `Frontend/src/features/emails/components/AttachmentList.tsx`
+- `Frontend/src/features/emails/components/attachments/index.tsx`
 - `Frontend/src/features/emails/components/AttachmentBadge.tsx`
+- `Backend/src/modules/attachments/attachment.model.ts`
+- `Backend/src/modules/attachments/attachment.service.ts`
+- `Backend/src/modules/attachments/attachment.controller.ts`
+- `Backend/src/integrations/storage/cloud-storage.service.ts`
 
 #### Files to Modify
 
@@ -714,11 +721,13 @@ EmailSchema.index({ accountId: 1, 'attachments.0': 1 }, { sparse: true });
 - [gmail.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts)
 - [outlook.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts)
 - [email.controller.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts)
+- [email.routes.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.routes.ts)
 
 #### Acceptance Criteria
 
-1. Attachments are parsed during email sync and stored in `attachments` array.
+1. Attachments are parsed during email sync and stored in `attachments` array (for both Gmail and Outlook).
 2. Clicking attachment chip streams binary file from provider without crashing memory.
+3. User can upload attachments in compose modal, stage files securely in Cloudflare R2, and send emails with attachments via Gmail and Outlook APIs without provider logic leaking out of provider adapters.
 
 ---
 

@@ -61,6 +61,11 @@ export const searchOtherContactsSchema = z.object({
     searchText: z.string().min(3, 'Search query must be at least 3 characters long'),
 });
 
+export const downloadAttachmentSchema = z.object({
+    emailId: z.string(),
+    attachmentId: z.string(),
+});
+
 export type GetAllEmailsSchema = z.infer<typeof getAllEmailsSchema>;
 export type GetEmailsSchema = z.infer<typeof getEmailsSchema>;
 export type GetEmailSchema = z.infer<typeof getEmailSchema>;
@@ -71,3 +76,4 @@ export type UnreadEmailBody = z.infer<typeof unreadEmailSchema>;
 export type SearchEmailBody = z.infer<typeof searchEmailSchema>;
 export type ComposeEmailBody = z.infer<typeof composeEmailSchema>;
 export type SearchOtherContactsBody = z.infer<typeof searchOtherContactsSchema>;
+export type DownloadAttachmentSchema = z.infer<typeof downloadAttachmentSchema>;
