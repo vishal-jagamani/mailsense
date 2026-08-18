@@ -350,8 +350,11 @@ export class GmailService {
 
     async sendMessage(composeEmailData: ComposeEmailBody): Promise<Partial<GmailMessageObjectFull>> {
         try {
-            const { accountId, to, subject, body } = composeEmailData;
-            const raw = GmailUtils.buildGmailRawString(to, subject, body);
+            const { accountId, to, subject, body, attachments } = composeEmailData;
+            const raw =
+                attachments && attachments.length > 0
+                    ? GmailUtils.constructGmailMimeMessage(to, subject, body, attachments)
+                    : GmailUtils.buildGmailRawString(to, subject, body);
             const response = await GmailApi.sendMessage(accountId, { raw });
             const emailDetails = await GmailApi.fetchEmailById(response.id, accountId);
             const emilData = this.transformGmailMessageToEmailInput(emailDetails, accountId);

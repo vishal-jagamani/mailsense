@@ -1,8 +1,8 @@
 # Email Experience Completion Types — Overview & Contract Changes
 
-> **Target Version:** `@mailsense/types` `v1.2.0`
+> **Target Version:** `@mailsense/types` `v1.3.1`
 > **Status:** COMPLETED
-> **Last Updated:** 2026-08-09
+> **Last Updated:** 2026-08-18
 
 ---
 
@@ -287,14 +287,14 @@ Microsoft Graph API attachment object interface supporting file attachment metad
 
 ```typescript
 export interface OutlookAttachmentObject {
-    id?: string;
+    id: string;
     '@odata.type'?: string;
     '@odata.mediaContentType'?: string;
     name: string;
     contentType: string;
     size: number;
     isInline: boolean;
-    contentId?: string | null;
+    contentId?: string;
     contentBytes?: string;
 }
 ```

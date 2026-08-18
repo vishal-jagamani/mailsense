@@ -49,3 +49,11 @@ export const OUTLOOK_SECRETS = {
 export const REDIS_CONFIG = {
     url: ENV.REDIS_URL,
 };
+
+export const R2_CONFIG = {
+    accountId: ENV.R2_ACCOUNT_ID,
+    accessKeyId: ENV.R2_ACCESS_KEY_ID,
+    secretAccessKey: ENV.R2_SECRET_ACCESS_KEY,
+    bucketName: ENV.R2_BUCKET_NAME,
+    region: ENV.R2_REGION,
+};

@@ -17,6 +17,7 @@ import {
     UpdateAPIResponse,
 } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AttachmentsService } from '@modules/attachments/attachment.service.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { decompressString, logger } from 'shared/utils/index.js';
@@ -25,7 +26,11 @@ import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
 
 export class EmailService {
-    constructor() {}
+    private attachmentsService: AttachmentsService;
+
+    constructor() {
+        this.attachmentsService = new AttachmentsService();
+    }
 
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         try {
@@ -174,7 +179,6 @@ export class EmailService {
     public async getEmail(emailId: string): Promise<EmailDocument | EmailInput | null> {
         try {
             const email = await EmailRepository.getEmail(emailId);
-            console.log('🚀 ~ EmailService ~ getEmail ~ email:', email);
             if (!email) throw new Error('Email not found');
             const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
             if (!account) throw new Error('Account not found');
@@ -309,15 +313,19 @@ export class EmailService {
         }
     }
 
-    public async composeEmail(composeEmailData: ComposeEmailBody): Promise<SuccessAPIResponse> {
+    public async composeEmail(userId: string, composeEmailData: ComposeEmailBody): Promise<SuccessAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(composeEmailData.accountId, { provider: 1 });
             if (!account) {
                 throw new Error('Account not found');
             }
-            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-            await provider.sendMail(composeEmailData);
-            return { status: true, message: 'Email composed successfully' };
+            if (composeEmailData.attachmentIds && composeEmailData.attachmentIds.length) {
+                return await this.composeEmailWithAttachments(userId, composeEmailData);
+            } else {
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
+                await provider.sendMail(composeEmailData);
+                return { status: true, message: 'Email composed successfully' };
+            }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.composeEmail: ${errorMessage}`, { error: err });
@@ -398,6 +406,52 @@ export class EmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.downloadAttachment: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async composeEmailWithAttachments(userId: string, reqBody: ComposeEmailBody): Promise<SuccessAPIResponse> {
+        try {
+            const { accountId, to, subject, body, attachmentIds } = reqBody;
+
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account || account.userId.toString() !== userId.toString()) {
+                throw new Error('Account not found or unauthorized');
+            }
+
+            const stagedFiles: { filename: string; mimeType: string; buffer: Buffer }[] = [];
+            if (attachmentIds && attachmentIds.length > 0) {
+                for (const attId of attachmentIds) {
+                    const { stagedAttachment, stream } = await this.attachmentsService.getStagedAttachmentWithStream(attId);
+
+                    // Verify attachment belongs to user and matches target account
+                    // if (stagedAttachment.userId.toString() !== userId.toString() || stagedAttachment.accountId !== accountId) {
+                    //     throw new Error(`Unauthorized or invalid attachment ${attId}`);
+                    // }
+
+                    const chunks: Buffer[] = [];
+                    for await (const chunk of stream) {
+                        chunks.push(Buffer.from(chunk));
+                    }
+                    stagedFiles.push({
+                        filename: stagedAttachment.filename,
+                        mimeType: stagedAttachment.mimeType,
+                        buffer: Buffer.concat(chunks),
+                    });
+                }
+            }
+
+            const provider = EmailProviderFactory.getProvider(account.provider);
+            await provider.sendMail({ accountId, to, subject, body, attachments: stagedFiles });
+
+            if (attachmentIds && attachmentIds.length > 0) {
+                this.attachmentsService.cleanupStagedAttachments(attachmentIds);
+            }
+
+            return { status: true, message: 'Email composed and sent successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.composeEmailWithAttachments: ${errorMessage}`, { error: err });
             throw err;
         }
     }

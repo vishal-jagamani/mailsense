@@ -55,6 +55,16 @@ export const composeEmailSchema = z.object({
     to: z.array(z.string().email('Invalid email address')),
     subject: z.string().min(1, 'Subject is required'),
     body: z.string().min(1, 'Email body is required'),
+    attachmentIds: z.array(z.string()).optional(),
+    attachments: z
+        .array(
+            z.object({
+                filename: z.string(),
+                mimeType: z.string(),
+                buffer: z.custom<Buffer>((val) => Buffer.isBuffer(val), { message: 'Invalid buffer' }),
+            }),
+        )
+        .optional(),
 });
 
 export const searchOtherContactsSchema = z.object({

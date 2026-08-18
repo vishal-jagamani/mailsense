@@ -77,12 +77,16 @@
   - Sync requests now enqueue background jobs and persist sync-job tracking records
   - Account activation, deactivation, creation, and deletion now synchronize repeatable background sync schedules
   - Newly connected accounts are now created as active but with `syncEnabled: false` by default
+- Attachments (`Backend/src/modules/attachments/*`)
+  - Attachment staging file upload (`POST /api/attachments/upload`) to Cloudflare R2 object storage
+  - Staged attachment deletion endpoint (`DELETE /api/attachments/:attachmentId`)
+  - Staged metadata tracking with 24-hour TTL expiration index
 - Emails (`Backend/src/modules/emails/*`)
   - Unified list, per-account list, email details
   - Thread details endpoint for conversation view by email ID
   - Attachment download endpoint for provider-backed file retrieval by email ID and attachment ID
   - Search, delete, archive, star, unread
-  - Compose/send mail through Gmail and Outlook providers
+  - Compose/send mail through Gmail (MIME Base64URL generator) and Outlook (direct <=3MB / chunked >3MB upload session) providers with staged attachments support
   - Search recipient suggestions across connected provider contacts
   - Supports account/date/folder-based filtering
   - Mailbox list responses now support thread-grouped conversation summaries with per-thread counts
@@ -106,6 +110,8 @@
 
 ### Integrations
 
+- Cloud Storage (`Backend/src/integrations/storage/cloud-storage.service.ts`)
+  - AWS S3 SDK wrapper targeting Cloudflare R2 object storage bucket (`mailsense-attachments-staging`) for attachment staging
 - Email provider abstraction (`Backend/src/integrations/email/*`)
   - `email.provider.ts`: shared provider contract for OAuth, token refresh, sync, email actions, compose, contact search, and folder CRUD
   - `email.provider.factory.ts`: provider selector and singleton cache for Gmail and Outlook adapters
@@ -117,17 +123,17 @@
   - Modify labels for archive/star/unread, trash/delete
   - Label CRUD + label sync into folders
   - Attachment metadata extraction and attachment download support
-  - Send outgoing mail and upsert sent copy locally
+  - Send outgoing mail (with RFC 2822 Base64URL MIME construction) and upsert sent copy locally
   - Search Google other contacts for compose recipient suggestions
   - `gmail.provider.ts`: adapts Gmail service capabilities to the shared provider contract, including token refresh via stored refresh token
 - Outlook (`Backend/src/integrations/outlook/*`)
   - OAuth token exchange/refresh
-  - Fetch profile/messages and message details
+  - Fetch profile/messages and message details (`$expand=attachments`)
   - Delta-based sync support
   - Inbox mutation support (delete/archive/unread/flag)
   - Attachment metadata extraction, attachment listing, and attachment download support
   - Folder CRUD + folder sync into folders
-  - Create/send outgoing mail and upsert sent copy locally
+  - Create/send outgoing mail (with direct inline fileAttachment or chunked `createUploadSession` strategy) and upsert sent copy locally
   - Search Microsoft Graph people for compose recipient suggestions
   - `outlook.provider.ts`: adapts Outlook service capabilities to the shared provider contract, including access-token refresh
 - Auth0 (`Backend/src/integrations/auth0/*`)
@@ -139,6 +145,8 @@
   - `Account`, `AccountMetrics`
 - `Backend/src/modules/accounts/sync-job.model.ts`
   - `SyncJob` for queued account-sync lifecycle tracking
+- `Backend/src/modules/attachments/attachment.model.ts`
+  - `StagedAttachment` with 24-hour TTL expiration index for Cloudflare R2 staging metadata
 - `Backend/src/modules/emails/email.model.ts`
   - `Email` with indexes on `(accountId, providerMessageId)`, date/folder access patterns, and attachment metadata storage
 - `Backend/src/modules/folders/folder.model.ts`
@@ -179,6 +187,9 @@
   - `GET /accounts/callback/:provider`
   - `GET /accounts/sync-all`
   - `GET /accounts/sync/:accountId`
+- Attachments:
+  - `POST /attachments/upload`
+  - `DELETE /attachments/:attachmentId`
 - Emails:
   - `POST /emails/list`
   - `GET /emails/filters`
@@ -298,11 +309,12 @@
    - available filter options are fetched from `GET /emails/filters`
    - filters can include account, folder, date range, search text, and unread state
 6. Folders UI reads paginated folder data, supports folder CRUD, and opens filtered email lists for a selected folder.
-7. Compose popup lets the user send email from a connected account; backend sends through the provider and stores the sent message for later listing/details.
+7. Compose popup lets the user select files (staged securely via `POST /api/attachments/upload` to Cloudflare R2 object storage with staged attachment chips rendered in UI), select a sender account, and dispatch composed emails with attachments through provider-specific adapters (RFC 2822 Base64URL MIME message for Gmail vs. direct/chunked upload session for Outlook).
 8. Compose recipient search uses provider contacts/people APIs to suggest and add recipients as chips while typing.
-9. Sidebar navigation builds connected account inbox entries dynamically from the fetched account list while preserving direct navigation to parent sections.
-10. Background sync and mailbox views still limit operational flows to active accounts only.
-11. Backend now includes queue infrastructure for future asynchronous account-sync execution, with Redis-backed job enqueue support and graceful queue shutdown handling.
+9. Post-send cleanup executes asynchronously in the background to purge staged R2 object storage files and MongoDB `StagedAttachment` records.
+10. Sidebar navigation builds connected account inbox entries dynamically from the fetched account list while preserving direct navigation to parent sections.
+11. Background sync and mailbox views still limit operational flows to active accounts only.
+12. Backend now includes queue infrastructure for future asynchronous account-sync execution, with Redis-backed job enqueue support and graceful queue shutdown handling.
 
 ## Important Notes
 

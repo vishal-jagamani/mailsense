@@ -10,7 +10,7 @@ import {
 import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
-import { OutlookApi } from './outlook.api.js';
+import { OutlookApi } from './outlook.client.js';
 import { OutlookService } from './outlook.service.js';
 
 export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenResponse, OutlookUserProfile, OutlookMessageObjectFull> {

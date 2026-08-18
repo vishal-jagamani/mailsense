@@ -15,3 +15,6 @@ export const OUTLOOK_API_PARAMS = {
     DELTA_MESSAGES_FIELD:
         'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,bodyPreview,conversationId,hasAttachments,attachments,body',
 };
+
+export const OUTLOOK_ATTACHMENT_MAX_DIRECT_SIZE = 3 * 1024 * 1024;
+export const OUTLOOK_ATTACHMENT_CHUNK_SIZE = 320 * 1024 * 10;

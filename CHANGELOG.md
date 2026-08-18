@@ -8,6 +8,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added
+- Added support for attaching and sending files when composing emails across connected Gmail and Outlook accounts.
+- Added attachment preview chips in the compose window with file size formatting and single-click removal.
 - Added thread-aware email detail view so conversations with multiple messages can be read as a single thread.
 - Added attachment download and image preview support from email details and threaded conversations.
 

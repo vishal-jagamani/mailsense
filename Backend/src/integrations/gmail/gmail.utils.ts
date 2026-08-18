@@ -213,3 +213,41 @@ export const buildGmailRawString = (to: string[], subject: string, body: string)
         .replace(/=+$/, ''); // Remove padding =
     return raw;
 };
+
+export const constructGmailMimeMessage = (
+    to: string[],
+    subject: string,
+    body: string,
+    attachments: { filename: string; mimeType: string; buffer: Buffer }[],
+): string => {
+    const boundary = `====_MailSense_Boundary_${Date.now()}====`;
+    const messageParts: string[] = [];
+
+    messageParts.push(`To: ${to.join(', ')}`);
+    messageParts.push(`Subject: ${subject}`);
+    messageParts.push(`MIME-Version: 1.0`);
+    messageParts.push(`Content-Type: multipart/mixed; boundary="${boundary}"\r\n`);
+
+    // Body Subpart
+    messageParts.push(`--${boundary}`);
+    messageParts.push(`Content-Type: text/html; charset="UTF-8"`);
+    messageParts.push(`Content-Transfer-Encoding: 7bit\r\n`);
+    messageParts.push(body);
+
+    // Attachment Subparts
+    for (const att of attachments) {
+        messageParts.push(`--${boundary}`);
+        messageParts.push(`Content-Type: ${att.mimeType}; name="${att.filename}"`);
+        messageParts.push(`Content-Disposition: attachment; filename="${att.filename}"`);
+        messageParts.push(`Content-Transfer-Encoding: base64\r\n`);
+        messageParts.push(att.buffer.toString('base64'));
+    }
+
+    messageParts.push(`--${boundary}--`);
+    const rawMime = messageParts.join('\r\n');
+    return Buffer.from(rawMime)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+};

@@ -161,11 +161,15 @@ export class EmailController {
 
     public composeEmail = async (req: Request<object, object, ComposeEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
             const { accountId, to, subject, body } = req.body;
             if (!accountId || !to || !subject || !body) {
                 throw new Error('Account ID, To, subject and body are required');
             }
-            const email = await this.emailService.composeEmail(req.body);
+            const email = await this.emailService.composeEmail(userId, req.body);
             res.send(email);
         } catch (error) {
             next(error);

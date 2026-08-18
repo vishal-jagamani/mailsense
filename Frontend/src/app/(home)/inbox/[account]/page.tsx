@@ -2,7 +2,7 @@ import React from 'react';
 
 import AccountInboxPageWrapper from '@features/inbox/pages/account-inbox';
 
-const page = async ({ params }: { params: { account: string } }) => {
+const page = async ({ params }: { params: Promise<{ account: string }> }) => {
     const { account } = await params;
     return (
         <React.Suspense fallback={null}>

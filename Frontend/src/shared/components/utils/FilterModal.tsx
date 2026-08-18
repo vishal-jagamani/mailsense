@@ -20,8 +20,6 @@ const FilterModal: React.FC<FilterModalProps> = ({ filter, onFilterChange, filte
     const [localFilterObject, setLocalFilterObject] = useState<Filter | null>(filter || null);
     const [isOpen, setIsOpen] = useState(false);
 
-    console.log('localFilterObject', localFilterObject);
-
     useEffect(() => {
         setLocalFilterObject(filter);
     }, [filter]);
@@ -41,7 +39,6 @@ const FilterModal: React.FC<FilterModalProps> = ({ filter, onFilterChange, filte
     };
 
     const handleValueChange = (name: string, value: string | boolean) => {
-        console.log('name', name, value);
         setLocalFilterObject((prev) => {
             const updated: Filter = { ...(prev || {}) };
             if (name === 'accountId' && typeof value === 'string') {
