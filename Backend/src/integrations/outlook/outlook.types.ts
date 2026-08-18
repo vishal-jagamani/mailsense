@@ -77,3 +77,33 @@ export interface OutlookPeopleSearchResponse {
     '@odata.context': string;
     '@odata.nextLink'?: string;
 }
+
+// Outlook Attachment & Upload Session Types
+export interface OutlookFileAttachmentPayload {
+    '@odata.type': '#microsoft.graph.fileAttachment';
+    name: string;
+    contentType: string;
+    contentBytes: string;
+}
+
+export interface OutlookCreateMessagePayload {
+    subject: string;
+    body: { contentType: 'Text' | 'HTML'; content: string };
+    toRecipients: { emailAddress: { address: string; name: string } }[];
+    ccRecipients?: { emailAddress: { address: string; name: string } }[];
+    bccRecipients?: { emailAddress: { address: string; name: string } }[];
+    attachments?: OutlookFileAttachmentPayload[];
+}
+
+export interface OutlookSendMailDirectPayload {
+    to: string[];
+    subject: string;
+    body: string;
+    attachments: OutlookFileAttachmentPayload[];
+}
+
+export interface OutlookUploadSessionResponse {
+    uploadUrl: string;
+    expirationDateTime?: string;
+    nextExpectedRanges?: string[];
+}

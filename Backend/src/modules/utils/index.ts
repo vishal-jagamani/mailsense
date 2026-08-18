@@ -4,7 +4,7 @@ import { GmailApi } from '@integrations/gmail/gmail.client.js';
 import { ACCOUNT_PROVIDER } from '@mailsense/types';
 import { authMiddleware } from '@middlewares';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { OutlookApi } from 'integrations/outlook/outlook.api.js';
+import { OutlookApi } from '@integrations/outlook/outlook.client.js';
 import { decrypt } from 'shared/utils/index.js';
 
 const router = Router();

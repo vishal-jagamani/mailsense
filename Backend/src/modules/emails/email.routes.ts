@@ -7,6 +7,7 @@ import {
     archiveEmailSchema,
     composeEmailSchema,
     deleteEmailSchema,
+    downloadAttachmentSchema,
     getAllEmailsSchema,
     getEmailSchema,
     searchEmailSchema,
@@ -28,6 +29,8 @@ router.get('/list/:accountId', handleRequest(emailController.getEmails));
 router.get('/filters', handleRequest(emailController.getFilters));
 
 router.get('/details/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getEmail));
+
+router.get('/attachment/:emailId/:attachmentId', validate({ params: downloadAttachmentSchema }), handleRequest(emailController.downloadAttachment));
 
 router.post('/delete', validate({ body: deleteEmailSchema }), handleRequest(emailController.deleteEmail));
 

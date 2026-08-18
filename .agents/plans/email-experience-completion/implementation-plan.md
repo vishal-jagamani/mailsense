@@ -2,8 +2,8 @@
 
 > **Phase:** Phase 1 (from MailSense Development Roadmap) · **Release Target:** v3.0.0
 > **Priority:** 🔴 HIGH — Core email features required for daily-driver usage
-> **Status:** IN PROGRESS (Phase 1 COMPLETED)
-> **Created:** 2026-08-01 · **Last Updated:** 2026-08-04
+> **Status:** IN PROGRESS (Phases 1 & 2 COMPLETED)
+> **Created:** 2026-08-01 · **Last Updated:** 2026-08-18
 
 ---
 
@@ -688,37 +688,85 @@ EmailSchema.index({ accountId: 1, 'attachments.0': 1 }, { sparse: true });
 
 ---
 
-### Phase 2: Attachments (Preview & Download Proxy)
+### Phase 2A: Inbound Email Attachments (Sync, Preview & Download Proxy) — COMPLETED
 
-**Objective:** Parse attachment metadata on sync and serve attachment file streams.
+**Objective:** Parse attachment metadata during Gmail & Outlook sync, serve authenticated attachment file streams on-demand, and display paperclip badges & attachment previews in UI.
 **Estimated Effort:** Medium-High
 
 #### Tasks
 
-- [x] Update `@mailsense/types` with `EmailAttachment` interface.
-- [ ] Update `EmailSchema` with `attachments` field and sparse index.
-- [ ] Modify `GmailService` and `OutlookService` sync parsers to capture attachment metadata.
-- [ ] Implement `getAttachment` in `GmailClient`, `OutlookApi`, and `EmailProvider`.
-- [ ] Add `GET /api/emails/attachment/:emailId/:attachmentId` proxy endpoint in backend.
-- [ ] Create `AttachmentList.tsx` and `AttachmentBadge.tsx` components in frontend.
+- [x] Update `@mailsense/types` with `EmailAttachment` and `OutlookAttachmentObject` interfaces.
+- [x] Update `EmailSchema` with `attachments` field and sparse index.
+- [x] Modify `GmailService` and `OutlookService` sync parsers to capture attachment metadata (including Outlook Graph API `hasAttachments` fetching via `OutlookApi.getMessageAttachments`).
+- [x] Fix `GmailUtils.parseEmailBody` recursive MIME part traversal so HTML/Plain body content is not lost when emails have attachments.
+- [x] Implement `getAttachment` in `GmailClient`, `GmailProvider`, `OutlookApi`, `OutlookProvider`, and `IEmailProvider`.
+- [x] Add `GET /api/emails/attachment/:emailId/:attachmentId` authenticated proxy endpoint in backend.
+- [x] Create `AttachmentList.tsx` and `AttachmentBadge.tsx` components in frontend with `axiosClient` Bearer authentication.
 
-#### Files to Create
+#### Files Created
 
-- `Frontend/src/features/emails/components/AttachmentList.tsx`
+- `Frontend/src/features/emails/components/attachments/index.tsx`
 - `Frontend/src/features/emails/components/AttachmentBadge.tsx`
 
-#### Files to Modify
+#### Files Modified
 
 - [emails.interfaces.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/src/emails/emails.interfaces.ts)
 - [email.model.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.model.ts)
-- [gmail.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts)
-- [outlook.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts)
+- [email.repository.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.repository.ts)
+- [email.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.service.ts)
 - [email.controller.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts)
+- [email.routes.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.routes.ts)
+- [gmail.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts)
+- [gmail.client.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.client.ts)
+- [outlook.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts)
+- [outlook.api.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.api.ts)
 
 #### Acceptance Criteria
 
-1. Attachments are parsed during email sync and stored in `attachments` array.
+1. Synchronized emails with attachments store `EmailAttachment` metadata array in MongoDB without raw Base64 bytes.
+2. Clicking attachment download chip in `AttachmentList` sends authenticated `axiosClient` request with Bearer token and streams file binary.
+3. Image attachments display inline preview inside modal popup.
+
+---
+
+### Phase 2B: Outbound Email Attachments (Compose Staging & Multi-Provider Send Engine) — COMPLETED
+
+**Objective:** Enable uploading attachment files in Compose modal, staging securely to Cloudflare R2 (S3 API), and assembling multi-provider outbound payloads for Gmail API Base64URL MIME message and Outlook Graph API direct/chunked upload session.
+**Estimated Effort:** High
+
+#### Tasks
+
+- [x] Design Cloudflare R2 staging bucket integration (`mailsense-attachments-staging`) and `StagedAttachmentModel` schema.
+- [x] Implement `POST /api/attachments/upload` and `DELETE /api/attachments/:attachmentId` endpoints.
+- [x] Implement Base64URL MIME generator for Gmail send (`users.messages.send`).
+- [x] Implement Graph API small/large chunked upload session for Outlook (`createUploadSession`).
+- [x] Update `POST /api/emails/send` API contract accepting `attachmentIds: string[]`.
+- [x] Implement post-send async object cleanup and MongoDB 24-hour TTL expiration purge.
+
+#### Files to Create
+
+- `Backend/src/modules/attachments/attachment.model.ts`
+- `Backend/src/modules/attachments/attachment.service.ts`
+- `Backend/src/modules/attachments/attachment.controller.ts`
+- `Backend/src/integrations/storage/cloud-storage.service.ts`
+
+#### Files to Modify
+
+- [attachments.interfaces.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/src/attachments/attachments.interfaces.ts)
+- [email.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.service.ts)
+- [gmail.provider.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.provider.ts)
+- [outlook.provider.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.provider.ts)
+- `Frontend/src/features/emails/components/ComposeModal.tsx`
+- [gmail.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts)
+- [outlook.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts)
+- [email.controller.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts)
+- [email.routes.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.routes.ts)
+
+#### Acceptance Criteria
+
+1. Attachments are parsed during email sync and stored in `attachments` array (for both Gmail and Outlook).
 2. Clicking attachment chip streams binary file from provider without crashing memory.
+3. User can upload attachments in compose modal, stage files securely in Cloudflare R2, and send emails with attachments via Gmail and Outlook APIs without provider logic leaking out of provider adapters.
 
 ---
 

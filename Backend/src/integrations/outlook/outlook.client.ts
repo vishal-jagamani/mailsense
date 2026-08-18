@@ -4,6 +4,7 @@ import { OUTLOOK_SECRETS } from '@config';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants';
 import {
     OUTLOOK_FOLDERS,
+    OutlookAttachmentObject,
     OutlookMessageObjectFull,
     OutlookMessagesResponse,
     OutlookOAuthAccessTokenResponse,
@@ -12,7 +13,16 @@ import {
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { apiRequest, decrypt, encrypt, logger } from 'shared/utils/index.js';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
-import { GetDeltaMessageChangesResponse, OutlookFolderObject, OutlookFoldersResponse, OutlookPeopleSearchResponse } from './outlook.types.js';
+import {
+    GetDeltaMessageChangesResponse,
+    OutlookCreateMessagePayload,
+    OutlookFolderObject,
+    OutlookFoldersResponse,
+    OutlookPeopleSearchResponse,
+    OutlookSendMailDirectPayload,
+    OutlookUploadSessionResponse,
+} from './outlook.types.js';
+import { buildOutlookMessagePayload } from './outlook.utils.js';
 
 export class OutlookApi {
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
@@ -147,12 +157,15 @@ export class OutlookApi {
                     Authorization: `Bearer ${accessToken}`,
                     Prefer: 'IdType="ImmutableId"',
                 },
+                params: {
+                    $expand: 'attachments',
+                },
             };
             const response = await apiRequest<OutlookMessageObjectFull>(options);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.getMessages: ${errorMessage}`, { error: err });
+            logger.error(`Error in OutlookApi.getMessageDetails: ${errorMessage}`, { error: err });
             throw err;
         }
     }
@@ -391,7 +404,10 @@ export class OutlookApi {
         }
     }
 
-    static async createDraftMessage(accountId: string, message: Partial<OutlookMessageObjectFull>): Promise<OutlookMessageObjectFull> {
+    static async createDraftMessage(
+        accountId: string,
+        message: OutlookCreateMessagePayload | Partial<OutlookMessageObjectFull>,
+    ): Promise<OutlookMessageObjectFull> {
         try {
             const accessToken = await this.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
@@ -451,6 +467,121 @@ export class OutlookApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookApi.searchContacts: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getMessageAttachments(accountId: string, messageId: string): Promise<OutlookAttachmentObject[]> {
+        try {
+            const accessToken = await OutlookApi.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.ATTACHMENTS(messageId)}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<{ value: OutlookAttachmentObject[] }>(options);
+            return response?.value || [];
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.getMessageAttachments: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<Buffer> {
+        try {
+            const accessToken = await OutlookApi.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.ATTACHMENT(messageId, attachmentId)}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                responseType: 'arraybuffer',
+            };
+            const response = await apiRequest<Buffer>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.getAttachment: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async sendMailDirect(accountId: string, payload: OutlookSendMailDirectPayload): Promise<void> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const messageBody = buildOutlookMessagePayload(payload.to, payload.subject, payload.body, 'HTML');
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/sendMail`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    message: {
+                        ...messageBody,
+                        attachments: payload.attachments,
+                    },
+                    saveToSentItems: 'true',
+                },
+            };
+            await apiRequest<void>(options);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.sendMailDirect: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async createUploadSession(accountId: string, messageId: string, filename: string, size: number): Promise<OutlookUploadSessionResponse> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/messages/${messageId}/attachments/createUploadSession`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    AttachmentItem: {
+                        attachmentType: 'file',
+                        name: filename,
+                        size,
+                    },
+                },
+            };
+            const response = await apiRequest<OutlookUploadSessionResponse>(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.createUploadSession: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async uploadChunk(uploadUrl: string, chunk: Buffer, start: number, totalSize: number): Promise<void> {
+        try {
+            const end = start + chunk.length - 1;
+            const options: AxiosRequestConfig = {
+                url: uploadUrl,
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/octet-stream',
+                    'Content-Length': chunk.length,
+                    'Content-Range': `bytes ${start}-${end}/${totalSize}`,
+                },
+                data: chunk,
+                timeout: 60000,
+            };
+            await apiRequest<void>(options);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.uploadChunk: ${errorMessage}`, { error: err });
             throw err;
         }
     }

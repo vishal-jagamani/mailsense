@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 
 import { AccountAttributes, EmailAttributes } from '@mailsense/types';
 import { Separator } from '@shared/ui/separator';
+import AttachmentList from '../attachments';
 import EmailBodyPreview from '../EmailBodyPreview';
 import ThreadViewHeaderBar from './ThreadViewHeaderBar';
 
@@ -50,7 +51,14 @@ const ThreadView: React.FC<ThreadViewProps> = ({ emails, account, onReply, onRep
                         <Separator />
 
                         {/* Collapsible Body */}
-                        {isExpanded && <EmailBodyPreview html={email.bodyHtml} plain={email.bodyPlain} />}
+                        {isExpanded && (
+                            <>
+                                <EmailBodyPreview html={email.bodyHtml} plain={email.bodyPlain} />
+                                {email.attachments && email.attachments.length > 0 && (
+                                    <AttachmentList emailId={emailId} attachments={email.attachments} />
+                                )}
+                            </>
+                        )}
                     </div>
                 );
             })}

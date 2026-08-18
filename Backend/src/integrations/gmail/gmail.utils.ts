@@ -1,13 +1,16 @@
 import { GMAIL_SECRETS } from '@config';
 import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
 import {
+    EmailAttachment,
     FOLDER_KIND,
     FOLDER_ROLE,
     GMAIL_LABEL_LABEL_LIST_VISIBILITY,
     GMAIL_LABEL_TYPE,
     GMAIL_LABELS,
     GmailLabel,
+    GmailMessageHeaderFull,
     GmailMessageObjectFull,
+    GmailMessagePartsFull,
 } from '@mailsense/types';
 import { FolderDocument } from '@modules/folders/folder.model.js';
 import { htmlToText } from 'html-to-text';
@@ -26,31 +29,132 @@ export const buildGmailOAuthConsentURL = async () => {
 };
 
 export const parseEmailBody = (data: GmailMessageObjectFull) => {
-    if (data?.payload?.body?.data) {
-        return { plainTextBody: decodeBase64Url(data?.payload?.body?.data) };
-    }
-    if (data?.payload?.parts) {
-        let plain = '';
-        let html = '';
-        for (const part of data.payload.parts) {
-            if (part?.mimeType === 'text/plain' && part?.body?.data) {
-                plain += decodeBase64Url(part?.body?.data);
-            }
-            if (part?.mimeType === 'text/html' && part?.body?.data) {
-                html += decodeBase64Url(part?.body?.data);
+    let plain = '';
+    let html = '';
+
+    const traverse = (part?: GmailMessagePartsFull) => {
+        if (!part) return;
+
+        const headers = (part.headers || []).reduce((acc: Record<string, string>, h: GmailMessageHeaderFull) => {
+            acc[h.name.toLowerCase()] = h.value;
+            return acc;
+        }, {});
+        const contentDisposition = (headers['content-disposition'] || '').toLowerCase();
+        const isAttachment =
+            contentDisposition.includes('attachment') || Boolean(part.filename && part.filename.length > 0 && part.body?.attachmentId);
+
+        if (!isAttachment) {
+            if (part.mimeType === 'text/plain' && part.body?.data) {
+                plain += decodeBase64Url(part.body.data);
+            } else if (part.mimeType === 'text/html' && part.body?.data) {
+                html += decodeBase64Url(part.body.data);
             }
         }
-        if (!plain && html) {
-            plain = htmlToText(html);
+
+        if (part.parts && Array.isArray(part.parts)) {
+            for (const subPart of part.parts) {
+                traverse(subPart);
+            }
         }
-        return { plainTextBody: plain, htmlBody: html };
+    };
+
+    if (data?.payload) {
+        if (data.payload.body?.data) {
+            if (data.payload.mimeType === 'text/html') {
+                html = decodeBase64Url(data.payload.body.data);
+                plain = htmlToText(html);
+            } else {
+                plain = decodeBase64Url(data.payload.body.data);
+            }
+        } else {
+            traverse(data.payload);
+        }
     }
-    return { plainTextBody: '' };
+
+    if (!plain && html) {
+        plain = htmlToText(html);
+    }
+
+    return { plainTextBody: plain, htmlBody: html };
+};
+
+const getPartFilename = (part: GmailMessagePartsFull, headers: Record<string, string>): string => {
+    if (part.filename && part.filename.trim().length > 0) {
+        return part.filename.trim();
+    }
+    const cd = headers['content-disposition'] || '';
+    const cdMatch = cd.match(/filename\*?=(?:UTF-8''|")?([^";\r\n]+)"?/i);
+    if (cdMatch && cdMatch[1]) {
+        try {
+            return decodeURIComponent(cdMatch[1].trim().replace(/^"|"$/g, ''));
+        } catch {
+            return cdMatch[1].trim().replace(/^"|"$/g, '');
+        }
+    }
+    const ct = headers['content-type'] || '';
+    const ctMatch = ct.match(/name="?([^";\r\n]+)"?/i);
+    if (ctMatch && ctMatch[1]) {
+        return ctMatch[1].trim().replace(/^"|"$/g, '');
+    }
+    return '';
+};
+
+export const extractGmailAttachments = (payload?: GmailMessagePartsFull): EmailAttachment[] => {
+    const attachments: EmailAttachment[] = [];
+
+    const processPart = (part?: GmailMessagePartsFull) => {
+        if (!part) return;
+
+        const headers = (part.headers || []).reduce((acc: Record<string, string>, h: GmailMessageHeaderFull) => {
+            acc[h.name.toLowerCase()] = h.value;
+            return acc;
+        }, {});
+
+        const contentDisposition = (headers['content-disposition'] || '').toLowerCase();
+        const contentIdHeader = headers['content-id'] || '';
+        const contentId = contentIdHeader.replace(/^<|>$/g, '');
+        const filename = getPartFilename(part, headers);
+        const hasAttachmentId = Boolean(part.body?.attachmentId);
+        const isMultipart = part.mimeType?.startsWith('multipart/');
+
+        const isAttachment =
+            !isMultipart &&
+            (hasAttachmentId ||
+                (filename.length > 0 && part.mimeType !== 'text/plain' && part.mimeType !== 'text/html') ||
+                contentDisposition.includes('attachment') ||
+                (contentDisposition.includes('inline') && Boolean(contentId || filename)));
+
+        if (isAttachment && (hasAttachmentId || part.body?.data)) {
+            const isInline = contentDisposition.includes('inline') || Boolean(contentId);
+            const attachmentId = part.body?.attachmentId || part.partId || '';
+            const finalFilename = filename || (isInline ? 'inline_image' : 'attachment');
+
+            attachments.push({
+                attachmentId,
+                filename: finalFilename,
+                mimeType: part.mimeType || 'application/octet-stream',
+                size: part.body?.size || 0,
+                contentId: contentId || undefined,
+                isInline,
+            });
+        }
+
+        if (part.parts && Array.isArray(part.parts)) {
+            for (const subPart of part.parts) {
+                processPart(subPart);
+            }
+        }
+    };
+
+    if (payload) {
+        processPart(payload);
+    }
+
+    return attachments;
 };
 
 const decodeBase64Url = (data: string): string => {
-    const normalized = data.replace('/-/g', '+').replace('_/', '/');
-    return Buffer.from(normalized, 'base64').toString('utf-8');
+    return Buffer.from(data, 'base64url').toString('utf-8');
 };
 
 const getGmailLabelRole = (labelId: string, labelName: string): FOLDER_ROLE => {
@@ -108,4 +212,42 @@ export const buildGmailRawString = (to: string[], subject: string, body: string)
         .replace(/\//g, '_') // Replace / with _
         .replace(/=+$/, ''); // Remove padding =
     return raw;
+};
+
+export const constructGmailMimeMessage = (
+    to: string[],
+    subject: string,
+    body: string,
+    attachments: { filename: string; mimeType: string; buffer: Buffer }[],
+): string => {
+    const boundary = `====_MailSense_Boundary_${Date.now()}====`;
+    const messageParts: string[] = [];
+
+    messageParts.push(`To: ${to.join(', ')}`);
+    messageParts.push(`Subject: ${subject}`);
+    messageParts.push(`MIME-Version: 1.0`);
+    messageParts.push(`Content-Type: multipart/mixed; boundary="${boundary}"\r\n`);
+
+    // Body Subpart
+    messageParts.push(`--${boundary}`);
+    messageParts.push(`Content-Type: text/html; charset="UTF-8"`);
+    messageParts.push(`Content-Transfer-Encoding: 7bit\r\n`);
+    messageParts.push(body);
+
+    // Attachment Subparts
+    for (const att of attachments) {
+        messageParts.push(`--${boundary}`);
+        messageParts.push(`Content-Type: ${att.mimeType}; name="${att.filename}"`);
+        messageParts.push(`Content-Disposition: attachment; filename="${att.filename}"`);
+        messageParts.push(`Content-Transfer-Encoding: base64\r\n`);
+        messageParts.push(att.buffer.toString('base64'));
+    }
+
+    messageParts.push(`--${boundary}--`);
+    const rawMime = messageParts.join('\r\n');
+    return Buffer.from(rawMime)
+        .toString('base64')
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
 };

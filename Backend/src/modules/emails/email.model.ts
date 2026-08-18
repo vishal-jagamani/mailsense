@@ -5,6 +5,18 @@ export type EmailInput = Omit<EmailAttributes, '_id' | 'createdAt' | 'updatedAt'
 
 export type EmailDocument = Document & EmailAttributes;
 
+const EmailAttachmentSchema = new Schema(
+    {
+        attachmentId: { type: String, required: true },
+        filename: { type: String, required: true },
+        mimeType: { type: String, required: true },
+        size: { type: Number, required: true },
+        contentId: { type: String },
+        isInline: { type: Boolean, required: true, default: false },
+    },
+    { _id: false },
+);
+
 const EmailSchema = new Schema<EmailDocument>(
     {
         accountId: { type: String, required: true },
@@ -21,6 +33,7 @@ const EmailSchema = new Schema<EmailDocument>(
         receivedAt: { type: Date, required: true },
         isRead: { type: Boolean, required: true },
         folders: { type: [String], required: true },
+        attachments: { type: [EmailAttachmentSchema], default: [] },
     },
     { timestamps: true, versionKey: false },
 );

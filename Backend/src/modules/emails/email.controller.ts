@@ -161,11 +161,15 @@ export class EmailController {
 
     public composeEmail = async (req: Request<object, object, ComposeEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
             const { accountId, to, subject, body } = req.body;
             if (!accountId || !to || !subject || !body) {
                 throw new Error('Account ID, To, subject and body are required');
             }
-            const email = await this.emailService.composeEmail(req.body);
+            const email = await this.emailService.composeEmail(userId, req.body);
             res.send(email);
         } catch (error) {
             next(error);
@@ -198,6 +202,25 @@ export class EmailController {
             }
             const threadData = await this.emailService.getThread(emailId);
             res.send(threadData);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public downloadAttachment = async (
+        req: Request<{ emailId: string; attachmentId: string }>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const { emailId, attachmentId } = req.params;
+            if (!emailId || !attachmentId) {
+                throw new Error('Email ID and Attachment ID are required');
+            }
+            const attachment = await this.emailService.downloadAttachment(emailId, attachmentId);
+            res.setHeader('Content-Type', attachment.mimeType);
+            res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
+            res.send(attachment.data);
         } catch (error) {
             next(error);
         }

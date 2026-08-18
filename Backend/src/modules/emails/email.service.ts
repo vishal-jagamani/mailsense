@@ -17,6 +17,7 @@ import {
     UpdateAPIResponse,
 } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AttachmentsService } from '@modules/attachments/attachment.service.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { decompressString, logger } from 'shared/utils/index.js';
@@ -25,7 +26,11 @@ import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
 
 export class EmailService {
-    constructor() {}
+    private attachmentsService: AttachmentsService;
+
+    constructor() {
+        this.attachmentsService = new AttachmentsService();
+    }
 
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         try {
@@ -49,8 +54,9 @@ export class EmailService {
                 );
                 folderIds = folders.map((folder) => folder.providerFolderId);
             }
+            const targetAccountIds = accountId?.length ? accountId.map(String) : accounts.map((account) => String(account._id));
             const searchQuery: FilterQuery<EmailDocument> = {
-                accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
+                accountId: { $in: targetAccountIds },
                 folders: folders ? { $in: folders } : { $nin: [GMAIL_LABELS.TRASH, GMAIL_LABELS.SPAM, GMAIL_LABELS.SENT, ...folderIds] },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
                 ...(dateRange &&
@@ -71,6 +77,7 @@ export class EmailService {
                 accountId: email.accountId,
                 threadId: email.threadId,
                 threadCount: email.threadCount || 1,
+                attachments: email.attachments || [],
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -128,6 +135,7 @@ export class EmailService {
                 threadId: email.threadId,
                 threadCount: email.threadCount || 1,
                 isRead: email.isRead,
+                attachments: email.attachments || [],
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -305,15 +313,19 @@ export class EmailService {
         }
     }
 
-    public async composeEmail(composeEmailData: ComposeEmailBody): Promise<SuccessAPIResponse> {
+    public async composeEmail(userId: string, composeEmailData: ComposeEmailBody): Promise<SuccessAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(composeEmailData.accountId, { provider: 1 });
             if (!account) {
                 throw new Error('Account not found');
             }
-            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-            await provider.sendMail(composeEmailData);
-            return { status: true, message: 'Email composed successfully' };
+            if (composeEmailData.attachmentIds && composeEmailData.attachmentIds.length) {
+                return await this.composeEmailWithAttachments(userId, composeEmailData);
+            } else {
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
+                await provider.sendMail(composeEmailData);
+                return { status: true, message: 'Email composed successfully' };
+            }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.composeEmail: ${errorMessage}`, { error: err });
@@ -343,24 +355,104 @@ export class EmailService {
     }
 
     public async getThread(emailId: string): Promise<GetThreadResponse> {
-        const email = await EmailRepository.getEmail(emailId);
-        if (!email) {
-            throw new Error('Email not found');
+        try {
+            const email = await EmailRepository.getEmail(emailId);
+            if (!email) {
+                throw new Error('Email not found');
+            }
+
+            const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
+
+            const decompressedThread = threadEmails.map((item) => ({
+                ...item,
+                _id: item._id.toString(),
+                bodyHtml: item.bodyHtml ? decompressString(item.bodyHtml) : '',
+                bodyPlain: item.bodyPlain ? decompressString(item.bodyPlain) : '',
+            }));
+
+            return {
+                thread: decompressedThread,
+                threadId: email.threadId,
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getThread: ${errorMessage}`, { error: err });
+            throw err;
         }
+    }
 
-        const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
+    public async downloadAttachment(emailId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        try {
+            const email = await EmailRepository.getEmail(emailId);
+            if (!email) {
+                throw new Error('Email not found');
+            }
 
-        const decompressedThread = threadEmails.map((item) => ({
-            ...item,
-            _id: item._id.toString(),
-            body: item.body ? decompressString(item.body) : '',
-            bodyHtml: item.bodyHtml ? decompressString(item.bodyHtml) : '',
-            bodyPlain: item.bodyPlain ? decompressString(item.bodyPlain) : '',
-        }));
+            const account = await AccountRepository.getAccountById(email.accountId);
+            if (!account) {
+                throw new Error('Account not found');
+            }
 
-        return {
-            thread: decompressedThread,
-            threadId: email.threadId,
-        };
+            const attachment = (email.attachments || []).find((att) => att.attachmentId === attachmentId);
+
+            const provider = EmailProviderFactory.getProvider(account.provider);
+            const result = await provider.getAttachment(email.accountId, email.providerMessageId, attachmentId);
+
+            return {
+                data: result.data,
+                mimeType: attachment?.mimeType || result.mimeType || 'application/octet-stream',
+                filename: attachment?.filename || result.filename || 'attachment',
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.downloadAttachment: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async composeEmailWithAttachments(userId: string, reqBody: ComposeEmailBody): Promise<SuccessAPIResponse> {
+        try {
+            const { accountId, to, subject, body, attachmentIds } = reqBody;
+
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account || account.userId.toString() !== userId.toString()) {
+                throw new Error('Account not found or unauthorized');
+            }
+
+            const stagedFiles: { filename: string; mimeType: string; buffer: Buffer }[] = [];
+            if (attachmentIds && attachmentIds.length > 0) {
+                for (const attId of attachmentIds) {
+                    const { stagedAttachment, stream } = await this.attachmentsService.getStagedAttachmentWithStream(attId);
+
+                    // Verify attachment belongs to user and matches target account
+                    // if (stagedAttachment.userId.toString() !== userId.toString() || stagedAttachment.accountId !== accountId) {
+                    //     throw new Error(`Unauthorized or invalid attachment ${attId}`);
+                    // }
+
+                    const chunks: Buffer[] = [];
+                    for await (const chunk of stream) {
+                        chunks.push(Buffer.from(chunk));
+                    }
+                    stagedFiles.push({
+                        filename: stagedAttachment.filename,
+                        mimeType: stagedAttachment.mimeType,
+                        buffer: Buffer.concat(chunks),
+                    });
+                }
+            }
+
+            const provider = EmailProviderFactory.getProvider(account.provider);
+            await provider.sendMail({ accountId, to, subject, body, attachments: stagedFiles });
+
+            if (attachmentIds && attachmentIds.length > 0) {
+                this.attachmentsService.cleanupStagedAttachments(attachmentIds);
+            }
+
+            return { status: true, message: 'Email composed and sent successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.composeEmailWithAttachments: ${errorMessage}`, { error: err });
+            throw err;
+        }
     }
 }

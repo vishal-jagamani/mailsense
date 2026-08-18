@@ -1,6 +1,6 @@
 'use client';
 
-import { X } from 'lucide-react';
+import { Paperclip, X } from 'lucide-react';
 import React from 'react';
 
 import RichTextEditor from '@features/emails/components/rich-text-editor';
@@ -17,8 +17,8 @@ const ComposeEmail: React.FC = () => {
         accounts: { data: accountsData },
         searchOtherContacts: { data: searchOtherContactsData },
         composeEmail: { isLoading: composeEmailLoading },
-        action: { handleClose, sendEmail },
-        states: { isOpen, isToFocused, composeEmailBody, toEmailSearchText, debouncedToEmailSearchText },
+        action: { handleClose, sendEmail, handleFileUpload, handleRemoveStagedAttachment },
+        states: { isOpen, isToFocused, composeEmailBody, toEmailSearchText, debouncedToEmailSearchText, stagedAttachments, isUploadingAttachment },
         setter: { setIsToFocused, setComposeEmailBody, setToEmailSearchText },
     } = useComposeEmail();
 
@@ -51,12 +51,33 @@ const ComposeEmail: React.FC = () => {
                     placeholder="Write your email..."
                 />
             </div>
+            {/* Render Staged Attachment Chips above footer */}
+            {stagedAttachments && stagedAttachments.length > 0 && (
+                <div className="border-border bg-sidebar/50 flex flex-wrap gap-2 border-t px-3 py-2">
+                    {stagedAttachments.map((att) => (
+                        <div
+                            key={att.attachmentId}
+                            className="bg-secondary text-secondary-foreground flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium"
+                        >
+                            <Paperclip className="text-muted-foreground size-3" />
+                            <span className="max-w-[150px] truncate">{att.filename}</span>
+                            <span className="text-muted-foreground text-[10px]">({(att.size / 1024).toFixed(1)} KB)</span>
+                            <X
+                                className="hover:text-destructive size-3 cursor-pointer"
+                                onClick={() => handleRemoveStagedAttachment(att.attachmentId)}
+                            />
+                        </div>
+                    ))}
+                </div>
+            )}
             <ComposeEmailFooter
                 accountsData={accountsData || []}
                 composeEmailBody={composeEmailBody}
                 setComposeEmailBody={setComposeEmailBody}
                 handleClose={handleClose}
                 sendEmail={sendEmail}
+                isUploadingAttachment={isUploadingAttachment}
+                handleFileUpload={handleFileUpload}
             />
         </div>
     );
