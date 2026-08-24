@@ -8,6 +8,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Added
+- Added "Move to..." folder action support for single or bulk selected emails across connected Gmail and Outlook accounts.
+- Added real-time folder search inside the Move to Folder dropdown with account-scoped folder isolation.
+- Added multi-account selection safeguards that inform users when emails from multiple accounts are selected.
 - Added support for attaching and sending files when composing emails across connected Gmail and Outlook accounts.
 - Added attachment preview chips in the compose window with file size formatting and single-click removal.
 - Added thread-aware email detail view so conversations with multiple messages can be read as a single thread.

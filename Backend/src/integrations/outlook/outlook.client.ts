@@ -585,4 +585,27 @@ export class OutlookApi {
             throw err;
         }
     }
+
+    static async moveMessage(accountId: string, messageId: string, destinationId: string): Promise<OutlookMessageObjectFull> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MOVE_MESSAGE(messageId)}`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    destinationId,
+                },
+            };
+            const response: OutlookMessageObjectFull = await apiRequest(options);
+            return response;
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.moveMessage: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
 }

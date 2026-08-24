@@ -1,4 +1,13 @@
-import { APIResponse, ComposeEmailRequestBody, EmailAttributes, GetThreadResponse, SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
+import {
+    APIResponse,
+    ComposeEmailRequestBody,
+    EmailAttributes,
+    GetThreadResponse,
+    MoveEmailsRequestBody,
+    MoveEmailsResponse,
+    SearchOtherContactsResponse,
+    UpdateAPIResponse,
+} from '@mailsense/types';
 import { axiosClient, EMAILS_API_ENDPOINTS } from '@shared/api';
 
 export async function getEmailDetails(emailId: string): Promise<EmailAttributes> {
@@ -28,5 +37,10 @@ export async function composeEmail(body: ComposeEmailRequestBody): Promise<Updat
 
 export async function searchOtherContacts(searchText: string): Promise<APIResponse<SearchOtherContactsResponse[]>> {
     const { data } = await axiosClient.post(EMAILS_API_ENDPOINTS.SEARCH_OTHER_CONTACTS, { searchText });
+    return data;
+}
+
+export async function moveEmails(body: MoveEmailsRequestBody): Promise<MoveEmailsResponse> {
+    const { data } = await axiosClient.post<MoveEmailsResponse>(EMAILS_API_ENDPOINTS.MOVE, body);
     return data;
 }

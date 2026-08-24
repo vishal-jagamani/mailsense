@@ -40,6 +40,7 @@ describe('syncAccountProcessor', () => {
             createFolder: jest.fn(),
             updateFolder: jest.fn(),
             deleteFolder: jest.fn(),
+            moveEmails: jest.fn(),
         };
 
         (EmailProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);

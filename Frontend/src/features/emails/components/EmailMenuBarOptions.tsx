@@ -9,6 +9,7 @@ import { useIsMobile } from '@shared/hooks';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { useEmailMenuBarOptions } from '../hooks/useEmailMenuBarOptions';
 import DeleteModal from './DeleteModal';
+import MoveToFolderDropdown from './MoveToFolderDropdown';
 
 interface EmailMenuBarOptionsProps {
     accountId: string;
@@ -16,7 +17,7 @@ interface EmailMenuBarOptionsProps {
     onManualUnreadOperation?: () => void;
 }
 
-const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onManualUnreadOperation }) => {
+const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ accountId, emailId, onManualUnreadOperation }) => {
     const isMobile = useIsMobile();
     const router = useRouter();
 
@@ -37,7 +38,7 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onMa
         <>
             <div className="bg-sidebar sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md px-4">
                 <ArrowLeft size={isMobile ? 16 : 18} onClick={() => router.back()} className="cursor-pointer" />
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                     {options.map((option) => (
                         <div key={option.id} className="flex items-center">
                             <Tooltip>
@@ -54,6 +55,13 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailId, onMa
                             </Tooltip>
                         </div>
                     ))}
+                    <MoveToFolderDropdown
+                        emailIds={emailId ? [emailId] : []}
+                        accountId={accountId}
+                        onSuccess={() => {
+                            router.back();
+                        }}
+                    />
                     <DeleteModal
                         open={showDeleteModal}
                         onOpenChange={setShowDeleteModal}

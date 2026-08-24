@@ -1,4 +1,4 @@
-import { GetAllEmailsFilters } from '@mailsense/types';
+import { GetAllEmailsFilters, MoveEmailsRequestBody } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import {
     ArchiveEmailBody,
@@ -207,11 +207,7 @@ export class EmailController {
         }
     };
 
-    public downloadAttachment = async (
-        req: Request<{ emailId: string; attachmentId: string }>,
-        res: Response,
-        next: NextFunction,
-    ): Promise<void> => {
+    public downloadAttachment = async (req: Request<{ emailId: string; attachmentId: string }>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { emailId, attachmentId } = req.params;
             if (!emailId || !attachmentId) {
@@ -221,6 +217,16 @@ export class EmailController {
             res.setHeader('Content-Type', attachment.mimeType);
             res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
             res.send(attachment.data);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public moveEmails = async (req: Request<object, object, MoveEmailsRequestBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const payload = req.body;
+            const result = await this.emailService.moveEmails(payload.emailIds, payload.targetFolderIds, payload.removeFolderIds || []);
+            res.send(result);
         } catch (error) {
             next(error);
         }

@@ -196,4 +196,27 @@ export class EmailRepository {
         ]);
         return result[0]?.total || 0;
     }
+
+    public static async getEmailsByIds(emailIds: string[]): Promise<EmailDocument[]> {
+        if (!emailIds.length) return [];
+        return await Email.find({ _id: { $in: emailIds } });
+    }
+
+    public static async updateFolders(emailIds: string[], targetFolderIds: string[], removeFolderIds: string[] = []): Promise<number> {
+        if (!emailIds.length) return 0;
+
+        let modifiedCount = 0;
+
+        if (removeFolderIds.length > 0) {
+            const pullResult = await Email.updateMany({ _id: { $in: emailIds } }, { $pull: { folders: { $in: removeFolderIds } } });
+            modifiedCount += pullResult.modifiedCount;
+        }
+
+        if (targetFolderIds.length > 0) {
+            const addResult = await Email.updateMany({ _id: { $in: emailIds } }, { $addToSet: { folders: { $each: targetFolderIds } } });
+            modifiedCount = Math.max(modifiedCount, addResult.modifiedCount);
+        }
+
+        return modifiedCount;
+    }
 }

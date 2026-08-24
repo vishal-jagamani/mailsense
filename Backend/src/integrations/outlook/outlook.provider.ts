@@ -99,4 +99,8 @@ export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenRe
     async refreshAccessToken(accountId: string): Promise<string> {
         return OutlookApi.refreshAccessToken(accountId);
     }
+
+    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], _removeFolderIds?: string[]): Promise<void> {
+        await this.outlookService.moveEmails(emailIds, accountId, targetFolderIds);
+    }
 }

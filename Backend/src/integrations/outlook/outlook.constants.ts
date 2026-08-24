@@ -9,6 +9,7 @@ export const OUTLOOK_APIs = {
     FOLDERS: '/me/mailFolders',
     ATTACHMENTS: (messageId: string) => `/me/messages/${messageId}/attachments`,
     ATTACHMENT: (messageId: string, attachmentId: string) => `/me/messages/${messageId}/attachments/${attachmentId}/$value`,
+    MOVE_MESSAGE: (messageId: string) => `/me/messages/${messageId}/move`,
 };
 
 export const OUTLOOK_API_PARAMS = {

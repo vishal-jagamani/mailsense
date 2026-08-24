@@ -8,6 +8,11 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [Unreleased]
 
 ### Added
+- Added `MoveToFolderDropdown` component for moving single or bulk selected emails to destination folders.
+- Added real-time folder search inside the Move to Folder dropdown modal.
+- Added single-account folder filtering to restrict destination folder options to the target account's folder structure.
+- Added multi-account selection safeguards with Radix `Tooltip` guidance disabling cross-account moves.
+- Added `useMoveEmailsMutation` React Query hook with automatic `[EMAILS]` and `[FOLDERS]` cache invalidation.
 - Added staged attachment file upload trigger via paperclip icon button in Compose email footer (`ComposeEmailFooter.tsx`).
 - Added staged attachment chips display with formatted file sizes (KB/MB) and deletion (`X`) buttons in Compose email modal (`index.tsx`).
 - Added attachment download support in email details and threaded conversation view.

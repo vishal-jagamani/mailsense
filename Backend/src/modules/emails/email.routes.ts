@@ -10,6 +10,7 @@ import {
     downloadAttachmentSchema,
     getAllEmailsSchema,
     getEmailSchema,
+    moveEmailsSchema,
     searchEmailSchema,
     searchOtherContactsSchema,
     starEmailSchema,
@@ -47,5 +48,7 @@ router.post('/compose', validate({ body: composeEmailSchema }), handleRequest(em
 router.post('/searchOtherContacts', validate({ body: searchOtherContactsSchema }), handleRequest(emailController.searchOtherContacts));
 
 router.get('/thread/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getThread));
+
+router.post('/move', validate({ body: moveEmailsSchema }), handleRequest(emailController.moveEmails));
 
 export default router;

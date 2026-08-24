@@ -36,4 +36,7 @@ export interface IEmailProvider<TAuthToken = IEmailTAuthToken, TUserProfile = IE
     createFolder(userId: string, accountId: string, folderName: string): Promise<UpdateAPIResponse>;
     updateFolder(accountId: string, folderId: string, folderName: string): Promise<UpdateAPIResponse>;
     deleteFolder(accountId: string, folderId: string): Promise<UpdateAPIResponse>;
+
+    // Folder & Label Relocation Operations
+    moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds?: string[]): Promise<void>;
 }

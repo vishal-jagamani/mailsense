@@ -8,6 +8,7 @@ export const GMAIL_APIs = {
     PROFILE: '/me/profile',
     MESSAGES: '/me/messages',
     BATCH_DELETE: '/me/messages/batchDelete',
+    BATCH_MODIFY: '/me/messages/batchModify',
     HISTORY: '/me/history',
     LABELS: '/me/labels',
 };
