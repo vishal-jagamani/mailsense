@@ -10,6 +10,7 @@ import {
     GetFiltersResponse,
     GetThreadResponse,
     GMAIL_LABELS,
+    MoveEmailsResponse,
     PaginatedDataResponse,
     SearchEmailsParams,
     SearchOtherContactsResponse,
@@ -453,6 +454,58 @@ export class EmailService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.composeEmailWithAttachments: ${errorMessage}`, { error: err });
             throw err;
+        }
+    }
+
+    public async moveEmails(emailIds: string[], targetFolderIds: string[], removeFolderIds: string[] = []): Promise<MoveEmailsResponse> {
+        try {
+            if (!emailIds.length) {
+                return { success: true, updatedCount: 0 };
+            }
+
+            // Fetch emails to extract account IDs and provider message IDs
+            const emailDocs = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emailDocs.length) {
+                throw new Error('No matching emails found for relocation');
+            }
+
+            let effectiveRemoveFolderIds = removeFolderIds || [];
+            if (!effectiveRemoveFolderIds.length) {
+                const extractedFolders = new Set<string>();
+                emailDocs.forEach((doc) => {
+                    if (Array.isArray(doc.folders)) {
+                        doc.folders.forEach((fId) => {
+                            if (!targetFolderIds.includes(fId)) {
+                                extractedFolders.add(fId);
+                            }
+                        });
+                    }
+                });
+                effectiveRemoveFolderIds = Array.from(extractedFolders);
+            }
+
+            // Guarantee effectiveRemoveFolderIds never overlaps with targetFolderIds
+            effectiveRemoveFolderIds = effectiveRemoveFolderIds.filter((fId) => !targetFolderIds.includes(fId));
+
+            const groupedEmails = Object.groupBy(emailDocs, (item) => item.accountId);
+            for (const [accountId, emails] of Object.entries(groupedEmails)) {
+                const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
+                if (!account || !emails) continue;
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
+                const providerMessageIds = emails.map((d) => d.providerMessageId);
+
+                await provider.moveEmails(providerMessageIds, accountId, targetFolderIds, effectiveRemoveFolderIds);
+            }
+
+            // Extract internal MongoDB document IDs to update local folder arrays
+            const dbIds = emailDocs.map((doc) => String(doc._id));
+            const updatedCount = await EmailRepository.updateFolders(dbIds, targetFolderIds, effectiveRemoveFolderIds);
+
+            return { success: true, updatedCount };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error('Failed to execute moveEmails in EmailService', { emailIds, targetFolderIds, removeFolderIds, error: errorMessage });
+            throw error;
         }
     }
 }

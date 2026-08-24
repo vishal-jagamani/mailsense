@@ -402,4 +402,16 @@ export class GmailService {
             throw err;
         }
     }
+
+    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds: string[] = []): Promise<void> {
+        try {
+            if (!emailIds.length) return;
+            const response = await GmailApi.batchModifyLabels(accountId, emailIds, targetFolderIds, removeFolderIds);
+            console.log({ response });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error('Failed to move emails in GmailService', { accountId, emailIds, targetFolderIds, removeFolderIds, error: errorMessage });
+            throw error;
+        }
+    }
 }

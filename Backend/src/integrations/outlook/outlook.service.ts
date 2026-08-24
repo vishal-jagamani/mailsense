@@ -5,7 +5,7 @@ import {
     OutlookOAuthAccessTokenResponse,
     OutlookUserProfile,
     SearchOtherContactsResponse,
-    UpdateAPIResponse
+    UpdateAPIResponse,
 } from '@mailsense/types';
 import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
@@ -19,7 +19,7 @@ import {
     OUTLOOK_API_PARAMS,
     OUTLOOK_APIs,
     OUTLOOK_ATTACHMENT_CHUNK_SIZE,
-    OUTLOOK_ATTACHMENT_MAX_DIRECT_SIZE
+    OUTLOOK_ATTACHMENT_MAX_DIRECT_SIZE,
 } from './outlook.constants.js';
 import {
     ExtractDeltaMessageChangesResponse,
@@ -487,5 +487,20 @@ export class OutlookService {
             mimeType: 'application/octet-stream',
             filename: 'attachment',
         };
+    }
+
+    async moveEmails(providerMessageIds: string[], accountId: string, targetFolderIds: string[]): Promise<void> {
+        try {
+            if (!providerMessageIds.length || !targetFolderIds.length) return;
+            const destinationId = targetFolderIds[0];
+
+            for (const messageId of providerMessageIds) {
+                await OutlookApi.moveMessage(accountId, messageId, destinationId);
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Failed to move emails in OutlookService: ${errorMessage}`, { error: err });
+            throw err;
+        }
     }
 }

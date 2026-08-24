@@ -33,6 +33,7 @@ export const EMAILS_API_ENDPOINTS = {
     COMPOSE: '/emails/compose',
     SEARCH_OTHER_CONTACTS: '/emails/searchOtherContacts',
     THREAD: (emailId: string) => `/emails/thread/${emailId}`,
+    MOVE: '/emails/move',
 } as const;
 
 export const FOLDER_API_ENDPOINTS = {

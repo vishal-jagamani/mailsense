@@ -114,4 +114,8 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
         }
         return GmailApi.refreshAccessToken(accountId, decrypt(account.refreshToken));
     }
+
+    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds?: string[]): Promise<void> {
+        await this.gmailService.moveEmails(emailIds, accountId, targetFolderIds, removeFolderIds || []);
+    }
 }

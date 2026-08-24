@@ -76,6 +76,12 @@ export const downloadAttachmentSchema = z.object({
     attachmentId: z.string(),
 });
 
+export const moveEmailsSchema = z.object({
+    emailIds: z.array(z.string().min(1, 'Invalid email id')).nonempty('At least one email id is required'),
+    targetFolderIds: z.array(z.string().min(1, 'Invalid folder id')).nonempty('At least one folder id is required'),
+    removeFolderIds: z.array(z.string()).optional(),
+});
+
 export type GetAllEmailsSchema = z.infer<typeof getAllEmailsSchema>;
 export type GetEmailsSchema = z.infer<typeof getEmailsSchema>;
 export type GetEmailSchema = z.infer<typeof getEmailSchema>;

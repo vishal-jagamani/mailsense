@@ -85,7 +85,7 @@
   - Unified list, per-account list, email details
   - Thread details endpoint for conversation view by email ID
   - Attachment download endpoint for provider-backed file retrieval by email ID and attachment ID
-  - Search, delete, archive, star, unread
+  - Search, delete, archive, star, unread, and move to folder
   - Compose/send mail through Gmail (MIME Base64URL generator) and Outlook (direct <=3MB / chunked >3MB upload session) providers with staged attachments support
   - Search recipient suggestions across connected provider contacts
   - Supports account/date/folder-based filtering
@@ -113,14 +113,14 @@
 - Cloud Storage (`Backend/src/integrations/storage/cloud-storage.service.ts`)
   - AWS S3 SDK wrapper targeting Cloudflare R2 object storage bucket (`mailsense-attachments-staging`) for attachment staging
 - Email provider abstraction (`Backend/src/integrations/email/*`)
-  - `email.provider.ts`: shared provider contract for OAuth, token refresh, sync, email actions, compose, contact search, and folder CRUD
+  - `email.provider.ts`: shared provider contract for OAuth, token refresh, sync, email actions, compose, contact search, folder CRUD, and move/relabel operations
   - `email.provider.factory.ts`: provider selector and singleton cache for Gmail and Outlook adapters
   - `email.provider.types.ts`: shared auth/profile/send-result types used by provider implementations
   - `__tests__/provider.factory.test.ts`: factory coverage for provider selection and singleton behavior
 - Gmail (`Backend/src/integrations/gmail/*`)
   - OAuth token exchange/refresh
   - Fetch history + messages
-  - Modify labels for archive/star/unread, trash/delete
+  - Modify labels for archive/star/unread, trash/delete, and move/relabel (`users.messages.batchModify`)
   - Label CRUD + label sync into folders
   - Attachment metadata extraction and attachment download support
   - Send outgoing mail (with RFC 2822 Base64URL MIME construction) and upsert sent copy locally
@@ -130,7 +130,7 @@
   - OAuth token exchange/refresh
   - Fetch profile/messages and message details (`$expand=attachments`)
   - Delta-based sync support
-  - Inbox mutation support (delete/archive/unread/flag)
+  - Inbox mutation support (delete/archive/unread/flag/move)
   - Attachment metadata extraction, attachment listing, and attachment download support
   - Folder CRUD + folder sync into folders
   - Create/send outgoing mail (with direct inline fileAttachment or chunked `createUploadSession` strategy) and upsert sent copy locally
@@ -204,6 +204,7 @@
   - `POST /emails/archive`
   - `POST /emails/star`
   - `POST /emails/unread`
+  - `POST /emails/move`
 - Folders:
   - `GET /folders/sync/:accountId`
   - `POST /folders/`

@@ -33,6 +33,7 @@ const InboxPage: React.FC = () => {
                         filter={filter}
                         setFilter={setFilter}
                         selectedEmails={selectedEmails}
+                        allEmails={emailsData?.data || []}
                         handleResetSelection={handleResetSelection}
                         handleResetPage={handleResetPage}
                         emailFilterOptions={emailFilterOptions || []}

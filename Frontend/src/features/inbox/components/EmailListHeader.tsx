@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Filter, FilterOption } from '@mailsense/types';
+import { EmailAttributes, Filter, FilterOption } from '@mailsense/types';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { UI_CONSTANTS } from '@shared/constants';
@@ -15,6 +15,7 @@ interface EmailListHeaderProps {
     filter: Filter | null;
     setFilter: (value: Filter) => void;
     selectedEmails: string[];
+    allEmails?: EmailAttributes[];
     handleResetSelection: () => void;
     handleResetPage: () => void;
     emailFilterOptions: FilterOption[];
@@ -28,6 +29,7 @@ const EmailListHeader: React.FC<EmailListHeaderProps> = (props) => {
         filter,
         setFilter,
         selectedEmails,
+        allEmails,
         handleResetSelection,
         handleResetPage,
         emailFilterOptions,
@@ -46,6 +48,7 @@ const EmailListHeader: React.FC<EmailListHeaderProps> = (props) => {
                         <FilterModal filter={filter} onFilterChange={(value) => setFilter(value)} filterOptions={emailFilterOptions || []} />
                         <EmailMenuBarOptions
                             emailIds={selectedEmails}
+                            allEmails={allEmails}
                             onResetSelection={handleResetSelection}
                             onResetPage={handleResetPage}
                             onRefetchEmails={fetchEmailsData}
@@ -58,6 +61,7 @@ const EmailListHeader: React.FC<EmailListHeaderProps> = (props) => {
                     <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                     <EmailMenuBarOptions
                         emailIds={selectedEmails}
+                        allEmails={allEmails}
                         onRefetchEmails={fetchEmailsData}
                         onResetSelection={handleResetSelection}
                         onResetPage={handleResetPage}

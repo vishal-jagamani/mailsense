@@ -444,4 +444,29 @@ export class GmailApi {
             throw err;
         }
     }
+
+    static async batchModifyLabels(accountId: string, messageIds: string[], addLabelIds: string[], removeLabelIds: string[]): Promise<void> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const cleanRemoveLabelIds = removeLabelIds.filter((id) => !addLabelIds.includes(id));
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.BATCH_MODIFY}`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    ids: messageIds,
+                    addLabelIds,
+                    removeLabelIds: cleanRemoveLabelIds,
+                },
+            };
+            await apiRequest(options);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error(`Error in GmailApi.batchModifyLabels: ${errorMessage}`, { accountId, messageIds, error });
+            throw error;
+        }
+    }
 }

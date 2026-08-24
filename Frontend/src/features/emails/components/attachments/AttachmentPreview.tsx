@@ -1,7 +1,6 @@
 'use client';
 
 import { X } from 'lucide-react';
-import Image from 'next/image';
 import React from 'react';
 
 interface AttachmentPreviewProps {
@@ -23,7 +22,7 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ previewUrl, close
                 >
                     <X className="size-5" />
                 </button>
-                <Image src={previewUrl} alt="Preview" className="block h-auto max-h-[85vh] w-auto max-w-[90vw] rounded-xl object-contain" />
+                <img src={previewUrl} alt="Preview" className="block h-auto max-h-[85vh] w-auto max-w-[90vw] rounded-xl object-contain" />
             </div>
         </div>
     );

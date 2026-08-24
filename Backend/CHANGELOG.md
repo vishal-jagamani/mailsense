@@ -9,6 +9,10 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Added `POST /api/emails/move` endpoint for relocating single or bulk emails to destination folders and labels.
+- Added provider strategy support for `moveEmails` across `GmailProvider` (modifying labels via `users.messages.batchModify`) and `OutlookProvider` (moving items via `/me/messages/{id}/move`).
+- Added atomic MongoDB folder updates in `EmailRepository.updateFolders` using `$pull` and `$addToSet` operators.
+- Added auto-resolution and deduplication of source folder IDs (`effectiveRemoveFolderIds`) in `EmailService.moveEmails` and `GmailApi.batchModifyLabels` to prevent overlap with target folder IDs.
 - Added Cloudflare R2 object storage integration (`ObjectStorageService`) for attachment compose staging.
 - Added `StagedAttachment` model with 24-hour TTL expiration index for auto-purging abandoned staging files.
 - Added attachment routes (`POST /api/attachments/upload` and `DELETE /api/attachments/:attachmentId`).
