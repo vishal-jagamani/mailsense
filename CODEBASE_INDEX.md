@@ -93,6 +93,11 @@
   - Email persistence now includes attachment metadata for detail, thread, and list rendering
   - Uses provider APIs + DB projection/sorting
   - Provider-specific email details and mail actions now dispatch through shared provider strategy instances
+- Drafts (`Backend/src/modules/drafts/*`)
+  - Local draft persistence schema (`draft.model.ts`) with compound indexes on `{ userId: 1, lastSavedAt: -1 }` and `{ userId: 1, accountId: 1 }`
+  - Data repository (`draft.repository.ts`) for draft CRUD operations
+  - Service layer (`draft.service.ts`) for draft saving (`saveDraft`), retrieval (`getUserDrafts`), deletion (`deleteDraft`), HTML plain-text normalization (`htmlToText`), and provider email dispatch (`sendDraft`)
+  - HTTP controller and route handlers (`draft.controller.ts`, `draft.routes.ts`, `draft.schema.ts`) mounted under `/api/drafts`
 - Folders (`Backend/src/modules/folders/*`)
   - Folder sync from providers
   - Folder list/details
@@ -190,6 +195,12 @@
 - Attachments:
   - `POST /attachments/upload`
   - `DELETE /attachments/:attachmentId`
+- Drafts:
+  - `POST /drafts/save`
+  - `GET /drafts/`
+  - `GET /drafts/:draftId`
+  - `DELETE /drafts/:draftId`
+  - `POST /drafts/:draftId/send`
 - Emails:
   - `POST /emails/list`
   - `GET /emails/filters`
@@ -234,6 +245,7 @@
 - `Frontend/src/app/(home)/inbox/[account]/email/[email]/page.tsx`: email details page
 - `Frontend/src/app/(home)/folders/page.tsx`: folders overview page
 - `Frontend/src/app/(home)/folders/[folder]/page.tsx`: folder-specific email list page
+- `Frontend/src/app/(home)/drafts/page.tsx`: drafts list page via `@features/drafts/pages`
 - `Frontend/src/app/(home)/accounts/page.tsx`: account connect/manage page via `@features/accounts/pages`
 - `Frontend/src/app/(home)/settings/[setting]/page.tsx`: settings page
 - `Frontend/src/app/get_started/page.tsx`: auth entry page via `@features/auth/pages`
@@ -248,6 +260,7 @@
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
   - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer
   - `features/auth/*`: login page and profile fetch query
+  - `features/drafts/*`: drafts page (`DraftsPage`), draft table components (`DraftListTable`, `DraftListTableHeader`, `DraftListTableBody`), debounced auto-save hook (`useAutoSaveDraft`), page state hook (`useDraftsPage`), and draft API layer (`draft.api.ts`, `draft.queries.ts`, `draft.mutations.ts`)
   - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, email API layer
   - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer, folder action hooks
   - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks with sync-aware refresh behavior

@@ -15,3 +15,9 @@ export const EMAIL_FILTERS = 'email-filters';
 export const FOLDER_KEYS = {
     FOLDERS: 'folders',
 };
+
+export const DRAFT_QUERY_KEYS = {
+    all: ['drafts'],
+    list: () => [...DRAFT_QUERY_KEYS.all, 'list'],
+    detail: (draftId: string) => [...DRAFT_QUERY_KEYS.all, 'detail', draftId],
+} as const;

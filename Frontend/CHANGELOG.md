@@ -8,6 +8,15 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [Unreleased]
 
 ### Added
+- Added `DraftsPage` (`Frontend/src/features/drafts/pages/index.tsx`) and App Router route (`Frontend/src/app/(home)/drafts/page.tsx`).
+- Added `DraftListTable` component suite (`DraftListTableHeader.tsx`, `DraftListTableBody.tsx`, `DraftListHeader.tsx`).
+- Added `useAutoSaveDraft` custom hook with 3000ms debouncing for auto-saving drafts during compose typing.
+- Added `useDraftsPage` custom hook supporting search filtering by recipient/subject/snippet, pagination, multi-select, and bulk/single deletion.
+- Added `DraftApi` client wrapper in `Frontend/src/features/drafts/api/draft.api.ts` mapping `/drafts` endpoints.
+- Added React Query query hooks (`useGetUserDraftsQuery`, `useGetDraftByIdQuery`) and mutation hooks (`useSaveDraftMutation`, `useDeleteDraftMutation`, `useSendDraftMutation`) in `draft.queries.ts` and `draft.mutations.ts`.
+- Added `activeDraftId` state and `openWithDraft(draftId)` action to `useComposeEmailPopupStore.ts`.
+- Added auto-save status feedback (saving indicator, last saved timestamp) and discard draft handling in `useComposeEmail.ts`, `ComposeEmail` index, and `ComposeEmailFooter.tsx`.
+- Added "Drafts" navigation item to sidebar (`sidebar.constants.ts`, `routes.ts`).
 - Added `MoveToFolderDropdown` component for moving single or bulk selected emails to destination folders.
 - Added real-time folder search inside the Move to Folder dropdown modal.
 - Added single-account folder filtering to restrict destination folder options to the target account's folder structure.

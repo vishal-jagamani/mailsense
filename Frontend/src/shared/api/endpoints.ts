@@ -46,3 +46,10 @@ export const SETTINGS_API_ENDPOINTS = {
     CHANGE_PASSWORD: '/users/change-password',
     USER_SETTINGS: '/users/settings',
 } as const;
+
+export const DRAFTS_API_ENDPOINTS = {
+    BASE: '/drafts',
+    SAVE: '/drafts/save',
+    DETAILS: (draftId: string) => `/drafts/${draftId}`,
+    SEND: (draftId: string) => `/drafts/${draftId}/send`,
+} as const;

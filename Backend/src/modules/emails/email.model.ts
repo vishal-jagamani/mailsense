@@ -5,7 +5,7 @@ export type EmailInput = Omit<EmailAttributes, '_id' | 'createdAt' | 'updatedAt'
 
 export type EmailDocument = Document & EmailAttributes;
 
-const EmailAttachmentSchema = new Schema(
+export const EmailAttachmentSchema = new Schema(
     {
         attachmentId: { type: String, required: true },
         filename: { type: String, required: true },

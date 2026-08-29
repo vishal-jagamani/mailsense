@@ -46,20 +46,20 @@ trigger: always_on
 
 ##### **4. Email Management & Operations**
 
-- Read email (full thread view / conversation mode)
+- Read email (full thread view / conversation mode) - done
 - Compose email: - done
     - Select sender account - done
     - Rich text editor - done
-- Drafts:
-    - Save locally + provider sync
+- Drafts: - done
+    - Save locally - done
 - Actions:
     - Mark read/unread - done
     - Star/flag - done
     - Delete / archive - done
-    - Move to folder/label
+    - Move to folder/label - done
 - Multi-select bulk actions - done
-- Attachments:
-    - Preview/download
+- Attachments: - done
+    - Preview/download - done
 
 ---
 
