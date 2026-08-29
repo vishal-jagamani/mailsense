@@ -9,6 +9,12 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Added dedicated `drafts` backend module (`Backend/src/modules/drafts/*`).
+- Added `DraftModel` schema (`draft.model.ts`) for local MongoDB `drafts` collection with compound indexing on `{ userId: 1, lastSavedAt: -1 }` and `{ userId: 1, accountId: 1 }`.
+- Added `DraftRepository` for draft CRUD operations (`upsertDraft`, `createDraft`, `updateDraft`, `getDraftById`, `getDraftsByUserId`, `deleteDraftById`, `getDraftCountByUserId`).
+- Added `DraftService` handling auto-save draft processing, HTML plain-text normalization (`htmlToText`), draft snippet generation, draft deletion, and provider email dispatch (`sendDraft`).
+- Added `DraftController` and Joi validation schemas (`draft.schema.ts`).
+- Added draft Express routes (`draft.routes.ts`) mounted under `/drafts` in `routes.ts`: `POST /api/drafts/save`, `GET /api/drafts`, `GET /api/drafts/:draftId`, `DELETE /api/drafts/:draftId`, and `POST /api/drafts/:draftId/send`.
 - Added `POST /api/emails/move` endpoint for relocating single or bulk emails to destination folders and labels.
 - Added provider strategy support for `moveEmails` across `GmailProvider` (modifying labels via `users.messages.batchModify`) and `OutlookProvider` (moving items via `/me/messages/{id}/move`).
 - Added atomic MongoDB folder updates in `EmailRepository.updateFolders` using `$pull` and `$addToSet` operators.

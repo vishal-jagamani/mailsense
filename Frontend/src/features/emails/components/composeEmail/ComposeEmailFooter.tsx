@@ -9,12 +9,13 @@ import { Button } from '@shared/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { Loader2, Paperclip, Trash2 } from 'lucide-react';
 
-interface ComposeEmailFooterProps {
+export interface ComposeEmailFooterProps {
     accountsData: AccountAttributes[];
     composeEmailBody: ComposeEmailRequestBody;
     setComposeEmailBody: (body: ComposeEmailRequestBody) => void;
     sendEmail: () => Promise<void>;
     handleClose: () => void;
+    handleDiscardDraft: () => void;
     isUploadingAttachment: boolean;
     handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
@@ -24,7 +25,7 @@ const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({
     composeEmailBody,
     setComposeEmailBody,
     sendEmail,
-    handleClose,
+    handleDiscardDraft,
     isUploadingAttachment,
     handleFileUpload,
 }) => {
@@ -32,10 +33,14 @@ const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handlePaperclipClick = () => {
-        if (!composeEmailBody?.accountId && accountsData && accountsData.length > 0) {
-            setComposeEmailBody({ ...composeEmailBody, accountId: accountsData[0]._id });
+        try {
+            if (!composeEmailBody?.accountId && accountsData && accountsData.length > 0) {
+                setComposeEmailBody({ ...composeEmailBody, accountId: accountsData[0]._id });
+            }
+            fileInputRef.current?.click();
+        } catch (error) {
+            console.error('Error handling paperclip click', error);
         }
-        fileInputRef.current?.click();
     };
 
     return (
@@ -51,7 +56,7 @@ const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({
                         </SelectTrigger>
                         <SelectContent position="popper">
                             {accountsData &&
-                                accountsData?.map((item, index) => {
+                                accountsData.map((item, index) => {
                                     return (
                                         <SelectItem key={index + 1} value={item?._id} className="text-xs">
                                             <AccountProviderIcon provider={item.provider} className="size-4" />
@@ -77,7 +82,11 @@ const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({
                     {isUploadingAttachment ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}
                 </Button>
             </div>
-            <Trash2 className={`cursor-pointer ${isMobile ? 'size-16 h-10 w-10' : 'size-4'}`} onClick={handleClose} />
+            <Trash2
+                className={`text-muted-foreground hover:text-destructive cursor-pointer transition-colors ${isMobile ? 'size-6' : 'size-4'}`}
+                // title="Discard draft"
+                onClick={handleDiscardDraft}
+            />
         </div>
     );
 };

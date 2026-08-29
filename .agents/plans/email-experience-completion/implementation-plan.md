@@ -2,8 +2,8 @@
 
 > **Phase:** Phase 1 (from MailSense Development Roadmap) · **Release Target:** v3.0.0
 > **Priority:** 🔴 HIGH — Core email features required for daily-driver usage
-> **Status:** IN PROGRESS (Phases 1 & 2 COMPLETED)
-> **Created:** 2026-08-01 · **Last Updated:** 2026-08-18
+> **Status:** COMPLETED (Phases 1, 2, 3 & 4 COMPLETED)
+> **Created:** 2026-08-01 · **Last Updated:** 2026-08-29
 
 ---
 
@@ -59,10 +59,10 @@ This phase builds directly on top of the completed Background Sync architecture 
 ### Acceptance Criteria
 
 - [x] `GET /api/emails/thread/:emailId` returns all emails in the thread sorted by `receivedAt` ascending.
-- [ ] `GET /api/emails/attachment/:emailId/:attachmentId` streams file binary with correct `Content-Type` and `Content-Disposition`.
-- [ ] `POST /api/drafts` and `PUT /api/drafts/:draftId` store and update draft documents in MongoDB.
-- [ ] Sending a draft executes provider `sendEmail`, deletes local draft, and creates a sent `Email` record.
-- [ ] `POST /api/emails/move` modifies Gmail labels via `batchModify` and Outlook `parentFolderId` via `move` endpoint.
+- [x] `GET /api/emails/attachment/:emailId/:attachmentId` streams file binary with correct `Content-Type` and `Content-Disposition`.
+- [x] `POST /api/drafts/save` stores and updates draft documents in MongoDB.
+- [x] Sending a draft executes provider `sendEmail`, deletes local draft, and creates a sent `Email` record.
+- [x] `POST /api/emails/move` modifies Gmail labels via `batchModify` and Outlook `parentFolderId` via `move` endpoint.
 
 ---
 
@@ -808,10 +808,10 @@ EmailSchema.index({ accountId: 1, 'attachments.0': 1 }, { sparse: true });
 #### Tasks
 
 - [x] Define `DraftAttributes` in `@mailsense/types`.
-- [ ] Create backend `drafts` module (`model`, `repository`, `service`, `controller`, `routes`).
-- [ ] Build `useAutoSaveDraft` debounced hook in frontend.
-- [ ] Integrate auto-save logic into `ComposePopup`.
-- [ ] Build `DraftList.tsx` component and add Drafts link to main navigation sidebar.
+- [x] Create backend `drafts` module (`model`, `repository`, `service`, `controller`, `routes`).
+- [x] Build `useAutoSaveDraft` debounced hook in frontend.
+- [x] Integrate auto-save logic into `ComposePopup` / `ComposeEmail`.
+- [x] Build `DraftListTable` component and add Drafts link to main navigation sidebar.
 
 #### Files to Create
 
