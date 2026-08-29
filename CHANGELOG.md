@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-29
+
 ### Added
 - Added automatic draft saving while composing emails so progress is saved continuously without manual effort.
 - Added live draft status indicators in the email compose window showing when a draft is saving and when it was last saved.
