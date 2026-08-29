@@ -7,6 +7,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-29
+
 ### Added
 - Added `DraftsPage` (`Frontend/src/features/drafts/pages/index.tsx`) and App Router route (`Frontend/src/app/(home)/drafts/page.tsx`).
 - Added `DraftListTable` component suite (`DraftListTableHeader.tsx`, `DraftListTableBody.tsx`, `DraftListHeader.tsx`).
