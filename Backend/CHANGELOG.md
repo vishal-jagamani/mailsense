@@ -7,6 +7,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-29
+
 ### Added
 
 - Added dedicated `drafts` backend module (`Backend/src/modules/drafts/*`).

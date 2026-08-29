@@ -1,6 +1,7 @@
 # MailSense Development Roadmap
 
 ##### **Type:** Master Plan · **Scope:** Full product feature roadmap
+
 **Baseline:** v2.1.0 (post Background Sync)
 **Status:** IN PROGRESS · **Created:** 2026-08-01 · **Last Updated:** 2026-08-08
 
