@@ -13,6 +13,7 @@ export const EMAIL_LIST_DB_FIELD_MAPPING: EmailListDBFieldMapping = {
             accountId: 1,
             bodyPlain: 1,
             folders: 1,
+            attachments: 1,
         },
     },
     SORT: {

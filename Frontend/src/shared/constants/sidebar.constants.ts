@@ -1,4 +1,4 @@
-import { CircleUser, Folder, Inbox, Settings } from 'lucide-react';
+import { CircleUser, FileText, Folder, Inbox, Settings } from 'lucide-react';
 import { SidebarData } from '../types/sidebar.types';
 import { HOME_ROUTES, ROUTES } from './routes';
 
@@ -15,6 +15,12 @@ export const SIDEBAR_DATA: SidebarData = {
             icon: Inbox,
             isActive: true,
             items: [],
+        },
+        {
+            title: 'Drafts',
+            url: HOME_ROUTES.DRAFTS,
+            icon: FileText,
+            isActive: true,
         },
         {
             title: 'Folders',

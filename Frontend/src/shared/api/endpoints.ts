@@ -32,6 +32,8 @@ export const EMAILS_API_ENDPOINTS = {
     UNREAD: '/emails/unread',
     COMPOSE: '/emails/compose',
     SEARCH_OTHER_CONTACTS: '/emails/searchOtherContacts',
+    THREAD: (emailId: string) => `/emails/thread/${emailId}`,
+    MOVE: '/emails/move',
 } as const;
 
 export const FOLDER_API_ENDPOINTS = {
@@ -43,4 +45,11 @@ export const SETTINGS_API_ENDPOINTS = {
     USERS: '/users',
     CHANGE_PASSWORD: '/users/change-password',
     USER_SETTINGS: '/users/settings',
+} as const;
+
+export const DRAFTS_API_ENDPOINTS = {
+    BASE: '/drafts',
+    SAVE: '/drafts/save',
+    DETAILS: (draftId: string) => `/drafts/${draftId}`,
+    SEND: (draftId: string) => `/drafts/${draftId}/send`,
 } as const;

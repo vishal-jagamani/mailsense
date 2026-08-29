@@ -8,7 +8,9 @@ import {
     GetAllEmailsFilters,
     GetEmailsResponse,
     GetFiltersResponse,
+    GetThreadResponse,
     GMAIL_LABELS,
+    MoveEmailsResponse,
     PaginatedDataResponse,
     SearchEmailsParams,
     SearchOtherContactsResponse,
@@ -16,6 +18,7 @@ import {
     UpdateAPIResponse,
 } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AttachmentsService } from '@modules/attachments/attachment.service.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { decompressString, logger } from 'shared/utils/index.js';
@@ -24,7 +27,11 @@ import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
 
 export class EmailService {
-    constructor() {}
+    private attachmentsService: AttachmentsService;
+
+    constructor() {
+        this.attachmentsService = new AttachmentsService();
+    }
 
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         try {
@@ -48,8 +55,9 @@ export class EmailService {
                 );
                 folderIds = folders.map((folder) => folder.providerFolderId);
             }
+            const targetAccountIds = accountId?.length ? accountId.map(String) : accounts.map((account) => String(account._id));
             const searchQuery: FilterQuery<EmailDocument> = {
-                accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
+                accountId: { $in: targetAccountIds },
                 folders: folders ? { $in: folders } : { $nin: [GMAIL_LABELS.TRASH, GMAIL_LABELS.SPAM, GMAIL_LABELS.SENT, ...folderIds] },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
                 ...(dateRange &&
@@ -58,14 +66,8 @@ export class EmailService {
                     }),
                 ...(unread && { isRead: false }),
             };
-            const emails = await EmailRepository.getEmails(
-                searchQuery,
-                size,
-                page,
-                EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection,
-                EMAIL_LIST_DB_FIELD_MAPPING.SORT.sort,
-            );
-            const total = await EmailRepository.countDocuments(searchQuery);
+            const emails = await EmailRepository.getGroupedEmails(searchQuery, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            const total = await EmailRepository.countGroupedThreads(searchQuery);
             const data = emails.map((email) => ({
                 _id: email._id.toString(),
                 subject: email.subject,
@@ -74,6 +76,9 @@ export class EmailService {
                 isRead: email.isRead,
                 providerMessageId: email.providerMessageId,
                 accountId: email.accountId,
+                threadId: email.threadId,
+                threadCount: email.threadCount || 1,
+                attachments: email.attachments || [],
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -119,14 +124,8 @@ export class EmailService {
 
     public async getEmails(accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
         try {
-            const emails = await EmailRepository.getEmailsByAccountId(
-                accountId,
-                size,
-                page,
-                EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection,
-                EMAIL_LIST_DB_FIELD_MAPPING.SORT.sort,
-            );
-            const total = await EmailRepository.countDocuments([accountId]);
+            const emails = await EmailRepository.getGroupedEmails({ accountId }, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            const total = await EmailRepository.countGroupedThreads({ accountId });
             const data = emails.map((email) => ({
                 _id: email._id.toString(),
                 subject: email.subject,
@@ -134,7 +133,10 @@ export class EmailService {
                 receivedAt: email.receivedAt,
                 providerMessageId: email.providerMessageId,
                 accountId: email.accountId,
+                threadId: email.threadId,
+                threadCount: email.threadCount || 1,
                 isRead: email.isRead,
+                attachments: email.attachments || [],
                 ...(email.body && { body: decompressString(email.body) }),
                 ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
@@ -312,15 +314,19 @@ export class EmailService {
         }
     }
 
-    public async composeEmail(composeEmailData: ComposeEmailBody): Promise<SuccessAPIResponse> {
+    public async composeEmail(userId: string, composeEmailData: ComposeEmailBody): Promise<SuccessAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(composeEmailData.accountId, { provider: 1 });
             if (!account) {
                 throw new Error('Account not found');
             }
-            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-            await provider.sendMail(composeEmailData);
-            return { status: true, message: 'Email composed successfully' };
+            if (composeEmailData.attachmentIds && composeEmailData.attachmentIds.length) {
+                return await this.composeEmailWithAttachments(userId, composeEmailData);
+            } else {
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
+                await provider.sendMail(composeEmailData);
+                return { status: true, message: 'Email composed successfully' };
+            }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.composeEmail: ${errorMessage}`, { error: err });
@@ -346,6 +352,160 @@ export class EmailService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.searchOtherContacts: ${errorMessage}`, { error: err });
             throw err;
+        }
+    }
+
+    public async getThread(emailId: string): Promise<GetThreadResponse> {
+        try {
+            const email = await EmailRepository.getEmail(emailId);
+            if (!email) {
+                throw new Error('Email not found');
+            }
+
+            const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
+
+            const decompressedThread = threadEmails.map((item) => ({
+                ...item,
+                _id: item._id.toString(),
+                bodyHtml: item.bodyHtml ? decompressString(item.bodyHtml) : '',
+                bodyPlain: item.bodyPlain ? decompressString(item.bodyPlain) : '',
+            }));
+
+            return {
+                thread: decompressedThread,
+                threadId: email.threadId,
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getThread: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async downloadAttachment(emailId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        try {
+            const email = await EmailRepository.getEmail(emailId);
+            if (!email) {
+                throw new Error('Email not found');
+            }
+
+            const account = await AccountRepository.getAccountById(email.accountId);
+            if (!account) {
+                throw new Error('Account not found');
+            }
+
+            const attachment = (email.attachments || []).find((att) => att.attachmentId === attachmentId);
+
+            const provider = EmailProviderFactory.getProvider(account.provider);
+            const result = await provider.getAttachment(email.accountId, email.providerMessageId, attachmentId);
+
+            return {
+                data: result.data,
+                mimeType: attachment?.mimeType || result.mimeType || 'application/octet-stream',
+                filename: attachment?.filename || result.filename || 'attachment',
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.downloadAttachment: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async composeEmailWithAttachments(userId: string, reqBody: ComposeEmailBody): Promise<SuccessAPIResponse> {
+        try {
+            const { accountId, to, subject, body, attachmentIds } = reqBody;
+
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account || account.userId.toString() !== userId.toString()) {
+                throw new Error('Account not found or unauthorized');
+            }
+
+            const stagedFiles: { filename: string; mimeType: string; buffer: Buffer }[] = [];
+            if (attachmentIds && attachmentIds.length > 0) {
+                for (const attId of attachmentIds) {
+                    const { stagedAttachment, stream } = await this.attachmentsService.getStagedAttachmentWithStream(attId);
+
+                    // Verify attachment belongs to user and matches target account
+                    // if (stagedAttachment.userId.toString() !== userId.toString() || stagedAttachment.accountId !== accountId) {
+                    //     throw new Error(`Unauthorized or invalid attachment ${attId}`);
+                    // }
+
+                    const chunks: Buffer[] = [];
+                    for await (const chunk of stream) {
+                        chunks.push(Buffer.from(chunk));
+                    }
+                    stagedFiles.push({
+                        filename: stagedAttachment.filename,
+                        mimeType: stagedAttachment.mimeType,
+                        buffer: Buffer.concat(chunks),
+                    });
+                }
+            }
+
+            const provider = EmailProviderFactory.getProvider(account.provider);
+            await provider.sendMail({ accountId, to, subject, body, attachments: stagedFiles });
+
+            if (attachmentIds && attachmentIds.length > 0) {
+                this.attachmentsService.cleanupStagedAttachments(attachmentIds);
+            }
+
+            return { status: true, message: 'Email composed and sent successfully' };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.composeEmailWithAttachments: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async moveEmails(emailIds: string[], targetFolderIds: string[], removeFolderIds: string[] = []): Promise<MoveEmailsResponse> {
+        try {
+            if (!emailIds.length) {
+                return { success: true, updatedCount: 0 };
+            }
+
+            // Fetch emails to extract account IDs and provider message IDs
+            const emailDocs = await EmailRepository.getEmailsByProviderMessageIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            if (!emailDocs.length) {
+                throw new Error('No matching emails found for relocation');
+            }
+
+            let effectiveRemoveFolderIds = removeFolderIds || [];
+            if (!effectiveRemoveFolderIds.length) {
+                const extractedFolders = new Set<string>();
+                emailDocs.forEach((doc) => {
+                    if (Array.isArray(doc.folders)) {
+                        doc.folders.forEach((fId) => {
+                            if (!targetFolderIds.includes(fId)) {
+                                extractedFolders.add(fId);
+                            }
+                        });
+                    }
+                });
+                effectiveRemoveFolderIds = Array.from(extractedFolders);
+            }
+
+            // Guarantee effectiveRemoveFolderIds never overlaps with targetFolderIds
+            effectiveRemoveFolderIds = effectiveRemoveFolderIds.filter((fId) => !targetFolderIds.includes(fId));
+
+            const groupedEmails = Object.groupBy(emailDocs, (item) => item.accountId);
+            for (const [accountId, emails] of Object.entries(groupedEmails)) {
+                const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
+                if (!account || !emails) continue;
+                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
+                const providerMessageIds = emails.map((d) => d.providerMessageId);
+
+                await provider.moveEmails(providerMessageIds, accountId, targetFolderIds, effectiveRemoveFolderIds);
+            }
+
+            // Extract internal MongoDB document IDs to update local folder arrays
+            const dbIds = emailDocs.map((doc) => String(doc._id));
+            const updatedCount = await EmailRepository.updateFolders(dbIds, targetFolderIds, effectiveRemoveFolderIds);
+
+            return { success: true, updatedCount };
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error('Failed to execute moveEmails in EmailService', { emailIds, targetFolderIds, removeFolderIds, error: errorMessage });
+            throw error;
         }
     }
 }

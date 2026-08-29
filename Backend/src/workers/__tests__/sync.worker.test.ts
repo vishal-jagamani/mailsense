@@ -35,10 +35,12 @@ describe('syncAccountProcessor', () => {
             starEmails: jest.fn(),
             sendMail: jest.fn(),
             searchContacts: jest.fn(),
+            getAttachment: jest.fn(),
             getAllFolders: jest.fn(),
             createFolder: jest.fn(),
             updateFolder: jest.fn(),
             deleteFolder: jest.fn(),
+            moveEmails: jest.fn(),
         };
 
         (EmailProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);

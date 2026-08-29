@@ -35,6 +35,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                         <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                         <EmailMenuBarOptions
                             emailIds={selectedEmails}
+                            allEmails={emailsData?.data || []}
                             onRefetchEmails={fetchEmailsData}
                             onResetSelection={handleResetSelection}
                             onResetPage={handleResetPage}

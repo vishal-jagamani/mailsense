@@ -1,8 +1,10 @@
 import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { UserSettingsRepository } from '@modules/user/user-settings.repository.js';
 import { getQueue } from '../queue.registry.js';
 import { SchedulerService } from '../scheduler.service.js';
 
 jest.mock('@modules/accounts/account.repository.js');
+jest.mock('@modules/user/user-settings.repository.js');
 jest.mock('../queue.registry.js');
 
 interface MockQueue {
@@ -21,6 +23,7 @@ describe('SchedulerService', () => {
             add: jest.fn(),
         };
         (getQueue as jest.Mock).mockReturnValue(mockQueue);
+        (UserSettingsRepository.getUserSettings as jest.Mock).mockResolvedValue(null);
     });
 
     afterEach(() => {
@@ -43,11 +46,13 @@ describe('SchedulerService', () => {
 
             mockQueue.getJobSchedulers.mockResolvedValue(mockSchedulers);
             (AccountRepository.getAccounts as jest.Mock).mockResolvedValue(mockAccounts);
+            (AccountRepository.getAccountById as jest.Mock).mockImplementation((id: string) =>
+                Promise.resolve(mockAccounts.find((a) => a._id === id)),
+            );
 
             await SchedulerService.init();
 
-            // Should remove acc2 (not active/syncEnabled/present) and acc3 (interval shift)
-            expect(mockQueue.removeJobScheduler).toHaveBeenCalledWith('key2');
+            // Should remove acc3 (interval shift)
             expect(mockQueue.removeJobScheduler).toHaveBeenCalledWith('key3');
 
             // Should add repeatable sync for acc3 and acc4

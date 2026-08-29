@@ -1,4 +1,4 @@
-import { GetAllEmailsFilters } from '@mailsense/types';
+import { GetAllEmailsFilters, MoveEmailsRequestBody } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import {
     ArchiveEmailBody,
@@ -161,11 +161,15 @@ export class EmailController {
 
     public composeEmail = async (req: Request<object, object, ComposeEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new Error('User ID is required');
+            }
             const { accountId, to, subject, body } = req.body;
             if (!accountId || !to || !subject || !body) {
                 throw new Error('Account ID, To, subject and body are required');
             }
-            const email = await this.emailService.composeEmail(req.body);
+            const email = await this.emailService.composeEmail(userId, req.body);
             res.send(email);
         } catch (error) {
             next(error);
@@ -185,6 +189,44 @@ export class EmailController {
             }
             const email = await this.emailService.searchOtherContacts(userId, searchText);
             res.send(email);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public getThread = async (req: Request<{ emailId: string }>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailId } = req.params;
+            if (!emailId) {
+                throw new Error('Email ID is required');
+            }
+            const threadData = await this.emailService.getThread(emailId);
+            res.send(threadData);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public downloadAttachment = async (req: Request<{ emailId: string; attachmentId: string }>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { emailId, attachmentId } = req.params;
+            if (!emailId || !attachmentId) {
+                throw new Error('Email ID and Attachment ID are required');
+            }
+            const attachment = await this.emailService.downloadAttachment(emailId, attachmentId);
+            res.setHeader('Content-Type', attachment.mimeType);
+            res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
+            res.send(attachment.data);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public moveEmails = async (req: Request<object, object, MoveEmailsRequestBody, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const payload = req.body;
+            const result = await this.emailService.moveEmails(payload.emailIds, payload.targetFolderIds, payload.removeFolderIds || []);
+            res.send(result);
         } catch (error) {
             next(error);
         }

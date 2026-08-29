@@ -168,7 +168,7 @@ export class GmailService {
     }
 
     private transformGmailMessageToEmailInput(emailDetails: GmailMessageObjectFull, accountId: string): EmailInput {
-        const headers = emailDetails.payload.headers.reduce(
+        const headers = (emailDetails.payload?.headers || []).reduce(
             (acc, header) => {
                 acc[header.name.toLowerCase()] = header.value;
                 return acc;
@@ -186,12 +186,13 @@ export class GmailService {
             cc: headers.cc || '',
             bcc: headers.bcc || '',
             subject: headers.subject || '',
-            body: emailDetails.payload.body.data || '',
+            body: emailDetails.payload?.body?.data || '',
             bodyHtml: compressString(htmlBody || ''),
             bodyPlain: compressString(plainTextBody),
             receivedAt,
             isRead: !emailDetails.labelIds.includes(GMAIL_LABELS.UNREAD),
             folders: emailDetails.labelIds,
+            attachments: GmailUtils.extractGmailAttachments(emailDetails.payload),
         };
     }
 
@@ -349,8 +350,11 @@ export class GmailService {
 
     async sendMessage(composeEmailData: ComposeEmailBody): Promise<Partial<GmailMessageObjectFull>> {
         try {
-            const { accountId, to, subject, body } = composeEmailData;
-            const raw = GmailUtils.buildGmailRawString(to, subject, body);
+            const { accountId, to, subject, body, attachments } = composeEmailData;
+            const raw =
+                attachments && attachments.length > 0
+                    ? GmailUtils.constructGmailMimeMessage(to, subject, body, attachments)
+                    : GmailUtils.buildGmailRawString(to, subject, body);
             const response = await GmailApi.sendMessage(accountId, { raw });
             const emailDetails = await GmailApi.fetchEmailById(response.id, accountId);
             const emilData = this.transformGmailMessageToEmailInput(emailDetails, accountId);
@@ -382,6 +386,32 @@ export class GmailService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.searchContacts: ${errorMessage}`, { error: err });
             throw err;
+        }
+    }
+
+    public async getAttachment(
+        accountId: string,
+        messageId: string,
+        attachmentId: string,
+    ): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        try {
+            return await GmailApi.getAttachment(accountId, messageId, attachmentId);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.searchContacts: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds: string[] = []): Promise<void> {
+        try {
+            if (!emailIds.length) return;
+            const response = await GmailApi.batchModifyLabels(accountId, emailIds, targetFolderIds, removeFolderIds);
+            console.log({ response });
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error('Failed to move emails in GmailService', { accountId, emailIds, targetFolderIds, removeFolderIds, error: errorMessage });
+            throw error;
         }
     }
 }

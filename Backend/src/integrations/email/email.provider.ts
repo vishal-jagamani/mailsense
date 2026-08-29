@@ -28,9 +28,15 @@ export interface IEmailProvider<TAuthToken = IEmailTAuthToken, TUserProfile = IE
     sendMail(composeEmailData: ComposeEmailBody): Promise<TSendMailResult>;
     searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]>;
 
+    // Attachment Operations
+    getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }>;
+
     // Folder/Label Operations
     getAllFolders(accountId: string, userId: string): Promise<Partial<FolderInput>[]>;
     createFolder(userId: string, accountId: string, folderName: string): Promise<UpdateAPIResponse>;
     updateFolder(accountId: string, folderId: string, folderName: string): Promise<UpdateAPIResponse>;
     deleteFolder(accountId: string, folderId: string): Promise<UpdateAPIResponse>;
+
+    // Folder & Label Relocation Operations
+    moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds?: string[]): Promise<void>;
 }

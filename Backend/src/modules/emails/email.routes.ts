@@ -7,8 +7,10 @@ import {
     archiveEmailSchema,
     composeEmailSchema,
     deleteEmailSchema,
+    downloadAttachmentSchema,
     getAllEmailsSchema,
     getEmailSchema,
+    moveEmailsSchema,
     searchEmailSchema,
     searchOtherContactsSchema,
     starEmailSchema,
@@ -29,6 +31,8 @@ router.get('/filters', handleRequest(emailController.getFilters));
 
 router.get('/details/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getEmail));
 
+router.get('/attachment/:emailId/:attachmentId', validate({ params: downloadAttachmentSchema }), handleRequest(emailController.downloadAttachment));
+
 router.post('/delete', validate({ body: deleteEmailSchema }), handleRequest(emailController.deleteEmail));
 
 router.post('/archive', validate({ body: archiveEmailSchema }), handleRequest(emailController.archiveEmails));
@@ -42,5 +46,9 @@ router.post('/search', validate({ body: searchEmailSchema }), handleRequest(emai
 router.post('/compose', validate({ body: composeEmailSchema }), handleRequest(emailController.composeEmail));
 
 router.post('/searchOtherContacts', validate({ body: searchOtherContactsSchema }), handleRequest(emailController.searchOtherContacts));
+
+router.get('/thread/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getThread));
+
+router.post('/move', validate({ body: moveEmailsSchema }), handleRequest(emailController.moveEmails));
 
 export default router;

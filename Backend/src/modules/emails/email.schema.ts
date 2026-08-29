@@ -55,10 +55,31 @@ export const composeEmailSchema = z.object({
     to: z.array(z.string().email('Invalid email address')),
     subject: z.string().min(1, 'Subject is required'),
     body: z.string().min(1, 'Email body is required'),
+    attachmentIds: z.array(z.string()).optional(),
+    attachments: z
+        .array(
+            z.object({
+                filename: z.string(),
+                mimeType: z.string(),
+                buffer: z.custom<Buffer>((val) => Buffer.isBuffer(val), { message: 'Invalid buffer' }),
+            }),
+        )
+        .optional(),
 });
 
 export const searchOtherContactsSchema = z.object({
     searchText: z.string().min(3, 'Search query must be at least 3 characters long'),
+});
+
+export const downloadAttachmentSchema = z.object({
+    emailId: z.string(),
+    attachmentId: z.string(),
+});
+
+export const moveEmailsSchema = z.object({
+    emailIds: z.array(z.string().min(1, 'Invalid email id')).nonempty('At least one email id is required'),
+    targetFolderIds: z.array(z.string().min(1, 'Invalid folder id')).nonempty('At least one folder id is required'),
+    removeFolderIds: z.array(z.string()).optional(),
 });
 
 export type GetAllEmailsSchema = z.infer<typeof getAllEmailsSchema>;
@@ -71,3 +92,4 @@ export type UnreadEmailBody = z.infer<typeof unreadEmailSchema>;
 export type SearchEmailBody = z.infer<typeof searchEmailSchema>;
 export type ComposeEmailBody = z.infer<typeof composeEmailSchema>;
 export type SearchOtherContactsBody = z.infer<typeof searchOtherContactsSchema>;
+export type DownloadAttachmentSchema = z.infer<typeof downloadAttachmentSchema>;

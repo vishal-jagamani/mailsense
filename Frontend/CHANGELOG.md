@@ -7,6 +7,38 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-29
+
+### Added
+- Added `DraftsPage` (`Frontend/src/features/drafts/pages/index.tsx`) and App Router route (`Frontend/src/app/(home)/drafts/page.tsx`).
+- Added `DraftListTable` component suite (`DraftListTableHeader.tsx`, `DraftListTableBody.tsx`, `DraftListHeader.tsx`).
+- Added `useAutoSaveDraft` custom hook with 3000ms debouncing for auto-saving drafts during compose typing.
+- Added `useDraftsPage` custom hook supporting search filtering by recipient/subject/snippet, pagination, multi-select, and bulk/single deletion.
+- Added `DraftApi` client wrapper in `Frontend/src/features/drafts/api/draft.api.ts` mapping `/drafts` endpoints.
+- Added React Query query hooks (`useGetUserDraftsQuery`, `useGetDraftByIdQuery`) and mutation hooks (`useSaveDraftMutation`, `useDeleteDraftMutation`, `useSendDraftMutation`) in `draft.queries.ts` and `draft.mutations.ts`.
+- Added `activeDraftId` state and `openWithDraft(draftId)` action to `useComposeEmailPopupStore.ts`.
+- Added auto-save status feedback (saving indicator, last saved timestamp) and discard draft handling in `useComposeEmail.ts`, `ComposeEmail` index, and `ComposeEmailFooter.tsx`.
+- Added "Drafts" navigation item to sidebar (`sidebar.constants.ts`, `routes.ts`).
+- Added `MoveToFolderDropdown` component for moving single or bulk selected emails to destination folders.
+- Added real-time folder search inside the Move to Folder dropdown modal.
+- Added single-account folder filtering to restrict destination folder options to the target account's folder structure.
+- Added multi-account selection safeguards with Radix `Tooltip` guidance disabling cross-account moves.
+- Added `useMoveEmailsMutation` React Query hook with automatic `[EMAILS]` and `[FOLDERS]` cache invalidation.
+- Added staged attachment file upload trigger via paperclip icon button in Compose email footer (`ComposeEmailFooter.tsx`).
+- Added staged attachment chips display with formatted file sizes (KB/MB) and deletion (`X`) buttons in Compose email modal (`index.tsx`).
+- Added attachment download support in email details and threaded conversation view.
+- Added image attachment preview support directly from email detail attachments.
+- Added thread-view rendering in email details for conversations with multiple messages.
+- Added thread count badges in email list rows to show how many messages belong to a conversation.
+- Added attachment indicator badges in email list rows.
+
+### Changed
+- Updated `useComposeEmail` hook to upload file selections to `POST /api/attachments/upload`, manage `stagedAttachments` state, and attach `attachmentIds` to compose email submissions.
+- Updated email detail data loading to fetch thread data alongside single-email details.
+- Updated email detail and thread rendering to show attachment lists for messages that include files.
+- Updated frontend email feature wiring to use the new thread endpoint and shared email-recipient formatting helper.
+- Updated frontend workspace and dependency metadata for the current shared package and lockfile setup.
+
 ## [2.1.0] - 2026-07-31
 
 ### Added

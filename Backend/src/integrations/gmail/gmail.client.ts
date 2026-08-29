@@ -186,8 +186,7 @@ export class GmailApi {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static async permanentlyDeleteEmails(emailIds: string[], accountId: string): Promise<any> {
+    static async permanentlyDeleteEmails(emailIds: string[], accountId: string): Promise<GmailMessages> {
         try {
             const accessToken = await this.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
@@ -415,6 +414,59 @@ export class GmailApi {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.searchContacts: ${errorMessage}`, { error: err });
             throw err;
+        }
+    }
+
+    static async getAttachment(
+        accountId: string,
+        messageId: string,
+        attachmentId: string,
+    ): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${messageId}/attachments/${attachmentId}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<{ data: string; size: number }>(options);
+            const data = Buffer.from(response.data, 'base64url');
+            return {
+                data,
+                mimeType: 'application/octet-stream',
+                filename: 'attachment',
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.getAttachment: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async batchModifyLabels(accountId: string, messageIds: string[], addLabelIds: string[], removeLabelIds: string[]): Promise<void> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const cleanRemoveLabelIds = removeLabelIds.filter((id) => !addLabelIds.includes(id));
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.BATCH_MODIFY}`,
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json',
+                },
+                data: {
+                    ids: messageIds,
+                    addLabelIds,
+                    removeLabelIds: cleanRemoveLabelIds,
+                },
+            };
+            await apiRequest(options);
+        } catch (error) {
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            logger.error(`Error in GmailApi.batchModifyLabels: ${errorMessage}`, { accountId, messageIds, error });
+            throw error;
         }
     }
 }

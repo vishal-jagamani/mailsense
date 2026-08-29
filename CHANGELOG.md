@@ -7,6 +7,26 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-29
+
+### Added
+- Added automatic draft saving while composing emails so progress is saved continuously without manual effort.
+- Added live draft status indicators in the email compose window showing when a draft is saving and when it was last saved.
+- Added a dedicated Drafts folder in the navigation sidebar to view, manage, and search all saved email drafts.
+- Added single-click draft resuming from the Drafts list to open, complete editing, or send saved drafts.
+- Added multi-select bulk deletion and single-click discard actions for saved drafts.
+- Added "Move to..." folder action support for moving single or bulk selected emails to specific folders or labels across connected accounts.
+- Added real-time folder search inside the Move to Folder dropdown menu with account-scoped folder filtering.
+- Added multi-account selection warnings when attempting to move emails from multiple accounts at once.
+- Added support for attaching and sending files when composing emails across connected Gmail and Outlook accounts.
+- Added attachment preview chips in the compose window with file size formatting and single-click removal.
+- Added thread-aware conversation view so related email messages are grouped together chronologically in single thread views.
+- Added attachment download and image preview support directly from email details and threaded conversations.
+
+### Changed
+- Inbox and account email lists now group conversation emails together and show the number of messages in each thread.
+- Email lists now show when a conversation includes attached files.
+
 ## [2.1.1] - 2026-08-03
 
 ### Changed

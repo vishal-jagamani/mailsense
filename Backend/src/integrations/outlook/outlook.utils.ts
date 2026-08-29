@@ -1,8 +1,8 @@
 import { OUTLOOK_SECRETS } from '@config';
 import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
-import { FOLDER_KIND, FOLDER_ROLE, OutlookMessageObjectFull } from '@mailsense/types';
+import { EmailAttachment, FOLDER_KIND, FOLDER_ROLE, OutlookAttachmentObject } from '@mailsense/types';
 import { FolderInput } from '@modules/folders/folder.model.js';
-import { OutlookFolderObject } from './outlook.types.js';
+import { OutlookCreateMessagePayload, OutlookFileAttachmentPayload, OutlookFolderObject } from './outlook.types.js';
 
 // Build outlook oauth access consent url
 export const buildOutlookOAuthConsentURL = async () => {
@@ -78,7 +78,8 @@ export const buildOutlookMessagePayload = (
     subject: string,
     body: string,
     contentType: 'Text' | 'HTML' = 'Text',
-): Partial<OutlookMessageObjectFull> => {
+    attachments?: OutlookFileAttachmentPayload[],
+): OutlookCreateMessagePayload => {
     return {
         toRecipients: to.map((email) => ({ emailAddress: { address: email, name: '' } })),
         subject,
@@ -86,5 +87,17 @@ export const buildOutlookMessagePayload = (
             contentType,
             content: body,
         },
+        ...(attachments && attachments.length > 0 ? { attachments } : {}),
     };
+};
+
+export const extractOutlookAttachments = (attachments: OutlookAttachmentObject[] = []): EmailAttachment[] => {
+    return (attachments || []).map((att) => ({
+        attachmentId: att.id || '',
+        filename: att.name || 'attachment',
+        mimeType: att.contentType || att['@odata.mediaContentType'] || 'application/octet-stream',
+        size: att.size || 0,
+        contentId: att.contentId || undefined,
+        isInline: att.isInline || false,
+    }));
 };

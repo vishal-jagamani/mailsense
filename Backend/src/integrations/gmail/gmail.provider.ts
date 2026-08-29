@@ -87,6 +87,10 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
         return this.gmailService.searchContacts(accountId, searchText);
     }
 
+    async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        return this.gmailService.getAttachment(accountId, messageId, attachmentId);
+    }
+
     async getAllFolders(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {
         return this.gmailService.getAllLabels(accountId, userId);
     }
@@ -109,5 +113,9 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
             throw new Error(`Account not found for token refresh: ${accountId}`);
         }
         return GmailApi.refreshAccessToken(accountId, decrypt(account.refreshToken));
+    }
+
+    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds?: string[]): Promise<void> {
+        await this.gmailService.moveEmails(emailIds, accountId, targetFolderIds, removeFolderIds || []);
     }
 }

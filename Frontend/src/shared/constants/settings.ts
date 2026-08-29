@@ -1,4 +1,4 @@
-import { Info, Lock, LucideIcon, Palette, User } from 'lucide-react';
+import { Info, LucideIcon, User } from 'lucide-react';
 
 export const SETTINGS_OPTIONS: { id: number; name: string; title: string; link: string; icon: LucideIcon }[] = [
     {

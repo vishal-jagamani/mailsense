@@ -29,6 +29,12 @@ class EnvConfig {
     public readonly AUTH0_API_CLIENT_SECRET: string;
     public readonly AUTH0_API_BASE_URL: string;
     public readonly SENTRY_DSN: string;
+    // Cloudflare R2 Storage Secrets
+    public readonly R2_ACCOUNT_ID: string;
+    public readonly R2_ACCESS_KEY_ID: string;
+    public readonly R2_SECRET_ACCESS_KEY: string;
+    public readonly R2_BUCKET_NAME: string;
+    public readonly R2_REGION: string;
 
     constructor() {
         dotenv?.config();
@@ -73,6 +79,12 @@ class EnvConfig {
             AUTH0_API_CLIENT_SECRET: z.string(),
             AUTH0_API_BASE_URL: z.string(),
             SENTRY_DSN: z.string(),
+            // Cloudflare R2 Storage Secrets
+            R2_ACCOUNT_ID: z.string(),
+            R2_ACCESS_KEY_ID: z.string(),
+            R2_SECRET_ACCESS_KEY: z.string(),
+            R2_BUCKET_NAME: z.string(),
+            R2_REGION: z.string(),
         });
 
         const result = schema.safeParse(process.env);
@@ -107,6 +119,12 @@ class EnvConfig {
         this.AUTH0_API_CLIENT_SECRET = data.AUTH0_API_CLIENT_SECRET;
         this.AUTH0_API_BASE_URL = data.AUTH0_API_BASE_URL;
         this.SENTRY_DSN = data.SENTRY_DSN;
+        // Cloudflare R2 Storage Secrets
+        this.R2_ACCOUNT_ID = data.R2_ACCOUNT_ID;
+        this.R2_ACCESS_KEY_ID = data.R2_ACCESS_KEY_ID;
+        this.R2_SECRET_ACCESS_KEY = data.R2_SECRET_ACCESS_KEY;
+        this.R2_BUCKET_NAME = data.R2_BUCKET_NAME;
+        this.R2_REGION = data.R2_REGION;
     }
 }
 

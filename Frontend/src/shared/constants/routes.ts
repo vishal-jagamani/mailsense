@@ -9,6 +9,8 @@ export const HOME_ROUTES = {
     UNIFIED_INBOX: '/inbox',
     ACCOUNT_INBOX: (id: string) => `/inbox/${id}`,
     EMAIL: (accountId: string, emailId: string) => `/inbox/${accountId}/email/${emailId}`,
+    // Draft routes
+    DRAFTS: '/drafts',
     // Starred routes
     STARRED: '/starred',
     ACCOUNT_STARRED: (accountId: string) => `/starred/${accountId}`,

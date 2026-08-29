@@ -1,24 +1,47 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 
 import { AccountProviderIcon } from '@entities/account';
-import { AccountAttributes } from '@mailsense/types';
+import { AccountAttributes, ComposeEmailRequestBody } from '@mailsense/types';
 import { useIsMobile } from '@shared/hooks';
 import { Button } from '@shared/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
-import { Trash2 } from 'lucide-react';
+import { Loader2, Paperclip, Trash2 } from 'lucide-react';
 
-interface ComposeEmailFooterProps {
+export interface ComposeEmailFooterProps {
     accountsData: AccountAttributes[];
-    composeEmailBody: any;
-    setComposeEmailBody: any;
-    sendEmail: any;
-    handleClose: any;
+    composeEmailBody: ComposeEmailRequestBody;
+    setComposeEmailBody: (body: ComposeEmailRequestBody) => void;
+    sendEmail: () => Promise<void>;
+    handleClose: () => void;
+    handleDiscardDraft: () => void;
+    isUploadingAttachment: boolean;
+    handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 
-const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({ accountsData, composeEmailBody, setComposeEmailBody, sendEmail, handleClose }) => {
+const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({
+    accountsData,
+    composeEmailBody,
+    setComposeEmailBody,
+    sendEmail,
+    handleDiscardDraft,
+    isUploadingAttachment,
+    handleFileUpload,
+}) => {
     const isMobile = useIsMobile();
+    const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+    const handlePaperclipClick = () => {
+        try {
+            if (!composeEmailBody?.accountId && accountsData && accountsData.length > 0) {
+                setComposeEmailBody({ ...composeEmailBody, accountId: accountsData[0]._id });
+            }
+            fileInputRef.current?.click();
+        } catch (error) {
+            console.error('Error handling paperclip click', error);
+        }
+    };
 
     return (
         <div className="flex items-center justify-between md:p-2">
@@ -33,22 +56,37 @@ const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({ accountsData, c
                         </SelectTrigger>
                         <SelectContent position="popper">
                             {accountsData &&
-                                accountsData?.map((item, index) => {
+                                accountsData.map((item, index) => {
                                     return (
                                         <SelectItem key={index + 1} value={item?._id} className="text-xs">
                                             <AccountProviderIcon provider={item.provider} className="size-4" />
                                             {item?.emailAddress}
-                                        </SelectItem> 
+                                        </SelectItem>
                                     );
                                 })}
                         </SelectContent>
                     </Select>
                 </div>
-                <Button className="cursor-pointer rounded-lg px-6 font-bold" onClick={sendEmail}>
+                <Button className="cursor-pointer rounded-lg px-6 font-bold" onClick={sendEmail} disabled={isUploadingAttachment}>
                     Send
                 </Button>
+                <input type="file" ref={fileInputRef} className="hidden" multiple onChange={handleFileUpload} />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="ml-2 cursor-pointer"
+                    onClick={handlePaperclipClick}
+                    disabled={isUploadingAttachment}
+                >
+                    {isUploadingAttachment ? <Loader2 className="size-4 animate-spin" /> : <Paperclip className="size-4" />}
+                </Button>
             </div>
-            <Trash2 className={`cursor-pointer ${isMobile ? 'size-16 h-10 w-10' : 'size-4'}`} onClick={handleClose} />
+            <Trash2
+                className={`text-muted-foreground hover:text-destructive cursor-pointer transition-colors ${isMobile ? 'size-6' : 'size-4'}`}
+                // title="Discard draft"
+                onClick={handleDiscardDraft}
+            />
         </div>
     );
 };

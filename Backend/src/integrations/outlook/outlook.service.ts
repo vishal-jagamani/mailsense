@@ -1,22 +1,31 @@
 import {
+    EmailAttachment,
+    EmailAttributes,
     OutlookMessageObjectFull,
     OutlookOAuthAccessTokenResponse,
     OutlookUserProfile,
     SearchOtherContactsResponse,
     UpdateAPIResponse,
 } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { compressString, logger } from 'shared/utils/index.js';
-import { OutlookApi } from './outlook.api.js';
-import { OUTLOOK_API_BASE_URL, OUTLOOK_API_PARAMS, OUTLOOK_APIs } from './outlook.constants.js';
+import { compressString, decompressString, logger } from 'shared/utils/index.js';
+import { OutlookApi } from './outlook.client.js';
+import {
+    OUTLOOK_API_BASE_URL,
+    OUTLOOK_API_PARAMS,
+    OUTLOOK_APIs,
+    OUTLOOK_ATTACHMENT_CHUNK_SIZE,
+    OUTLOOK_ATTACHMENT_MAX_DIRECT_SIZE,
+} from './outlook.constants.js';
 import {
     ExtractDeltaMessageChangesResponse,
     GetOutlookDeltaMessagesResponse,
     GetOutlookMessagesResponse,
+    OutlookFileAttachmentPayload,
     OutlookFolderObject,
 } from './outlook.types.js';
 import * as OutlookUtils from './outlook.utils.js';
@@ -95,8 +104,22 @@ export class OutlookService {
         }
     }
 
-    async getMessageDetails(accountId: string, emailId: string): Promise<EmailInput> {
+    async getMessageDetails(accountId: string, emailId: string, dbEmail?: EmailDocument): Promise<EmailAttributes | EmailInput> {
         try {
+            if (dbEmail) {
+                let attachments = dbEmail.attachments || [];
+                if (attachments.length === 0) {
+                    const outlookAttachments = await OutlookApi.getMessageAttachments(accountId, emailId);
+                    attachments = OutlookUtils.extractOutlookAttachments(outlookAttachments);
+                }
+                return {
+                    ...dbEmail.toObject(),
+                    _id: String(dbEmail._id),
+                    bodyHtml: decompressString(dbEmail.bodyHtml),
+                    bodyPlain: decompressString(dbEmail.bodyPlain),
+                    attachments,
+                };
+            }
             const email = await OutlookApi.getMessageDetails(accountId, emailId);
             const parsedEmail = await this.parseEmailDetailsIntoPlainObject(accountId, email);
             return parsedEmail;
@@ -132,27 +155,32 @@ export class OutlookService {
         }
     }
 
-    async parseEmailsIntoPlainObjects(
-        accountId: string,
-        emailResponseData: OutlookMessageObjectFull[],
-    ): Promise<Partial<EmailInput>[] | EmailInput[]> {
+    async parseEmailsIntoPlainObjects(accountId: string, emailResponseData: OutlookMessageObjectFull[]): Promise<Partial<EmailInput>[]> {
         try {
-            const parsedEmails: Partial<EmailInput>[] = emailResponseData.map((email) => {
-                const emailObject: Partial<EmailInput> = {
-                    accountId,
-                    providerMessageId: email.id,
-                    threadId: email.conversationId,
-                    from: email.from.emailAddress.address,
-                    to: email.toRecipients.map((val) => val.emailAddress.address),
-                    cc: email.ccRecipients.map((val) => val.emailAddress.address),
-                    bcc: email.bccRecipients.map((val) => val.emailAddress.address),
-                    subject: email.subject,
-                    body: email.bodyPreview || '',
-                    receivedAt: new Date(email.receivedDateTime),
-                    isRead: email.isRead,
-                };
-                return emailObject;
-            });
+            const parsedEmails: Partial<EmailInput>[] = await Promise.all(
+                emailResponseData.map(async (email) => {
+                    let attachments: EmailAttachment[] = [];
+                    if (email.hasAttachments) {
+                        const outlookAttachments = await OutlookApi.getMessageAttachments(accountId, email.id);
+                        attachments = OutlookUtils.extractOutlookAttachments(outlookAttachments);
+                    }
+                    const emailObject: Partial<EmailInput> = {
+                        accountId,
+                        providerMessageId: email.id,
+                        threadId: email.conversationId,
+                        from: email.from.emailAddress.address,
+                        to: email.toRecipients.map((val) => val.emailAddress.address),
+                        cc: email.ccRecipients.map((val) => val.emailAddress.address),
+                        bcc: email.bccRecipients?.map((val) => val.emailAddress.address) || [],
+                        subject: email.subject,
+                        body: email.bodyPreview || '',
+                        receivedAt: new Date(email.receivedDateTime),
+                        isRead: email.isRead,
+                        attachments,
+                    };
+                    return emailObject;
+                }),
+            );
             return parsedEmails;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -161,8 +189,16 @@ export class OutlookService {
         }
     }
 
-    private parseEmailDetailsIntoPlainObject(accountId: string, email: OutlookMessageObjectFull): EmailInput {
+    private async parseEmailDetailsIntoPlainObject(accountId: string, email: OutlookMessageObjectFull): Promise<EmailInput> {
         try {
+            let attachments: EmailAttachment[] = [];
+            if (email.attachments && email.attachments.length > 0) {
+                attachments = OutlookUtils.extractOutlookAttachments(email.attachments);
+            } else if (email.hasAttachments) {
+                const outlookAttachments = await OutlookApi.getMessageAttachments(accountId, email.id);
+                attachments = OutlookUtils.extractOutlookAttachments(outlookAttachments);
+            }
+
             const emailObject: EmailInput = {
                 accountId,
                 providerMessageId: email.id,
@@ -170,7 +206,7 @@ export class OutlookService {
                 from: email.from.emailAddress.address,
                 to: email.toRecipients.map((val) => val.emailAddress.address),
                 cc: email.ccRecipients.map((val) => val.emailAddress.address),
-                bcc: email.bccRecipients.map((val) => val.emailAddress.address),
+                bcc: email.bccRecipients?.map((val) => val.emailAddress.address) || [],
                 subject: email.subject,
                 body: email.bodyPreview || '',
                 bodyPlain: compressString(email.body.content),
@@ -178,11 +214,12 @@ export class OutlookService {
                 receivedAt: new Date(email.receivedDateTime),
                 isRead: email.isRead,
                 folders: [email.parentFolderId],
+                attachments,
             };
             return emailObject;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });
+            logger.error(`Error in OutlookService.parseEmailDetailsIntoPlainObject: ${errorMessage}`, { error: err });
             throw err;
         }
     }
@@ -346,19 +383,80 @@ export class OutlookService {
 
     async sendMail(composeEmailData: ComposeEmailBody): Promise<OutlookMessageObjectFull> {
         try {
-            const { accountId, to, subject, body } = composeEmailData;
-            const messageBody = OutlookUtils.buildOutlookMessagePayload(to, subject, body, 'HTML');
-            const response = await OutlookApi.createDraftMessage(accountId, messageBody);
-            await OutlookApi.sendDraftMessage(accountId, response.id);
-            const emailDetails = await OutlookApi.getMessageDetails(accountId, response.id);
-            const emailData = this.parseEmailDetailsIntoPlainObject(accountId, emailDetails);
-            await EmailRepository.upsertEmailsInBulk([emailData]);
-            return response;
+            const { accountId, to, subject, body, attachments = [] } = composeEmailData;
+
+            const totalAttachmentSize = attachments.reduce((sum, attachment) => sum + attachment.buffer.length, 0);
+
+            const { smallAttachments, largeAttachments } = this.prepareOutlookAttachments(
+                attachments,
+                OUTLOOK_ATTACHMENT_MAX_DIRECT_SIZE,
+                totalAttachmentSize <= OUTLOOK_ATTACHMENT_MAX_DIRECT_SIZE,
+            );
+            const messageBody = OutlookUtils.buildOutlookMessagePayload(
+                to,
+                subject,
+                body,
+                'HTML',
+                smallAttachments.length > 0 ? smallAttachments : undefined,
+            );
+
+            const draft = await OutlookApi.createDraftMessage(accountId, messageBody);
+
+            for (const attachment of largeAttachments) {
+                const session = await OutlookApi.createUploadSession(accountId, draft.id, attachment.filename, attachment.buffer.length);
+
+                for (let start = 0; start < attachment.buffer.length; start += OUTLOOK_ATTACHMENT_CHUNK_SIZE) {
+                    const chunk = attachment.buffer.subarray(start, start + OUTLOOK_ATTACHMENT_CHUNK_SIZE);
+                    await OutlookApi.uploadChunk(session.uploadUrl, chunk, start, attachment.buffer.length);
+                }
+            }
+
+            return await this.finalizeSentOutlookDraft(accountId, draft);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookService.sendMail: ${errorMessage}`, { error: err });
+            logger.error(`Error in OutlookService.sendMail: ${errorMessage}`, {
+                error: err,
+            });
             throw err;
         }
+    }
+
+    private prepareOutlookAttachments(
+        attachments: ComposeEmailBody['attachments'],
+        maxDirectSize: number,
+        useDirectStrategy: boolean,
+    ): {
+        smallAttachments: OutlookFileAttachmentPayload[];
+        largeAttachments: NonNullable<ComposeEmailBody['attachments']>;
+    } {
+        const smallAttachments: OutlookFileAttachmentPayload[] = [];
+        const largeAttachments: NonNullable<ComposeEmailBody['attachments']> = [];
+
+        for (const attachment of attachments ?? []) {
+            if (useDirectStrategy || attachment.buffer.length <= maxDirectSize) {
+                smallAttachments.push({
+                    '@odata.type': '#microsoft.graph.fileAttachment',
+                    name: attachment.filename,
+                    contentType: attachment.mimeType,
+                    contentBytes: attachment.buffer.toString('base64'),
+                });
+            } else {
+                largeAttachments.push(attachment);
+            }
+        }
+
+        return { smallAttachments, largeAttachments };
+    }
+
+    private async finalizeSentOutlookDraft(accountId: string, draft: OutlookMessageObjectFull): Promise<OutlookMessageObjectFull> {
+        await OutlookApi.sendDraftMessage(accountId, draft.id);
+
+        const emailDetails = await OutlookApi.getMessageDetails(accountId, draft.id);
+        const emailData = await this.parseEmailDetailsIntoPlainObject(accountId, emailDetails);
+
+        await EmailRepository.upsertEmailsInBulk([emailData]);
+
+        return draft;
     }
 
     async searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]> {
@@ -374,6 +472,34 @@ export class OutlookService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.searchContacts: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    public async getAttachment(
+        accountId: string,
+        messageId: string,
+        attachmentId: string,
+    ): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+        const buffer = await OutlookApi.getAttachment(accountId, messageId, attachmentId);
+        return {
+            data: Buffer.from(buffer),
+            mimeType: 'application/octet-stream',
+            filename: 'attachment',
+        };
+    }
+
+    async moveEmails(providerMessageIds: string[], accountId: string, targetFolderIds: string[]): Promise<void> {
+        try {
+            if (!providerMessageIds.length || !targetFolderIds.length) return;
+            const destinationId = targetFolderIds[0];
+
+            for (const messageId of providerMessageIds) {
+                await OutlookApi.moveMessage(accountId, messageId, destinationId);
+            }
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Failed to move emails in OutlookService: ${errorMessage}`, { error: err });
             throw err;
         }
     }
