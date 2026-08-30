@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import accountsRoutes from '@modules/accounts/account.routes.js';
+import analyticsRoutes from '@modules/analytics/analytics.routes.js';
 import attachmentRoutes from '@modules/attachments/attachment.routes.js';
 import demoRoutes from '@modules/demo/demo.routes.js';
 import draftRoutes from '@modules/drafts/draft.routes.js';
@@ -28,6 +29,8 @@ router.use('/folders', foldersRoutes);
 router.use('/attachments', attachmentRoutes);
 
 router.use('/drafts', draftRoutes);
+
+router.use('/analytics', analyticsRoutes);
 
 router.use('/utils', utilsRoutes);
 

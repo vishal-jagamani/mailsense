@@ -53,3 +53,8 @@ export const DRAFTS_API_ENDPOINTS = {
     DETAILS: (draftId: string) => `/drafts/${draftId}`,
     SEND: (draftId: string) => `/drafts/${draftId}/send`,
 } as const;
+
+export const ANALYTICS_API_ENDPOINTS = {
+    BASE: '/analytics',
+    DASHBOARD: '/analytics/dashboard',
+} as const;

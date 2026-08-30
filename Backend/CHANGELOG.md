@@ -7,6 +7,22 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Added dedicated `analytics` backend module (`Backend/src/modules/analytics/*`).
+- Added `AnalyticsRepository` with pure MongoDB aggregation pipelines for Overview KPIs, volume time-series trend, top senders, thread response turnaround time distribution, and account breakdown summaries.
+- Added `AnalyticsService` orchestrating user account ownership resolution, concurrent raw query dispatch, percentage change calculations, and background snapshot refreshes.
+- Added `analytics.utils.ts` for pure data transformations (`formatOverviewMetrics`, `formatEmailVolumeTimeSeries`, `formatTopSenders`, `calculateResponseTimeMetrics`, `formatAccountBreakdown`, `calculateDateRange`, `calculatePercentageChange`, `buildNoAccountsAnalyticsDashboardData`).
+- Added `analytics.constants.ts` and `analytics.types.ts` centralizing folder classification identifiers and internal raw aggregation interfaces.
+- Added `AnalyticsController` and Zod validation schema (`analytics.schema.ts`) mounting `GET /api/analytics/dashboard` route guarded by `authMiddleware`.
+- Added automatic account metrics daily snapshot refresh on `SYSTEM_EVENT.SYNC_COMPLETED` inside `sync-completed.handler.ts`.
+- Added unit tests for date range calculations in `Backend/src/modules/analytics/__tests__/analytics.service.test.ts`.
+
+### Changed
+
+- Updated `AccountMetricsSchema` in `account.model.ts` to track `unreadCount` and `sentCount`.
+- Added compound indexes in `email.model.ts` on `{ accountId: 1, receivedAt: -1 }`, `{ accountId: 1, folders: 1, receivedAt: -1 }`, `{ accountId: 1, isRead: 1 }`, `{ accountId: 1, from: 1 }`, and `{ accountId: 1, threadId: 1, receivedAt: 1 }` for high-performance aggregation queries.
+
 ## [3.0.0] - 2026-08-29
 
 ### Added
