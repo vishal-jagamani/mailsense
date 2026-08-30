@@ -5,6 +5,8 @@ export const ROUTES = {
 } as const;
 
 export const HOME_ROUTES = {
+    // Dashboard route
+    DASHBOARD: '/',
     // Unified inbox routes
     UNIFIED_INBOX: '/inbox',
     ACCOUNT_INBOX: (id: string) => `/inbox/${id}`,

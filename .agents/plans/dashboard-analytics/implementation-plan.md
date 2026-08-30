@@ -563,11 +563,11 @@ EmailSchema.index({ accountId: 1, threadId: 1, receivedAt: 1 });
 
 #### Tasks
 
-- [ ] Install `recharts` and `@types/recharts` in `Frontend`.
-- [ ] Add `ANALYTICS.DASHBOARD` to `Frontend/src/shared/api/endpoints.ts`.
-- [ ] Create `Frontend/src/features/dashboard/api/analytics.api.ts` with error handling.
-- [ ] Create `Frontend/src/features/dashboard/api/analytics.queries.ts` with React Query hooks.
-- [ ] Create `Frontend/src/features/dashboard/hooks/useDashboard.ts` to handle filter state and chart data formatting.
+- [x] Install `recharts` and `@types/recharts` in `Frontend`.
+- [x] Add `ANALYTICS_API_ENDPOINTS.DASHBOARD` to `Frontend/src/shared/api/endpoints.ts`.
+- [x] Create `Frontend/src/features/analytics/api/analytics.api.ts` with error handling.
+- [x] Create `Frontend/src/features/analytics/api/analytics.queries.ts` with React Query hooks.
+- [x] Create `Frontend/src/features/analytics/hooks/useDashboardPage.ts` to handle filter state and chart data formatting.
 
 #### Files to Create
 
