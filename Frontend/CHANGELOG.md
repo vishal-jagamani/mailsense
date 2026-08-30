@@ -7,6 +7,10 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+### Added
+
+- Added `ANALYTICS_API_ENDPOINTS.DASHBOARD` to centralized endpoint definitions in `Frontend/src/shared/api/endpoints.ts`.
+
 ## [3.0.0] - 2026-08-29
 
 ### Added

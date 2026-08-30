@@ -2,7 +2,6 @@ import { EmailAttributes } from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
 
 export type EmailInput = Omit<EmailAttributes, '_id' | 'createdAt' | 'updatedAt'>;
-
 export type EmailDocument = Document & EmailAttributes;
 
 export const EmailAttachmentSchema = new Schema(
@@ -42,5 +41,8 @@ const EmailSchema = new Schema<EmailDocument>(
 EmailSchema.index({ accountId: 1, providerMessageId: 1 }, { unique: true });
 EmailSchema.index({ accountId: 1, receivedAt: -1 });
 EmailSchema.index({ accountId: 1, folders: 1, receivedAt: -1 });
+EmailSchema.index({ accountId: 1, isRead: 1 });
+EmailSchema.index({ accountId: 1, from: 1 });
+EmailSchema.index({ accountId: 1, threadId: 1, receivedAt: 1 });
 
 export const Email = model<EmailDocument>('Email', EmailSchema);

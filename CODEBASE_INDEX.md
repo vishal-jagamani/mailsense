@@ -44,7 +44,7 @@
 - `Backend/src/core/events/*`: internal event bus and event handlers for background sync milestones
   - `event-bus.ts`: typed event emitter wrapper with safe subscriber execution and sanitized logging, now powered by shared event contracts from `@mailsense/types`
   - `handlers/email-created.handler.ts`: subscriber hook for newly indexed email events
-  - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events
+  - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events; triggers `AnalyticsService.refreshAccountMetrics` to update daily account metrics snapshots
   - `index.ts`: system-event initialization entry point used during background jobs startup
 - `Backend/src/core/events/__tests__/event-bus.test.ts`: event bus coverage for publish/subscribe behavior and subscriber error isolation
 
@@ -77,6 +77,12 @@
   - Sync requests now enqueue background jobs and persist sync-job tracking records
   - Account activation, deactivation, creation, and deletion now synchronize repeatable background sync schedules
   - Newly connected accounts are now created as active but with `syncEnabled: false` by default
+- Analytics (`Backend/src/modules/analytics/*`)
+  - Pure database query repository (`analytics.repository.ts`) with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, and account breakdown
+  - Utility and transformation layer (`analytics.utils.ts`) for metric math, contiguous date backfilling, regex name/email extraction, and response formatting
+  - Service layer (`analytics.service.ts`) orchestrating account authorization, concurrent queries, period percentage changes, and metrics snapshot refresh
+  - HTTP controller and route handlers (`analytics.controller.ts`, `analytics.routes.ts`, `analytics.schema.ts`) mounted under `/api/analytics`
+  - Internal type definitions and centralized constants (`analytics.types.ts`, `analytics.constants.ts`)
 - Attachments (`Backend/src/modules/attachments/*`)
   - Attachment staging file upload (`POST /api/attachments/upload`) to Cloudflare R2 object storage
   - Staged attachment deletion endpoint (`DELETE /api/attachments/:attachmentId`)
@@ -147,13 +153,13 @@
 ### Data Models
 
 - `Backend/src/modules/accounts/account.model.ts`
-  - `Account`, `AccountMetrics`
+  - `Account`, `AccountMetrics` (with `unreadCount`, `sentCount`, `totalEmails`, `totalThreads`)
 - `Backend/src/modules/accounts/sync-job.model.ts`
   - `SyncJob` for queued account-sync lifecycle tracking
 - `Backend/src/modules/attachments/attachment.model.ts`
   - `StagedAttachment` with 24-hour TTL expiration index for Cloudflare R2 staging metadata
 - `Backend/src/modules/emails/email.model.ts`
-  - `Email` with indexes on `(accountId, providerMessageId)`, date/folder access patterns, and attachment metadata storage
+  - `Email` with compound indexes on `(accountId, providerMessageId)`, `(accountId, receivedAt)`, `(accountId, folders, receivedAt)`, `(accountId, isRead)`, `(accountId, from)`, and `(accountId, threadId, receivedAt)`
 - `Backend/src/modules/folders/folder.model.ts`
   - `Folder` with provider folder identity + counts/role metadata
 - `Backend/src/modules/user/user.model.ts`
