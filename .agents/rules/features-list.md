@@ -123,14 +123,14 @@ trigger: always_on
 
 ##### **8. Dashboard / Home Page**
 
-- Overview:
-    - Total emails
-    - Unread count
-    - Important emails
-- Analytics:
-    - Emails per day/week/month
-    - Top senders
-    - Response time tracking
+- Overview: - done
+    - Total emails - done
+    - Unread count - done
+    - Important emails - done
+- Analytics: - done
+    - Emails per day/week/month - done
+    - Top senders - done
+    - Response time tracking - done
 - Weekly AI Digest:
     - Generated every Sunday
     - Key highlights:

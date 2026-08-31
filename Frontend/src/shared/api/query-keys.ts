@@ -1,3 +1,5 @@
+import { AnalyticsQueryParams } from '@mailsense/types';
+
 export const QUERY_KEYS = {
     AUTH: 'auth',
     ACCOUNTS: 'accounts',
@@ -20,4 +22,9 @@ export const DRAFT_QUERY_KEYS = {
     all: ['drafts'],
     list: () => [...DRAFT_QUERY_KEYS.all, 'list'],
     detail: (draftId: string) => [...DRAFT_QUERY_KEYS.all, 'detail', draftId],
+} as const;
+
+export const ANALYTICS_QUERY_KEYS = {
+    all: ['analytics'],
+    dashboard: (params?: AnalyticsQueryParams) => [...ANALYTICS_QUERY_KEYS.all, 'dashboard', params],
 } as const;

@@ -16,7 +16,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added `analytics.constants.ts` and `analytics.types.ts` centralizing folder classification identifiers and internal raw aggregation interfaces.
 - Added `AnalyticsController` and Zod validation schema (`analytics.schema.ts`) mounting `GET /api/analytics/dashboard` route guarded by `authMiddleware`.
 - Added automatic account metrics daily snapshot refresh on `SYSTEM_EVENT.SYNC_COMPLETED` inside `sync-completed.handler.ts`.
-- Added unit tests for date range calculations in `Backend/src/modules/analytics/__tests__/analytics.service.test.ts`.
+- Added unit and integration test suites: `analytics.utils.test.ts`, `analytics.service.test.ts`, `analytics.repository.test.ts`, and `analytics.integration.test.ts`.
+- Added performance benchmark suite (`analytics.benchmark.ts`) for latency and memory SLA verification across MongoDB aggregations.
 
 ### Changed
 
