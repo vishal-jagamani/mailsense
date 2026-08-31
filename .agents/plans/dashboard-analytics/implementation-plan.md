@@ -2,8 +2,8 @@
 
 > **Phase:** Phase 2 (from MailSense Development Roadmap) · **Release Target:** v3.1.0
 > **Priority:** 🟡 MEDIUM — High-impact overview, metrics collection & productivity analytics
-> **Status:** DRAFT
-> **Created:** 2026-08-29 · **Last Updated:** 2026-08-30
+> **Status:** COMPLETED
+> **Created:** 2026-08-29 · **Last Updated:** 2026-08-31
 
 ---
 
@@ -594,22 +594,24 @@ EmailSchema.index({ accountId: 1, threadId: 1, receivedAt: 1 });
 
 #### Tasks
 
-- [ ] Build `DashboardHeader.tsx` with timeframe buttons (`Today`, `7D`, `30D`, `90D`, `This Month`, `1Y`, `All Time`, `Custom`) and account selector.
-- [ ] Build `OverviewKpiCards.tsx` with animated counters and trend indicators.
-- [ ] Build `EmailVolumeChart.tsx` with customized Recharts Area/Bar chart, gradient fill, and theme-styled tooltips.
-- [ ] Build `ResponseTimeCard.tsx` with turnaround badges and distribution progress bars.
-- [ ] Build `TopSendersCard.tsx` with contact avatars and volume bars.
-- [ ] Build `AccountActivityGrid.tsx` with mailbox cards and status indicators.
-- [ ] Build `DashboardSkeleton.tsx` and `DashboardEmptyState.tsx`.
-- [ ] Assemble `Frontend/src/features/dashboard/pages/index.tsx`.
-- [ ] Create route `Frontend/src/app/(home)/dashboard/page.tsx`.
-- [ ] Update `HOME_ROUTES` and `SIDEBAR_DATA` to add Dashboard navigation item with `LayoutDashboard` icon.
+- [x] Build `DashboardHeader.tsx` with timeframe buttons (`Today`, `7D`, `30D`, `90D`, `This Month`, `1Y`, `All Time`, `Custom`) and account selector.
+- [x] Build `OverviewKpiCards.tsx` with animated counters and trend indicators.
+- [x] Build `EmailVolumeChart.tsx` with customized Recharts Area/Bar chart, gradient fill, and theme-styled tooltips.
+- [x] Build `AccountDistributionPieChart.tsx` with customized Recharts Doughnut/Pie chart for account email volume distribution.
+- [x] Build `ResponseTimeCard.tsx` with turnaround badges and distribution progress bars.
+- [x] Build `TopSendersCard.tsx` with contact avatars and volume bars.
+- [x] Build `AccountActivityGrid.tsx` with mailbox cards and status indicators.
+- [x] Build `DashboardSkeleton.tsx` and `DashboardEmptyState.tsx`.
+- [x] Assemble `Frontend/src/features/dashboard/pages/index.tsx`.
+- [x] Create route `Frontend/src/app/(home)/dashboard/page.tsx`.
+- [x] Update `HOME_ROUTES` and `SIDEBAR_DATA` to add Dashboard navigation item with `LayoutDashboard` icon.
 
 #### Files to Create
 
 - `Frontend/src/features/dashboard/components/DashboardHeader.tsx`
 - `Frontend/src/features/dashboard/components/OverviewKpiCards.tsx`
 - `Frontend/src/features/dashboard/components/EmailVolumeChart.tsx`
+- `Frontend/src/features/dashboard/components/AccountDistributionPieChart.tsx`
 - `Frontend/src/features/dashboard/components/ResponseTimeCard.tsx`
 - `Frontend/src/features/dashboard/components/TopSendersCard.tsx`
 - `Frontend/src/features/dashboard/components/AccountActivityGrid.tsx`
@@ -639,10 +641,10 @@ EmailSchema.index({ accountId: 1, threadId: 1, receivedAt: 1 });
 
 #### Tasks
 
-- [ ] Test aggregation pipelines against empty accounts and accounts with $\ge 10,000$ emails.
-- [ ] Verify response time calculation ignores automated bounce emails or invalid timestamp deltas.
-- [ ] Verify memory footprint remains well within the 256MB deployment limit during heavy dashboard queries.
-- [ ] Run full project type checks (`pnpm build` in `@mailsense/types`, `Backend`, and `Frontend`).
+- [x] Test aggregation pipelines against empty accounts and accounts with $\ge 10,000$ emails.
+- [x] Verify response time calculation ignores automated bounce emails or invalid timestamp deltas.
+- [x] Verify memory footprint remains well within the 256MB deployment limit during heavy dashboard queries.
+- [x] Run full project type checks (`pnpm build` in `@mailsense/types`, `Backend`, and `Frontend`).
 
 #### Acceptance Criteria
 

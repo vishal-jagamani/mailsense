@@ -10,6 +10,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 - Added mailbox analytics overview with real-time tracking of total, unread, sent, and starred email counts alongside active account statistics.
 - Added email volume trends with interactive time-series charts and period-over-period comparison insights.
+- Added account email distribution chart displaying volume share across connected mailboxes with a central total emails count.
 - Added top senders analytics highlighting most frequent incoming contacts and their share of incoming mail.
 - Added response turnaround time tracking and reply rate metrics to measure communication speed across email conversations.
 - Added per-account activity breakdowns summarizing email volume and unread messages across connected accounts.

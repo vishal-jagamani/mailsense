@@ -33,14 +33,10 @@ const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({
     const fileInputRef = useRef<HTMLInputElement | null>(null);
 
     const handlePaperclipClick = () => {
-        try {
-            if (!composeEmailBody?.accountId && accountsData && accountsData.length > 0) {
-                setComposeEmailBody({ ...composeEmailBody, accountId: accountsData[0]._id });
-            }
-            fileInputRef.current?.click();
-        } catch (error) {
-            console.error('Error handling paperclip click', error);
+        if (!composeEmailBody?.accountId && accountsData && accountsData.length > 0) {
+            setComposeEmailBody({ ...composeEmailBody, accountId: accountsData[0]._id });
         }
+        fileInputRef.current?.click();
     };
 
     return (

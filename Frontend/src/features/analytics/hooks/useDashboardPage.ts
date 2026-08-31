@@ -10,18 +10,14 @@ import { CustomDateRangeState, UseDashboardPageResult, UseDashboardParams } from
 
 export const useDashboardPage = (params?: UseDashboardParams): UseDashboardPageResult => {
     const currentUser = useAuthStore((state) => state.user);
+    const isAuthLoading = useAuthStore((state) => state.isLoading);
 
     const [selectedAccountId, setSelectedAccountId] = useState<string>(params?.initialAccountId ?? ALL_ACCOUNTS_FILTER_ID);
     const [selectedTimeframe, setSelectedTimeframe] = useState<ANALYTICS_TIMEFRAME>(params?.initialTimeframe ?? DEFAULT_ANALYTICS_TIMEFRAME);
     const [customDateRange, setCustomDateRangeState] = useState<CustomDateRangeState>({ startDate: '', endDate: '' });
 
-    // Synchronize breadcrumbs on mount
-    useEffect(() => {
-        useBreadcrumbStore.setState({ items: [{ title: 'Dashboard', url: HOME_ROUTES.DASHBOARD }] });
-    }, []);
-
     // Fetch user connected accounts
-    const { data: accountsData } = useGetAccountsQuery(currentUser?.id || '', {
+    const { data: accountsData, isLoading: isAccountsLoading } = useGetAccountsQuery(currentUser?.id || '', {
         enabled: Boolean(currentUser?.id),
     });
 
@@ -61,7 +57,9 @@ export const useDashboardPage = (params?: UseDashboardParams): UseDashboardPageR
         isLoading: analyticsDataLoading,
         error: analyticsDataError,
         refetch: refetchAnalytics,
-    } = useGetDashboardAnalyticsQuery(queryParams, Boolean(currentUser?.id));
+    } = useGetDashboardAnalyticsQuery(queryParams, Boolean(currentUser?.id && activeAccounts.length > 0));
+
+    const isInitialLoading = isAuthLoading || !currentUser?.id || isAccountsLoading || (activeAccounts.length > 0 && analyticsDataLoading && !analyticsData);
 
     const handleSetSelectedAccountId = (accountId: string): void => {
         setSelectedAccountId(accountId);
@@ -86,8 +84,8 @@ export const useDashboardPage = (params?: UseDashboardParams): UseDashboardPageR
     };
 
     return {
-        accounts: { data: activeAccounts },
-        analytics: { data: analyticsData, isLoading: analyticsDataLoading, error: analyticsDataError },
+        accounts: { data: activeAccounts, isLoading: isAccountsLoading },
+        analytics: { data: analyticsData, isLoading: isInitialLoading, error: analyticsDataError },
         states: { selectedAccountId, selectedTimeframe, customDateRange, timeframeOptions: TIMEFRAME_OPTIONS },
         setters: {
             setSelectedAccountId: handleSetSelectedAccountId,

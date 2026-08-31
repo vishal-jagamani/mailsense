@@ -31,3 +31,15 @@ export const VOLUME_CHART_SERIES: { RECEIVED: ChartSeriesConfig; SENT: ChartSeri
         fillColor: '#34d399',
     },
 };
+
+export const ACCOUNT_PIE_CHART_COLORS: string[] = [
+    '#6366f1', // Indigo
+    '#3b82f6', // Blue
+    '#10b981', // Emerald
+    '#f59e0b', // Amber
+    '#ec4899', // Pink
+    '#8b5cf6', // Purple
+    '#06b6d4', // Cyan
+    '#f97316', // Orange
+];
+

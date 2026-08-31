@@ -23,12 +23,8 @@ export const DraftListHeader: React.FC<DraftListHeaderProps> = ({
                     placeholder="Search drafts by recipient, subject, or content..."
                     value={searchValue}
                     onChange={(e) => {
-                        try {
-                            setSearchValue(e.target.value);
-                            handleResetPage();
-                        } catch (error) {
-                            console.error('Error handling search change', error);
-                        }
+                        setSearchValue(e.target.value);
+                        handleResetPage();
                     }}
                     className="pl-9 text-xs md:text-sm"
                 />

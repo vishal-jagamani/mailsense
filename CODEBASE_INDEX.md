@@ -265,7 +265,7 @@
   - Account, email, folder, user, filter, and settings data contracts now come from `@mailsense/types`
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
   - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer
-  - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), and composite state orchestration hook (`useDashboardPage.ts`)
+  - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), composite state orchestration hook (`useDashboardPage.ts`), UI components (`DashboardHeader`, `OverviewKpiCards`, `EmailVolumeChart`, `AccountDistributionPieChart`, `ResponseTimeCard`, `TopSendersCard`, `AccountActivityGrid`, `DashboardSkeleton`, `DashboardEmptyState`), and primary dashboard page view (`pages/index.tsx`)
   - `features/auth/*`: login page and profile fetch query
   - `features/drafts/*`: drafts page (`DraftsPage`), draft table components (`DraftListTable`, `DraftListTableHeader`, `DraftListTableBody`), debounced auto-save hook (`useAutoSaveDraft`), page state hook (`useDraftsPage`), and draft API layer (`draft.api.ts`, `draft.queries.ts`, `draft.mutations.ts`)
   - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, email API layer

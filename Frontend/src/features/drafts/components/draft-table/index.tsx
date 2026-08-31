@@ -16,14 +16,10 @@ export const DraftListTable: React.FC<DraftListTableProps> = ({ data, selectedDr
     const allSelected = data.length > 0 && selectedDrafts.length === data.length;
 
     const handleSelectAll = () => {
-        try {
-            if (allSelected) {
-                onDraftSelect([]);
-            } else {
-                onDraftSelect(data.map((d) => d._id));
-            }
-        } catch (error) {
-            console.error('Error selecting all drafts', error);
+        if (allSelected) {
+            onDraftSelect([]);
+        } else {
+            onDraftSelect(data.map((d) => d._id));
         }
     };
 
