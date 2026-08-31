@@ -7,6 +7,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-31
+
 ### Added
 
 - Added dedicated `analytics` backend module (`Backend/src/modules/analytics/*`).
