@@ -7,6 +7,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-31
+
 ### Added
 
 - Added `recharts` (`^3.10.1`) and `@types/recharts` (`^2.0.1`) chart visualization dependencies to `package.json`.

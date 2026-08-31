@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-31
+
 ### Added
 - Added mailbox analytics overview with real-time tracking of total, unread, sent, and starred email counts alongside active account statistics.
 - Added email volume trends with interactive time-series charts and period-over-period comparison insights.
