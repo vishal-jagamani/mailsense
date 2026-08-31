@@ -1,8 +1,11 @@
-import { redirect } from 'next/navigation';
+'use client';
+
 import React from 'react';
 
-const page: React.FC = () => {
-    redirect('/inbox');
+import DashboardPage from '@features/analytics/pages';
+
+const HomePage: React.FC = () => {
+    return <DashboardPage />;
 };
 
-export default page;
+export default HomePage;

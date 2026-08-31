@@ -1,4 +1,4 @@
-import { CircleUser, FileText, Folder, Inbox, Settings } from 'lucide-react';
+import { CircleUser, FileText, Folder, Inbox, LayoutDashboard, Settings } from 'lucide-react';
 import { SidebarData } from '../types/sidebar.types';
 import { HOME_ROUTES, ROUTES } from './routes';
 
@@ -9,6 +9,12 @@ export const SIDEBAR_DATA: SidebarData = {
         avatar: '/avatars/shadcn.jpg',
     },
     navMain: [
+        {
+            title: 'Dashboard',
+            url: HOME_ROUTES.DASHBOARD,
+            icon: LayoutDashboard,
+            isActive: true,
+        },
         {
             title: 'Inbox',
             url: HOME_ROUTES.UNIFIED_INBOX,

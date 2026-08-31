@@ -27,17 +27,13 @@ export const useAutoSaveDraft = ({ composeBody, isOpen, activeDraftId, onDraftSa
         }
 
         timeoutRef.current = setTimeout(() => {
-            try {
-                saveDraft({
-                    draftId,
-                    accountId: composeBody.accountId,
-                    to: composeBody.to || [],
-                    subject: composeBody.subject || '',
-                    body: composeBody.body || '',
-                });
-            } catch (error) {
-                console.error('Auto-save draft error', error);
-            }
+            saveDraft({
+                draftId,
+                accountId: composeBody.accountId,
+                to: composeBody.to || [],
+                subject: composeBody.subject || '',
+                body: composeBody.body || '',
+            });
         }, 3000);
 
         return () => {

@@ -7,6 +7,30 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-08-31
+
+### Added
+
+- Added `recharts` (`^3.10.1`) and `@types/recharts` (`^2.0.1`) chart visualization dependencies to `package.json`.
+- Added `ANALYTICS_API_ENDPOINTS.DASHBOARD` to centralized endpoint definitions in `Frontend/src/shared/api/endpoints.ts`.
+- Added `ANALYTICS_QUERY_KEYS` in `Frontend/src/shared/api/query-keys.ts` with factory methods for dashboard queries and filter-based cache keys.
+- Added `DASHBOARD: '/'` to `HOME_ROUTES` in `Frontend/src/shared/constants/routes.ts`.
+- Added `Frontend/src/shared/constants/dashboard.ts` centralizing timeframe options (`today`, `7d`, `30d`, `90d`, `this_month`, `1y`, `all_time`), stale time (60s), and volume chart color palettes.
+- Added `Frontend/src/features/analytics/types/index.ts` defining `UseDashboardPageResult`, `TimeframeOption`, `UseDashboardParams`, `CustomDateRangeState`, and `ChartSeriesConfig`.
+- Added `fetchDashboardAnalytics` API client wrapper in `Frontend/src/features/analytics/api/analytics.api.ts` mapping `/analytics/dashboard`.
+- Added `useGetDashboardAnalyticsQuery` React Query hook in `Frontend/src/features/analytics/api/analytics.queries.ts` with 60s stale time and window focus refetching.
+- Added `useDashboardPage` custom hook in `Frontend/src/features/analytics/hooks/useDashboardPage.ts` managing filter state, connected account resolution, custom date boundaries, and breadcrumb synchronization.
+- Added `DashboardHeader` with mobile/desktop responsive filter layout, account selection dropdown, and timeframe filter pills.
+- Added `OverviewKpiCards` displaying 6 productivity metric cards with trend indicators.
+- Added `EmailVolumeChart` dual-area chart using Recharts for Received vs Sent email volume.
+- Added `AccountDistributionPieChart` doughnut chart showing per-mailbox volume share with a centered total emails count and aligned legend.
+- Added `ResponseTimeCard` showing turnaround speed metrics and 4-tier distribution bars.
+- Added `TopSendersCard` contact leaderboard with avatars, counts, and volume share progress bars.
+- Added `AccountActivityGrid` cards summarizing per-account sync health and direct inbox navigation.
+- Added `DashboardSkeleton` loading placeholders and `DashboardEmptyState` mailbox connect CTA.
+- Added `DashboardPage` primary view in `Frontend/src/features/analytics/pages/index.tsx` and mounted on `/` (`Frontend/src/app/(home)/page.tsx`).
+- Added `Dashboard` navigation item with `LayoutDashboard` Lucide icon to sidebar (`Frontend/src/shared/constants/sidebar.constants.ts`).
+
 ## [3.0.0] - 2026-08-29
 
 ### Added

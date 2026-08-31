@@ -1,3 +1,5 @@
+import { ANALYTICS_TIMEFRAME } from '@mailsense/types';
+
 export const formatDateToMonthDateString = (date: Date) =>
     new Intl.DateTimeFormat('en-US', {
         month: 'short',
@@ -65,4 +67,29 @@ export const formatDateToDateTimeAgoString = (input: string | Date): string => {
         day: 'numeric',
     });
     return `${dateString} ${timeString} (${calculateTimeAgo(date)})`;
+};
+
+export const formatEpochToTimeAgo = (timestamp: number): string => {
+    if (!timestamp) return 'Never synced';
+    const diffSeconds = Math.floor((Date.now() - timestamp) / 1000);
+    if (diffSeconds < 60) return 'Just now';
+    const diffMins = Math.floor(diffSeconds / 60);
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return new Date(timestamp).toLocaleDateString([], { month: 'short', day: 'numeric' });
+};
+
+export const formatEmailVolumeChartXAxisDate = (dateString: string, timeframe: ANALYTICS_TIMEFRAME): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+
+    if (timeframe === ANALYTICS_TIMEFRAME.TODAY) {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    if (timeframe === ANALYTICS_TIMEFRAME.SEVEN_DAYS || timeframe === ANALYTICS_TIMEFRAME.THIRTY_DAYS) {
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+    return date.toLocaleDateString([], { month: 'short', year: '2-digit' });
 };

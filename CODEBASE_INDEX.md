@@ -44,7 +44,7 @@
 - `Backend/src/core/events/*`: internal event bus and event handlers for background sync milestones
   - `event-bus.ts`: typed event emitter wrapper with safe subscriber execution and sanitized logging, now powered by shared event contracts from `@mailsense/types`
   - `handlers/email-created.handler.ts`: subscriber hook for newly indexed email events
-  - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events
+  - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events; triggers `AnalyticsService.refreshAccountMetrics` to update daily account metrics snapshots
   - `index.ts`: system-event initialization entry point used during background jobs startup
 - `Backend/src/core/events/__tests__/event-bus.test.ts`: event bus coverage for publish/subscribe behavior and subscriber error isolation
 
@@ -77,6 +77,12 @@
   - Sync requests now enqueue background jobs and persist sync-job tracking records
   - Account activation, deactivation, creation, and deletion now synchronize repeatable background sync schedules
   - Newly connected accounts are now created as active but with `syncEnabled: false` by default
+- Analytics (`Backend/src/modules/analytics/*`)
+  - Pure database query repository (`analytics.repository.ts`) with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, and account breakdown
+  - Utility and transformation layer (`analytics.utils.ts`) for metric math, contiguous date backfilling, regex name/email extraction, and response formatting
+  - Service layer (`analytics.service.ts`) orchestrating account authorization, concurrent queries, period percentage changes, and metrics snapshot refresh
+  - HTTP controller and route handlers (`analytics.controller.ts`, `analytics.routes.ts`, `analytics.schema.ts`) mounted under `/api/analytics`
+  - Internal type definitions and centralized constants (`analytics.types.ts`, `analytics.constants.ts`)
 - Attachments (`Backend/src/modules/attachments/*`)
   - Attachment staging file upload (`POST /api/attachments/upload`) to Cloudflare R2 object storage
   - Staged attachment deletion endpoint (`DELETE /api/attachments/:attachmentId`)
@@ -147,13 +153,13 @@
 ### Data Models
 
 - `Backend/src/modules/accounts/account.model.ts`
-  - `Account`, `AccountMetrics`
+  - `Account`, `AccountMetrics` (with `unreadCount`, `sentCount`, `totalEmails`, `totalThreads`)
 - `Backend/src/modules/accounts/sync-job.model.ts`
   - `SyncJob` for queued account-sync lifecycle tracking
 - `Backend/src/modules/attachments/attachment.model.ts`
   - `StagedAttachment` with 24-hour TTL expiration index for Cloudflare R2 staging metadata
 - `Backend/src/modules/emails/email.model.ts`
-  - `Email` with indexes on `(accountId, providerMessageId)`, date/folder access patterns, and attachment metadata storage
+  - `Email` with compound indexes on `(accountId, providerMessageId)`, `(accountId, receivedAt)`, `(accountId, folders, receivedAt)`, `(accountId, isRead)`, `(accountId, from)`, and `(accountId, threadId, receivedAt)`
 - `Backend/src/modules/folders/folder.model.ts`
   - `Folder` with provider folder identity + counts/role metadata
 - `Backend/src/modules/user/user.model.ts`
@@ -259,13 +265,14 @@
   - Account, email, folder, user, filter, and settings data contracts now come from `@mailsense/types`
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
   - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer
+  - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), composite state orchestration hook (`useDashboardPage.ts`), UI components (`DashboardHeader`, `OverviewKpiCards`, `EmailVolumeChart`, `AccountDistributionPieChart`, `ResponseTimeCard`, `TopSendersCard`, `AccountActivityGrid`, `DashboardSkeleton`, `DashboardEmptyState`), and primary dashboard page view (`pages/index.tsx`)
   - `features/auth/*`: login page and profile fetch query
   - `features/drafts/*`: drafts page (`DraftsPage`), draft table components (`DraftListTable`, `DraftListTableHeader`, `DraftListTableBody`), debounced auto-save hook (`useAutoSaveDraft`), page state hook (`useDraftsPage`), and draft API layer (`draft.api.ts`, `draft.queries.ts`, `draft.mutations.ts`)
   - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, email API layer
   - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer, folder action hooks
   - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks with sync-aware refresh behavior
   - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer
-- `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys
+- `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`)
 - `Frontend/next.config.ts`: transpiles the shared `@mailsense/types` package for Next.js consumption
 - `Frontend/pnpm-workspace.yaml`: links `@mailsense/types` from the local workspace
 
@@ -283,7 +290,7 @@
   - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:
   - query keys in `Frontend/src/shared/api/query-keys.ts`
-  - includes `USER_SYNC_SETTINGS` for account background-sync preferences
+  - includes `USER_SYNC_SETTINGS` for account background-sync preferences and `ANALYTICS_QUERY_KEYS` for dashboard query caching
   - feature-level queries and mutations under `features/*/api/*.queries.ts`, `features/*/api/*.mutation.ts`, and `features/*/api/*.mutations.ts`
 - Axios clients:
   - `Frontend/src/shared/api/client.ts`
@@ -293,6 +300,7 @@
 ### Backend API Endpoint Constants in Frontend
 
 - Accounts: `Frontend/src/shared/api/endpoints.ts`
+- Analytics: `Frontend/src/shared/api/endpoints.ts`
 - Auth: `Frontend/src/shared/api/endpoints.ts`
 - Emails: `Frontend/src/shared/api/endpoints.ts`
 - Folders: `Frontend/src/shared/api/endpoints.ts`
@@ -305,8 +313,9 @@
 - `Frontend/src/shared/ui/badge.tsx`: reusable recipient chip/badge UI used in compose flow
 - `Frontend/src/shared/types/sidebar.types.ts`: shared sidebar navigation item and project typing
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
+- `Frontend/src/shared/constants/dashboard.ts`: timeframe options, stale cache configuration, and volume chart color series
 - `Frontend/src/shared/constants/email.ts`: email list pagination and date-range dropdown options backed by email entity enums
-- `Frontend/src/shared/api/endpoints.ts`: centralized Auth0 route helpers and backend endpoint constants, including account sync-settings and user settings endpoints
+- `Frontend/src/shared/api/endpoints.ts`: centralized Auth0 route helpers and backend endpoint constants, including analytics, account sync-settings, and user settings endpoints
 - `Frontend/src/shared/utils/emails.ts`: shared email display-formatting helpers such as recipient label formatting for thread headers
 - `Frontend/src/features/emails/utils/attachments.ts`: frontend attachment download and preview helpers for email detail flows
 

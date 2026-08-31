@@ -1,10 +1,10 @@
-import { ACCOUNT_LAST_SYNC_STATUS, AccountAttributes, AccountMetricsAttributes } from '@mailsense/types';
+import { ACCOUNT_LAST_SYNC_STATUS, AccountAttributes, AccountMetricsAttributes, CreateEntityInput } from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
 import validator from 'validator';
 
 // ✅ Input type (plain object you pass into create)
-export type AccountInput = Omit<AccountAttributes, '_id' | 'createdAt' | 'updatedAt'>;
-export type AccountMetricsInput = Omit<AccountMetricsAttributes, '_id' | 'createdAt' | 'updatedAt'>;
+export type AccountInput = CreateEntityInput<AccountAttributes>;
+export type AccountMetricsInput = CreateEntityInput<AccountMetricsAttributes>;
 
 // ✅ Document type (what comes back from Mongo)
 export type AccountDocument = Document & AccountAttributes;
@@ -56,12 +56,14 @@ export const Account = model<AccountDocument>('Account', AccountSchema);
 const AccountMetricsSchema = new Schema<AccountMetricsDocument>(
     {
         accountId: { type: String, required: true },
-        totalEmails: { type: Number, required: true },
-        totalThreads: { type: Number, required: true },
-        totalLabels: { type: Number, required: true },
-        totalFolders: { type: Number, required: true },
-        totalContacts: { type: Number, required: true },
-        date: { type: Date, required: true },
+        totalEmails: { type: Number, required: true, default: 0 },
+        totalThreads: { type: Number, required: true, default: 0 },
+        totalLabels: { type: Number, required: true, default: 0 },
+        totalFolders: { type: Number, required: true, default: 0 },
+        totalContacts: { type: Number, required: true, default: 0 },
+        unreadCount: { type: Number, required: false, default: 0 },
+        sentCount: { type: Number, required: false, default: 0 },
+        date: { type: Date, required: true, default: Date.now },
     },
     { timestamps: true, versionKey: false },
 );
