@@ -70,12 +70,16 @@ export class AnalyticsRepository {
             },
         ];
 
-        const [emailStats, draftsCount] = await Promise.all([
+        const [emailStats, draftsCount, allTimeTotalEmails] = await Promise.all([
             Email.aggregate<RawOverviewFacetResult>(aggregationPipeline),
             DraftModel.countDocuments({ userId, accountId: { $in: accountIds } }),
+            Email.countDocuments({ accountId: { $in: accountIds } }),
         ]);
 
-        return { facetResult: emailStats[0] || {}, draftsCount };
+        const facetResult = emailStats[0] || {};
+        const periodEmailsCount = facetResult.totalEmails?.[0]?.count ?? 0;
+
+        return { facetResult, draftsCount, allTimeTotalEmails, periodEmailsCount };
     }
 
     public static async getEmailVolumeTimeSeriesRaw(accountIds: string[], startDate: Date, endDate: Date): Promise<RawVolumeDataPoint[]> {
