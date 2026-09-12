@@ -10,7 +10,7 @@ import { useIsMobile } from '@shared/hooks';
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = (props) => {
     const isMobile = useIsMobile();
-    const { selectedAccountId, onSelectAccountId, onRefresh, accounts, selectedTimeframe, timeframeOptions, isRefreshing } = props;
+    const { selectedAccountId, onSelectAccountId, onSelectTimeframe, onRefresh, accounts, selectedTimeframe, timeframeOptions, isRefreshing } = props;
 
     const activeAccountLabel: string = useMemo(() => {
         if (selectedAccountId === ALL_ACCOUNTS_FILTER_ID) {
@@ -47,7 +47,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = (props) => {
                             selectedTimeframe={selectedTimeframe}
                             timeframeOptions={timeframeOptions}
                             isRefreshing={isRefreshing}
-                            onSelectAccountId={onSelectAccountId}
+                            onSelectTimeframe={onSelectTimeframe}
                             handleRefreshClick={handleRefreshClick}
                         />
                     </div>
@@ -75,7 +75,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = (props) => {
                             selectedTimeframe={selectedTimeframe}
                             timeframeOptions={timeframeOptions}
                             isRefreshing={isRefreshing}
-                            onSelectAccountId={onSelectAccountId}
+                            onSelectTimeframe={onSelectTimeframe}
                             handleRefreshClick={handleRefreshClick}
                         />
                     </div>

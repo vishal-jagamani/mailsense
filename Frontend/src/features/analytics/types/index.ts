@@ -56,6 +56,7 @@ export interface DashboardHeaderProps {
     timeframeOptions: TimeframeOption[];
     isRefreshing: boolean;
     onSelectAccountId: (accountId: string) => void;
+    onSelectTimeframe: (timeframe: ANALYTICS_TIMEFRAME) => void;
     onRefresh: () => Promise<void>;
 }
 
@@ -70,7 +71,7 @@ export interface DashboardHeaderActionBarProps {
     selectedTimeframe: ANALYTICS_TIMEFRAME;
     timeframeOptions: TimeframeOption[];
     isRefreshing: boolean;
-    onSelectAccountId: (id: string) => void;
+    onSelectTimeframe: (timeframe: ANALYTICS_TIMEFRAME) => void;
     handleRefreshClick: () => Promise<void>;
 }
 
