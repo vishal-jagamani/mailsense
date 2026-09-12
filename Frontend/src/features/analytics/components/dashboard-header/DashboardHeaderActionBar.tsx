@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 const DashboardHeaderActionBar: React.FC<DashboardHeaderActionBarProps> = ({
     timeframeOptions,
     selectedTimeframe,
-    onSelectAccountId,
+    onSelectTimeframe,
     handleRefreshClick,
     isRefreshing,
 }) => {
@@ -22,7 +22,7 @@ const DashboardHeaderActionBar: React.FC<DashboardHeaderActionBarProps> = ({
                             <button
                                 key={option.value}
                                 type="button"
-                                onClick={() => onSelectAccountId(option.value)}
+                                onClick={() => onSelectTimeframe(option.value)}
                                 className={`cursor-pointer rounded-md px-2 py-2 text-xs font-medium text-nowrap transition-all ${
                                     isSelected
                                         ? 'bg-secondary text-foreground shadow-sm'

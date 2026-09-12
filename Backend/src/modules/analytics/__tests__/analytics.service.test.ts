@@ -111,6 +111,8 @@ describe('AnalyticsService — Unit & Scenario Tests', () => {
                     threads: [{ count: 65 }],
                 },
                 draftsCount: 3,
+                allTimeTotalEmails: 229,
+                periodEmailsCount: 120,
             });
 
             (AnalyticsRepository.getEmailVolumeTimeSeriesRaw as jest.Mock).mockResolvedValue([]);
@@ -125,7 +127,7 @@ describe('AnalyticsService — Unit & Scenario Tests', () => {
                 timeframe: ANALYTICS_TIMEFRAME.SEVEN_DAYS,
             });
 
-            expect(response.overview.totalEmails).toBe(120);
+            expect(response.overview.totalEmails).toBe(229);
             expect(response.overview.unreadEmails).toBe(15);
             expect(response.overview.sentEmails).toBe(35);
             expect(response.overview.activeAccountsCount).toBe(2);

@@ -165,7 +165,7 @@ export const calculateDateRange = (timeframe: ANALYTICS_TIMEFRAME, customStartDa
 export const formatOverviewMetrics = (raw: RawOverviewAggregateResult, activeAccountsCount: number): OverviewMetricsAttributes => {
     try {
         const facet = raw.facetResult || {};
-        const totalEmails = facet.totalEmails?.[0]?.count ?? 0;
+        const totalEmails = raw.allTimeTotalEmails ?? (facet.totalEmails?.[0]?.count ?? 0);
         const unreadEmails = facet.unreadEmails?.[0]?.count ?? 0;
         const sentEmails = facet.sentEmails?.[0]?.count ?? 0;
         const starredEmails = facet.starredEmails?.[0]?.count ?? 0;
