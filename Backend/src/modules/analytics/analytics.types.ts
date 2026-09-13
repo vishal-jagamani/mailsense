@@ -26,6 +26,8 @@ export interface RawOverviewFacetResult {
 export interface RawOverviewAggregateResult {
     facetResult: RawOverviewFacetResult;
     draftsCount: number;
+    allTimeTotalEmails?: number;
+    periodEmailsCount?: number;
 }
 
 export interface RawVolumeDataPoint {

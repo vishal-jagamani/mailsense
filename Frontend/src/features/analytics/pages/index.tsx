@@ -58,6 +58,7 @@ const DashboardPage: React.FC = () => {
                 timeframeOptions={states.timeframeOptions}
                 isRefreshing={isRefreshing}
                 onSelectAccountId={setters.setSelectedAccountId}
+                onSelectTimeframe={setters.setSelectedTimeframe}
                 onRefresh={handleManualRefresh}
             />
 

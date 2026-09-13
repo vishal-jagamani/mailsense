@@ -59,6 +59,7 @@ describe('AnalyticsRepository — Unit Tests', () => {
 
                 (Email.aggregate as jest.Mock).mockResolvedValue(mockFacetData);
                 (DraftModel.countDocuments as jest.Mock).mockResolvedValue(5);
+                (Email.countDocuments as jest.Mock).mockResolvedValue(229);
 
                 const startDate = new Date('2026-08-01T00:00:00Z');
                 const endDate = new Date('2026-08-31T23:59:59Z');
@@ -70,8 +71,13 @@ describe('AnalyticsRepository — Unit Tests', () => {
                     userId: 'usr_123',
                     accountId: { $in: ['acc_1', 'acc_2'] },
                 });
+                expect(Email.countDocuments).toHaveBeenCalledWith({
+                    accountId: { $in: ['acc_1', 'acc_2'] },
+                });
                 expect(result.facetResult).toEqual(mockFacetData[0]);
                 expect(result.draftsCount).toBe(5);
+                expect(result.allTimeTotalEmails).toBe(229);
+                expect(result.periodEmailsCount).toBe(150);
             } catch (error) {
                 expect(error).toBeUndefined();
             }

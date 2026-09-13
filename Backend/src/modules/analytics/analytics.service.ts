@@ -45,9 +45,14 @@ export class AnalyticsService {
             const currentOverview = formatOverviewMetrics(rawOverview, targetAccountIds.length);
             const prevOverview = rawPrevOverview ? formatOverviewMetrics(rawPrevOverview, targetAccountIds.length) : null;
 
+            const currentPeriodEmails = rawOverview.periodEmailsCount ?? rawOverview.facetResult.totalEmails?.[0]?.count ?? 0;
+            const prevPeriodEmails = rawPrevOverview
+                ? (rawPrevOverview.periodEmailsCount ?? rawPrevOverview.facetResult.totalEmails?.[0]?.count ?? 0)
+                : undefined;
+
             const overview: OverviewMetricsAttributes = {
                 ...currentOverview,
-                emailsChangePercentage: calculatePercentageChange(currentOverview.totalEmails, prevOverview?.totalEmails),
+                emailsChangePercentage: calculatePercentageChange(currentPeriodEmails, prevPeriodEmails),
                 unreadChangePercentage: calculatePercentageChange(currentOverview.unreadEmails, prevOverview?.unreadEmails),
                 sentChangePercentage: calculatePercentageChange(currentOverview.sentEmails, prevOverview?.sentEmails),
             };
