@@ -1,9 +1,13 @@
+import { htmlToText } from 'html-to-text';
+
+import { LOGGER_MODULE } from '@constants';
 import { DraftAttributes, DraftListDTO, SaveDraftRequestBody, SuccessAPIResponse } from '@mailsense/types';
 import { EmailService } from '@modules/emails/email.service.js';
-import { logger } from '@utils';
-import { htmlToText } from 'html-to-text';
+import { createLogger } from '@observability';
 import { DraftDocument, DraftInput } from './draft.model.js';
 import { DraftRepository } from './draft.repository.js';
+
+const logger = createLogger(LOGGER_MODULE.DRAFT_SERVICE);
 
 export class DraftService {
     private emailService: EmailService;

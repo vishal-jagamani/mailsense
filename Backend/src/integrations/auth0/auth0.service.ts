@@ -1,8 +1,11 @@
+import { LOGGER_MODULE } from '@constants';
 import { UserDetailsObject } from '@mailsense/types';
 import { UpdateUserSchema } from '@modules/user/user.schema.js';
-import { logger } from 'shared/utils/index.js';
+import { createLogger } from '@observability';
 import { Auth0Api } from './auth0.client.js';
 import { Auth0UserDetailsResponse } from './auth0.types.js';
+
+const logger = createLogger(LOGGER_MODULE.AUTH0_SERVICE);
 
 export class Auth0Service {
     private auth0Api: Auth0Api;

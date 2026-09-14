@@ -61,10 +61,37 @@
 ### Middleware and Request Flow
 
 - `Backend/src/middlewares/index.ts`: barrel export for backend middleware
-- `Backend/src/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`
+- `Backend/src/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`, binds user context to `TraceStore`, and registers `monitoring.setUser()`
 - `Backend/src/middlewares/validator.ts`: Zod request validation (`headers`, `params`, `query`, `body`)
 - `Backend/src/shared/utils/request.handler.ts`: async wrapper for controllers
-- `Backend/src/middlewares/error.handler.ts`: centralized structured error responses for app/provider failures
+- `Backend/src/middlewares/error.handler.ts`: centralized structured error responses with `traceId` correlation and APM exception dispatch
+
+### Observability & Tracing (`Backend/src/core/observability/*`)
+
+- `trace.ts`: Node.js `AsyncLocalStorage`-backed distributed tracing store capturing `traceId`, `userId`, `userEmail`, `userName`, and `accountId` across async call chains; provides `traceMiddleware`, `runWithTrace`, `getTraceStore`, and `setTraceContext`
+- `logger.factory.ts`: `createLogger(moduleName, options)` returning module-scoped child Pino loggers with automatic non-blocking APM bridging (`addBreadcrumb`, `captureException`), recursion guards, and `withTiming` helper
+- `request-logger.middleware.ts`: Express middleware logging inbound/outbound HTTP transactions with latency timing, auto-skipping health check probes
+- `Backend/src/core/constants/observability.constants.ts`: centralizes `LOGGER_MODULE` enum and health probe endpoint paths
+
+### Monitoring Infrastructure (`Backend/src/core/monitoring/*`)
+
+- `monitoring.manager.ts`: singleton APM orchestrator supporting pluggable providers via `MONITORING_PROVIDER` environment variable
+- `providers/sentry.provider.ts`: Sentry provider supporting Sentry Native Structured Logging (`enableLogs: true`, `Sentry.logger.*`), breadcrumbs, worker error reporting, and canonical user modeling (`user.id`, `user.email`, `user.username`)
+- `providers/noop.provider.ts`: silent fallback provider for development and testing environments
+- `Backend/src/core/types/monitoring.types.ts`: `IMonitoringProvider` strategy contract and monitoring DTOs
+
+### Error Infrastructure (`Backend/src/core/errors/*`)
+
+- `ErrorCodes.ts`: standardized `ErrorCode` string enum providing compiler-enforced error codes
+- `AppError.ts`: base operational error class carrying `errorCode`, `httpStatus`, `traceId`, and typed context
+- `DomainErrors.ts`: 11 domain error subclasses (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`)
+- `ErrorFactories.ts`: ergonomic helpers for domain error instantiation
+
+### Health Probes & Readiness Checks (`Backend/src/core/health/*`)
+
+- `health.service.ts`: verifies MongoDB and Redis operational connection states
+- `health.controller.ts`: handles `/health` (Koyeb liveness probe) and `/health/ready` (readiness probe with dependency verification)
+- `health.routes.ts`: unauthenticated Express route definitions mounted prior to auth middleware
 
 ### Modules
 
@@ -239,9 +266,17 @@
 ### Runtime Entry
 
 - `Frontend/src/app/layout.tsx`: root layout + providers
-- `Frontend/src/shared/providers/index.tsx`: Centralized application providers wrapper (Auth0, custom AuthProvider, React Query, theme, toaster)
+- `Frontend/src/shared/providers/index.tsx`: Centralized application providers wrapper (ErrorBoundary root wrapper, Auth0, custom AuthProvider, React Query, theme, toaster)
+- `Frontend/src/shared/components/ErrorBoundary.tsx`: Functional React Error Boundary with user-friendly error card, stack disclosure, retry action, and single-click "Copy Trace ID" button
 - `Frontend/src/middleware.ts`: route protection via Auth0 session (redirect unauthenticated to `/get_started`)
 - `Frontend/src/app/(home)/layout.tsx`: authenticated shell with sidebar, breadcrumb, and global compose-email popup
+
+### Observability & Monitoring (`Frontend/src/shared/monitoring/*`)
+
+- `Frontend/src/shared/monitoring/index.ts`: barrel export for `frontendMonitoring` singleton and `sessionTracker`
+- `Frontend/src/shared/monitoring/frontend-monitoring.interfaces.ts`: `IMonitoringProvider` strategy interface and frontend user context contracts
+- `Frontend/src/shared/monitoring/providers/sentry-frontend.provider.ts`: Sentry browser SDK integration with performance tracing, session replay, and privacy masking for rich-text editors and email bodies
+- `Frontend/src/shared/monitoring/session.tracker.ts`: tracks client route changes, user actions, breadcrumbs, and API mutation failures
 
 ### App Router Pages
 
@@ -273,8 +308,15 @@
   - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks with sync-aware refresh behavior
   - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`)
-- `Frontend/next.config.ts`: transpiles the shared `@mailsense/types` package for Next.js consumption
-- `Frontend/pnpm-workspace.yaml`: links `@mailsense/types` from the local workspace
+- `Frontend/src/shared/monitoring/*`: client observability and action tracking
+  - `frontend.manager.ts`: `FrontendMonitoringManager` singleton and `trackUserAction` helper
+  - `providers/sentry-frontend.provider.ts`: `SentryFrontendProvider` integrating `@sentry/nextjs` for client error capture, user identity mapping (`setUser`), distributed `traceId` correlation, and typed breadcrumbs (Session Replay omitted to avoid paid tier costs)
+  - `providers/console-frontend.provider.ts`: `ConsoleFrontendProvider` for structured local console logging
+  - `session.tracker.ts`: in-memory rolling action ring buffer (FIFO 50 items) with strict privacy masking for rich-text editors, inputs, and email content
+- `Frontend/src/shared/components/ErrorBoundary.tsx`: React Error Boundary with user-friendly recovery UI and "Copy Trace ID" action
+- `Frontend/sentry.client.config.ts`: Next.js client-side Sentry initialization file configuring error tracking and trace sampling (`tracesSampleRate: 1.0`)
+- `Frontend/next.config.ts`: wraps Next.js build with `withSentryConfig` and transpiles the shared `@mailsense/types` package
+- `Frontend/pnpm-workspace.yaml`: links `@mailsense/types` from the local workspace and permits `@sentry/cli` builds
 
 ### State and Data
 
@@ -294,7 +336,7 @@
   - feature-level queries and mutations under `features/*/api/*.queries.ts`, `features/*/api/*.mutation.ts`, and `features/*/api/*.mutations.ts`
 - Axios clients:
   - `Frontend/src/shared/api/client.ts`
-  - `axiosClient` -> backend API base URL + Auth0 client-side bearer token injection
+  - `axiosClient` -> backend API base URL + Auth0 client-side bearer token injection + distributed tracing headers (`X-Trace-Id`, `X-User-Id`, `X-User-Email`, `X-User-Name`) and typed error interceptors
   - `auth0ApiClient` -> frontend `/auth/*` routes
 
 ### Backend API Endpoint Constants in Frontend
@@ -355,3 +397,4 @@
 - Frontend account/auth/email/inbox/folders/settings code is fully migrated from the deprecated `modules/*` directory into `entities/*`, `features/*`, and `shared/api/*` (with the `src/modules` directory removed entirely).
 - Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).
 - Centralized `FilterModal` component is introduced under `@shared/components/utils` to unify the filter logic/UI for both inbox lists and folders overview.
+- Full-stack observability and error reliability infrastructure is established (Phase 3 of development roadmap), featuring custom domain error hierarchy, distributed tracing (`X-Trace-Id`) via AsyncLocalStorage and Axios interceptors, module-scoped Pino loggers (`createLogger`) with non-blocking APM bridging, pluggable monitoring manager with Sentry Native Structured Logging, Koyeb health probes (`/health`, `/health/ready`), and frontend Error Boundary with user-friendly recovery UI.

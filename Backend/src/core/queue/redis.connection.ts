@@ -1,6 +1,10 @@
-import { REDIS_CONFIG } from '@config';
-import { logger } from '@utils';
 import { Redis, RedisOptions } from 'ioredis';
+
+import { REDIS_CONFIG } from '@config';
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
+
+const logger = createLogger(LOGGER_MODULE.REDIS_CONNECTION);
 
 let redisInstance: Redis | null = null;
 

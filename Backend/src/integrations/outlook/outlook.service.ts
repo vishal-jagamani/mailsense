@@ -1,3 +1,4 @@
+import { LOGGER_MODULE } from '@constants';
 import {
     EmailAttachment,
     EmailAttributes,
@@ -12,7 +13,8 @@ import { EmailRepository } from '@modules/emails/email.repository.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { compressString, decompressString, logger } from 'shared/utils/index.js';
+import { createLogger } from '@observability';
+import { compressString, decompressString } from 'shared/utils/index.js';
 import { OutlookApi } from './outlook.client.js';
 import {
     OUTLOOK_API_BASE_URL,
@@ -29,11 +31,16 @@ import {
     OutlookFolderObject,
 } from './outlook.types.js';
 import * as OutlookUtils from './outlook.utils.js';
+
+const logger = createLogger(LOGGER_MODULE.OUTLOOK_SERVICE);
+
 export class OutlookService {
     private outlookApi: OutlookApi;
+
     constructor() {
         this.outlookApi = new OutlookApi();
     }
+
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
         try {
             const response = await this.outlookApi.getAccessTokenFromCode(code);

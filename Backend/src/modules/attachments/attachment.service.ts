@@ -1,10 +1,14 @@
+import mongoose from 'mongoose';
+
+import { LOGGER_MODULE } from '@constants';
 import { StagedAttachmentAttributes } from '@mailsense/types';
-import { logger } from '@utils';
+import { createLogger } from '@observability';
 import { ObjectStorageService } from '../../integrations/storage/ObjectStorageService.service.js';
 import { StagedAttachmentInput } from './attachment.model.js';
 import { StagedAttachmentRepository } from './attachment.repository.js';
 import { UploadStageAttachmentFile } from './attachment.types.js';
-import mongoose from 'mongoose';
+
+const logger = createLogger(LOGGER_MODULE.ATTACHMENT_SERVICE);
 
 export class AttachmentsService {
     private objectStorageService: ObjectStorageService;

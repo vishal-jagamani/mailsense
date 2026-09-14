@@ -7,6 +7,31 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-09-14
+
+### Added
+
+- Added React Error Boundary functional component (`Frontend/src/shared/components/ErrorBoundary.tsx`):
+  - Wrapped root application tree in `Frontend/src/shared/providers/index.tsx` with `ErrorBoundary`.
+  - Added sleek fallback UI displaying user-friendly error guidance, detailed stack trace disclosure, "Try Again" recovery action, and single-click "Copy Trace ID" button.
+  - Added `useErrorBoundary` hook for triggering boundary catches from async callbacks.
+- Added Distributed Tracing & User Context Interceptors (`Frontend/src/shared/api/client.ts`):
+  - Request interceptor attaches `X-Trace-Id` (generating UUID v4 when missing) and forwards user context headers (`X-User-Id`, `X-User-Email`, `X-User-Name`) from `useAuthStore`.
+  - Response error interceptor extracts `X-Trace-Id` and parses backend `error.response?.data?.error?.traceId` into typed `AxiosApiError`.
+- Added Sentry Next.js Integration & Client Configuration:
+  - Installed `@sentry/nextjs` (`^10.74.0`) and wrapped Next.js build configuration with `withSentryConfig` in `Frontend/next.config.ts`.
+  - Added `Frontend/sentry.client.config.ts` initializing client telemetry with distributed trace sampling (`tracesSampleRate: 1.0`). Session Replay was intentionally excluded to avoid paid Sentry tier expenses.
+- Added Frontend Monitoring & Session Action Tracker (`Frontend/src/shared/monitoring/*`):
+  - Defined provider abstraction (`IFrontendMonitoringProvider`, `FrontendMonitoringManager`).
+  - Added `SentryFrontendProvider` integrating `@sentry/nextjs` for client error capture with active `traceId`, route and component stack tagging, user identity context (`id`, `email`, `username`), and typed breadcrumbs.
+  - Added `ConsoleFrontendProvider` for structured local console logging.
+  - Added `SessionTracker` maintaining an in-memory rolling action ring buffer (FIFO 50 items) with strict privacy masking for `.tiptap` rich-text editor, inputs, and email content.
+- Connected authenticated Auth0 user state to `frontendMonitoring.setUser()` in `Frontend/src/shared/providers/auth.provider.tsx`.
+
+### Changed
+
+- Enhanced API error handling by typing backend error responses with `ApiErrorResponse` and `ErrorCode`.
+
 ## [3.1.0] - 2026-08-31
 
 ### Added

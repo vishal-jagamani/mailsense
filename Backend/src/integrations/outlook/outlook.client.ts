@@ -1,7 +1,7 @@
 import { AxiosRequestConfig } from 'axios';
 
 import { OUTLOOK_SECRETS } from '@config';
-import { OAUTH_ACCESS_TOKEN_URI } from '@constants';
+import { LOGGER_MODULE, OAUTH_ACCESS_TOKEN_URI } from '@constants';
 import {
     OUTLOOK_FOLDERS,
     OutlookAttachmentObject,
@@ -11,8 +11,10 @@ import {
     OutlookUserProfile,
 } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { apiRequest, decrypt, encrypt, logger } from 'shared/utils/index.js';
+import { createLogger } from '@observability';
+import { apiRequest, decrypt, encrypt } from 'shared/utils/index.js';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
+
 import {
     GetDeltaMessageChangesResponse,
     OutlookCreateMessagePayload,
@@ -23,6 +25,8 @@ import {
     OutlookUploadSessionResponse,
 } from './outlook.types.js';
 import { buildOutlookMessagePayload } from './outlook.utils.js';
+
+const logger = createLogger(LOGGER_MODULE.OUTLOOK_CLIENT);
 
 export class OutlookApi {
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {

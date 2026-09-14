@@ -1,7 +1,10 @@
 import mongoose from 'mongoose';
 
-import { logger } from 'shared/utils/index.js';
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
 import { DATABASE, MONGODB_URI } from './app.config.js';
+
+const logger = createLogger(LOGGER_MODULE.DATABASE);
 
 export const connectDB = async (): Promise<void> => {
     try {

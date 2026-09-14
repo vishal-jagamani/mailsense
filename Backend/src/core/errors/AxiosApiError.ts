@@ -1,32 +1,46 @@
+import { ProviderErrorResponse } from '@types';
 import axios, { AxiosError } from 'axios';
-import { AppError } from './AppError.js';
+import { ProviderApiError } from './DomainErrors.js';
 
-export class AxiosApiError extends AppError {
-    public originalError: unknown;
+export class AxiosApiError extends ProviderApiError {
+    public readonly originalError?: Record<string, string | number | boolean>;
 
-    constructor(error: unknown) {
+    constructor(error: unknown, providerName = 'ExternalAPI', traceId?: string) {
         if (axios.isAxiosError(error)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const axiosError = error as AxiosError<any>;
+            const typedAxiosError = error as AxiosError<ProviderErrorResponse>;
+            const statusCode = typedAxiosError.response?.status ?? 502;
+            const responseData = typedAxiosError.response?.data;
 
-            const status = axiosError.response?.status || 500;
-
-            const message =
-                axiosError.response?.data?.error?.message || axiosError.response?.data?.message || axiosError.message || 'External API Error';
+            const extractedMessage =
+                responseData?.error?.message ?? responseData?.message ?? typedAxiosError.message ?? 'External HTTP request failed';
 
             super({
-                message,
-                status,
-                error: axiosError?.response?.data,
+                provider: providerName,
+                message: extractedMessage,
+                providerStatusCode: statusCode,
+                providerErrorMessage: extractedMessage,
+                traceId,
             });
-            this.originalError = axiosError.response?.data || axiosError;
+
+            if (responseData && typeof responseData === 'object') {
+                this.originalError = {
+                    status: statusCode,
+                    url: typedAxiosError.config?.url ?? 'unknown',
+                    method: typedAxiosError.config?.method ?? 'unknown',
+                };
+            }
         } else {
+            const standardError = error instanceof Error ? error : new Error(String(error));
             super({
-                message: 'Unknown external API error',
-                status: 500,
+                provider: providerName,
+                message: standardError.message,
+                providerStatusCode: 500,
+                providerErrorMessage: standardError.message,
+                traceId,
             });
-
-            this.originalError = error;
+            this.originalError = {
+                message: standardError.message,
+            };
         }
     }
 }

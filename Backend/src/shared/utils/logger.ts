@@ -1,10 +1,9 @@
-import { log } from '@config';
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
 
-type LogMeta = Record<string, unknown>;
-
-export const logger = {
-    info: (msg: string, meta?: LogMeta) => log.info(meta, msg),
-    error: (msg: string, meta?: LogMeta) => log.error(meta, msg),
-    warn: (msg: string, meta?: LogMeta) => log.warn(meta, msg),
-    debug: (msg: string, meta?: LogMeta) => log.debug(meta, msg),
-};
+/**
+ * Default application logger.
+ * Backwards-compatible drop-in replacement that uses createLogger('App')
+ * with strict LogContext and automatic traceId injection.
+ */
+export const logger = createLogger(LOGGER_MODULE.APP);

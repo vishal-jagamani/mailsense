@@ -1,11 +1,15 @@
+import { LOGGER_MODULE } from '@constants';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { ACCOUNT_PROVIDER, GetAllFoldersFilters, PaginatedDataResponse, UpdateAPIResponse } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { createLogger } from '@observability';
 import { FilterQuery } from 'mongoose';
-import { getDateRange, logger } from 'shared/utils/index.js';
+import { getDateRange } from 'shared/utils/index.js';
 import { FOLDER_LIST_DB_FIELD_MAPPING } from './folder.constants.js';
 import { FolderDocument } from './folder.model.js';
 import { FolderRepository } from './folder.repository.js';
+
+const logger = createLogger(LOGGER_MODULE.FOLDER_SERVICE);
 
 export class FolderService {
     constructor() {}

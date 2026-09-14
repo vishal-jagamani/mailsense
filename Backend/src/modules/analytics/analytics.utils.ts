@@ -1,3 +1,4 @@
+import { LOGGER_MODULE } from '@constants';
 import {
     AccountActivitySummaryAttributes,
     ANALYTICS_TIMEFRAME,
@@ -8,7 +9,7 @@ import {
     ResponseTimeMetricsAttributes,
     TopSenderDataAttributes,
 } from '@mailsense/types';
-import { logger } from '@utils';
+import { createLogger } from '@observability';
 import {
     DateRangeBoundary,
     RawAccountBreakdownResult,
@@ -17,6 +18,8 @@ import {
     RawTopSendersResult,
     RawVolumeDataPoint,
 } from './analytics.types.js';
+
+const logger = createLogger(LOGGER_MODULE.ANALYTICS_UTILS);
 
 export const buildNoAccountsAnalyticsDashboardData = (timeframe?: ANALYTICS_TIMEFRAME): DashboardAnalyticsResponse => {
     try {
@@ -165,7 +168,7 @@ export const calculateDateRange = (timeframe: ANALYTICS_TIMEFRAME, customStartDa
 export const formatOverviewMetrics = (raw: RawOverviewAggregateResult, activeAccountsCount: number): OverviewMetricsAttributes => {
     try {
         const facet = raw.facetResult || {};
-        const totalEmails = raw.allTimeTotalEmails ?? (facet.totalEmails?.[0]?.count ?? 0);
+        const totalEmails = raw.allTimeTotalEmails ?? facet.totalEmails?.[0]?.count ?? 0;
         const unreadEmails = facet.unreadEmails?.[0]?.count ?? 0;
         const sentEmails = facet.sentEmails?.[0]?.count ?? 0;
         const starredEmails = facet.starredEmails?.[0]?.count ?? 0;

@@ -1,17 +1,20 @@
 import { MAILSENSE_BASE_URL } from '@config';
-import { ACCOUNT_PROVIDERS } from '@constants';
+import { ACCOUNT_PROVIDERS, LOGGER_MODULE } from '@constants';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { ACCOUNT_PROVIDER, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, AccountProviderType, UpdateAPIResponse } from '@mailsense/types';
 import { EmailRepository } from '@modules/emails/email.repository.js';
+import { createLogger } from '@observability';
 import { QueueService } from 'core/queue/queue.service.js';
 import { SchedulerService } from 'core/queue/scheduler.service.js';
 import * as GmailUtils from 'integrations/gmail/gmail.utils.js';
 import * as OutlookUtils from 'integrations/outlook/outlook.utils.js';
-import { decrypt, encrypt, logger } from 'shared/utils/index.js';
+import { decrypt, encrypt } from 'shared/utils/index.js';
 import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
-import { SyncJobRepository } from './sync-job.repository.js';
 import { UpdateAccountSettingsSchema } from './account.schema.js';
+import { SyncJobRepository } from './sync-job.repository.js';
+
+const logger = createLogger(LOGGER_MODULE.ACCOUNT_SERVICE);
 
 export class AccountsService {
     constructor() {}
