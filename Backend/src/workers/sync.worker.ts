@@ -1,7 +1,8 @@
+import { LOGGER_MODULE } from '@constants';
 import { ACCOUNT_LAST_SYNC_STATUS, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { SyncJobRepository } from '@modules/accounts/sync-job.repository.js';
-import { logger } from '@utils';
+import { createLogger } from '@observability';
 import { Job } from 'bullmq';
 import { eventBus } from 'core/events/event-bus.js';
 import { QUEUE_NAMES } from 'core/queue/queue.config.js';
@@ -11,6 +12,7 @@ import { syncAccountProcessor } from './processors/sync-account.processor.js';
 
 export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
     protected queueName = QUEUE_NAMES.SYNC_ACCOUNT;
+    protected override workerLogger = createLogger(LOGGER_MODULE.SYNC_WORKER);
 
     protected async processJob(job: Job<SyncAccountPayload, SyncJobResult>): Promise<SyncJobResult> {
         return syncAccountProcessor(job);
@@ -43,7 +45,7 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
             });
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
-            logger.error(`Error in SyncWorker.onActive: ${msg}`, { error });
+            this.workerLogger.error(`Error in SyncWorker.onActive: ${msg}`, { error });
         }
     }
 
@@ -74,7 +76,7 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
             });
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
-            logger.error(`Error in SyncWorker.onCompleted: ${msg}`, { error });
+            this.workerLogger.error(`Error in SyncWorker.onCompleted: ${msg}`, { error });
         }
     }
 
@@ -97,7 +99,7 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
             });
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in SyncWorker.onFailed: ${msg}`, { error: err });
+            this.workerLogger.error(`Error in SyncWorker.onFailed: ${msg}`, { error: err });
         }
     }
 }

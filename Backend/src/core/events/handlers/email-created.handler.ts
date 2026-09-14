@@ -1,6 +1,9 @@
+import { LOGGER_MODULE } from '@constants';
 import { EmailCreatedPayload, SYSTEM_EVENT } from '@mailsense/types';
-import { logger } from '@utils';
+import { createLogger } from '@observability';
 import { eventBus } from '../event-bus.js';
+
+const logger = createLogger(LOGGER_MODULE.EMAIL_CREATED_HANDLER);
 
 export function registerEmailCreatedHandler(): void {
     eventBus.subscribe(SYSTEM_EVENT.EMAIL_CREATED, async (payload: EmailCreatedPayload) => {

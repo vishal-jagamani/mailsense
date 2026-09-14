@@ -1,6 +1,9 @@
+import { LOGGER_MODULE } from '@constants';
 import { SYSTEM_EVENT, SystemEventPayloads } from '@mailsense/types';
-import { logger } from '@utils';
+import { createLogger } from '@observability';
 import EventEmitter from 'events';
+
+const logger = createLogger(LOGGER_MODULE.EVENT_BUS);
 
 class EventBus {
     private emitter = new EventEmitter();

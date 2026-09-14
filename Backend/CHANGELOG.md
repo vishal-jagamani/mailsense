@@ -7,6 +7,46 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-09-14
+
+### Added
+
+- Added Custom Exception Hierarchy (`Backend/src/core/errors/*`):
+  - Standardized `ErrorCode` string enum (`ErrorCodes.ts`) replacing magic strings with compiler-enforced error codes.
+  - Added typed error payload contracts (`error.types.ts`) for consistent JSON responses.
+  - Implemented 11 domain-specific subclasses in `DomainErrors.ts` (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`).
+  - Added ergonomic error factory helpers (`ErrorFactories.ts`).
+- Added Distributed Tracing & Request Logging (`Backend/src/core/observability/*`):
+  - Implemented `TraceStore` using Node.js `AsyncLocalStorage` (`trace.ts`) capturing `traceId`, `userId`, `userEmail`, `userName`, and `accountId` across async call chains.
+  - Added Express `traceMiddleware` parsing inbound `X-Trace-Id` or auto-generating UUID v4 and setting outbound `X-Trace-Id` response header.
+  - Added `requestLoggerMiddleware` logging HTTP inbound and outbound requests with latency measurement, skipping health probes.
+  - Added `setTraceContext` helper for dynamically binding authenticated user metadata to active trace contexts.
+- Added Pino Structured Logging & APM Log Bridge:
+  - Enhanced `logger.config.ts` with base metadata (`service`, `environment`), ISO timestamps, and dynamic mixin extracting `traceId`, `userId`, `userEmail`, `userName`, and `accountId`.
+  - Created `createLogger(moduleName, options)` factory (`logger.factory.ts`) returning module-scoped loggers with non-blocking forwarding to monitoring sinks.
+  - Added `LOGGER_MODULE` enum (`Backend/src/core/constants/observability.constants.ts`) standardizing module identifiers across all services, clients, and workers.
+- Added Pluggable Monitoring Provider Architecture (`Backend/src/core/monitoring/*`):
+  - Defined `IMonitoringProvider` strategy interface and DTO contracts (`monitoring.types.ts`).
+  - Implemented `SentryMonitoringProvider` (`providers/sentry.provider.ts`) supporting Sentry Native Structured Logging (`enableLogs: true`, `Sentry.logger.*` API) and canonical `user` context modeling (`user.id`, `user.email`, `user.username`).
+  - Implemented `NoopMonitoringProvider` for local/test environments.
+  - Created `MonitoringManager` singleton orchestrating provider lifecycle based on `MONITORING_PROVIDER` environment configuration.
+- Added Koyeb Health Probes & Readiness Checks (`Backend/src/core/health/*`):
+  - Implemented `HealthService` verifying MongoDB and Redis connectivity.
+  - Implemented `HealthController` handling liveness (`GET /health`) and readiness (`GET /health/ready`) checks.
+  - Mounted unauthenticated health probe routes in `Backend/src/app.ts` prior to auth middleware.
+- Added Worker & Background Queue Tracing:
+  - Updated `BaseWorker` and `SyncWorker` to execute all BullMQ jobs within `runWithTrace()`, capturing job `traceId`, `jobId`, `userId`, and `accountId`.
+  - Added `reportWorkerError()` hooks reporting worker exceptions to active monitoring providers.
+
+### Changed
+
+- Migrated all backend services, integration clients, background workers, processors, and bootstrap files from generic `App` logger to module-scoped `createLogger(LOGGER_MODULE.*)`.
+- Updated `authMiddleware` to enrich trace store and monitoring user context upon JWT verification.
+- Simplified user context handling across `sentry.provider.ts`, `auth.ts`, `sync-account.processor.ts`, `refresh-token.processor.ts`, and `base.worker.ts`: centralized active user extraction with `resolveActiveUser()`, unified auth context binding with `bindUserContext()`, and eliminated redundant manual metadata passing by relying on automatic Pino trace mixin context.
+- Updated centralized `errorHandler` middleware to log domain errors with `traceId` and dispatch uncaught exceptions to active APM provider.
+- Cleaned up obsolete demo modules (`Backend/src/modules/demo/*`) and deleted legacy `instruction.mjs` and `api.error.ts`.
+- Removed unused `winston` dependency from `Backend/package.json`.
+
 ## [3.1.0] - 2026-08-31
 
 ### Added

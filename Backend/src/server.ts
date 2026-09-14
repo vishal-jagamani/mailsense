@@ -1,8 +1,14 @@
+// Initialize monitoring as the very first import before database or Express
+import { monitoring } from '@monitoring';
+monitoring.init();
+
 import { connectDB, PORT } from '@config';
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
 import { App } from './app.js';
-import './instruction.mjs';
-import { logger } from './shared/utils/logger.js';
 import { initBackgroundJobs, shutdownBackgroundJobs } from './core/queue/index.js';
+
+const logger = createLogger(LOGGER_MODULE.SERVER);
 
 // Create app instance
 const appInstance = new App();

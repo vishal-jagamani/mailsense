@@ -1,2 +1,6 @@
+allowBuilds:
+  '@sentry/cli': true
+  sharp: true
+  unrs-resolver: true
 minimumReleaseAgeExclude:
-    - '@mailsense/types@1.4.0'
+  - '@mailsense/types@1.4.0'

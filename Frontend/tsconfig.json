@@ -28,6 +28,7 @@
             "@shared/config/*": ["./src/shared/config/*"],
             "@shared/constants": ["./src/shared/constants/index"],
             "@shared/hooks": ["./src/shared/hooks/index"],
+            "@shared/monitoring": ["./src/shared/monitoring/index"],
             "@shared/ui/*": ["./src/shared/ui/*"],
             "@shared/utils/*": ["./src/shared/utils/*"],
             "@shared/types": ["./src/shared/types/index"],

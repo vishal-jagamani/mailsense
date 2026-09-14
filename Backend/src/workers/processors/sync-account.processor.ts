@@ -1,11 +1,14 @@
+import { Job } from 'bullmq';
+
+import { LOGGER_MODULE } from '@constants';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { SyncResult } from '@integrations/email/email.provider.js';
 import { ACCOUNT_PROVIDER, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderService } from '@modules/folders/folder.service.js';
-import { logger } from '@utils';
-import { Job } from 'bullmq';
+import { monitoring } from '@monitoring';
+import { createLogger, setTraceContext } from '@observability';
 import { eventBus } from '../../core/events/event-bus.js';
 import { RefreshTokenPayload, SyncAccountPayload } from '../../core/queue/queue.service.js';
 import { refreshTokenProcessor } from './refresh-token.processor.js';
@@ -18,6 +21,8 @@ interface ErrorWithStatus {
         statusCode?: number;
     };
 }
+
+const logger = createLogger(LOGGER_MODULE.SYNC_ACCOUNT_PROCESSOR);
 
 function isTokenExpiryError(error: Error | ErrorWithStatus | null | undefined): boolean {
     if (!error) return false;
@@ -40,12 +45,23 @@ function isTokenExpiryError(error: Error | ErrorWithStatus | null | undefined): 
 export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobResult>): Promise<SyncJobResult> => {
     const { accountId } = job.data;
 
-    logger.info(`Processing background sync for account: ${accountId}`);
-
     const account = await AccountRepository.getAccountById(accountId);
     if (!account) {
         throw new Error(`Account not found: ${accountId}`);
     }
+
+    const userId = account.userId?.toString() || job.data.userId;
+    const userEmail = account.emailAddress;
+
+    setTraceContext({ userId, userEmail, accountId });
+    if (userId) {
+        monitoring.setUser({
+            id: userId,
+            email: userEmail,
+        });
+    }
+
+    logger.info(`Processing background sync for account: ${accountId}`);
 
     // Gracefully abort sync if account is disabled or deactivated
     if (!account.active) {

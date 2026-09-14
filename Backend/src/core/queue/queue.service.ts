@@ -1,6 +1,9 @@
-import { logger } from '../../shared/utils/logger.js';
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
 import { QUEUE_NAMES } from './queue.config.js';
 import { getQueue } from './queue.registry.js';
+
+const logger = createLogger(LOGGER_MODULE.QUEUE_SERVICE);
 
 export interface SyncAccountPayload {
     accountId: string;

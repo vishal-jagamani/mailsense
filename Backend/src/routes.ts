@@ -3,7 +3,6 @@ import { Router } from 'express';
 import accountsRoutes from '@modules/accounts/account.routes.js';
 import analyticsRoutes from '@modules/analytics/analytics.routes.js';
 import attachmentRoutes from '@modules/attachments/attachment.routes.js';
-import demoRoutes from '@modules/demo/demo.routes.js';
 import draftRoutes from '@modules/drafts/draft.routes.js';
 import emailsRoutes from '@modules/emails/email.routes.js';
 import foldersRoutes from '@modules/folders/folder.routes.js';
@@ -15,8 +14,6 @@ const router = Router();
 router.get('/', (req, res) => {
     res.send('MailSense Backend!');
 });
-
-router.use('/demo', demoRoutes);
 
 router.use('/users', usersRoutes);
 

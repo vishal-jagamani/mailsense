@@ -7,6 +7,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-09-14
+
+### Added
+- Added an application error recovery screen with a single-click "Copy Trace ID" feature so users can easily share diagnostic reference IDs with support if an unexpected issue occurs.
+- Added automated server health and self-healing probes to keep mailbox operations, background sync, and notification delivery consistently available.
+- Added privacy-preserving error tracking with automatic masking of sensitive credentials, compose editor content, and email messages.
+
+### Changed
+- Improved overall platform stability and error recovery with graceful failure fallbacks across all mailbox actions, background syncing, and folder operations.
+- Enhanced backend synchronization resilience so scheduled email sync jobs run more reliably without getting stuck or dropping connections.
+
 ## [3.1.0] - 2026-08-31
 
 ### Added
