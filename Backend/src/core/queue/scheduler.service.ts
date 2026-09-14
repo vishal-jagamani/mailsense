@@ -1,9 +1,12 @@
+import { LOGGER_MODULE } from '@constants';
 import { ACCOUNT_SYNC_MODE } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { UserSettingsRepository } from '@modules/user/user-settings.repository.js';
-import { logger } from '@utils';
+import { createLogger } from '@observability';
 import { QUEUE_NAMES } from './queue.config.js';
 import { getQueue } from './queue.registry.js';
+
+const logger = createLogger(LOGGER_MODULE.SCHEDULER_SERVICE);
 
 export class SchedulerService {
     /**

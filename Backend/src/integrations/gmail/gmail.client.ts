@@ -1,5 +1,5 @@
 import { GMAIL_SECRETS } from '@config';
-import { OAUTH_ACCESS_TOKEN_URI } from '@constants';
+import { LOGGER_MODULE, OAUTH_ACCESS_TOKEN_URI } from '@constants';
 import {
     GMAIL_LABELS,
     GmailHistoryResponse,
@@ -12,9 +12,12 @@ import {
     GoogleOtherContactsSearchResponse,
 } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { createLogger } from '@observability';
 import { AxiosRequestConfig } from 'axios';
-import { apiRequest, decrypt, encrypt, logger } from 'shared/utils/index.js';
+import { apiRequest, decrypt, encrypt } from 'shared/utils/index.js';
 import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_PEOPLE_API_BASE_URL, GMAIL_PEOPLE_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
+
+const logger = createLogger(LOGGER_MODULE.GMAIL_CLIENT);
 
 export class GmailApi {
     static async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {

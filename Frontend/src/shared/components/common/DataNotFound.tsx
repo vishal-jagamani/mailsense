@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { DataNotFoundProps } from '../../types/common.types';
+import { DataNotFoundProps } from '@shared/types';
 
 const DataNotFound: React.FC<DataNotFoundProps> = ({ title, description, icon: Icon }) => {
     return (

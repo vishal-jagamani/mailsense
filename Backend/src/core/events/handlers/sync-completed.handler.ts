@@ -1,7 +1,10 @@
+import { LOGGER_MODULE } from '@constants';
 import { SyncCompletedPayload, SYSTEM_EVENT } from '@mailsense/types';
 import { AnalyticsService } from '@modules/analytics/analytics.service.js';
-import { logger } from '@utils';
+import { createLogger } from '@observability';
 import { eventBus } from '../event-bus.js';
+
+const logger = createLogger(LOGGER_MODULE.SYNC_COMPLETED_HANDLER);
 
 export function registerSyncCompletedHandler(): void {
     const analyticsService = new AnalyticsService();
@@ -17,7 +20,7 @@ export function registerSyncCompletedHandler(): void {
             // NOTE: Future dashboard analytics, metrics updates or reporting jobs will be enqueued here.
             // For example:
             // await QueueService.addDashboardJob({ accountId: payload.accountId });
-            
+
             // Automatically refresh account metrics daily snapshot
             await analyticsService.refreshAccountMetrics(payload.accountId);
         } catch (err) {

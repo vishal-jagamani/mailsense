@@ -1,13 +1,22 @@
-import { logger } from '@utils';
-import { eventBus } from '../event-bus.js';
 import { SYSTEM_EVENT } from '@mailsense/types';
+import { createLogger } from '@observability';
+import { eventBus } from '../event-bus.js';
 
-jest.mock('@utils', () => ({
-    logger: {
+jest.mock('@observability', () => {
+    const actual = jest.requireActual('@observability') as Record<string, unknown>;
+    const loggerInstance = {
         info: jest.fn(),
         error: jest.fn(),
-    },
-}));
+        warn: jest.fn(),
+        debug: jest.fn(),
+    };
+    return {
+        ...actual,
+        createLogger: jest.fn(() => loggerInstance),
+    };
+});
+
+const mockLogger = jest.mocked(createLogger)('EventBus');
 
 describe('EventBus', () => {
     beforeEach(() => {
@@ -33,7 +42,7 @@ describe('EventBus', () => {
         await new Promise((resolve) => setImmediate(resolve));
 
         expect(mockHandler).toHaveBeenCalledWith(payload);
-        expect(logger.info).toHaveBeenCalledWith('📢 Publishing event: sync:completed', expect.objectContaining({ payload }));
+        expect(mockLogger.info).toHaveBeenCalledWith('📢 Publishing event: sync:completed', expect.objectContaining({ payload }));
     });
 
     it('should handle errors thrown in event handlers without throwing inside publish', async () => {
@@ -71,7 +80,7 @@ describe('EventBus', () => {
         await new Promise((resolve) => setImmediate(resolve));
 
         expect(mockHandler).toHaveBeenCalledWith(payload);
-        expect(logger.error).toHaveBeenCalledWith(
+        expect(mockLogger.error).toHaveBeenCalledWith(
             expect.stringContaining('❌ Error executing subscriber for event email:created'),
             expect.objectContaining({ error }),
         );

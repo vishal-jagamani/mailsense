@@ -1,9 +1,13 @@
-import { logger } from '@utils';
 import { Job } from 'bullmq';
-import { refreshTokenProcessor } from './processors/refresh-token.processor.js';
+
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
 import { QUEUE_NAMES } from '../core/queue/queue.config.js';
 import { RefreshTokenPayload } from '../core/queue/queue.service.js';
 import { BaseWorker } from './base.worker.js';
+import { refreshTokenProcessor } from './processors/refresh-token.processor.js';
+
+const logger = createLogger(LOGGER_MODULE.TOKEN_REFRESH_WORKER);
 
 export class TokenRefreshWorker extends BaseWorker<RefreshTokenPayload, { status: boolean }> {
     protected queueName = QUEUE_NAMES.REFRESH_TOKEN;

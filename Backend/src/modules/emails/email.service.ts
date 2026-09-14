@@ -1,5 +1,6 @@
 import { FilterQuery } from 'mongoose';
 
+import { LOGGER_MODULE } from '@constants';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import {
     ACCOUNT_PROVIDER,
@@ -21,10 +22,13 @@ import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { AttachmentsService } from '@modules/attachments/attachment.service.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import { decompressString, logger } from 'shared/utils/index.js';
+import { createLogger } from '@observability';
+import { decompressString } from 'shared/utils/index.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
+
+const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 
 export class EmailService {
     private attachmentsService: AttachmentsService;

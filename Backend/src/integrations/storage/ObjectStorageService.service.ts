@@ -1,7 +1,10 @@
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { R2_CONFIG } from '@config';
-import { logger } from '@utils';
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
 import { Readable } from 'stream';
+
+const logger = createLogger(LOGGER_MODULE.OBJECT_STORAGE_SERVICE);
 
 export class ObjectStorageService {
     private client: S3Client;

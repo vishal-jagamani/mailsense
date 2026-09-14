@@ -1,11 +1,11 @@
-import * as Sentry from '@sentry/node';
+import { MAILSENSE_BASE_URL } from '@config';
+import { healthRoutes } from '@health';
+import { errorHandler } from '@middlewares';
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
 import path from 'path';
-
-import { MAILSENSE_BASE_URL } from '@config';
-import { errorHandler } from '@middlewares';
 import indexRoutes from 'routes.js';
+import { requestLoggerMiddleware, traceMiddleware } from './core/observability/index.js';
 
 export class App {
     public expressApp: Application;
@@ -22,20 +22,29 @@ export class App {
     }
 
     private setupMiddleware(): void {
-        // Enable cors for all routes
+        // 1. Mount distributed tracing middleware first to wrap entire lifecycle
+        this.expressApp.use(traceMiddleware);
+
+        // 2. Mount request logger middleware (automatically ignores HEALTH_PROBES_API_ENDPOINTS)
+        this.expressApp.use(requestLoggerMiddleware);
+
+        // 3. Enable cors for all routes
         this.expressApp.use(cors({ origin: ['http://localhost:3000', MAILSENSE_BASE_URL], credentials: true }));
 
-        // Parse JSON and URL encoded request body
+        // 4. Parse JSON and URL encoded request bodies
         this.expressApp.use(express.json());
         this.expressApp.use(express.urlencoded({ extended: true }));
 
-        // Serve static files
+        // 5. Serve static files
         this.expressApp.use(express.static(path.join(this.__dirname, '/')));
     }
 
     private setupRoutes(): void {
-        // Test endpoint
-        this.expressApp.get('/testEndpoint', (req: Request, res: Response) => {
+        // Mount health probes at both root and /api for cloud orchestrator compatibility
+        this.expressApp.use(healthRoutes);
+        this.expressApp.use('/api', healthRoutes);
+
+        this.expressApp.get('/testEndpoint', (_req: Request, res: Response) => {
             res.send(`MailSense Backend Test Endpoint`);
         });
 
@@ -43,23 +52,22 @@ export class App {
     }
 
     private setupNotFoundHandler(): void {
-        // Handle 404 errors
-
-        this.expressApp.use((req: Request, res: Response) => {
-            res.status(404).send({
+        this.expressApp.use((_req: Request, res: Response) => {
+            res.status(404).json({
+                status: false,
+                message: 'Resource not found',
                 error: {
                     code: 404,
-                    message: 'Not Found',
-                    description: 'The requested resource was not found on the server.',
-                    suggestedAction: 'Check the resource URL or verify that the resource exists.',
+                    errorCode: 'RESOURCE_NOT_FOUND',
+                    traceId: '',
+                    description: 'The requested endpoint does not exist on the server.',
+                    suggestedAction: 'Verify the request URL and HTTP method.',
                 },
             });
         });
     }
 
     private setupErrorHandler(): void {
-        Sentry.setupExpressErrorHandler(this.expressApp);
-        // Centralized error handler
         this.expressApp.use(errorHandler);
     }
 }

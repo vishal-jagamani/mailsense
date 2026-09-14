@@ -1,7 +1,10 @@
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
 import { ConnectionOptions, Queue } from 'bullmq';
-import { logger } from '../../shared/utils/logger.js';
-import { QUEUE_NAMES, getQueueConfig } from './queue.config.js';
+import { getQueueConfig, QUEUE_NAMES } from './queue.config.js';
 import { getRedisConnection } from './redis.connection.js';
+
+const logger = createLogger(LOGGER_MODULE.QUEUE_REGISTRY);
 
 const registry = new Map<string, Queue>();
 

@@ -1,4 +1,3 @@
-export * from './api.error.js';
 export * from './axios.js';
 export * from './batchProcessor.js';
 export * from './common.js';

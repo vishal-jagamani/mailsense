@@ -1,4 +1,7 @@
 import { AxiosApiError } from '@errors';
+import axios from 'axios';
+
+import { LOGGER_MODULE } from '@constants';
 import {
     GMAIL_LABELS,
     GmailHistoryResponse,
@@ -17,8 +20,8 @@ import { EmailRepository } from '@modules/emails/email.repository.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
-import axios from 'axios';
-import { BatchProcessor, compressString, logger } from 'shared/utils/index.js';
+import { createLogger } from '@observability';
+import { BatchProcessor, compressString } from 'shared/utils/index.js';
 import { GmailApi } from './gmail.client.js';
 import {
     ExtractMessageChangesResponse,
@@ -28,6 +31,8 @@ import {
     MessagesAfterLastHistoryResponse,
 } from './gmail.types.js';
 import * as GmailUtils from './gmail.utils.js';
+
+const logger = createLogger(LOGGER_MODULE.GMAIL_SERVICE);
 
 export class GmailService {
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {

@@ -1,10 +1,12 @@
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
+import { SyncWorker, TokenRefreshWorker } from '@workers';
 import { initSystemEvents } from 'core/events/index.js';
-import { SyncWorker } from 'workers/sync.worker.js';
-import { TokenRefreshWorker } from 'workers/token-refresh.worker.js';
-import { logger } from '../../shared/utils/logger.js';
 import { closeAllQueues, initQueueRegistry } from './queue.registry.js';
 import { closeRedisConnection } from './redis.connection.js';
 import { SchedulerService } from './scheduler.service.js';
+
+const logger = createLogger(LOGGER_MODULE.QUEUE_SERVICE);
 
 let syncWorkerInstance: SyncWorker | null = null;
 let tokenRefreshWorkerInstance: TokenRefreshWorker | null = null;
@@ -62,4 +64,8 @@ export async function shutdownBackgroundJobs(): Promise<void> {
 }
 
 export * from './queue.config.js';
+export * from './queue.registry.js';
 export * from './queue.service.js';
+export * from './redis.connection.js';
+export * from './scheduler.service.js';
+

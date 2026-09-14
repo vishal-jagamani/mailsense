@@ -16,12 +16,17 @@
             "@config": ["core/config/index.js"],
             "@constants": ["core/constants/index.js"],
             "@errors": ["core/errors/index.js"],
+            "@health": ["core/health/index.js"],
+            "@monitoring": ["core/monitoring/index.js"],
+            "@observability": ["core/observability/index.js"],
+            "@queue": ["core/queue/index.js"],
             "@middlewares": ["middlewares/index.js"],
             "@modules/*": ["modules/*"],
             "@integrations/*": ["integrations/*"],
             "@routes/*": ["routes/*"],
             "@types": ["core/types/index.js"],
-            "@utils": ["shared/utils/index.js"]
+            "@utils": ["shared/utils/index.js"],
+            "@workers": ["workers/index.js"]
         }
     },
     "include": ["src/**/*.ts", "src/core/config/app.config.ts", "src/types/express.d.ts"],
