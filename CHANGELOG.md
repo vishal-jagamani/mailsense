@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+- Fixed email selection, starring, marking unread, archiving, and deletion across the inbox and email views so actions reliably target selected emails without ID mismatches.
+- Fixed moving emails between folders and labels so moved messages update their folder location immediately and reflect changes accurately across connected accounts.
+- Fixed folder management to ensure renaming and deleting folders reliably persists and synchronizes across connected Gmail and Outlook mailboxes.
+- Fixed folder search in the folder management view to properly filter and find folders by their actual name.
+- Fixed email search pagination to accurately display the true count of matching emails and total pages when searching messages.
+- Fixed draft sending to ensure that CC recipients, BCC recipients, replies in conversation threads, and staged attachments are properly delivered.
+- Fixed search and account navigation requests to prevent server interruptions and connection failures when handling invalid queries or non-existent accounts.
+- Enhanced account privacy and security by strictly verifying user ownership on account sync, enable, and delete operations, and ensuring sensitive OAuth access and refresh credentials are never exposed to the client.
+
 ## [3.2.0] - 2026-09-14
 
 ### Added

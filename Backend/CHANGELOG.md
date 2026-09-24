@@ -7,6 +7,25 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+- Fixed BUG-10 (Email ID Boundary): Decoupled Frontend from external `providerMessageId`; Frontend passes canonical MongoDB `_id` and Backend resolves `providerMessageId` via `EmailRepository.getEmailsByIds` before delegating to provider adapters (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`, `moveEmails`).
+- Fixed BUG-12 (Folder ID Boundary): Decoupled Frontend from external `providerFolderId`; Frontend passes canonical MongoDB `_id` and Backend resolves `providerFolderId` via `FolderRepository.getFolder` and `FolderRepository.getFoldersByIds` before delegating to provider adapters (`updateFolder`, `deleteFolder`, `moveEmails`, `getEmails`).
+- Fixed BUG-12 (Database Synchronization): Restored `EmailRepository.updateFolders` in `EmailService.moveEmails` and implemented `FolderRepository.updateFolder` and `FolderRepository.deleteFolder` in `FolderService` to keep MongoDB records in sync with external providers.
+- Fixed BUG-06 (Control Flow Crash): Added missing `return` statement following early 400 error in `EmailController.searchEmails` to prevent `ERR_HTTP_HEADERS_SENT` Node.js process crashes.
+- Fixed BUG-07 (Control Flow Crash): Added missing `return` statement following early 404 response in `AccountsController.getAccountDetails` to prevent `ERR_HTTP_HEADERS_SENT` Node.js process crashes.
+- Fixed BUG-02 (Folder Search): Corrected folder search in `FolderService.getAllFolders` to query the `name` field using `$regex` instead of querying non-existent `subject`/`from` fields.
+- Fixed BUG-04 (Search Pagination): Fixed total count in `EmailService.searchEmails` by executing `EmailRepository.countDocuments(searchQuery)` rather than returning page slice length.
+- Fixed BUG-08 (Error Typing): Replaced raw `Object.assign(new Error(...))` in `AccountsService.syncAccount` with domain-specific `NotFoundError` and `BadRequestError`.
+- Fixed BUG-09 (Draft Dispatch Parameters): Forwarded `cc`, `bcc`, `inReplyTo`, and `attachmentIds` in `DraftService.sendDraft` to provider `sendMail`.
+- Fixed BUG-11 (Folder Pagination): Corrected `FolderService.getAllFolders` response envelope to return the actual requested `page` parameter rather than hardcoded `page: 1`.
+- Fixed SEC-02 (Tenant Isolation): Enforced caller `userId` validation in `AccountsService` for `getAccountDetails`, `deleteAccount`, `syncAccount`, and `enableAccount`.
+- Fixed SEC-03 (Credential Redaction): Stripped sensitive `accessToken` and `refreshToken` credentials in `AccountsService.getAccountDetails` and `getAccounts`, returning `SanitizedAccountAttributes`.
+- Fixed SEC-07 (Email Move Authorization): Enforced caller ownership verification over target email IDs in `EmailService.moveEmails` before dispatching move commands to providers.
+
+### Changed
+- Refactored `composeEmailSchema` in `email.schema.ts` to support optional `cc`, `bcc`, `inReplyTo`, `threadId`, and `attachmentIds` using Zod 4 syntax.
+- Updated `FolderRepository` data access methods to delegate error handling and logging to `FolderService`.
+
 ## [3.2.0] - 2026-09-14
 
 ### Added

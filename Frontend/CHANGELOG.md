@@ -7,6 +7,11 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+### Fixed
+- Fixed BUG-10 (Email ID Decoupling): Eliminated `email.providerMessageId` from UI state and selection tables; `EmailListTable`, `useEmailsPage`, `EmailMenuBarOptions`, and `MoveToFolderDropdown` now strictly use MongoDB `_id` (`email._id`) for selection, detail routing, checkboxes, trash actions, and DOM IDs.
+- Fixed BUG-12 (Folder ID Decoupling): Switched all folder UI actions from `providerFolderId` to canonical MongoDB `_id` (`folder._id` / `folder.id`) in `MoveToFolderDropdown`, `FolderCardHeader`, `FolderCardActions`, `FolderCard`, `useFolderEmailListPage`, and `useInboxPage`.
+- Fixed BUG-05 (Hardcoded Environment URL): Replaced hardcoded `http://localhost:3000/auth` URL in `Frontend/src/shared/api/client.ts` with configurable `AUTH_API_BASE_URL` from `Frontend/src/config/config.ts`.
+
 ## [3.2.0] - 2026-09-14
 
 ### Added

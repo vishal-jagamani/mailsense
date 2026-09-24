@@ -52,9 +52,13 @@ export const searchEmailSchema = z.object({
 
 export const composeEmailSchema = z.object({
     accountId: z.string().min(1, 'Account ID is required'),
-    to: z.array(z.string().email('Invalid email address')),
+    to: z.array(z.email('Invalid email address')),
     subject: z.string().min(1, 'Subject is required'),
     body: z.string().min(1, 'Email body is required'),
+    cc: z.array(z.email('Invalid email address')).optional(),
+    bcc: z.array(z.email('Invalid email address')).optional(),
+    inReplyTo: z.string().optional(),
+    threadId: z.string().optional(),
     attachmentIds: z.array(z.string()).optional(),
     attachments: z
         .array(

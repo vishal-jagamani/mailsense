@@ -43,14 +43,15 @@ export class FolderService {
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
+            const dateRangeResult = dateRange ? getDateRange(dateRange) : null;
             const filterQuery: FilterQuery<FolderDocument> = {
                 accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
-                ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
-                ...(dateRange &&
-                    getDateRange(dateRange) && {
-                        updatedAt: { $gte: getDateRange(dateRange).startDate, $lte: getDateRange(dateRange).endDate },
-                    }),
+                ...(searchText && { name: { $regex: searchText, $options: 'i' } }),
+                ...(dateRangeResult && {
+                    updatedAt: { $gte: dateRangeResult.startDate, $lte: dateRangeResult.endDate },
+                }),
             };
+
             const folders = await FolderRepository.getAllFolders(
                 filterQuery,
                 size,
@@ -59,7 +60,8 @@ export class FolderService {
                 FOLDER_LIST_DB_FIELD_MAPPING.SORT.sort,
             );
             const total = await FolderRepository.countDocuments(filterQuery);
-            return { data: folders, size: folders.length, page: 1, total };
+
+            return { data: folders, size: folders.length, page, total };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in FolderService.getAllFolders: ${errorMessage}`, { error: err });
@@ -113,22 +115,31 @@ export class FolderService {
 
     public async updateFolder(accountId: string, folderId: string, folderName: string): Promise<UpdateAPIResponse> {
         try {
+            const folder = await FolderRepository.getFolder(folderId);
+            if (!folder) {
+                throw new Error('Folder not found');
+            }
             const account = await AccountRepository.getAccountById(accountId, { provider: 1, userId: 1 });
             if (!account) {
                 throw new Error('Account not found');
             }
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-            return provider.updateFolder(accountId, folderId, folderName);
+            const providerRes = await provider.updateFolder(accountId, folder.providerFolderId, folderName);
+            await FolderRepository.updateFolder(folderId, {
+                name: folderName,
+                normalizedName: folderName.toLowerCase(),
+            });
+            return providerRes || { status: true, message: 'Folder updated successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in FolderService.updateFolder: ${errorMessage}`, { error: err });
+            logger.error(`Error in FolderService.updateFolder: ${errorMessage}`, { accountId, folderId, folderName, error: err });
             throw err;
         }
     }
 
     public async deleteFolder(folderId: string): Promise<UpdateAPIResponse> {
         try {
-            const folder = await FolderRepository.getFolderByProviderFolderId(folderId);
+            const folder = await FolderRepository.getFolder(folderId);
             if (!folder) {
                 throw new Error('Folder not found');
             }
@@ -137,10 +148,12 @@ export class FolderService {
                 throw new Error('Account not found');
             }
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-            return provider.deleteFolder(folder.accountId, folderId);
+            const providerRes = await provider.deleteFolder(folder.accountId, folder.providerFolderId);
+            await FolderRepository.deleteFolder(folderId);
+            return providerRes || { status: true, message: 'Folder deleted successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in FolderService.deleteFolder: ${errorMessage}`, { error: err });
+            logger.error(`Error in FolderService.deleteFolder: ${errorMessage}`, { folderId, error: err });
             throw err;
         }
     }

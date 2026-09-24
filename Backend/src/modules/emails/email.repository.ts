@@ -76,7 +76,10 @@ export class EmailRepository {
             .sort(sort);
     }
 
-    public static async getEmailsByProviderMessageIds(emailIds: string[], fields: ProjectionType<EmailDocument>) {
+    public static async getEmailsByProviderMessageIds(
+        emailIds: string[],
+        fields: ProjectionType<EmailDocument> = {},
+    ): Promise<FlattenMaps<EmailDocument>[]> {
         return Email.find({ providerMessageId: { $in: emailIds } }, fields).lean();
     }
 
@@ -96,8 +99,8 @@ export class EmailRepository {
         return Email.deleteMany({ providerMessageId: { $in: emailIds } });
     }
 
-    public static async countDocuments(searchQuery: FilterQuery<EmailDocument>) {
-        return Email.countDocuments(searchQuery);
+    public static async countDocuments(searchQuery: FilterQuery<EmailDocument>): Promise<number> {
+        return await Email.countDocuments(searchQuery);
     }
 
     public static async deleteEmailsByAccountId(accountId: string) {
@@ -197,9 +200,9 @@ export class EmailRepository {
         return result[0]?.total || 0;
     }
 
-    public static async getEmailsByIds(emailIds: string[]): Promise<EmailDocument[]> {
+    public static async getEmailsByIds(emailIds: string[], fields: ProjectionType<EmailDocument> = {}): Promise<FlattenMaps<EmailDocument>[]> {
         if (!emailIds.length) return [];
-        return await Email.find({ _id: { $in: emailIds } });
+        return await Email.find({ _id: { $in: emailIds } }, fields).lean();
     }
 
     public static async updateFolders(emailIds: string[], targetFolderIds: string[], removeFolderIds: string[] = []): Promise<number> {

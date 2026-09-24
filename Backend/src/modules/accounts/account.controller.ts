@@ -17,10 +17,15 @@ export class AccountsController {
 
     public getAccountDetails = async (req: Request<GetAccountDetailsSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) throw new Error('User ID is required');
             const accountId = req.params.accountId;
             if (!accountId) throw new Error('Account ID is required');
-            const account = await this.accountsService.getAccountDetails(accountId);
-            if (!account) res.status(404).send({ message: 'Account not found' });
+            const account = await this.accountsService.getAccountDetails(userId, accountId);
+            if (!account) {
+                res.status(404).send({ message: 'Account not found' });
+                return;
+            }
             res.send(account);
         } catch (error) {
             next(error);
@@ -29,9 +34,11 @@ export class AccountsController {
 
     public deleteAccount = async (req: Request<DeleteAccountSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) throw new Error('User ID is required');
             const accountId = req.params.accountId;
             if (!accountId) throw new Error('Account ID is required');
-            await this.accountsService.deleteAccount(accountId);
+            await this.accountsService.deleteAccount(userId, accountId);
             res.send({ message: 'Account deleted successfully' });
         } catch (error) {
             next(error);
@@ -97,8 +104,10 @@ export class AccountsController {
 
     public syncAccount = async (req: Request<GetAccountDetailsSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) throw new Error('User ID is required');
             const accountId = req.params.accountId;
-            const response = await this.accountsService.syncAccount(accountId);
+            const response = await this.accountsService.syncAccount(userId, accountId);
             res.status(202).send(response);
         } catch (error) {
             next(error);
@@ -111,9 +120,11 @@ export class AccountsController {
         next: NextFunction,
     ): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) throw new Error('User ID is required');
             const accountId = req.params.accountId;
             const { active } = req.body;
-            const response = await this.accountsService.enableAccount(accountId, active);
+            const response = await this.accountsService.enableAccount(userId, accountId, active);
             res.send(response);
         } catch (error) {
             next(error);

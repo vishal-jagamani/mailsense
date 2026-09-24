@@ -1,5 +1,5 @@
 import { getAccessToken } from '@auth0/nextjs-auth0/client';
-import { API_BASE_URL } from '@config/config';
+import { API_BASE_URL, AUTH_API_BASE_URL } from '@config/config';
 import { trackUserAction } from '@shared/monitoring';
 import { useAuthStore } from '@shared/store';
 import axios from 'axios';
@@ -90,6 +90,6 @@ apiClient.interceptors.response.use(
 export const axiosClient = apiClient;
 
 export const auth0ApiClient = axios.create({
-    baseURL: 'http://localhost:3000/auth',
+    baseURL: AUTH_API_BASE_URL,
     withCredentials: true,
 });

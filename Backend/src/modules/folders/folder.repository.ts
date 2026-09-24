@@ -35,6 +35,11 @@ export class FolderRepository {
         return await Folder.findById(folderId);
     }
 
+    public static async getFoldersByIds(folderIds: string[]): Promise<FolderDocument[]> {
+        if (!folderIds || folderIds.length === 0) return [];
+        return await Folder.find({ _id: { $in: folderIds } });
+    }
+
     public static async countDocuments(filterQuery: Record<string, unknown>): Promise<number> {
         return await Folder.countDocuments(filterQuery);
     }
@@ -49,6 +54,14 @@ export class FolderRepository {
 
     public static async createFolder(folder: Partial<FolderInput>): Promise<FolderDocument> {
         return await Folder.create(folder);
+    }
+
+    public static async updateFolder(folderId: string, folder: Partial<FolderDocument>): Promise<FolderDocument | null> {
+        return await Folder.findByIdAndUpdate(folderId, folder, { new: true });
+    }
+
+    public static async deleteFolder(folderId: string): Promise<void> {
+        await Folder.findByIdAndDelete(folderId);
     }
 
     public static async updateFolderByProviderFolderId(providerFolderId: string, folder: Partial<FolderDocument>): Promise<FolderDocument | null> {

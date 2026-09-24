@@ -37,7 +37,7 @@ const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
                     <APILoader show={unreadEmailLoading} />
                     <EmailMenuBarOptions
                         accountId={account}
-                        emailId={emailData?.providerMessageId || ''}
+                        emailId={emailData?._id || ''}
                         onManualUnreadOperation={() => setIsManualUnreadOperation(true)}
                     />
                     <Separator orientation="horizontal" />

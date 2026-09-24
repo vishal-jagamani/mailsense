@@ -6,6 +6,7 @@ import { EmailService } from '@modules/emails/email.service.js';
 import { createLogger } from '@observability';
 import { DraftDocument, DraftInput } from './draft.model.js';
 import { DraftRepository } from './draft.repository.js';
+import { ForbiddenError, NotFoundError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.DRAFT_SERVICE);
 
@@ -101,18 +102,27 @@ export class DraftService {
         try {
             const draftDoc = await DraftRepository.getDraftById(draftId, userId);
             if (!draftDoc) {
-                throw new Error(`Draft with ID ${draftId} not found or unauthorized`);
+                throw new NotFoundError('Draft', draftId);
             }
 
-            // Compose and send email via EmailService
+            if (draftDoc.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Unauthorized draft dispatch attempt');
+            }
+
+            const attachmentIds = draftDoc.attachments?.map((item) => item.attachmentId) || [];
+
             await this.emailService.composeEmail(userId, {
                 accountId: draftDoc.accountId,
                 to: draftDoc.to,
                 subject: draftDoc.subject,
                 body: draftDoc.body,
+                cc: draftDoc.cc,
+                bcc: draftDoc.bcc,
+                inReplyTo: draftDoc.inReplyTo,
+                attachmentIds,
             });
 
-            // Delete draft after successful sending
+            // Delete draft after successful transmission
             await DraftRepository.deleteDraftById(draftId, userId);
 
             return { status: true, message: 'Draft sent successfully' };

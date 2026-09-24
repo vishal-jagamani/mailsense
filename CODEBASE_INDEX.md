@@ -99,6 +99,8 @@
   - Connect/callback OAuth for Gmail/Outlook
   - Sync one/all accounts
   - Account list/details/delete
+  - Strips sensitive OAuth tokens (`accessToken`, `refreshToken`) on public account responses, returning `SanitizedAccountAttributes`
+  - Enforces caller `userId` verification on `deleteAccount`, `syncAccount`, and `enableAccount`
   - Account-level sync settings update endpoint for `syncEnabled`, `syncInterval`, and related scheduler refresh
   - Provider callback token exchange, profile fetch, and sync execution now route through `EmailProviderFactory`
   - Sync requests now enqueue background jobs and persist sync-job tracking records
@@ -119,6 +121,11 @@
   - Thread details endpoint for conversation view by email ID
   - Attachment download endpoint for provider-backed file retrieval by email ID and attachment ID
   - Search, delete, archive, star, unread, and move to folder
+  - Resolves canonical MongoDB `_id` to `providerMessageId` via `EmailRepository.getEmailsByIds` before dispatching batch provider actions (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`, `moveEmails`)
+  - Resolves folder MongoDB `_id` arrays to `providerFolderId` before querying database or dispatching `moveEmails`
+  - Synchronizes MongoDB email records upon folder moves via `EmailRepository.updateFolders`
+  - Enforces caller ownership validation over target emails before executing folder move operations
+  - Accurate search pagination using `EmailRepository.countDocuments`
   - Compose/send mail through Gmail (MIME Base64URL generator) and Outlook (direct <=3MB / chunked >3MB upload session) providers with staged attachments support
   - Search recipient suggestions across connected provider contacts
   - Supports account/date/folder-based filtering
@@ -129,20 +136,20 @@
 - Drafts (`Backend/src/modules/drafts/*`)
   - Local draft persistence schema (`draft.model.ts`) with compound indexes on `{ userId: 1, lastSavedAt: -1 }` and `{ userId: 1, accountId: 1 }`
   - Data repository (`draft.repository.ts`) for draft CRUD operations
-  - Service layer (`draft.service.ts`) for draft saving (`saveDraft`), retrieval (`getUserDrafts`), deletion (`deleteDraft`), HTML plain-text normalization (`htmlToText`), and provider email dispatch (`sendDraft`)
+  - Service layer (`draft.service.ts`) for draft saving (`saveDraft`), retrieval (`getUserDrafts`), deletion (`deleteDraft`), HTML plain-text normalization (`htmlToText`), and provider email dispatch (`sendDraft` forwarding `cc`, `bcc`, `inReplyTo`, and `attachmentIds`)
   - HTTP controller and route handlers (`draft.controller.ts`, `draft.routes.ts`, `draft.schema.ts`) mounted under `/api/drafts`
 - Folders (`Backend/src/modules/folders/*`)
   - Folder sync from providers
   - Folder list/details
   - Folder create/update/delete
+  - Resolves canonical MongoDB `_id` to `providerFolderId` before delegating to provider adapters in `updateFolder` and `deleteFolder`
+  - Synchronizes MongoDB folder documents via `FolderRepository.updateFolder` and `FolderRepository.deleteFolder`
+  - Corrected folder search to query `name` with regex matching and dynamic page numbering
   - Folder sync and CRUD now dispatch through shared provider strategy instances
 - Users (`Backend/src/modules/user/*`)
   - Session-scoped user/profile fetch/update
   - Change password via Auth0 Management API
   - User sync settings fetch/update endpoints for global account background-sync preferences
-- Demo (`Backend/src/modules/demo/*`)
-  - Cat fact sample endpoint
-  - Queue-sync demo endpoint for manually enqueuing sync-account jobs
 - Utils route (`Backend/src/modules/utils/index.ts`)
   - Decrypt helper and account-token debug endpoint (auth protected)
 
@@ -206,7 +213,6 @@
 ### API Surface (mounted at `/api`)
 
 - `GET /`
-- `GET /demo/catFact`
 - Users:
   - `GET /users/`
   - `PUT /users/`
@@ -257,6 +263,8 @@
   - `DELETE /folders/:folderId`
   - `POST /folders/list`
   - `GET /folders/list/:accountId`
+- Analytics:
+  - `GET /analytics/dashboard`
 - Utils:
   - `POST /utils/decrypt`
   - `GET /utils/getAccountAccessToken`
@@ -303,9 +311,9 @@
   - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), composite state orchestration hook (`useDashboardPage.ts`), UI components (`DashboardHeader`, `OverviewKpiCards`, `EmailVolumeChart`, `AccountDistributionPieChart`, `ResponseTimeCard`, `TopSendersCard`, `AccountActivityGrid`, `DashboardSkeleton`, `DashboardEmptyState`), and primary dashboard page view (`pages/index.tsx`)
   - `features/auth/*`: login page and profile fetch query
   - `features/drafts/*`: drafts page (`DraftsPage`), draft table components (`DraftListTable`, `DraftListTableHeader`, `DraftListTableBody`), debounced auto-save hook (`useAutoSaveDraft`), page state hook (`useDraftsPage`), and draft API layer (`draft.api.ts`, `draft.queries.ts`, `draft.mutations.ts`)
-  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, email API layer
-  - `features/folders/*`: folders overview, folder email list, folder CRUD UI, folder API layer, folder action hooks
-  - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table, inbox API layer, inbox page hooks with sync-aware refresh behavior
+  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), and email API layer; strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
+  - `features/folders/*`: folders overview, folder email list (`useFolderEmailListPage`), folder CRUD UI (`FolderCardHeader`, `FolderCardActions`, `FolderCard`), folder API layer, folder action hooks; strictly references canonical MongoDB `_id` (`folder._id`) across all UI operations
+  - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table (`EmailListTable`), inbox API layer, inbox page hooks with sync-aware refresh behavior; strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
   - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`)
 - `Frontend/src/shared/monitoring/*`: client observability and action tracking
@@ -398,3 +406,5 @@
 - Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).
 - Centralized `FilterModal` component is introduced under `@shared/components/utils` to unify the filter logic/UI for both inbox lists and folders overview.
 - Full-stack observability and error reliability infrastructure is established (Phase 3 of development roadmap), featuring custom domain error hierarchy, distributed tracing (`X-Trace-Id`) via AsyncLocalStorage and Axios interceptors, module-scoped Pino loggers (`createLogger`) with non-blocking APM bridging, pluggable monitoring manager with Sentry Native Structured Logging, Koyeb health probes (`/health`, `/health/ready`), and frontend Error Boundary with user-friendly recovery UI.
+- Strict database ID isolation: Frontend exclusively passes MongoDB `_id` for both emails (`email._id`) and folders (`folder._id`), while Backend repositories and services resolve external third-party IDs (`providerMessageId`, `providerFolderId`) before delegating to Gmail and Outlook provider adapters, guaranteeing zero ID mismatch regressions and clean separation of concerns.
+
