@@ -519,22 +519,22 @@ EmailSchema.index({ userId: 1, isRead: 1 });
 
 #### Tasks
 
-- [ ] Implement `try / catch` blocks and structured logging across all 6 methods in [user.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.service.ts):
-  - [ ] `getUser`
-  - [ ] `updateUser`
-  - [ ] `getUserProfile`
-  - [ ] `changePassword`
-  - [ ] `getUserSettings`
-  - [ ] `updateUserSettings`
-- [ ] Audit and migrate 50+ instances of `throw new Error(...)` to domain errors:
-  - [ ] [email.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.service.ts): `NotFoundError('Email', ...)` and `BadRequestError(...)`
-  - [ ] [account.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.service.ts): `NotFoundError('Account', ...)` and `UnauthorizedError(...)`
-  - [ ] [folder.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.service.ts): `NotFoundError('Folder', ...)`
-  - [ ] [draft.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/drafts/draft.service.ts): `NotFoundError('Draft', ...)`
-  - [ ] [attachment.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/attachments/attachment.service.ts): `NotFoundError('Attachment', ...)`
-  - [ ] [analytics.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.service.ts): `BadRequestError(...)`
-- [ ] Verify global error handler captures domain errors and properly serializes status code, error code, and trace ID.
-- [ ] Standardize frontend API client error unwrapping to consistently expose backend `errorCode` and `message` to React Query error boundaries.
+- [x] Implement `try / catch` blocks and structured logging across all 6 methods in [user.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.service.ts):
+  - [x] `getUser`
+  - [x] `updateUser`
+  - [x] `getUserProfile`
+  - [x] `changePassword`
+  - [x] `getUserSettings`
+  - [x] `updateUserSettings`
+- [x] Audit and migrate 50+ instances of `throw new Error(...)` to domain errors:
+  - [x] [email.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.service.ts): `NotFoundError('Email', ...)`, `BadRequestError(...)`, and `ForbiddenError(...)`
+  - [x] [account.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.service.ts): `NotFoundError('Account', ...)`, `BadRequestError(...)`, and `UnauthorizedError(...)`
+  - [x] [folder.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.service.ts): `NotFoundError('Folder', ...)`, `NotFoundError('Account', ...)`, and `ForbiddenError(...)`
+  - [x] [draft.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/drafts/draft.service.ts): `NotFoundError('Draft', ...)` and `ForbiddenError(...)`
+  - [x] [attachment.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/attachments/attachment.service.ts): `NotFoundError('Attachment', ...)` and `ForbiddenError(...)`
+  - [x] [analytics.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.service.ts): `ForbiddenError(...)`
+- [x] Verify global error handler captures domain errors and properly serializes status code, error code, and trace ID.
+- [x] Standardize frontend API client error unwrapping to consistently expose backend `errorCode` and `message` to React Query error boundaries.
 
 #### Files to Modify
 

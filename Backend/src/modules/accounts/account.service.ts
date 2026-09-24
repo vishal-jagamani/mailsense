@@ -152,7 +152,7 @@ export class AccountsService {
                 const url = await OutlookUtils.buildOutlookOAuthConsentURL();
                 return { url };
             } else {
-                throw new Error('Invalid provider');
+                throw new BadRequestError('Invalid provider');
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -320,8 +320,9 @@ export class AccountsService {
     public async updateAccountSettings(accountId: string, settings: UpdateAccountSettingsSchema): Promise<UpdateAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account) throw new Error('Account not found');
-
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
             await AccountRepository.updateAccount(accountId, settings);
 
             // Re-evaluates schedule in BullMQ

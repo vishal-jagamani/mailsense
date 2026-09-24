@@ -1,4 +1,5 @@
 import { LOGGER_MODULE } from '@constants';
+import { ForbiddenError } from '@errors';
 import { ANALYTICS_TIMEFRAME, AnalyticsQueryParams, DashboardAnalyticsResponse, OverviewMetricsAttributes } from '@mailsense/types';
 import { createLogger } from '@observability';
 import { AccountRepository } from '../accounts/account.repository.js';
@@ -103,7 +104,7 @@ export class AnalyticsService {
 
             if (requestedAccountId) {
                 if (!validAccountIds.includes(requestedAccountId)) {
-                    throw new Error('Requested account does not belong to the user or is inactive');
+                    throw new ForbiddenError('Requested account does not belong to the user or is inactive');
                 }
                 return [requestedAccountId];
             }

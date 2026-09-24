@@ -1,3 +1,4 @@
+import { UnauthorizedError } from '@errors';
 import { SaveDraftRequestBody } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import { DraftService } from './draft.service.js';
@@ -13,7 +14,7 @@ export class DraftController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const draft = await this.draftService.saveDraft(userId, req.body);
             res.status(200).json(draft);
@@ -26,7 +27,7 @@ export class DraftController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const drafts = await this.draftService.getUserDrafts(userId);
             res.status(200).json(drafts);
@@ -39,7 +40,7 @@ export class DraftController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const { draftId } = req.params;
             const draft = await this.draftService.getDraftById(draftId, userId);
@@ -53,7 +54,7 @@ export class DraftController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const { draftId } = req.params;
             const response = await this.draftService.deleteDraft(draftId, userId);
@@ -67,7 +68,7 @@ export class DraftController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const { draftId } = req.params;
             const result = await this.draftService.sendDraft(draftId, userId);

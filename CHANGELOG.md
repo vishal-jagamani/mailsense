@@ -17,6 +17,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Fixed search and account navigation requests to prevent server interruptions and connection failures when handling invalid queries or non-existent accounts.
 - Enhanced account privacy and security by strictly verifying user ownership on account sync, enable, and delete operations, and ensuring sensitive OAuth access and refresh credentials are never exposed to the client.
 
+### Changed
+- Improved error handling and notifications with clear, descriptive explanations and actionable recovery guidance instead of generic failure popups when mailbox, folder, draft, or attachment operations encounter issues.
+- Strengthened tenant privacy and access control across folders, drafts, staged attachments, and account preferences to guarantee resources can only be modified by their verified owners.
+- Improved background resilience and synchronization stability for scheduled email synchronization and credential renewal, ensuring mailboxes stay continuously up-to-date.
+
 ## [3.2.0] - 2026-09-14
 
 ### Added

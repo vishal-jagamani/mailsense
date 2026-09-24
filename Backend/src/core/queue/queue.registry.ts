@@ -3,6 +3,7 @@ import { createLogger } from '@observability';
 import { ConnectionOptions, Queue } from 'bullmq';
 import { getQueueConfig, QUEUE_NAMES } from './queue.config.js';
 import { getRedisConnection } from './redis.connection.js';
+import { NotFoundError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.QUEUE_REGISTRY);
 
@@ -33,7 +34,7 @@ export function initQueueRegistry(): void {
 export function getQueue(name: string): Queue {
     const queue = registry.get(name);
     if (!queue) {
-        throw new Error(`❌ Queue "${name}" is not registered. Ensure initQueueRegistry() is called.`);
+        throw new NotFoundError('Queue', name);
     }
     return queue;
 }

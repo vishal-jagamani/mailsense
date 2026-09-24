@@ -1,5 +1,6 @@
 import { GMAIL_SECRETS } from '@config';
 import { LOGGER_MODULE, OAUTH_ACCESS_TOKEN_URI } from '@constants';
+import { NotFoundError } from '@errors';
 import {
     GMAIL_LABELS,
     GmailHistoryResponse,
@@ -49,7 +50,9 @@ export class GmailApi {
     static async fetchAccessToken(accountId: string) {
         try {
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account) throw new Error('Account not found');
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
             return account.accessTokenExpiry < Date.now()
                 ? await this.refreshAccessToken(accountId, decrypt(account.refreshToken))
                 : decrypt(account.accessToken);

@@ -11,6 +11,7 @@ import {
 } from '@mailsense/types';
 import { IEmailProvider } from './email.provider.js';
 import { IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
+import { BadRequestError } from '@errors';
 
 export class EmailProviderFactory {
     private static providers: Map<ACCOUNT_PROVIDER, IEmailProvider<IEmailTAuthToken, IEmailTUserProfile, IEmailTSendEmailResult>> = new Map();
@@ -33,7 +34,7 @@ export class EmailProviderFactory {
             } else if (providerType === ACCOUNT_PROVIDER.OUTLOOK) {
                 provider = new OutlookProvider();
             } else {
-                throw new Error(`Unsupported email provider type: ${providerType}`);
+                throw new BadRequestError(`Unsupported email provider type: ${providerType} for EmailProviderFactory.getProvider`);
             }
             this.providers.set(providerType, provider);
         }

@@ -1,3 +1,4 @@
+import { BadRequestError } from '@errors';
 import { ACCOUNT_LAST_SYNC_STATUS, AccountAttributes, AccountMetricsAttributes, CreateEntityInput } from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
 import validator from 'validator';
@@ -46,7 +47,7 @@ AccountSchema.pre('save', function (next) {
         this.emailAddress = this.emailAddress.trim().toLowerCase();
     }
     if (!validator.isEmail(this.emailAddress)) {
-        return next(new Error('Invalid email format'));
+        return next(new BadRequestError('Invalid email format'));
     }
     next();
 });

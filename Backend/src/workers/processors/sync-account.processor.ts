@@ -12,6 +12,7 @@ import { createLogger, setTraceContext } from '@observability';
 import { eventBus } from '../../core/events/event-bus.js';
 import { RefreshTokenPayload, SyncAccountPayload } from '../../core/queue/queue.service.js';
 import { refreshTokenProcessor } from './refresh-token.processor.js';
+import { NotFoundError, SyncError } from '@errors';
 
 interface ErrorWithStatus {
     status?: number;
@@ -47,7 +48,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
 
     const account = await AccountRepository.getAccountById(accountId);
     if (!account) {
-        throw new Error(`Account not found: ${accountId}`);
+        throw new NotFoundError(`Account`, accountId);
     }
 
     const userId = account.userId?.toString() || job.data.userId;
@@ -94,7 +95,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
 
             const updatedAccount = await AccountRepository.getAccountById(accountId);
             if (!updatedAccount || !updatedAccount.active) {
-                throw new Error(`Account disabled or missing post token refresh: ${accountId}`);
+                throw new SyncError({ accountId, message: `Account disabled or missing post token refresh: ${accountId}` });
             }
             logger.info(`🔑 Retrying fetchMessages for account: ${accountId}`);
             historyDetails = await emailProvider.fetchMessages(accountId, updatedAccount.lastSyncCursor);
@@ -145,7 +146,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
 
                 const updatedAccount = await AccountRepository.getAccountById(accountId);
                 if (!updatedAccount || !updatedAccount.active) {
-                    throw new Error(`Account disabled or missing post token refresh: ${accountId}`);
+                    throw new SyncError({ accountId, message: `Account disabled or missing post token refresh: ${accountId}` });
                 }
                 logger.info(`🔑 Retrying full sync fetchMessages for account: ${accountId}`);
                 fullSyncResult = await emailProvider.fetchMessages(accountId);

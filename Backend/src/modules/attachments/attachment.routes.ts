@@ -1,7 +1,8 @@
+import { BadRequestError } from '@errors';
+import { handleRequest } from '@utils';
 import { Router } from 'express';
 import multer from 'multer';
 import { authMiddleware } from '../../middlewares/auth.js';
-import { handleRequest } from '@utils';
 import { AttachmentsController } from './attachment.controller.js';
 
 const router = Router();
@@ -13,7 +14,7 @@ const upload = multer({
         const forbiddenExts = ['.exe', '.bat', '.sh', '.vbs', '.js', '.jar'];
         const isForbidden = forbiddenExts.some((ext) => file.originalname.toLowerCase().endsWith(ext));
         if (isForbidden) {
-            return cb(new Error('File extension forbidden for security'));
+            return cb(new BadRequestError('File extension forbidden for security'));
         }
         cb(null, true);
     },

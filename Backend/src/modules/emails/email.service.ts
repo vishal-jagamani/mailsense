@@ -194,9 +194,15 @@ export class EmailService {
     public async getEmail(emailId: string): Promise<EmailDocument | EmailInput | null> {
         try {
             const email = await EmailRepository.getEmail(emailId);
-            if (!email) throw new Error('Email not found');
+            if (!email) {
+                throw new NotFoundError('Email', emailId);
+            }
+
             const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
-            if (!account) throw new Error('Account not found');
+            if (!account) {
+                throw new NotFoundError('Account', email.accountId);
+            }
+
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             return provider.getMessageDetails(email.accountId, email.providerMessageId, email);
         } catch (err) {
@@ -369,7 +375,7 @@ export class EmailService {
         try {
             const account = await AccountRepository.getAccountById(composeEmailData.accountId, { provider: 1 });
             if (!account) {
-                throw new Error('Account not found');
+                throw new NotFoundError('Account', composeEmailData.accountId);
             }
             if (composeEmailData.attachmentIds && composeEmailData.attachmentIds.length) {
                 return await this.composeEmailWithAttachments(userId, composeEmailData);
@@ -410,7 +416,7 @@ export class EmailService {
         try {
             const email = await EmailRepository.getEmail(emailId);
             if (!email) {
-                throw new Error('Email not found');
+                throw new NotFoundError('Email', emailId);
             }
 
             const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
@@ -437,12 +443,12 @@ export class EmailService {
         try {
             const email = await EmailRepository.getEmail(emailId);
             if (!email) {
-                throw new Error('Email not found');
+                throw new NotFoundError('Email', emailId);
             }
 
             const account = await AccountRepository.getAccountById(email.accountId);
             if (!account) {
-                throw new Error('Account not found');
+                throw new NotFoundError('Account', email.accountId);
             }
 
             const attachment = (email.attachments || []).find((att) => att.attachmentId === attachmentId);
@@ -467,10 +473,12 @@ export class EmailService {
             const { accountId, to, subject, body, attachmentIds } = reqBody;
 
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account || account.userId.toString() !== userId.toString()) {
-                throw new Error('Account not found or unauthorized');
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
             }
-
+            if (account.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Unauthorized attempt to compose email from unowned account');
+            }
             const stagedFiles: { filename: string; mimeType: string; buffer: Buffer }[] = [];
             if (attachmentIds && attachmentIds.length > 0) {
                 for (const attId of attachmentIds) {
@@ -478,7 +486,7 @@ export class EmailService {
 
                     // Verify attachment belongs to user and matches target account
                     // if (stagedAttachment.userId.toString() !== userId.toString() || stagedAttachment.accountId !== accountId) {
-                    //     throw new Error(`Unauthorized or invalid attachment ${attId}`);
+                    //     throw new ForbiddenError(`Unauthorized or invalid attachment ${attId}`);
                     // }
 
                     const chunks: Buffer[] = [];

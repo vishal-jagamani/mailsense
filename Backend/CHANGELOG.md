@@ -21,10 +21,20 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Fixed SEC-02 (Tenant Isolation): Enforced caller `userId` validation in `AccountsService` for `getAccountDetails`, `deleteAccount`, `syncAccount`, and `enableAccount`.
 - Fixed SEC-03 (Credential Redaction): Stripped sensitive `accessToken` and `refreshToken` credentials in `AccountsService.getAccountDetails` and `getAccounts`, returning `SanitizedAccountAttributes`.
 - Fixed SEC-07 (Email Move Authorization): Enforced caller ownership verification over target email IDs in `EmailService.moveEmails` before dispatching move commands to providers.
+- Fixed Exception Handling & Logging Audit (Phase 2):
+  - Replaced 50+ generic `throw new Error(...)` calls across services, controllers, provider clients, and background workers with compiler-enforced domain errors (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `SyncError`).
+  - Remediated unhandled exception gaps in `UserService`: wrapped all 6 service methods (`getUser`, `updateUser`, `getUserProfile`, `changePassword`, `getUserSettings`, `updateUserSettings`) in explicit `try / catch` blocks with module-scoped logging and `NotFoundError` throws.
+  - Enforced caller authorization checks in `AttachmentsService.deleteStagedAttachment`, `FolderService.updateFolder`, and `FolderService.deleteFolder` using `ForbiddenError` to prevent cross-tenant mutations.
+  - Enforced account ownership verification in `EmailService.composeEmailWithAttachments` with `ForbiddenError` before initiating provider dispatch.
+  - Replaced generic worker exception handling in `syncAccountProcessor` and `refreshTokenProcessor` with `SyncError`, preventing unhandled queue rejections.
+  - Fixed `account.model.ts` pre-save validation to throw `BadRequestError` on invalid email formats.
+  - Corrected accidental third-party imports of `UnauthorizedError` from `express-oauth2-jwt-bearer` in `folder.controller.ts` and `draft.controller.ts`, replacing them with `@errors`.
 
 ### Changed
 - Refactored `composeEmailSchema` in `email.schema.ts` to support optional `cc`, `bcc`, `inReplyTo`, `threadId`, and `attachmentIds` using Zod 4 syntax.
 - Updated `FolderRepository` data access methods to delegate error handling and logging to `FolderService`.
+- Added `USER_SERVICE = 'UserService'` to `LOGGER_MODULE` enum in `observability.constants.ts`.
+- Standardized error mapping and taxonomy across `EmailService`, `AccountsService`, `FolderService`, `DraftService`, `AttachmentsService`, and `AnalyticsService` to ensure centralized error middleware maps operational errors directly to RFC-compliant HTTP status codes (400, 401, 403, 404).
 
 ## [3.2.0] - 2026-09-14
 

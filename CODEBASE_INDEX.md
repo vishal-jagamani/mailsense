@@ -84,7 +84,7 @@
 
 - `ErrorCodes.ts`: standardized `ErrorCode` string enum providing compiler-enforced error codes
 - `AppError.ts`: base operational error class carrying `errorCode`, `httpStatus`, `traceId`, and typed context
-- `DomainErrors.ts`: 11 domain error subclasses (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`)
+- `DomainErrors.ts`: 11 domain error subclasses (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`); all services, controllers, provider clients, and background workers are fully migrated from generic `new Error` to these domain error classes
 - `ErrorFactories.ts`: ergonomic helpers for domain error instantiation
 
 ### Health Probes & Readiness Checks (`Backend/src/core/health/*`)
@@ -109,12 +109,12 @@
 - Analytics (`Backend/src/modules/analytics/*`)
   - Pure database query repository (`analytics.repository.ts`) with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, and account breakdown
   - Utility and transformation layer (`analytics.utils.ts`) for metric math, contiguous date backfilling, regex name/email extraction, and response formatting
-  - Service layer (`analytics.service.ts`) orchestrating account authorization, concurrent queries, period percentage changes, and metrics snapshot refresh
+  - Service layer (`analytics.service.ts`) orchestrating account authorization, concurrent queries, period percentage changes, and metrics snapshot refresh; throws `ForbiddenError` when requested accounts are unauthorized or inactive
   - HTTP controller and route handlers (`analytics.controller.ts`, `analytics.routes.ts`, `analytics.schema.ts`) mounted under `/api/analytics`
   - Internal type definitions and centralized constants (`analytics.types.ts`, `analytics.constants.ts`)
 - Attachments (`Backend/src/modules/attachments/*`)
   - Attachment staging file upload (`POST /api/attachments/upload`) to Cloudflare R2 object storage
-  - Staged attachment deletion endpoint (`DELETE /api/attachments/:attachmentId`)
+  - Staged attachment deletion endpoint (`DELETE /api/attachments/:attachmentId`) with user ownership verification throwing `ForbiddenError` on unauthorized deletions
   - Staged metadata tracking with 24-hour TTL expiration index
 - Emails (`Backend/src/modules/emails/*`)
   - Unified list, per-account list, email details
@@ -126,7 +126,7 @@
   - Synchronizes MongoDB email records upon folder moves via `EmailRepository.updateFolders`
   - Enforces caller ownership validation over target emails before executing folder move operations
   - Accurate search pagination using `EmailRepository.countDocuments`
-  - Compose/send mail through Gmail (MIME Base64URL generator) and Outlook (direct <=3MB / chunked >3MB upload session) providers with staged attachments support
+  - Compose/send mail through Gmail (MIME Base64URL generator) and Outlook (direct <=3MB / chunked >3MB upload session) providers with staged attachments support and sender account ownership verification
   - Search recipient suggestions across connected provider contacts
   - Supports account/date/folder-based filtering
   - Mailbox list responses now support thread-grouped conversation summaries with per-thread counts
@@ -136,7 +136,7 @@
 - Drafts (`Backend/src/modules/drafts/*`)
   - Local draft persistence schema (`draft.model.ts`) with compound indexes on `{ userId: 1, lastSavedAt: -1 }` and `{ userId: 1, accountId: 1 }`
   - Data repository (`draft.repository.ts`) for draft CRUD operations
-  - Service layer (`draft.service.ts`) for draft saving (`saveDraft`), retrieval (`getUserDrafts`), deletion (`deleteDraft`), HTML plain-text normalization (`htmlToText`), and provider email dispatch (`sendDraft` forwarding `cc`, `bcc`, `inReplyTo`, and `attachmentIds`)
+  - Service layer (`draft.service.ts`) for draft saving (`saveDraft`), retrieval (`getUserDrafts`), deletion (`deleteDraft`), HTML plain-text normalization (`htmlToText`), and provider email dispatch (`sendDraft` forwarding `cc`, `bcc`, `inReplyTo`, and `attachmentIds`) with caller authorization enforcement throwing `ForbiddenError`
   - HTTP controller and route handlers (`draft.controller.ts`, `draft.routes.ts`, `draft.schema.ts`) mounted under `/api/drafts`
 - Folders (`Backend/src/modules/folders/*`)
   - Folder sync from providers
@@ -144,12 +144,14 @@
   - Folder create/update/delete
   - Resolves canonical MongoDB `_id` to `providerFolderId` before delegating to provider adapters in `updateFolder` and `deleteFolder`
   - Synchronizes MongoDB folder documents via `FolderRepository.updateFolder` and `FolderRepository.deleteFolder`
+  - Enforces caller ownership verification over folders in `updateFolder` and `deleteFolder` throwing `ForbiddenError` on cross-tenant attempts
   - Corrected folder search to query `name` with regex matching and dynamic page numbering
   - Folder sync and CRUD now dispatch through shared provider strategy instances
 - Users (`Backend/src/modules/user/*`)
   - Session-scoped user/profile fetch/update
   - Change password via Auth0 Management API
   - User sync settings fetch/update endpoints for global account background-sync preferences
+  - All 6 service methods wrapped in explicit `try / catch` blocks with structured module logging via `LOGGER_MODULE.USER_SERVICE` and typed `NotFoundError` throws
 - Utils route (`Backend/src/modules/utils/index.ts`)
   - Decrypt helper and account-token debug endpoint (auth protected)
 

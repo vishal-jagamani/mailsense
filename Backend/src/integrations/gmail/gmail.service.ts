@@ -1,4 +1,4 @@
-import { AxiosApiError } from '@errors';
+import { AxiosApiError, NotFoundError } from '@errors';
 import axios from 'axios';
 
 import { LOGGER_MODULE } from '@constants';
@@ -63,7 +63,9 @@ export class GmailService {
                 accountId,
                 ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING.FETCH_ACCESS_TOKEN.projection,
             );
-            if (!account) throw new Error('Account not found');
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
             const emails = await GmailApi.fetchEmails(accountId, 500);
             const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails);
             return { emails: parsedEmails.emails, lastSyncCursor: parsedEmails.lastSyncCursor };

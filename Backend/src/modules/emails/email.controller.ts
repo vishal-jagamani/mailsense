@@ -1,3 +1,4 @@
+import { BadRequestError, UnauthorizedError } from '@errors';
 import { GetAllEmailsFilters, MoveEmailsRequestBody } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import {
@@ -24,7 +25,7 @@ export class EmailController {
             const { size, page, filters } = req.body;
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const sizeValue = size ? Number(size) : 10;
             const pageValue = page ? Number(page) : 1;
@@ -50,7 +51,7 @@ export class EmailController {
             const { accountId } = req.params;
             const { size, page } = req.query;
             if (!accountId) {
-                throw new Error('Account ID is required');
+                throw new BadRequestError('Account ID is required');
             }
             const sizeValue = size ? Number(size) : 10;
             const pageValue = page ? Number(page) : 1;
@@ -65,7 +66,7 @@ export class EmailController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const filters = await this.emailService.getFilters(userId);
             res.send(filters);
@@ -78,7 +79,7 @@ export class EmailController {
         try {
             const { emailId } = req.params;
             if (!emailId) {
-                throw new Error('Email ID is required');
+                throw new BadRequestError('Email ID is required');
             }
             const email = await this.emailService.getEmail(emailId);
             res.send(email);
@@ -92,8 +93,7 @@ export class EmailController {
             const { searchText, size, page } = req.body;
             const { id: userid } = req.user || {};
             if (!userid) {
-                res.status(400).send('User ID is required');
-                return;
+                throw new UnauthorizedError('User ID is required');
             }
             const params = {
                 userId: String(userid),
@@ -112,11 +112,11 @@ export class EmailController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const { emailIds, trash } = req.body;
             if (!emailIds) {
-                throw new Error('Email ID is required');
+                throw new BadRequestError('Email ID is required');
             }
             const email = await this.emailService.deleteEmail(userId, emailIds, Boolean(trash));
             res.send(email);
@@ -129,11 +129,11 @@ export class EmailController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const { emailIds, archive } = req.body;
             if (!emailIds) {
-                throw new Error('Email ID is required');
+                throw new BadRequestError('Email ID is required');
             }
             const email = await this.emailService.archiveEmails(userId, emailIds, Boolean(archive));
             res.send(email);
@@ -146,11 +146,11 @@ export class EmailController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const { emailIds, star } = req.body;
             if (!emailIds) {
-                throw new Error('Email ID is required');
+                throw new BadRequestError('Email ID is required');
             }
             const email = await this.emailService.starEmails(userId, emailIds, Boolean(star));
             res.send(email);
@@ -163,11 +163,11 @@ export class EmailController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const { emailIds, unread } = req.body;
             if (!emailIds) {
-                throw new Error('Email ID is required');
+                throw new BadRequestError('Email ID is required');
             }
             const email = await this.emailService.unreadEmails(userId, emailIds, Boolean(unread));
             res.send(email);
@@ -180,11 +180,11 @@ export class EmailController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const { accountId, to, subject, body } = req.body;
             if (!accountId || !to || !subject || !body) {
-                throw new Error('Account ID, To, subject and body are required');
+                throw new BadRequestError('Account ID, To, subject and body are required');
             }
             const email = await this.emailService.composeEmail(userId, req.body);
             res.send(email);
@@ -202,7 +202,7 @@ export class EmailController {
             const { searchText } = req.body;
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const email = await this.emailService.searchOtherContacts(userId, searchText);
             res.send(email);
@@ -215,7 +215,7 @@ export class EmailController {
         try {
             const { emailId } = req.params;
             if (!emailId) {
-                throw new Error('Email ID is required');
+                throw new BadRequestError('Email ID is required');
             }
             const threadData = await this.emailService.getThread(emailId);
             res.send(threadData);
@@ -228,7 +228,7 @@ export class EmailController {
         try {
             const { emailId, attachmentId } = req.params;
             if (!emailId || !attachmentId) {
-                throw new Error('Email ID and Attachment ID are required');
+                throw new BadRequestError('Email ID and Attachment ID are required');
             }
             const attachment = await this.emailService.downloadAttachment(emailId, attachmentId);
             res.setHeader('Content-Type', attachment.mimeType);
@@ -243,7 +243,7 @@ export class EmailController {
         try {
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const payload = req.body;
             const result = await this.emailService.moveEmails(userId, payload.emailIds, payload.targetFolderIds, payload.removeFolderIds || []);

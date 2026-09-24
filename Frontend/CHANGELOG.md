@@ -12,6 +12,9 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Fixed BUG-12 (Folder ID Decoupling): Switched all folder UI actions from `providerFolderId` to canonical MongoDB `_id` (`folder._id` / `folder.id`) in `MoveToFolderDropdown`, `FolderCardHeader`, `FolderCardActions`, `FolderCard`, `useFolderEmailListPage`, and `useInboxPage`.
 - Fixed BUG-05 (Hardcoded Environment URL): Replaced hardcoded `http://localhost:3000/auth` URL in `Frontend/src/shared/api/client.ts` with configurable `AUTH_API_BASE_URL` from `Frontend/src/config/config.ts`.
 
+### Changed
+- Standardized client-side API error unwrapping in `Frontend/src/shared/api/errors.ts` and Axios interceptor in `Frontend/src/shared/api/client.ts` to consistently parse structured backend domain error fields (`errorCode`, `description`, `suggestedAction`, `traceId`) for React Query mutations, UI toasts, and error recovery screens.
+
 ## [3.2.0] - 2026-09-14
 
 ### Added
