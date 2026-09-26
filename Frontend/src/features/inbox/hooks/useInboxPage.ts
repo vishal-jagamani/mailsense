@@ -155,7 +155,7 @@ export const useInboxPage = (accountId?: string): useInboxPageReturnParams => {
                     data: emailFilters?.folders.map((folder) => {
                         return {
                             id: folder.id,
-                            name: folder.providerFolderId,
+                            name: folder.id,
                             label: folder.name,
                             selectedValue: '',
                         };

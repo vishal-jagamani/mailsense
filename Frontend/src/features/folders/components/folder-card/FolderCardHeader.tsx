@@ -30,7 +30,7 @@ const FolderCardHeader: React.FC<FolderCardHeaderProps> = ({ data, renameState }
                         <Check
                             className="size-5 cursor-pointer text-blue-500"
                             onClick={() => {
-                                handleUpdateFolder(data.providerFolderId, { accountId: data.accountId, folderName: renameFolderValue });
+                                handleUpdateFolder(data._id, { accountId: data.accountId, folderName: renameFolderValue });
                                 setRenameFolderFlag(false);
                                 setRenameFolderId('');
                             }}

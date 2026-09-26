@@ -38,7 +38,7 @@ const FolderCard: React.FC<FolderCardProps> = ({ data, renameState, deleteFolder
                             <Check
                                 className="size-5 cursor-pointer text-blue-500"
                                 onClick={() => {
-                                    handleUpdateFolder(data.providerFolderId, { accountId: data.accountId, folderName: renameFolderValue });
+                                    handleUpdateFolder(data._id, { accountId: data.accountId, folderName: renameFolderValue });
                                     setRenameFolderFlag(false);
                                     setRenameFolderId('');
                                 }}
@@ -130,7 +130,7 @@ const FolderCard: React.FC<FolderCardProps> = ({ data, renameState, deleteFolder
                                 <p
                                     className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-red-500 hover:underline"
                                     onClick={() => {
-                                        deleteFolder(data.providerFolderId);
+                                        deleteFolder(data._id);
                                         setPopoverOpen(false);
                                     }}
                                 >

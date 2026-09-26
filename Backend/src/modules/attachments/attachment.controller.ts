@@ -1,4 +1,6 @@
+import { BadRequestError, UnauthorizedError } from '@errors';
 import { NextFunction, Request, Response } from 'express';
+import { DeleteStagedAttachmentSchema, UploadStagedAttachmentSchema } from './attachment.schema.js';
 import { AttachmentsService } from './attachment.service.js';
 
 export class AttachmentsController {
@@ -8,14 +10,24 @@ export class AttachmentsController {
         this.attachmentsService = new AttachmentsService();
     }
 
-    public uploadStagedAttachment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public uploadStagedAttachment = async (
+        req: Request<object, object, UploadStagedAttachmentSchema, object>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
         try {
             const userId = req.user?.id;
-            if (!userId) throw new Error('User ID is required');
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
             const { accountId } = req.body;
-            if (!accountId) throw new Error('Account ID is required');
+            if (!accountId) {
+                throw new BadRequestError('Account ID is required');
+            }
             const file = req.file;
-            if (!file) throw new Error('File is required');
+            if (!file) {
+                throw new BadRequestError('File is required');
+            }
             const uploadStagedAttachment = await this.attachmentsService.uploadStagedAttachment(userId, accountId, file);
             res.status(201).send({
                 success: true,
@@ -33,16 +45,20 @@ export class AttachmentsController {
     };
 
     public deleteStagedAttachment = async (
-        req: Request<{ attachmentId: string }, object, object, object>,
+        req: Request<DeleteStagedAttachmentSchema, object, object, object>,
         res: Response,
         next: NextFunction,
     ): Promise<void> => {
         try {
-            const { attachmentId } = req.params;
-            if (!attachmentId) throw new Error('Attachment ID is required');
             const userId = req.user?.id;
-            if (!userId) throw new Error('User ID is required');
-            await this.attachmentsService.deleteStagedAttachment(attachmentId);
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            const { attachmentId } = req.params;
+            if (!attachmentId) {
+                throw new BadRequestError('Attachment ID is required');
+            }
+            await this.attachmentsService.deleteStagedAttachment(userId, attachmentId);
             res.status(200).send({ success: true, message: 'Staged attachment deleted successfully' });
         } catch (err) {
             next(err);

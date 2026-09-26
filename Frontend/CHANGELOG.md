@@ -7,6 +7,18 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-09-26
+
+### Fixed
+- Fixed BUG-10 (Email ID Decoupling): Eliminated `email.providerMessageId` from UI state and selection tables; `EmailListTable`, `useEmailsPage`, `EmailMenuBarOptions`, and `MoveToFolderDropdown` now strictly use MongoDB `_id` (`email._id`) for selection, detail routing, checkboxes, trash actions, and DOM IDs.
+- Fixed BUG-12 (Folder ID Decoupling): Switched all folder UI actions from `providerFolderId` to canonical MongoDB `_id` (`folder._id` / `folder.id`) in `MoveToFolderDropdown`, `FolderCardHeader`, `FolderCardActions`, `FolderCard`, `useFolderEmailListPage`, and `useInboxPage`.
+- Fixed BUG-05 (Hardcoded Environment URL): Replaced hardcoded `http://localhost:3000/auth` URL in `Frontend/src/shared/api/client.ts` with configurable `AUTH_API_BASE_URL` from `Frontend/src/config/config.ts`.
+
+### Changed
+- Standardized client-side API error unwrapping in `Frontend/src/shared/api/errors.ts` and Axios interceptor in `Frontend/src/shared/api/client.ts` to consistently parse structured backend domain error fields (`errorCode`, `description`, `suggestedAction`, `traceId`) for React Query mutations, UI toasts, and error recovery screens.
+- Consolidated fragmented email query keys (`EMAILS`, `EMAIL_FILTERS`, `QUERY_KEYS.EMAIL`) into a strongly-typed hierarchical key factory `EMAIL_QUERY_KEYS` in `Frontend/src/shared/api/query-keys.ts`, maintaining backwards-compatible exports.
+- Refactored `email.queries.ts`, `inbox.queries.ts`, `email.mutations.ts`, `inbox.mutations.ts`, and `draft.mutations.ts` to use `EMAIL_QUERY_KEYS` for deterministic cache invalidations across email, inbox, and draft operations.
+
 ## [3.2.0] - 2026-09-14
 
 ### Added
@@ -319,7 +331,10 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Notes
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.3.0
+[3.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.2.0
+[3.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.1.0
 [2.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.0
 [2.0.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.0
 [1.4.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v1.4.1

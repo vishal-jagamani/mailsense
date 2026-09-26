@@ -1,4 +1,5 @@
 import { LOGGER_MODULE } from '@constants';
+import { ForbiddenError, NotFoundError } from '@errors';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { ACCOUNT_PROVIDER, GetAllFoldersFilters, PaginatedDataResponse, UpdateAPIResponse } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
@@ -18,7 +19,7 @@ export class FolderService {
         try {
             const account = await AccountRepository.getAccountById(accountId, { provider: 1, userId: 1 });
             if (!account) {
-                throw new Error('Account not found');
+                throw new NotFoundError('Account', accountId);
             }
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             const folderInputs = await provider.getAllFolders(accountId, account.userId);
@@ -43,14 +44,15 @@ export class FolderService {
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
+            const dateRangeResult = dateRange ? getDateRange(dateRange) : null;
             const filterQuery: FilterQuery<FolderDocument> = {
                 accountId: { $in: accountId?.length ? accountId : accounts.map((account) => account._id) },
-                ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
-                ...(dateRange &&
-                    getDateRange(dateRange) && {
-                        updatedAt: { $gte: getDateRange(dateRange).startDate, $lte: getDateRange(dateRange).endDate },
-                    }),
+                ...(searchText && { name: { $regex: searchText, $options: 'i' } }),
+                ...(dateRangeResult && {
+                    updatedAt: { $gte: dateRangeResult.startDate, $lte: dateRangeResult.endDate },
+                }),
             };
+
             const folders = await FolderRepository.getAllFolders(
                 filterQuery,
                 size,
@@ -59,7 +61,8 @@ export class FolderService {
                 FOLDER_LIST_DB_FIELD_MAPPING.SORT.sort,
             );
             const total = await FolderRepository.countDocuments(filterQuery);
-            return { data: folders, size: folders.length, page: 1, total };
+
+            return { data: folders, size: folders.length, page, total };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in FolderService.getAllFolders: ${errorMessage}`, { error: err });
@@ -71,7 +74,7 @@ export class FolderService {
         try {
             const folder = await FolderRepository.getFolder(folderId);
             if (!folder) {
-                throw new Error('Folder not found');
+                throw new NotFoundError('Folder', folderId);
             }
             return folder;
         } catch (err) {
@@ -85,7 +88,7 @@ export class FolderService {
         try {
             const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
             if (!account) {
-                throw new Error('Account not found');
+                throw new NotFoundError('Account', accountId);
             }
             const folders = await FolderRepository.getAccountFolders(accountId);
             return { data: folders, size: folders.length, page: 1, total: folders.length };
@@ -100,7 +103,7 @@ export class FolderService {
         try {
             const account = await AccountRepository.getAccountById(accountId, { provider: 1, userId: 1 });
             if (!account) {
-                throw new Error('Account not found');
+                throw new NotFoundError('Account', accountId);
             }
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             return provider.createFolder(account.userId, accountId, folderName);
@@ -111,36 +114,54 @@ export class FolderService {
         }
     }
 
-    public async updateFolder(accountId: string, folderId: string, folderName: string): Promise<UpdateAPIResponse> {
+    public async updateFolder(userId: string, accountId: string, folderId: string, folderName: string): Promise<UpdateAPIResponse> {
         try {
+            const folder = await FolderRepository.getFolder(folderId);
+            if (!folder) {
+                throw new NotFoundError('Folder', folderId);
+            }
+            if (folder.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Unauthorized attempt to update folder');
+            }
             const account = await AccountRepository.getAccountById(accountId, { provider: 1, userId: 1 });
             if (!account) {
-                throw new Error('Account not found');
+                throw new NotFoundError('Account', folder.accountId);
             }
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-            return provider.updateFolder(accountId, folderId, folderName);
+            const providerRes = await provider.updateFolder(accountId, folder.providerFolderId, folderName);
+            await FolderRepository.updateFolder(folderId, {
+                name: folderName,
+                normalizedName: folderName.toLowerCase(),
+            });
+            return providerRes || { status: true, message: 'Folder updated successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in FolderService.updateFolder: ${errorMessage}`, { error: err });
+            logger.error(`Error in FolderService.updateFolder: ${errorMessage}`, { accountId, folderId, folderName, error: err });
             throw err;
         }
     }
 
-    public async deleteFolder(folderId: string): Promise<UpdateAPIResponse> {
+    public async deleteFolder(userId: string, folderId: string): Promise<UpdateAPIResponse> {
         try {
-            const folder = await FolderRepository.getFolderByProviderFolderId(folderId);
+            const folder = await FolderRepository.getFolder(folderId);
             if (!folder) {
-                throw new Error('Folder not found');
+                throw new NotFoundError('Folder', folderId);
+            }
+            if (folder.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Unauthorized attempt to delete folder');
             }
             const account = await AccountRepository.getAccountById(folder.accountId);
             if (!account) {
-                throw new Error('Account not found');
+                throw new NotFoundError('Account', folder.accountId);
             }
+
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-            return provider.deleteFolder(folder.accountId, folderId);
+            const providerRes = await provider.deleteFolder(folder.accountId, folder.providerFolderId);
+            await FolderRepository.deleteFolder(folderId);
+            return providerRes || { status: true, message: 'Folder deleted successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in FolderService.deleteFolder: ${errorMessage}`, { error: err });
+            logger.error(`Error in FolderService.deleteFolder: ${errorMessage}`, { folderId, error: err });
             throw err;
         }
     }

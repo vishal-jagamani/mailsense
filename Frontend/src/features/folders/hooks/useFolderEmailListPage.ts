@@ -42,7 +42,7 @@ export const useFolderEmailListPage = (folderId: string) => {
                 searchText: debouncedSearchValue || undefined,
                 accountId: folder?.accountId ? [folder.accountId] : undefined,
                 dateRange: filter?.dateRange,
-                folders: folder?.providerFolderId ? [folder.providerFolderId] : undefined,
+                folders: folder?._id ? [folder._id] : undefined,
             },
         });
     }, [user, page, pageSize, debouncedSearchValue, refetchEmails, filter, folder]);

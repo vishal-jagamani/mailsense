@@ -7,6 +7,7 @@ import { ObjectStorageService } from '../../integrations/storage/ObjectStorageSe
 import { StagedAttachmentInput } from './attachment.model.js';
 import { StagedAttachmentRepository } from './attachment.repository.js';
 import { UploadStageAttachmentFile } from './attachment.types.js';
+import { ForbiddenError, NotFoundError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.ATTACHMENT_SERVICE);
 
@@ -53,7 +54,7 @@ export class AttachmentsService {
             const stagedAttachment = await StagedAttachmentRepository.getStagedAttachmentById(attachmentId);
 
             if (!stagedAttachment) {
-                throw new Error(`Staged attachment ${attachmentId} not found or unauthorized`);
+                throw new NotFoundError('Attachment', attachmentId);
             }
             const { stream } = await this.objectStorageService.getObjectStream(stagedAttachment.r2Key);
             return { stagedAttachment, stream };
@@ -64,11 +65,14 @@ export class AttachmentsService {
         }
     }
 
-    async deleteStagedAttachment(attachmentId: string) {
+    async deleteStagedAttachment(userId: string, attachmentId: string) {
         try {
             const stagedAttachment = await StagedAttachmentRepository.getStagedAttachmentById(attachmentId);
             if (!stagedAttachment) {
-                throw new Error(`Staged attachment ${attachmentId} not found or unauthorized`);
+                throw new NotFoundError('Attachment', attachmentId);
+            }
+            if (stagedAttachment.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Unauthorized to delete attachment');
             }
             await this.objectStorageService.deleteObject(stagedAttachment.r2Key);
             await StagedAttachmentRepository.deleteStagedAttachments([attachmentId]);

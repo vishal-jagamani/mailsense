@@ -59,7 +59,7 @@ export const useEmailsPage = (accountId: string, emailId: string): useEmailsPage
     useEffect(() => {
         const updateEmailStatus = async () => {
             if (emailData && accountData && !emailData.isRead && !hasMarkedAsRead) {
-                unreadEmail({ emailIds: [emailData?.providerMessageId], unread: false });
+                unreadEmail({ emailIds: [emailData._id], unread: false });
                 setHasMarkedAsRead(true);
             }
         };

@@ -6,6 +6,7 @@ import { EmailService } from '@modules/emails/email.service.js';
 import { createLogger } from '@observability';
 import { DraftDocument, DraftInput } from './draft.model.js';
 import { DraftRepository } from './draft.repository.js';
+import { ForbiddenError, NotFoundError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.DRAFT_SERVICE);
 
@@ -46,11 +47,11 @@ export class DraftService {
 
     public async getDraftById(draftId: string, userId: string): Promise<DraftAttributes> {
         try {
-            const draftDoc = await DraftRepository.getDraftById(draftId, userId);
-            if (!draftDoc) {
-                throw new Error(`Draft with ID ${draftId} not found`);
+            const draft = await DraftRepository.getDraftById(draftId, userId);
+            if (!draft) {
+                throw new NotFoundError('Draft', draftId);
             }
-            return this.formatDraftDocument(draftDoc);
+            return this.formatDraftDocument(draft);
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error in DraftService.getDraftById: ${errorMessage}`, { draftId, userId, error });
@@ -85,10 +86,14 @@ export class DraftService {
 
     public async deleteDraft(draftId: string, userId: string): Promise<SuccessAPIResponse> {
         try {
-            const deleted = await DraftRepository.deleteDraftById(draftId, userId);
-            if (!deleted) {
-                throw new Error(`Draft with ID ${draftId} not found or unauthorized`);
+            const draftDoc = await DraftRepository.getDraftById(draftId, userId);
+            if (!draftDoc) {
+                throw new NotFoundError('Draft', draftId);
             }
+            if (draftDoc.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to delete draft belonging to another user');
+            }
+            await DraftRepository.deleteDraftById(draftId, userId);
             return { status: true, message: 'Draft deleted successfully' };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
@@ -101,18 +106,26 @@ export class DraftService {
         try {
             const draftDoc = await DraftRepository.getDraftById(draftId, userId);
             if (!draftDoc) {
-                throw new Error(`Draft with ID ${draftId} not found or unauthorized`);
+                throw new NotFoundError('Draft', draftId);
+            }
+            if (draftDoc.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to send draft belonging to another user');
             }
 
-            // Compose and send email via EmailService
+            const attachmentIds = draftDoc.attachments?.map((item) => item.attachmentId) || [];
+
             await this.emailService.composeEmail(userId, {
                 accountId: draftDoc.accountId,
                 to: draftDoc.to,
                 subject: draftDoc.subject,
                 body: draftDoc.body,
+                cc: draftDoc.cc,
+                bcc: draftDoc.bcc,
+                inReplyTo: draftDoc.inReplyTo,
+                attachmentIds,
             });
 
-            // Delete draft after successful sending
+            // Delete draft after successful transmission
             await DraftRepository.deleteDraftById(draftId, userId);
 
             return { status: true, message: 'Draft sent successfully' };

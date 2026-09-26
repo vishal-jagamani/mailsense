@@ -1,3 +1,4 @@
+import { BadRequestError, UnauthorizedError } from '@errors';
 import { GetAllFoldersFilters } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import { CreateFolderSchema, GetAccountFoldersSchema, GetAllFoldersSchema, GetFolderSchema, UpdateFolderBodySchema } from './folder.schema.js';
@@ -14,7 +15,7 @@ export class FolderController {
         try {
             const { accountId } = req.params;
             if (!accountId) {
-                throw new Error('Account ID is required');
+                throw new BadRequestError('Account ID is required');
             }
             const folders = await this.folderService.syncFolders(accountId);
             res.send(folders);
@@ -28,7 +29,7 @@ export class FolderController {
             const { size, page, filters } = req.body;
             const userId = req.user?.id;
             if (!userId) {
-                throw new Error('User ID is required');
+                throw new UnauthorizedError('User ID is required');
             }
             const sizeValue = size ? Number(size) : 10;
             const pageValue = page ? Number(page) : 1;
@@ -44,7 +45,7 @@ export class FolderController {
         try {
             const { folderId } = req.params;
             if (!folderId) {
-                throw new Error('Folder ID is required');
+                throw new BadRequestError('Folder ID is required');
             }
             const folder = await this.folderService.getFolder(folderId);
             res.send(folder);
@@ -61,7 +62,7 @@ export class FolderController {
         try {
             const { accountId } = req.params;
             if (!accountId) {
-                throw new Error('Account ID is required');
+                throw new BadRequestError('Account ID is required');
             }
             const folders = await this.folderService.getAccountFolders(accountId);
             res.send(folders);
@@ -74,7 +75,7 @@ export class FolderController {
         try {
             const { folderName, accountId } = req.body;
             if (!folderName || !accountId) {
-                throw new Error('Folder name and account ID are required');
+                throw new BadRequestError('Folder name and account ID are required');
             }
             const folder = await this.folderService.createFolder(accountId, folderName);
             res.send(folder);
@@ -89,12 +90,16 @@ export class FolderController {
         next: NextFunction,
     ): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
             const { folderId } = req.params;
             const { accountId, folderName } = req.body;
             if (!folderId || !accountId || !folderName) {
-                throw new Error('Folder ID, account ID and folder name are required');
+                throw new BadRequestError('Folder ID, account ID and folder name are required');
             }
-            const folder = await this.folderService.updateFolder(accountId, folderId, folderName);
+            const folder = await this.folderService.updateFolder(userId, accountId, folderId, folderName);
             res.send(folder);
         } catch (error) {
             next(error);
@@ -103,11 +108,15 @@ export class FolderController {
 
     public deleteFolder = async (req: Request<GetFolderSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
             const { folderId } = req.params;
             if (!folderId) {
-                throw new Error('Folder ID is required');
+                throw new BadRequestError('Folder ID is required');
             }
-            const folder = await this.folderService.deleteFolder(folderId);
+            const folder = await this.folderService.deleteFolder(userId, folderId);
             res.send(folder);
         } catch (error) {
             next(error);
