@@ -1,5 +1,5 @@
 import { BadRequestError } from '@errors';
-import { ACCOUNT_LAST_SYNC_STATUS, AccountAttributes, AccountMetricsAttributes, CreateEntityInput } from '@mailsense/types';
+import { ACCOUNT_LAST_SYNC_STATUS, ACCOUNT_PROVIDER, AccountAttributes, AccountMetricsAttributes, CreateEntityInput } from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
 import validator from 'validator';
 
@@ -14,7 +14,7 @@ export type AccountMetricsDocument = Document & AccountMetricsAttributes;
 const AccountSchema = new Schema<AccountDocument>(
     {
         userId: { type: String, required: true },
-        provider: { type: String, required: true },
+        provider: { type: String, enum: Object.values(ACCOUNT_PROVIDER), required: true },
         emailAddress: { type: String, required: true },
         userProfileDetails: { type: Object, required: true },
         accessToken: { type: String, required: true },

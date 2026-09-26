@@ -70,18 +70,21 @@ export class EmailService {
                 }
             }
             const targetAccountIds = accountId?.length ? accountId.map(String) : accounts.map((account) => String(account._id));
+
+            const computedDateRange = dateRange ? this.getDateRange(dateRange) : undefined;
+
             const searchQuery: FilterQuery<EmailDocument> = {
                 accountId: { $in: targetAccountIds },
                 folders: targetFolders ? { $in: targetFolders } : { $nin: [GMAIL_LABELS.TRASH, GMAIL_LABELS.SPAM, GMAIL_LABELS.SENT, ...folderIds] },
                 ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
-                ...(dateRange &&
-                    this.getDateRange(dateRange) && {
-                        receivedAt: { $gte: this.getDateRange(dateRange).startDate, $lte: this.getDateRange(dateRange).endDate },
-                    }),
+                ...(computedDateRange && {
+                    receivedAt: { $gte: computedDateRange.startDate, $lte: computedDateRange.endDate },
+                }),
                 ...(unread && { isRead: false }),
             };
             const emails = await EmailRepository.getGroupedEmails(searchQuery, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             const total = await EmailRepository.countGroupedThreads(searchQuery);
+
             const data = emails.map((email) => ({
                 _id: email._id.toString(),
                 subject: email.subject,
@@ -93,8 +96,6 @@ export class EmailService {
                 threadId: email.threadId,
                 threadCount: email.threadCount || 1,
                 attachments: email.attachments || [],
-                ...(email.body && { body: decompressString(email.body) }),
-                ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
             }));
             return { data, size, page, total };
@@ -140,6 +141,7 @@ export class EmailService {
         try {
             const emails = await EmailRepository.getGroupedEmails({ accountId }, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             const total = await EmailRepository.countGroupedThreads({ accountId });
+
             const data = emails.map((email) => ({
                 _id: email._id.toString(),
                 subject: email.subject,
@@ -151,8 +153,6 @@ export class EmailService {
                 threadCount: email.threadCount || 1,
                 isRead: email.isRead,
                 attachments: email.attachments || [],
-                ...(email.body && { body: decompressString(email.body) }),
-                ...(email.bodyHtml && { bodyHtml: decompressString(email.bodyHtml) }),
                 ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
             }));
             return { data, size, page, total };

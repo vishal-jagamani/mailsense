@@ -1,6 +1,7 @@
-import { NextFunction, Request, Response } from 'express';
-import { AttachmentsService } from './attachment.service.js';
 import { BadRequestError, UnauthorizedError } from '@errors';
+import { NextFunction, Request, Response } from 'express';
+import { DeleteStagedAttachmentSchema, UploadStagedAttachmentSchema } from './attachment.schema.js';
+import { AttachmentsService } from './attachment.service.js';
 
 export class AttachmentsController {
     private attachmentsService: AttachmentsService;
@@ -9,7 +10,11 @@ export class AttachmentsController {
         this.attachmentsService = new AttachmentsService();
     }
 
-    public uploadStagedAttachment = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    public uploadStagedAttachment = async (
+        req: Request<object, object, UploadStagedAttachmentSchema, object>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
         try {
             const userId = req.user?.id;
             if (!userId) {
@@ -40,7 +45,7 @@ export class AttachmentsController {
     };
 
     public deleteStagedAttachment = async (
-        req: Request<{ attachmentId: string }, object, object, object>,
+        req: Request<DeleteStagedAttachmentSchema, object, object, object>,
         res: Response,
         next: NextFunction,
     ): Promise<void> => {

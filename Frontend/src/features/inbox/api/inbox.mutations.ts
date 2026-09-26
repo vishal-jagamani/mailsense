@@ -1,5 +1,5 @@
 import { EmailAttributes, PaginatedDataResponse } from '@mailsense/types';
-import { EMAILS } from '@shared/api';
+import { EMAIL_QUERY_KEYS } from '@shared/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getEmailDetails } from './inbox.api';
 
@@ -8,7 +8,7 @@ export const useSearchEmails = () => {
     return useMutation<PaginatedDataResponse<EmailAttributes>, Error, { searchText: string; userId: string }>({
         mutationFn: ({ searchText, userId }) => getEmailDetails(searchText, userId),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [EMAILS] });
+            queryClient.invalidateQueries({ queryKey: EMAIL_QUERY_KEYS.all });
         },
     });
 };

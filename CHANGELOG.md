@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-09-26
+
 ### Fixed
 - Fixed email selection, starring, marking unread, archiving, and deletion across the inbox and email views so actions reliably target selected emails without ID mismatches.
 - Fixed moving emails between folders and labels so moved messages update their folder location immediately and reflect changes accurately across connected accounts.
@@ -21,6 +23,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Improved error handling and notifications with clear, descriptive explanations and actionable recovery guidance instead of generic failure popups when mailbox, folder, draft, or attachment operations encounter issues.
 - Strengthened tenant privacy and access control across folders, drafts, staged attachments, and account preferences to guarantee resources can only be modified by their verified owners.
 - Improved background resilience and synchronization stability for scheduled email synchronization and credential renewal, ensuring mailboxes stay continuously up-to-date.
+- Accelerated mailbox load times and inbox navigation by streaming lightweight email previews without unneeded background decompression.
+- Sped up conversation loading and thread grouping with optimized database indexing.
+- Enhanced file attachment upload security and validation to safeguard file staging and prevent invalid requests.
 
 ## [3.2.0] - 2026-09-14
 
@@ -217,7 +222,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Notes
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.3.0
+[3.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.2.0
+[3.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.1.0
 [2.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.1
 [2.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.0
 [2.0.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.1
