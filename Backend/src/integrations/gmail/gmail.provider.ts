@@ -1,10 +1,11 @@
+import { NotFoundError } from '@errors';
 import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
 import {
+    GmailMessageObjectFull,
     GmailOAuthAccessTokenResponse,
+    GmailUserProfile,
     SearchOtherContactsResponse,
     UpdateAPIResponse,
-    GmailMessageObjectFull,
-    GmailUserProfile,
 } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
@@ -58,7 +59,7 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
         }
         const emails = await this.gmailService.getMessagesByMessagesId(accountId, [emailId]);
         if (!emails.length) {
-            throw new Error(`Email details not found for message ID: ${emailId}`);
+            throw new NotFoundError('Email', emailId);
         }
         return emails[0];
     }
@@ -110,7 +111,7 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
     async refreshAccessToken(accountId: string): Promise<string> {
         const account = await AccountRepository.getAccountById(accountId);
         if (!account) {
-            throw new Error(`Account not found for token refresh: ${accountId}`);
+            throw new NotFoundError('Account', accountId);
         }
         return GmailApi.refreshAccessToken(accountId, decrypt(account.refreshToken));
     }

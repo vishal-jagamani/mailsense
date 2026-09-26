@@ -67,7 +67,7 @@ const FolderCardActions: React.FC<FolderCardActionsProps> = ({ data, renameState
                             <p
                                 className="flex cursor-pointer items-center gap-1 text-xs font-semibold text-red-500 hover:underline"
                                 onClick={() => {
-                                    deleteFolder(data.providerFolderId);
+                                    deleteFolder(data._id);
                                     setPopoverOpen(false);
                                 }}
                             >

@@ -33,6 +33,7 @@ export enum LOGGER_MODULE {
     ATTACHMENT_SERVICE = 'AttachmentService',
     FOLDER_SERVICE = 'FolderService',
     DRAFT_SERVICE = 'DraftService',
+    USER_SERVICE = 'UserService',
     ANALYTICS_SERVICE = 'AnalyticsService',
     ANALYTICS_UTILS = 'AnalyticsUtils',
     BASE_WORKER = 'BaseWorker',

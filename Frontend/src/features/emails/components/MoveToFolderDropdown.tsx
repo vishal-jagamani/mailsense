@@ -49,7 +49,7 @@ export const MoveToFolderDropdown: React.FC<MoveToFolderDropdownProps> = ({
     const resolvedSelectedEmailObjects = useMemo(() => {
         if (selectedEmails && selectedEmails.length > 0) return selectedEmails;
         if (allEmails && emailIds.length > 0) {
-            return allEmails.filter((email) => emailIds.includes(email.providerMessageId) || emailIds.includes(email._id));
+            return allEmails.filter((email) => emailIds.includes(email._id));
         }
         return [];
     }, [selectedEmails, allEmails, emailIds]);
@@ -215,7 +215,7 @@ export const MoveToFolderDropdown: React.FC<MoveToFolderDropdownProps> = ({
                                 <button
                                     key={folder._id}
                                     type="button"
-                                    onClick={() => handleSelectFolder(folder.providerFolderId)}
+                                    onClick={() => handleSelectFolder(folder._id)}
                                     disabled={isCurrent || moveEmailsMutation.isPending}
                                     className={`hover:bg-accent hover:text-accent-foreground flex w-full items-center justify-between px-3 py-1.5 text-left text-xs transition-colors ${
                                         isCurrent ? 'bg-accent/50 text-muted-foreground cursor-default font-medium' : 'text-foreground'

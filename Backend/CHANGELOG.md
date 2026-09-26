@@ -7,6 +7,44 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-09-26
+
+### Fixed
+- Fixed BUG-10 (Email ID Boundary): Decoupled Frontend from external `providerMessageId`; Frontend passes canonical MongoDB `_id` and Backend resolves `providerMessageId` via `EmailRepository.getEmailsByIds` before delegating to provider adapters (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`, `moveEmails`).
+- Fixed BUG-12 (Folder ID Boundary): Decoupled Frontend from external `providerFolderId`; Frontend passes canonical MongoDB `_id` and Backend resolves `providerFolderId` via `FolderRepository.getFolder` and `FolderRepository.getFoldersByIds` before delegating to provider adapters (`updateFolder`, `deleteFolder`, `moveEmails`, `getEmails`).
+- Fixed BUG-12 (Database Synchronization): Restored `EmailRepository.updateFolders` in `EmailService.moveEmails` and implemented `FolderRepository.updateFolder` and `FolderRepository.deleteFolder` in `FolderService` to keep MongoDB records in sync with external providers.
+- Fixed BUG-06 (Control Flow Crash): Added missing `return` statement following early 400 error in `EmailController.searchEmails` to prevent `ERR_HTTP_HEADERS_SENT` Node.js process crashes.
+- Fixed BUG-07 (Control Flow Crash): Added missing `return` statement following early 404 response in `AccountsController.getAccountDetails` to prevent `ERR_HTTP_HEADERS_SENT` Node.js process crashes.
+- Fixed BUG-02 (Folder Search): Corrected folder search in `FolderService.getAllFolders` to query the `name` field using `$regex` instead of querying non-existent `subject`/`from` fields.
+- Fixed BUG-04 (Search Pagination): Fixed total count in `EmailService.searchEmails` by executing `EmailRepository.countDocuments(searchQuery)` rather than returning page slice length.
+- Fixed BUG-08 (Error Typing): Replaced raw `Object.assign(new Error(...))` in `AccountsService.syncAccount` with domain-specific `NotFoundError` and `BadRequestError`.
+- Fixed BUG-09 (Draft Dispatch Parameters): Forwarded `cc`, `bcc`, `inReplyTo`, and `attachmentIds` in `DraftService.sendDraft` to provider `sendMail`.
+- Fixed BUG-11 (Folder Pagination): Corrected `FolderService.getAllFolders` response envelope to return the actual requested `page` parameter rather than hardcoded `page: 1`.
+- Fixed SEC-02 (Tenant Isolation): Enforced caller `userId` validation in `AccountsService` for `getAccountDetails`, `deleteAccount`, `syncAccount`, and `enableAccount`.
+- Fixed SEC-03 (Credential Redaction): Stripped sensitive `accessToken` and `refreshToken` credentials in `AccountsService.getAccountDetails` and `getAccounts`, returning `SanitizedAccountAttributes`.
+- Fixed SEC-07 (Email Move Authorization): Enforced caller ownership verification over target email IDs in `EmailService.moveEmails` before dispatching move commands to providers.
+- Fixed Exception Handling & Logging Audit (Phase 2):
+  - Replaced 50+ generic `throw new Error(...)` calls across services, controllers, provider clients, and background workers with compiler-enforced domain errors (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `SyncError`).
+  - Remediated unhandled exception gaps in `UserService`: wrapped all 6 service methods (`getUser`, `updateUser`, `getUserProfile`, `changePassword`, `getUserSettings`, `updateUserSettings`) in explicit `try / catch` blocks with module-scoped logging and `NotFoundError` throws.
+  - Enforced caller authorization checks in `AttachmentsService.deleteStagedAttachment`, `FolderService.updateFolder`, and `FolderService.deleteFolder` using `ForbiddenError` to prevent cross-tenant mutations.
+  - Enforced account ownership verification in `EmailService.composeEmailWithAttachments` with `ForbiddenError` before initiating provider dispatch.
+  - Replaced generic worker exception handling in `syncAccountProcessor` and `refreshTokenProcessor` with `SyncError`, preventing unhandled queue rejections.
+  - Fixed `account.model.ts` pre-save validation to throw `BadRequestError` on invalid email formats.
+  - Corrected accidental third-party imports of `UnauthorizedError` from `express-oauth2-jwt-bearer` in `folder.controller.ts` and `draft.controller.ts`, replacing them with `@errors`.
+
+### Changed
+- Refactored `composeEmailSchema` in `email.schema.ts` to support optional `cc`, `bcc`, `inReplyTo`, `threadId`, and `attachmentIds` using Zod 4 syntax.
+- Updated `FolderRepository` data access methods to delegate error handling and logging to `FolderService`.
+- Added `USER_SERVICE = 'UserService'` to `LOGGER_MODULE` enum in `observability.constants.ts`.
+- Standardized error mapping and taxonomy across `EmailService`, `AccountsService`, `FolderService`, `DraftService`, `AttachmentsService`, and `AnalyticsService` to ensure centralized error middleware maps operational errors directly to RFC-compliant HTTP status codes (400, 401, 403, 404).
+- Added Modifications & Enhancements (Phase 3):
+  - Created `Backend/src/modules/attachments/attachment.schema.ts` defining strict Zod validation schemas (`uploadStagedAttachmentSchema`, `deleteStagedAttachmentSchema`) for attachment staging endpoints.
+  - Bound validation middleware in `attachment.routes.ts` and strongly typed `AttachmentsController` handler parameters with `Request` generics.
+  - Enforced `ACCOUNT_PROVIDER` enum constraint in `AccountSchema.provider` (`account.model.ts`).
+  - Added compound index `{ accountId: 1, threadId: 1 }` on `EmailSchema` (`email.model.ts`) to accelerate conversation queries and thread grouping operations.
+  - Optimized `EmailService.getAllEmails` to calculate `getDateRange()` once per request instead of redundant triple executions.
+  - Optimized `EmailService.getAllEmails` and `getEmails` to omit heavy `body` and `bodyHtml` decompression during message list queries, reducing heap allocations and CPU latency.
+
 ## [3.2.0] - 2026-09-14
 
 ### Added
@@ -417,7 +455,10 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v2.1.1...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.3.0...HEAD
+[3.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.3.0
+[3.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.2.0
+[3.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.1.0
 [2.1.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.1
 [2.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.1.0
 [2.0.1]: https://github.com/vishal-jagamani/mailsense/releases/tag/v2.0.1

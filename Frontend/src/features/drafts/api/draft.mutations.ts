@@ -1,5 +1,5 @@
 import { DraftAttributes, SaveDraftRequestBody, SuccessAPIResponse } from '@mailsense/types';
-import { DRAFT_QUERY_KEYS, EMAILS } from '@shared/api';
+import { DRAFT_QUERY_KEYS, EMAIL_QUERY_KEYS } from '@shared/api';
 import { useMutation, UseMutationResult, useQueryClient } from '@tanstack/react-query';
 import { deleteDraft, saveDraft, sendDraft } from './draft.api';
 
@@ -29,7 +29,7 @@ export const useSendDraftMutation = (): UseMutationResult<SuccessAPIResponse, Er
         mutationFn: (draftId) => sendDraft(draftId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: DRAFT_QUERY_KEYS.all });
-            queryClient.invalidateQueries({ queryKey: [EMAILS] });
+            queryClient.invalidateQueries({ queryKey: EMAIL_QUERY_KEYS.all });
         },
     });
 };

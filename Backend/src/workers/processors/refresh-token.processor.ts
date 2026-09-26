@@ -7,6 +7,7 @@ import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { monitoring } from '@monitoring';
 import { createLogger, setTraceContext } from '@observability';
 import { getRedisConnection, RefreshTokenPayload } from '@queue';
+import { NotFoundError, SyncError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.REFRESH_TOKEN_PROCESSOR);
 
@@ -27,7 +28,7 @@ export const refreshTokenProcessor = async (job: Job<RefreshTokenPayload, { stat
             try {
                 const account = await AccountRepository.getAccountById(accountId);
                 if (!account) {
-                    throw new Error(`Account details missing: ${accountId}`);
+                    throw new NotFoundError('Account', accountId);
                 }
 
                 const userId = account.userId?.toString();
@@ -63,5 +64,5 @@ export const refreshTokenProcessor = async (job: Job<RefreshTokenPayload, { stat
         }
     }
 
-    throw new Error(`Timeout waiting to acquire refresh token lock for account: ${accountId}`);
+    throw new SyncError({ accountId, message: `Timeout waiting to acquire refresh token lock for account: ${accountId}` });
 };

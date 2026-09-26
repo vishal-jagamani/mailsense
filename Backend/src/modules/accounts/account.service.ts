@@ -1,7 +1,14 @@
 import { MAILSENSE_BASE_URL } from '@config';
 import { ACCOUNT_PROVIDERS, LOGGER_MODULE } from '@constants';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { ACCOUNT_PROVIDER, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, AccountProviderType, UpdateAPIResponse } from '@mailsense/types';
+import {
+    ACCOUNT_PROVIDER,
+    ACCOUNT_SYNC_JOB_STATUS,
+    ACCOUNT_SYNC_JOB_TRIGGER_TYPE,
+    AccountProviderType,
+    SanitizedAccountAttributes,
+    UpdateAPIResponse,
+} from '@mailsense/types';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { createLogger } from '@observability';
 import { QueueService } from 'core/queue/queue.service.js';
@@ -13,11 +20,33 @@ import { AccountDocument, AccountInput } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
 import { UpdateAccountSettingsSchema } from './account.schema.js';
 import { SyncJobRepository } from './sync-job.repository.js';
+import { BadRequestError, ForbiddenError, NotFoundError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.ACCOUNT_SERVICE);
 
 export class AccountsService {
     constructor() {}
+
+    private sanitizeAccount(account: AccountDocument): SanitizedAccountAttributes {
+        try {
+            return {
+                _id: String(account._id),
+                userId: account.userId,
+                email: account.emailAddress,
+                provider: account.provider,
+                isEnabled: account.active,
+                lastSyncedAt: account.lastSyncedAt ? new Date(account.lastSyncedAt) : undefined,
+                lastSyncStatus: account.lastSyncStatus,
+                syncFrequency: String(account.syncInterval),
+                createdAt: new Date(account.createdAt || ''),
+                updatedAt: new Date(account.updatedAt || ''),
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in AccountsService.sanitizeAccount: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
 
     /**
      * Fetches an account from the database by ID.
@@ -26,11 +55,16 @@ export class AccountsService {
      * @throws {Error} When the account is not found in the database.
      * @throws {Error} When there's a database connection error.
      */
-    async getAccountDetails(accountId: string): Promise<AccountDocument> {
+    async getAccountDetails(userId: string, accountId: string): Promise<SanitizedAccountAttributes> {
         try {
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account) throw new Error('Account not found');
-            return account;
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
+            if (userId && account.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Access to specified account is denied');
+            }
+            return this.sanitizeAccount(account);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.getAccountDetails: ${errorMessage}`, { error: err });
@@ -43,8 +77,15 @@ export class AccountsService {
      * @param accountId The ID of the account to delete.
      * @returns A promise that resolves when the account is deleted.
      */
-    async deleteAccount(accountId: string): Promise<void> {
+    async deleteAccount(userId: string, accountId: string): Promise<void> {
         try {
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
+            if (account.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Cannot delete an account belonging to another user');
+            }
             await this.initiateAccountDeletion(accountId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -111,7 +152,7 @@ export class AccountsService {
                 const url = await OutlookUtils.buildOutlookOAuthConsentURL();
                 return { url };
             } else {
-                throw new Error('Invalid provider');
+                throw new BadRequestError('Invalid provider');
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -162,7 +203,7 @@ export class AccountsService {
             // Register repeatable sync schedulers for newly authenticated accounts
             await SchedulerService.upsertAccountRepeatableJob(String(savedAccount._id));
 
-            this.syncAccount(String(savedAccount._id));
+            this.syncAccount(userDetails?.id, String(savedAccount._id));
             return MAILSENSE_BASE_URL;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -206,25 +247,20 @@ export class AccountsService {
         }
     }
 
-    async syncAccount(accountId: string): Promise<{ status: boolean; message: string; jobId?: string }> {
+    async syncAccount(userId: string, accountId: string): Promise<{ status: boolean; message: string; jobId?: string }> {
         try {
-            logger.info('Account Syncing Requested', { accountId });
+            logger.info('Account sync requested', { accountId, userId });
             const account = await AccountRepository.getAccountById(accountId);
             if (!account) {
-                throw Object.assign(new Error('Account not found'), {
-                    status: 404,
-                    isOperational: true,
-                    description: 'Given account ID does not exist',
-                    suggestedAction: 'Please check the account ID',
-                });
+                throw new NotFoundError('Account', accountId);
             }
+
+            if (account.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Cannot trigger sync for an account belonging to another user');
+            }
+
             if (!account.active) {
-                throw Object.assign(new Error('Account is not active'), {
-                    status: 400,
-                    isOperational: true,
-                    description: 'Given account is not active',
-                    suggestedAction: 'Please activate the account',
-                });
+                throw new BadRequestError('Cannot sync disabled account. Please enable account first.');
             }
 
             // Enqueue manual sync job with High Priority (Priority 1)
@@ -255,8 +291,17 @@ export class AccountsService {
         }
     }
 
-    public async enableAccount(accountId: string, active: boolean): Promise<UpdateAPIResponse> {
+    public async enableAccount(userId: string, accountId: string, active: boolean): Promise<UpdateAPIResponse> {
         try {
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
+
+            if (account.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Cannot modify an account belonging to another user');
+            }
+
             await AccountRepository.updateAccount(accountId, { active });
             if (active) {
                 await SchedulerService.upsertAccountRepeatableJob(accountId);
@@ -275,8 +320,9 @@ export class AccountsService {
     public async updateAccountSettings(accountId: string, settings: UpdateAccountSettingsSchema): Promise<UpdateAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account) throw new Error('Account not found');
-
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
             await AccountRepository.updateAccount(accountId, settings);
 
             // Re-evaluates schedule in BullMQ

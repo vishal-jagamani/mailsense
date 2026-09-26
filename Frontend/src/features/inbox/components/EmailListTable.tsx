@@ -29,7 +29,7 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
 
     const handleTrashIconClick = async (email: EmailAttributes) => {
         try {
-            const res = await mutateAsync({ emailIds: [email.providerMessageId], trash: true });
+            const res = await mutateAsync({ emailIds: [email._id], trash: true });
             if (res && res.status) {
                 toast.success('Email deleted successfully', { duration: 3000 });
                 onDeleteSuccess?.();
@@ -57,7 +57,7 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                                             if ((selectedEmails || []).length === data.length) {
                                                 onEmailSelect?.([]);
                                             } else {
-                                                onEmailSelect?.(data.map((email) => email.providerMessageId));
+                                                onEmailSelect?.(data.map((email) => email._id));
                                             }
                                         }}
                                         className="cursor-pointer"
@@ -88,20 +88,21 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                             {data.map((email) => (
                                 <TableRow
                                     key={email._id}
-                                    className={`cursor-pointer ${selectedEmails?.includes(email.providerMessageId) ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800' : ''} ${!email.isRead && selectedEmails?.includes(email.providerMessageId) ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800' : !email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
+                                    id={email._id}
+                                    className={`cursor-pointer ${selectedEmails?.includes(email._id) ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800' : ''} ${!email.isRead && selectedEmails?.includes(email._id) ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800' : !email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
                                     onClick={() => {
                                         router.push(`/inbox/${email.accountId}/email/${email._id}?page=${page}`);
                                     }}
                                 >
                                     <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                                         <Checkbox
-                                            id={email.providerMessageId}
-                                            checked={selectedEmails?.includes(email.providerMessageId)}
+                                            id={email._id}
+                                            checked={selectedEmails?.includes(email._id)}
                                             onCheckedChange={(checked) => {
                                                 if (checked) {
-                                                    onEmailSelect?.([...(selectedEmails || []), email.providerMessageId]);
+                                                    onEmailSelect?.([...(selectedEmails || []), email._id]);
                                                 } else {
-                                                    onEmailSelect?.((selectedEmails || []).filter((id) => id !== email.providerMessageId));
+                                                    onEmailSelect?.((selectedEmails || []).filter((id) => id !== email._id));
                                                 }
                                             }}
                                             className="cursor-pointer"

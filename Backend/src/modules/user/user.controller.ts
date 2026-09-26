@@ -1,7 +1,8 @@
+import { UnauthorizedError } from '@errors';
+import { UserSettings } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import { ChangePasswordSchema, UpdateUserSchema, UpdateUserSettingsSchema } from './user.schema.js';
 import { UserService } from './user.service.js';
-import { UserSettings } from '@mailsense/types';
 
 export class UserController {
     private userService: UserService;
@@ -12,10 +13,11 @@ export class UserController {
 
     public getUser = async (req: Request<object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            if (!req.user?.id) {
-                throw new Error('User ID is required');
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
             }
-            const user = await this.userService.getUser(req.user.id);
+            const user = await this.userService.getUser(userId);
             res.status(200).send(user);
         } catch (error) {
             next(error);
@@ -24,10 +26,11 @@ export class UserController {
 
     public updateUser = async (req: Request<object, object, UpdateUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            if (!req.user?.id) {
-                throw new Error('User ID is required');
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
             }
-            const user = await this.userService.updateUser(req.user.id, req.body);
+            const user = await this.userService.updateUser(userId, req.body);
             res.status(200).send(user);
         } catch (error) {
             next(error);
@@ -36,10 +39,11 @@ export class UserController {
 
     public getUserProfile = async (req: Request<object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            if (!req.user?.id) {
-                throw new Error('User ID is required');
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
             }
-            const user = await this.userService.getUserProfile(req.user.id);
+            const user = await this.userService.getUserProfile(userId);
             res.status(200).send(user);
         } catch (error) {
             next(error);
@@ -48,10 +52,11 @@ export class UserController {
 
     public updateUserProfile = async (req: Request<object, object, UpdateUserSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            if (!req.user?.id) {
-                throw new Error('User ID is required');
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
             }
-            const user = await this.userService.updateUser(req.user.id, req.body);
+            const user = await this.userService.updateUser(userId, req.body);
             res.status(200).send(user);
         } catch (error) {
             next(error);
@@ -60,10 +65,11 @@ export class UserController {
 
     public changePassword = async (req: Request<object, object, ChangePasswordSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            if (!req.user?.id) {
-                throw new Error('User ID is required');
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
             }
-            const user = await this.userService.changePassword(req.user.id, req.body);
+            const user = await this.userService.changePassword(userId, req.body);
             res.status(200).send(user);
         } catch (error) {
             next(error);
@@ -72,10 +78,11 @@ export class UserController {
 
     public getUserSettings = async (req: Request<object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            if (!req.user?.id) {
-                throw new Error('User ID is required');
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
             }
-            const response = await this.userService.getUserSettings(req.user.id);
+            const response = await this.userService.getUserSettings(userId);
             res.status(200).send(response);
         } catch (error) {
             next(error);
@@ -84,10 +91,11 @@ export class UserController {
 
     public updateUserSettings = async (req: Request<object, object, UpdateUserSettingsSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
-            if (!req.user?.id) {
-                throw new Error('User ID is required');
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
             }
-            const response = await this.userService.updateUserSettings(req.user.id, req.body as UserSettings);
+            const response = await this.userService.updateUserSettings(userId, req.body as UserSettings);
             res.status(200).send(response);
         } catch (error) {
             next(error);

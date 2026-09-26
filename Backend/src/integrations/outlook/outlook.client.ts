@@ -25,6 +25,7 @@ import {
     OutlookUploadSessionResponse,
 } from './outlook.types.js';
 import { buildOutlookMessagePayload } from './outlook.utils.js';
+import { NotFoundError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.OUTLOOK_CLIENT);
 
@@ -58,7 +59,9 @@ export class OutlookApi {
     static async fetchAccessToken(accountId: string): Promise<string> {
         try {
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account) throw new Error('Account not found');
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
             return account.accessTokenExpiry < Date.now() ? await this.refreshAccessToken(accountId) : decrypt(account.accessToken);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -71,7 +74,9 @@ export class OutlookApi {
     static async refreshAccessToken(accountId: string) {
         try {
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account) throw new Error('Account not found');
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
             const options: AxiosRequestConfig = {
                 url: OUTLOOK_TOKEN_URI,
                 method: 'POST',

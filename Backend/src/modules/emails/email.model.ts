@@ -43,6 +43,7 @@ EmailSchema.index({ accountId: 1, receivedAt: -1 });
 EmailSchema.index({ accountId: 1, folders: 1, receivedAt: -1 });
 EmailSchema.index({ accountId: 1, isRead: 1 });
 EmailSchema.index({ accountId: 1, from: 1 });
+EmailSchema.index({ accountId: 1, threadId: 1 });
 EmailSchema.index({ accountId: 1, threadId: 1, receivedAt: 1 });
 
 export const Email = model<EmailDocument>('Email', EmailSchema);

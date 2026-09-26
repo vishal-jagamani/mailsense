@@ -6,7 +6,7 @@ import {
     SearchOtherContactsResponse,
     UpdateAPIResponse,
 } from '@mailsense/types';
-import { EMAILS, FOLDER_KEYS, QUERY_KEYS } from '@shared/api';
+import { EMAIL_QUERY_KEYS, FOLDER_KEYS } from '@shared/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { composeEmail, moveEmails, searchOtherContacts, starEmail, unreadEmail } from './email.api';
 
@@ -15,7 +15,7 @@ export const useStarEmailMutation = () => {
     return useMutation<UpdateAPIResponse, Error, { emailIds: string[]; star: boolean }>({
         mutationFn: ({ emailIds, star }) => starEmail(emailIds, star),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMAIL] });
+            queryClient.invalidateQueries({ queryKey: EMAIL_QUERY_KEYS.all });
         },
     });
 };
@@ -31,8 +31,7 @@ export const useComposeEmailMutation = () => {
     return useMutation<UpdateAPIResponse, Error, ComposeEmailRequestBody>({
         mutationFn: (body) => composeEmail(body),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.EMAIL] });
-            queryClient.invalidateQueries({ queryKey: [EMAILS] });
+            queryClient.invalidateQueries({ queryKey: EMAIL_QUERY_KEYS.all });
         },
     });
 };
@@ -50,7 +49,7 @@ export function useMoveEmailsMutation() {
         mutationFn: (data: MoveEmailsRequestBody) => moveEmails(data),
         onSuccess: () => {
             // Invalidate inbox emails and folder queries
-            queryClient.invalidateQueries({ queryKey: [EMAILS] });
+            queryClient.invalidateQueries({ queryKey: EMAIL_QUERY_KEYS.all });
             queryClient.invalidateQueries({ queryKey: [FOLDER_KEYS.FOLDERS] });
         },
     });
