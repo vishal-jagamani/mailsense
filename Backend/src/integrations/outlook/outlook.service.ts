@@ -31,6 +31,7 @@ import {
     OutlookFolderObject,
 } from './outlook.types.js';
 import * as OutlookUtils from './outlook.utils.js';
+import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
 
 const logger = createLogger(LOGGER_MODULE.OUTLOOK_SERVICE);
 
@@ -494,6 +495,16 @@ export class OutlookService {
             mimeType: 'application/octet-stream',
             filename: 'attachment',
         };
+    }
+
+    public async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
+        try {
+            return await OutlookApi.getAttachmentStream(accountId, messageId, attachmentId);
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookService.getAttachmentStream: ${errorMessage}`, { error: err });
+            throw err;
+        }
     }
 
     async moveEmails(providerMessageIds: string[], accountId: string, targetFolderIds: string[]): Promise<void> {

@@ -36,6 +36,7 @@ describe('syncAccountProcessor', () => {
             sendMail: jest.fn(),
             searchContacts: jest.fn(),
             getAttachment: jest.fn(),
+            getAttachmentStream: jest.fn(),
             getAllFolders: jest.fn(),
             createFolder: jest.fn(),
             updateFolder: jest.fn(),
@@ -45,6 +46,7 @@ describe('syncAccountProcessor', () => {
 
         (EmailProviderFactory.getProvider as jest.Mock).mockReturnValue(mockProvider);
         (FolderService.prototype.syncFolders as jest.Mock).mockResolvedValue({ status: true, message: 'folders synced' });
+        (EmailRepository.getEmailIdsByProviderMessageIds as jest.Mock).mockResolvedValue(['email-1', 'email-2']);
     });
 
     afterEach(() => {

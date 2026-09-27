@@ -1,6 +1,7 @@
 import { MAILSENSE_BASE_URL } from '@config';
 import { healthRoutes } from '@health';
 import { errorHandler } from '@middlewares';
+import { createHelmetMiddleware, defaultApiRateLimiter } from '@security';
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
 import path from 'path';
@@ -22,20 +23,23 @@ export class App {
     }
 
     private setupMiddleware(): void {
-        // 1. Mount distributed tracing middleware first to wrap entire lifecycle
+        // 1. Mount distributed tracing middleware first
         this.expressApp.use(traceMiddleware);
 
-        // 2. Mount request logger middleware (automatically ignores HEALTH_PROBES_API_ENDPOINTS)
+        // 2. Mount Helmet HTTP security headers
+        this.expressApp.use(createHelmetMiddleware());
+
+        // 3. Mount request logger middleware
         this.expressApp.use(requestLoggerMiddleware);
 
-        // 3. Enable cors for all routes
+        // 4. Enable cors for verified origins
         this.expressApp.use(cors({ origin: ['http://localhost:3000', MAILSENSE_BASE_URL], credentials: true }));
 
-        // 4. Parse JSON and URL encoded request bodies
+        // 5. Parse JSON and URL encoded request bodies
         this.expressApp.use(express.json());
         this.expressApp.use(express.urlencoded({ extended: true }));
 
-        // 5. Serve static files
+        // 6. Serve static files
         this.expressApp.use(express.static(path.join(this.__dirname, '/')));
     }
 
@@ -48,7 +52,7 @@ export class App {
             res.send(`MailSense Backend Test Endpoint`);
         });
 
-        this.expressApp.use('/api', indexRoutes);
+        this.expressApp.use('/api', defaultApiRateLimiter, indexRoutes);
     }
 
     private setupNotFoundHandler(): void {

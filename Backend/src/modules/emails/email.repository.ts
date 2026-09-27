@@ -76,6 +76,11 @@ export class EmailRepository {
             .sort(sort);
     }
 
+    public static async getEmailIdsByProviderMessageIds(providerMessageIds: string[], accountId: string): Promise<string[]> {
+        const docs = await Email.find({ accountId, providerMessageId: { $in: providerMessageIds } }, { _id: 1 }).lean();
+        return docs.map((doc) => String(doc._id)) || [];
+    }
+
     public static async getEmailsByProviderMessageIds(
         emailIds: string[],
         fields: ProjectionType<EmailDocument> = {},

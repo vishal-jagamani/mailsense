@@ -7,6 +7,26 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-09-27
+
+### Added
+- **Optimistic UI Rollbacks (`UI-NEXT-01`):** Enhanced email mutations (`starEmail`, `unreadEmail`, `moveEmails`) with React Query `onMutate` cache snapshots and contextual error recovery toasts (`sonner`), guaranteeing automatic state restoration to the pre-mutation snapshot upon network or server failures.
+- **Keyboard Navigation & Shortcuts Engine (`UI-NEXT-02`):** Implemented global mailbox keyboard navigation with focus guards (`isInputElement`), supporting `j`/`k` (cursor move with auto-scroll), `Enter`/`o` (open email), `s` (star), `u` (unread), `e` (archive), `Delete`/`Backspace` (trash with confirmation dialog), `c` (compose), `/` (search focus), and `?` (shortcuts cheat-sheet dialog). Ensured complete mouse click and keyboard shortcut parity across all bulk operations (Star, Mark Unread/Read, Archive, Delete, and Move to Folder): when checkboxes are selected, actions operate on all selected emails simultaneously, update local UI state optimistically, show contextual count toasts (e.g. `X emails starred / marked as unread / archived / deleted`), send all selected IDs in mutation payloads, and reset selections cleanly. Integrated accessible `DeleteModal` (`Enter` to confirm, `Escape` to cancel) with pluralized count descriptions, visual keyboard shortcut buttons in toolbars, and active-row cursor focus ring (`ring-2 ring-primary ring-inset`) in mailbox tables across Unified Inbox, Account Inbox, and Folder Email List pages.
+- **Accessible Shortcuts Modal:** Integrated `KeyboardShortcutsModal` presenting organized keybinding categories (Navigation, Actions, Composer & Search) styled with accessible Radix primitives.
+- **Email Service Decomposition (`ARCH-NEXT-01`):** Decomposed monolithic `EmailService` into focused, single-responsibility `EmailReadService` (queries, search, threading, attachment streaming) and `EmailWriteService` (composition, multi-account moves, batch mutations, staging cleanup) layers. Maintained a backward-compatible, lightweight `EmailService` facade, ensuring `EmailController`, `DraftService`, and external API routes continue operating with zero modifications or regressions.
+- **Memory-Safe Attachment Streaming (`PERF-NEXT-01`):** Refactored email attachment downloads to stream binary payloads directly from email providers (Microsoft Graph streaming and Gmail decoded byte streams) to Express HTTP responses without buffering files in Node.js heap memory, preventing memory pressure during concurrent downloads of large files.
+- **Multi-Account Batch Parallelization (`PERF-NEXT-02`):** Parallelized cross-account email moves using `Promise.allSettled()`, slashing multi-account operation latency and providing graceful partial failure handling by updating local database records only for accounts that succeed.
+- **Centralized Attachment API Endpoint:** Integrated `EMAILS_API_ENDPOINTS.ATTACHMENT` across frontend attachment download and preview helpers.
+- **API Ingress Rate Limiting (`SEC-NEXT-01`):** Enforced route-level rate limiting via `express-rate-limit` for manual sync triggers (5/min), email composition (20/min), OAuth connection (10/min), and general API traffic (300/15min) with standard HTTP 429 `RateLimitError` responses.
+- **HTTP Security Headers & CSP (`SEC-NEXT-02`):** Mounted `helmet` with strict Content Security Policy (CSP), frame protection (`X-Frame-Options: DENY`), MIME sniffing protection (`X-Content-Type-Options: nosniff`), and HSTS.
+- **Frontend Rate Limit Feedback:** Enhanced client API error extraction to display descriptive rate limit explanations and cooldown advice for HTTP 429 responses.
+- **AI Event Pipeline Foundation (`ARCH-NEXT-02`):** Integrated `EMAIL_BATCH_SYNCED` domain event dispatch in the background email sync processor, capturing discrete MongoDB email IDs for newly ingested email batches to power downstream AI categorization and summarization workflows.
+- Added `EmailBatchSyncedHandler` event subscriber with structured logging and error containment.
+- Added tenant-scoped `EmailRepository.getEmailIdsByProviderMessageIds` query helper.
+
+### Fixed
+- **ErrorBoundary & Bulk API Resilience:** Resolved issue where an archive HTTP 500 or async rejection triggered the full-screen `ErrorBoundary` component. Isolated `window.onunhandledrejection` to observability monitoring in `ErrorBoundary.tsx` without setting visual error state, and standardized `useInboxPage`, `useFolderEmailListPage`, and `useInboxEmailMenuBarOptions` on React Query's `.mutate()` with `onError` handlers, displaying polite sonner toasts advising the user to *"Please retry in some time"* while rolling back optimistic UI state and refetching data to maintain synchronization.
+
 ## [3.3.0] - 2026-09-26
 
 ### Fixed
