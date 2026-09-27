@@ -21,6 +21,17 @@ export function extractApiError(error: unknown): FormattedClientError {
             };
         }
 
+        if (axiosError.response?.status === 429) {
+            return {
+                message: responseData?.message || 'Rate limit reached. Please wait a moment before trying again.',
+                errorCode: 'RATE_LIMITED',
+                traceId: '',
+                description: 'Too many requests were sent in a short period.',
+                suggestedAction: 'Please pause for 60 seconds before retrying.',
+                httpStatus: 429,
+            };
+        }
+
         return {
             message: axiosError.message || 'Network request failed',
             errorCode: 'NETWORK_ERROR',

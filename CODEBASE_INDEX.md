@@ -27,6 +27,15 @@
 - `Backend/src/core/constants/oauth.constants.ts`: provider OAuth scopes/authorize URLs including contacts/people read scopes for compose recipient suggestions
 - `Backend/package.json`: backend package metadata currently uses `pnpm@11.18.0`
 
+### Security
+
+- `Backend/src/core/security/*`: HTTP security headers, Content Security Policy, and API rate limiting infrastructure
+  - `helmet.config.ts`: Helmet middleware configuration with strict CSP, frame-guard (`DENY`), and HSTS
+  - `rate-limit.config.ts`: route-level rate limiters (`defaultApiRateLimiter`, `syncRateLimiter`, `composeRateLimiter`, `authRateLimiter`) with standard `RateLimitError` responses
+  - `index.ts`: security module exports accessible via `@security` alias
+- `Backend/src/core/security/__tests__/rate-limit.test.ts`: test coverage for rate limit enforcement and 429 status payload format
+- `Backend/src/core/security/__tests__/helmet.test.ts`: test coverage for Helmet HTTP security headers and CSP presence
+
 ### Queue Infrastructure
 
 - `Backend/src/core/queue/*`: BullMQ/Redis queue bootstrap, queue registry, queue service, and graceful shutdown handling
@@ -45,8 +54,10 @@
   - `event-bus.ts`: typed event emitter wrapper with safe subscriber execution and sanitized logging, now powered by shared event contracts from `@mailsense/types`
   - `handlers/email-created.handler.ts`: subscriber hook for newly indexed email events
   - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events; triggers `AnalyticsService.refreshAccountMetrics` to update daily account metrics snapshots
+  - `handlers/email-batch-synced.handler.ts`: subscriber hook for `EMAIL_BATCH_SYNCED` system events; provides foundational integration hook for Phase 4 AI ingestion queues
   - `index.ts`: system-event initialization entry point used during background jobs startup
 - `Backend/src/core/events/__tests__/event-bus.test.ts`: event bus coverage for publish/subscribe behavior and subscriber error isolation
+- `Backend/src/core/events/__tests__/email-batch-synced.handler.test.ts`: unit tests for `EMAIL_BATCH_SYNCED` event subscriber and error containment
 
 ### Workers
 
@@ -117,13 +128,17 @@
   - Staged attachment deletion endpoint (`DELETE /api/attachments/:attachmentId`) with user ownership verification throwing `ForbiddenError` on unauthorized deletions
   - Staged metadata tracking with 24-hour TTL expiration index
 - Emails (`Backend/src/modules/emails/*`)
+  - Decomposed service layer architecture:
+    - `email-read.service.ts`: Read operations, querying (`getAllEmails`, `getEmails`), filter aggregation (`getFilters`), thread retrieval (`getThread`), contact search (`searchOtherContacts`), regex search (`searchEmails`), and attachment binary streaming (`downloadAttachmentStream`).
+    - `email-write.service.ts`: Write operations, email composition (`composeEmail`, `composeEmailWithAttachments`), parallelized multi-account folder migration (`moveEmails`), batch mutations (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`), and staged attachment lifecycle cleanup.
+    - `email.service.ts`: Lightweight backward-compatible facade delegating read and write calls to underlying services, preserving 100% of method signatures for `EmailController` and `DraftService`.
   - Unified list, per-account list, email details
   - Thread details endpoint for conversation view by email ID
-  - Attachment download endpoint for provider-backed file retrieval by email ID and attachment ID
+  - Attachment download endpoint (`GET /api/emails/attachment/:emailId/:attachmentId`) streams binary data directly from upstream providers (`getAttachmentStream`) into Express response with zero heap buffering
   - Search, delete, archive, star, unread, and move to folder
   - Resolves canonical MongoDB `_id` to `providerMessageId` via `EmailRepository.getEmailsByIds` before dispatching batch provider actions (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`, `moveEmails`)
   - Resolves folder MongoDB `_id` arrays to `providerFolderId` before querying database or dispatching `moveEmails`
-  - Synchronizes MongoDB email records upon folder moves via `EmailRepository.updateFolders`
+  - Parallelized multi-account email moves: `moveEmails` executes account dispatches concurrently via `Promise.allSettled`, updating MongoDB email records exclusively for successful accounts while isolating partial failures
   - Enforces caller ownership validation over target emails before executing folder move operations
   - Accurate search pagination using `EmailRepository.countDocuments`
   - Compose/send mail through Gmail (MIME Base64URL generator) and Outlook (direct <=3MB / chunked >3MB upload session) providers with staged attachments support and sender account ownership verification
@@ -305,7 +320,7 @@
 
 - `Frontend/src/entities/*`: domain entities and shared domain UI/types
   - `entities/account/*`: provider display metadata, provider icon helpers, `AccountProviderIcon`
-  - `entities/email/*`: email formatting helpers and email UI utilities
+  - `entities/email/*`: email formatting helpers, email UI utilities, and `model/email.types.ts` holding mutation parameter and optimistic context interfaces (`StarEmailMutationParams`, `UnreadEmailMutationParams`, `MoveEmailsMutationContext`), keyboard shortcut hook parameters (`UseEmailKeyboardShortcutsParams`), and modal props (`KeyboardShortcutsModalProps`)
   - `entities/folder/*`: folder UI component state/interfaces that remain frontend-specific
   - Account, email, folder, user, filter, and settings data contracts now come from `@mailsense/types`
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
@@ -313,11 +328,11 @@
   - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), composite state orchestration hook (`useDashboardPage.ts`), UI components (`DashboardHeader`, `OverviewKpiCards`, `EmailVolumeChart`, `AccountDistributionPieChart`, `ResponseTimeCard`, `TopSendersCard`, `AccountActivityGrid`, `DashboardSkeleton`, `DashboardEmptyState`), and primary dashboard page view (`pages/index.tsx`)
   - `features/auth/*`: login page and profile fetch query
   - `features/drafts/*`: drafts page (`DraftsPage`), draft table components (`DraftListTable`, `DraftListTableHeader`, `DraftListTableBody`), debounced auto-save hook (`useAutoSaveDraft`), page state hook (`useDraftsPage`), and draft API layer (`draft.api.ts`, `draft.queries.ts`, `draft.mutations.ts`)
-  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), and email API layer; strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
-  - `features/folders/*`: folders overview, folder email list (`useFolderEmailListPage`), folder CRUD UI (`FolderCardHeader`, `FolderCardActions`, `FolderCard`), folder API layer, folder action hooks; strictly references canonical MongoDB `_id` (`folder._id`) across all UI operations
-  - `features/inbox/*`: unified inbox, account inbox, shared inbox header, inbox filters/actions/table (`EmailListTable`), inbox API layer, inbox page hooks with sync-aware refresh behavior; strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
+  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), keyboard navigation hook (`useEmailKeyboardShortcuts`), keyboard shortcuts modal (`KeyboardShortcutsModal`), input guard utilities (`isInputElement`), and email API mutations with React Query cache snapshotting and optimistic rollbacks (`email.mutations.ts`); strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
+  - `features/folders/*`: folders overview, folder email list (`useFolderEmailListPage` with keyboard shortcuts and modal), folder CRUD UI (`FolderCardHeader`, `FolderCardActions`, `FolderCard`), folder API layer, folder action hooks; strictly references canonical MongoDB `_id` (`folder._id`) across all UI operations
+  - `features/inbox/*`: unified inbox, account inbox, shared inbox header (`EmailListHeader` with shortcuts button), inbox filters/actions/table (`EmailListTable` with `focusedIndex` active keyboard cursor styling `ring-2 ring-primary ring-inset` and auto-scroll), inbox API layer, inbox page hooks (`useInboxPage`) with sync-aware refresh behavior and keyboard shortcuts integration; strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
   - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer
-- `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, and query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`)
+- `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`), and error parsing (`errors.ts` extracting domain errors and HTTP 429 rate limit retry guidance)
 - `Frontend/src/shared/monitoring/*`: client observability and action tracking
   - `frontend.manager.ts`: `FrontendMonitoringManager` singleton and `trackUserAction` helper
   - `providers/sentry-frontend.provider.ts`: `SentryFrontendProvider` integrating `@sentry/nextjs` for client error capture, user identity mapping (`setUser`), distributed `traceId` correlation, and typed breadcrumbs (Session Replay omitted to avoid paid tier costs)
@@ -367,9 +382,12 @@
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration
 - `Frontend/src/shared/constants/dashboard.ts`: timeframe options, stale cache configuration, and volume chart color series
 - `Frontend/src/shared/constants/email.ts`: email list pagination and date-range dropdown options backed by email entity enums
-- `Frontend/src/shared/api/endpoints.ts`: centralized Auth0 route helpers and backend endpoint constants, including analytics, account sync-settings, and user settings endpoints
+- `Frontend/src/shared/api/endpoints.ts`: centralized Auth0 route helpers and backend endpoint constants, including analytics, account sync-settings, user settings, and attachment download endpoints (`EMAILS_API_ENDPOINTS.ATTACHMENT`)
 - `Frontend/src/shared/utils/emails.ts`: shared email display-formatting helpers such as recipient label formatting for thread headers
-- `Frontend/src/features/emails/utils/attachments.ts`: frontend attachment download and preview helpers for email detail flows
+- `Frontend/src/features/emails/utils/attachments.ts`: frontend attachment download and preview helpers using centralized `EMAILS_API_ENDPOINTS.ATTACHMENT`
+- `Frontend/src/features/emails/components/KeyboardShortcutsModal.tsx`: accessible dialog displaying grouped keyboard shortcuts categories using Radix primitives
+- `Frontend/src/features/emails/components/DeleteModal.tsx`: accessible delete confirmation modal with window capture-phase `Enter` (confirm deletion) and `Escape` (cancel and close) bindings
+- `Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts`: keyboard navigation engine (`j`/`k`, `Enter`, `s`, `u`, `e`, `Delete`, `c`, `/`, `?`) with input element typing guards (`isInputElement`)
 
 ## End-to-End Flow Summary
 
@@ -409,4 +427,6 @@
 - Centralized `FilterModal` component is introduced under `@shared/components/utils` to unify the filter logic/UI for both inbox lists and folders overview.
 - Full-stack observability and error reliability infrastructure is established (Phase 3 of development roadmap), featuring custom domain error hierarchy, distributed tracing (`X-Trace-Id`) via AsyncLocalStorage and Axios interceptors, module-scoped Pino loggers (`createLogger`) with non-blocking APM bridging, pluggable monitoring manager with Sentry Native Structured Logging, Koyeb health probes (`/health`, `/health/ready`), and frontend Error Boundary with user-friendly recovery UI.
 - Strict database ID isolation: Frontend exclusively passes MongoDB `_id` for both emails (`email._id`) and folders (`folder._id`), while Backend repositories and services resolve external third-party IDs (`providerMessageId`, `providerFolderId`) before delegating to Gmail and Outlook provider adapters, guaranteeing zero ID mismatch regressions and clean separation of concerns.
+- Keyboard navigation and deletion parity: Mailbox rows support full keyboard shortcut navigation (`j`/`k`, `Enter`, `s`, `u`, `e`, `Delete`, `c`, `/`, `?`) with automatic focus cursor indication. Both mouse trash clicks and `Delete`/`Backspace` shortcuts trigger `<DeleteModal />` requiring confirmation (`Enter` confirms deletion, `Escape` cancels), with all email actions (`s`, `u`, `e`, delete) updating local UI state optimistically and displaying confirmation toasts.
+- ErrorBoundary isolation & bulk operation resilience: Top-level `ErrorBoundary` isolates unhandled promise rejections to monitoring and avoids crashing to the full-screen error fallback on API/500 failures. Bulk email operations (`star`, `unread`, `archive`, `delete`, `move`) use React Query `.mutate()` with `onError` handling, displaying polite sonner toasts advising the user to retry in some time and refetching mailbox data to keep server state in sync.
 

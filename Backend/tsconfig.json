@@ -20,6 +20,7 @@
             "@monitoring": ["core/monitoring/index.js"],
             "@observability": ["core/observability/index.js"],
             "@queue": ["core/queue/index.js"],
+            "@security": ["core/security/index.js"],
             "@middlewares": ["middlewares/index.js"],
             "@modules/*": ["modules/*"],
             "@integrations/*": ["integrations/*"],

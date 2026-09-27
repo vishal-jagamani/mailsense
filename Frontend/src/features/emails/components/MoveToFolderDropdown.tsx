@@ -100,53 +100,57 @@ export const MoveToFolderDropdown: React.FC<MoveToFolderDropdownProps> = ({
     };
 
     const handleSelectFolder = async (targetFolderId: string) => {
-        try {
-            if (targetFolderId === currentFolderId || emailIds.length === 0) {
-                setIsOpen(false);
-                setSearchQuery('');
-                return;
-            }
+        if (targetFolderId === currentFolderId || emailIds.length === 0) {
+            setIsOpen(false);
+            setSearchQuery('');
+            return;
+        }
 
-            let removeFolderIds: string[] = [];
-            if (currentFolderId && currentFolderId !== targetFolderId) {
-                removeFolderIds = [currentFolderId];
-            } else if (resolvedSelectedEmailObjects.length > 0) {
-                const existingFolders = new Set<string>();
-                resolvedSelectedEmailObjects.forEach((email) => {
-                    if (Array.isArray(email.folders)) {
-                        email.folders.forEach((fId) => {
-                            if (fId !== targetFolderId) existingFolders.add(fId);
-                        });
-                    }
-                });
-                removeFolderIds = Array.from(existingFolders);
-            }
+        let removeFolderIds: string[] = [];
+        if (currentFolderId && currentFolderId !== targetFolderId) {
+            removeFolderIds = [currentFolderId];
+        } else if (resolvedSelectedEmailObjects.length > 0) {
+            const existingFolders = new Set<string>();
+            resolvedSelectedEmailObjects.forEach((email) => {
+                if (Array.isArray(email.folders)) {
+                    email.folders.forEach((fId) => {
+                        if (fId !== targetFolderId) existingFolders.add(fId);
+                    });
+                }
+            });
+            removeFolderIds = Array.from(existingFolders);
+        }
 
-            // Guarantee removeFolderIds never contains targetFolderId
-            removeFolderIds = removeFolderIds.filter((fId) => fId !== targetFolderId);
+        // Guarantee removeFolderIds never contains targetFolderId
+        removeFolderIds = removeFolderIds.filter((fId) => fId !== targetFolderId);
 
-            const res = await moveEmailsMutation.mutateAsync({
+        moveEmailsMutation.mutate(
+            {
                 emailIds,
                 targetFolderIds: [targetFolderId],
                 removeFolderIds,
-            });
-
-            if (res?.success) {
-                toast.success(`Moved ${res.updatedCount || emailIds.length} email(s) successfully`);
-            } else {
-                toast.success('Emails moved successfully');
-            }
-
-            setIsOpen(false);
-            setSearchQuery('');
-            if (onSuccess) {
-                onSuccess();
-            }
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            toast.error(`Failed to move emails: ${errorMessage}`);
-            console.error('Failed to move emails to folder:', errorMessage);
-        }
+            },
+            {
+                onSuccess: (res) => {
+                    if (res?.success) {
+                        const count = res.updatedCount || emailIds.length;
+                        toast.success(count > 1 ? `${count} emails moved successfully` : 'Email moved successfully', { duration: 3000 });
+                    } else {
+                        toast.success('Emails moved successfully', { duration: 3000 });
+                    }
+                    setIsOpen(false);
+                    setSearchQuery('');
+                    if (onSuccess) {
+                        onSuccess();
+                    }
+                },
+                onError: (error: Error) => {
+                    console.error('Failed to move emails to folder:', error);
+                    setIsOpen(false);
+                    setSearchQuery('');
+                },
+            },
+        );
     };
 
     return (

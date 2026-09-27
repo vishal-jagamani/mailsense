@@ -22,23 +22,26 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, all
         states: { showDeleteModal },
         setters: { setShowDeleteModal },
         actionOptions: options,
+        actions: { handleConfirmDelete },
         starEmail: { isLoading: isStarEmailLoading },
         unreadEmail: { isLoading: isUnreadEmailLoading },
-        deleteEmail: { mutate: deleteEmail, isLoading: isDeleteEmailLoading },
+        archiveEmail: { isLoading: isArchiveEmailLoading },
+        deleteEmail: { isLoading: isDeleteEmailLoading },
     } = useInboxEmailMenuBarOptions({
         emailIds,
+        allEmails,
         onRefetchEmails,
         onResetPage,
         onResetSelection,
     });
 
-    if (isStarEmailLoading || isUnreadEmailLoading || isDeleteEmailLoading) {
+    if (isStarEmailLoading || isUnreadEmailLoading || isArchiveEmailLoading || isDeleteEmailLoading) {
         return <APILoader show size="small" />;
     }
 
     return (
         <>
-            <div className="sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md md:px-4">
+            <div className="sticky top-0 z-40 flex h-10 max-h-10 min-h-10 items-center justify-between rounded-t-md">
                 <div className="flex items-center gap-4">
                     {options.map((option) => (
                         <div key={option.id} className="flex items-center">
@@ -67,9 +70,13 @@ const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, all
                     <DeleteModal
                         open={showDeleteModal}
                         onOpenChange={setShowDeleteModal}
-                        onDelete={() => {
-                            deleteEmail({ emailIds, trash: true });
-                        }}
+                        onDelete={handleConfirmDelete}
+                        title={emailIds.length > 1 ? 'Delete Emails' : 'Delete Email'}
+                        description={
+                            emailIds.length > 1
+                                ? `Are you sure you want to delete ${emailIds.length} emails?`
+                                : 'Are you sure you want to delete this email?'
+                        }
                     />
                 </div>
             </div>

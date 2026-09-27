@@ -1,4 +1,4 @@
-import { axiosClient } from '@shared/api';
+import { axiosClient, EMAILS_API_ENDPOINTS } from '@shared/api';
 
 export const handleDownload = async (
     emailId: string,
@@ -8,7 +8,8 @@ export const handleDownload = async (
 ) => {
     try {
         setLoadingAttId(attId);
-        const response = await axiosClient.get(`/emails/attachment/${emailId}/${attId}`, {
+        const endpoint = EMAILS_API_ENDPOINTS.ATTACHMENT(emailId, attId);
+        const response = await axiosClient.get(endpoint, {
             responseType: 'blob',
         });
         const contentType = (response.headers['content-type'] as string) || 'application/octet-stream';
@@ -35,7 +36,8 @@ export const handlePreview = async (
 ) => {
     try {
         setLoadingAttId(attId);
-        const response = await axiosClient.get(`/emails/attachment/${emailId}/${attId}`, {
+        const endpoint = EMAILS_API_ENDPOINTS.ATTACHMENT(emailId, attId);
+        const response = await axiosClient.get(endpoint, {
             responseType: 'blob',
         });
         const contentType = (response.headers['content-type'] as string) || 'application/octet-stream';

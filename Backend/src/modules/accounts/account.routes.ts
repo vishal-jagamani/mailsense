@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { authMiddleware, validate } from '@middlewares';
+import { authRateLimiter, syncRateLimiter } from '@security';
 import { handleRequest } from 'shared/utils/index.js';
 import { AccountsController } from './account.controller.js';
 import {
@@ -19,9 +20,9 @@ router.get('/callback/:provider', validate({ params: connectAccountSchema }), ha
 
 router.use(authMiddleware);
 
-router.get('/sync-all', handleRequest(accountsController.syncAccounts));
+router.get('/sync-all', syncRateLimiter, handleRequest(accountsController.syncAccounts));
 
-router.get('/sync/:accountId', handleRequest(accountsController.syncAccount));
+router.get('/sync/:accountId', syncRateLimiter, handleRequest(accountsController.syncAccount));
 
 router.get('/:accountId', validate({ params: getAccountDetailsSchema }), handleRequest(accountsController.getAccountDetails));
 
@@ -31,7 +32,7 @@ router.get('/list/all', handleRequest(accountsController.getAccounts));
 
 router.get('/providers/list', handleRequest(accountsController.getAccountProviders));
 
-router.get('/connect/:provider', validate({ params: connectAccountSchema }), handleRequest(accountsController.connect));
+router.get('/connect/:provider', authRateLimiter, validate({ params: connectAccountSchema }), handleRequest(accountsController.connect));
 
 router.patch(
     '/enable/:accountId',

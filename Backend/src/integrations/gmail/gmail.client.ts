@@ -17,6 +17,8 @@ import { createLogger } from '@observability';
 import { AxiosRequestConfig } from 'axios';
 import { apiRequest, decrypt, encrypt } from 'shared/utils/index.js';
 import { GMAIL_API_BASE_URL, GMAIL_APIs, GMAIL_PEOPLE_API_BASE_URL, GMAIL_PEOPLE_APIs, GMAIL_USER_INFO } from './gmail.constants.js';
+import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { Readable } from 'stream';
 
 const logger = createLogger(LOGGER_MODULE.GMAIL_CLIENT);
 
@@ -447,6 +449,32 @@ export class GmailApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailApi.getAttachment: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
+        try {
+            const accessToken = await this.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${GMAIL_API_BASE_URL}${GMAIL_APIs.MESSAGES}/${messageId}/attachments/${attachmentId}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+            };
+            const response = await apiRequest<{ data: string; size: number }>(options);
+            const buffer = Buffer.from(response.data, 'base64url');
+            const stream = Readable.from(buffer);
+            return {
+                stream,
+                mimeType: 'application/octet-stream',
+                filename: 'attachment',
+                contentLength: buffer.length,
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailApi.getAttachmentStream: ${errorMessage}`, { error: err, accountId, messageId, attachmentId });
             throw err;
         }
     }

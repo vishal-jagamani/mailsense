@@ -1,7 +1,10 @@
 'use client';
 
+import { Keyboard } from 'lucide-react';
 import React, { Suspense } from 'react';
 
+import KeyboardShortcutsModal from '@features/emails/components/KeyboardShortcutsModal';
+import DeleteModal from '@features/emails/components/DeleteModal';
 import EmailListTable from '@features/inbox/components/EmailListTable';
 import EmailMenuBarOptions from '@features/inbox/components/EmailMenuBarOptions';
 import { useInboxPage } from '@features/inbox/hooks';
@@ -13,6 +16,8 @@ import PaginationComponent from '@shared/components/table/Pagination';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
+import { Button } from '@shared/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 
 const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     const isMobile = useIsMobile();
@@ -20,9 +25,9 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     const {
         emails: { data: emailsData, fetchEmailsData, isLoadingEmails },
         emailFilterOptions: { data: filterOptions },
-        actions: { handleEmailSelect, handlePageSizeChange, handleResetPage, handleResetSelection },
-        states: { selectedEmails, page, pageSize, searchValue, filter },
-        setters: { setPage, setSearchValue, setFilter },
+        actions: { handleEmailSelect, handlePageSizeChange, handleResetPage, handleResetSelection, handleConfirmDelete },
+        states: { selectedEmails, page, pageSize, searchValue, filter, focusedIndex, isShortcutsModalOpen, emailsToDelete },
+        setters: { setPage, setSearchValue, setFilter, setIsShortcutsModalOpen, setEmailsToDelete },
     } = useInboxPage(account);
 
     return (
@@ -40,14 +45,32 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                             onResetSelection={handleResetSelection}
                             onResetPage={handleResetPage}
                         />
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setIsShortcutsModalOpen(true)}
+                                    className="size-9 shrink-0 cursor-pointer"
+                                    aria-label="Keyboard Shortcuts"
+                                >
+                                    <Keyboard className="size-4" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p className="text-xs">Keyboard Shortcuts (?)</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </div>
                     <div className={`flex w-full flex-col ${isMobile ? 'h-[calc(100vh-200px)]' : 'h-[calc(100vh-150px)]'}`}>
                         <EmailListTable
                             data={emailsData?.data || []}
                             page={page}
                             selectedEmails={selectedEmails}
+                            focusedIndex={focusedIndex}
                             onEmailSelect={handleEmailSelect}
                             onDeleteSuccess={fetchEmailsData}
+                            onDeleteRequest={(email) => setEmailsToDelete([email._id])}
                         />
                     </div>
                     <PaginationComponent
@@ -59,6 +82,20 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
                     />
                 </div>
             </div>
+            <KeyboardShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setIsShortcutsModalOpen(false)} />
+            <DeleteModal
+                open={emailsToDelete.length > 0}
+                onOpenChange={(open) => {
+                    if (!open) setEmailsToDelete([]);
+                }}
+                onDelete={handleConfirmDelete}
+                title={emailsToDelete.length > 1 ? 'Delete Emails' : 'Delete Email'}
+                description={
+                    emailsToDelete.length > 1
+                        ? `Are you sure you want to delete ${emailsToDelete.length} emails?`
+                        : 'Are you sure you want to delete this email?'
+                }
+            />
         </>
     );
 };

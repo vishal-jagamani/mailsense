@@ -34,6 +34,7 @@ export const EMAILS_API_ENDPOINTS = {
     SEARCH_OTHER_CONTACTS: '/emails/searchOtherContacts',
     THREAD: (emailId: string) => `/emails/thread/${emailId}`,
     MOVE: '/emails/move',
+    ATTACHMENT: (emailId: string, attachmentId: string) => `/emails/attachment/${emailId}/${attachmentId}`,
 } as const;
 
 export const FOLDER_API_ENDPOINTS = {

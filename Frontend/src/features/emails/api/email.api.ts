@@ -30,6 +30,11 @@ export async function unreadEmail(emailIds: string[], unread: boolean): Promise<
     return data;
 }
 
+export async function archiveEmail(emailIds: string[], archive: boolean): Promise<UpdateAPIResponse> {
+    const { data } = await axiosClient.post(EMAILS_API_ENDPOINTS.ARCHIVE, { emailIds, archive });
+    return data;
+}
+
 export async function composeEmail(body: ComposeEmailRequestBody): Promise<UpdateAPIResponse> {
     const { data } = await axiosClient.post(EMAILS_API_ENDPOINTS.COMPOSE, body);
     return data;

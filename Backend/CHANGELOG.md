@@ -7,6 +7,23 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-09-27
+
+### Added
+- **Email Service Decomposition (`ARCH-NEXT-01`):** Decomposed `email.service.ts` into single-responsibility service layers adhering to CQRS principles: `EmailReadService` (`src/modules/emails/email-read.service.ts`) for query/threading/attachment handling and `EmailWriteService` (`src/modules/emails/email-write.service.ts`) for composition/moves/batch mutations. Refactored `EmailService` (`src/modules/emails/email.service.ts`) into a lightweight Facade preserving 100% of method signatures for caller non-regression (`EmailController`, `DraftService`).
+- **Attachment Streaming (`PERF-NEXT-01`):** Added `getAttachmentStream` across `IEmailProvider`, `GmailClient`, `OutlookClient`, `GmailProvider`, `OutlookProvider`, and `EmailService`. Refactored `EmailController.downloadAttachment` to stream binary attachments directly to Express `Response` via `attachment.stream.pipe(res)` with `Content-Type`, `Content-Disposition`, and `Content-Length` headers and error listeners, eliminating memory heap buffering.
+- **Multi-Account Batch Parallelization (`PERF-NEXT-02`):** Parallelized `EmailService.moveEmails` using `Promise.allSettled` across account groups, returning aggregated update counts and updating MongoDB folder references exclusively for successful accounts while logging partial failures.
+- **Provider Streaming Contracts:** Added typed `AttachmentStreamResult` and `AccountBatchMoveTaskResult` interfaces in `src/integrations/email/email.provider.types.ts`.
+- **API Ingress Rate Limiting (`SEC-NEXT-01`):** Integrated `express-rate-limit` with bucket configurations (`defaultApiRateLimiter`, `syncRateLimiter`, `composeRateLimiter`, `authRateLimiter`) in `src/core/security/rate-limit.config.ts`, delegating 429 rejections to `RateLimitError` and centralized `errorHandler`.
+- **HTTP Security Headers & CSP (`SEC-NEXT-02`):** Implemented `createHelmetMiddleware` in `src/core/security/helmet.config.ts` mounting Content Security Policy (CSP), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and HSTS across Express ingress in `app.ts`.
+- **Security Module & Path Alias:** Added `@security` alias in `tsconfig.json` exporting security middleware from `src/core/security/index.ts`.
+- **Security Unit Testing:** Added test suites `src/core/security/__tests__/rate-limit.test.ts` and `src/core/security/__tests__/helmet.test.ts`.
+- **AI Event Pipeline Foundation (`ARCH-NEXT-02`):** Integrated `SYSTEM_EVENT.EMAIL_BATCH_SYNCED` event dispatch in `syncAccountProcessor` during both incremental and full background sync flows, resolving MongoDB `_id` strings and emitting typed `EmailBatchSyncedPayload` payloads.
+- **Event Subscriber:** Added `registerEmailBatchSyncedHandler` in `src/core/events/handlers/email-batch-synced.handler.ts` subscribing to `EMAIL_BATCH_SYNCED` with structured logging.
+- **Observability:** Added `EMAIL_BATCH_SYNCED_HANDLER` to `LOGGER_MODULE` enum.
+- **Repository Helper:** Implemented `EmailRepository.getEmailIdsByProviderMessageIds` with tenant `accountId` isolation.
+- **Unit Testing:** Added unit test suite `src/core/events/__tests__/email-batch-synced.handler.test.ts`.
+
 ## [3.3.0] - 2026-09-26
 
 ### Fixed

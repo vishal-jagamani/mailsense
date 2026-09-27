@@ -1,5 +1,6 @@
 import { BadRequestError, UnauthorizedError } from '@errors';
 import { GetAllEmailsFilters, MoveEmailsRequestBody } from '@mailsense/types';
+import { logger } from '@utils';
 import { NextFunction, Request, Response } from 'express';
 import {
     ArchiveEmailBody,
@@ -230,10 +231,23 @@ export class EmailController {
             if (!emailId || !attachmentId) {
                 throw new BadRequestError('Email ID and Attachment ID are required');
             }
-            const attachment = await this.emailService.downloadAttachment(emailId, attachmentId);
+
+            const attachment = await this.emailService.downloadAttachmentStream(emailId, attachmentId);
+
             res.setHeader('Content-Type', attachment.mimeType);
-            res.setHeader('Content-Disposition', `attachment; filename="${attachment.filename}"`);
-            res.send(attachment.data);
+            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(attachment.filename)}"`);
+            if (attachment.contentLength) {
+                res.setHeader('Content-Length', attachment.contentLength);
+            }
+
+            attachment.stream.on('error', (streamErr) => {
+                logger.error('Error during attachment stream transfer', { emailId, attachmentId, error: streamErr });
+                if (!res.headersSent) {
+                    next(streamErr);
+                }
+            });
+
+            attachment.stream.pipe(res);
         } catch (error) {
             next(error);
         }

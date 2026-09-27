@@ -132,8 +132,6 @@ export function ErrorBoundary({ children, fallbackRender, onError }: ErrorBounda
                         : new Error(typeof reason === 'string' ? reason : 'Unhandled asynchronous rejection');
                 const traceId = crypto.randomUUID();
 
-                setErrorState({ error, traceId });
-
                 frontendMonitoring.captureException(error, {
                     traceId,
                     route: typeof window !== 'undefined' ? window.location.pathname : undefined,
