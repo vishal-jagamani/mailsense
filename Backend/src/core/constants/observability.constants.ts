@@ -18,6 +18,7 @@ export enum LOGGER_MODULE {
     EVENT_BUS = 'EventBus',
     EMAIL_CREATED_HANDLER = 'EmailCreatedHandler',
     SYNC_COMPLETED_HANDLER = 'SyncCompletedHandler',
+    EMAIL_BATCH_SYNCED_HANDLER = 'EmailBatchSyncedHandler',
     MONITORING_MANAGER = 'MonitoringManager',
     SENTRY_PROVIDER = 'SentryProvider',
     NOOP_MONITORING_PROVIDER = 'NoopMonitoringProvider',

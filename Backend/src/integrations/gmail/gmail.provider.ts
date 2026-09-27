@@ -1,5 +1,6 @@
 import { NotFoundError } from '@errors';
 import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
+import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
 import {
     GmailMessageObjectFull,
     GmailOAuthAccessTokenResponse,
@@ -90,6 +91,10 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
 
     async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
         return this.gmailService.getAttachment(accountId, messageId, attachmentId);
+    }
+
+    async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
+        return await this.gmailService.getAttachmentStream(accountId, messageId, attachmentId);
     }
 
     async getAllFolders(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {

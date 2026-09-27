@@ -128,6 +128,24 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
                     email,
                 });
             }
+
+            // Extract provider message IDs and resolve MongoDB _id strings
+            const providerMessageIds = addedEmails.map((email) => email.providerMessageId).filter((id): id is string => Boolean(id));
+
+            if (providerMessageIds.length > 0) {
+                const syncedEmailIds = await EmailRepository.getEmailIdsByProviderMessageIds(providerMessageIds, accountId);
+
+                if (syncedEmailIds && syncedEmailIds.length > 0) {
+                    eventBus.publish(SYSTEM_EVENT.EMAIL_BATCH_SYNCED, {
+                        accountId,
+                        userId,
+                        emailIds: syncedEmailIds,
+                        batchSize: syncedEmailIds.length,
+                        timestamp: Date.now(),
+                    });
+                    logger.info(`Published EMAIL_BATCH_SYNCED event for ${syncedEmailIds.length} emails`);
+                }
+            }
         }
 
         await AccountRepository.updateAccount(accountId, {
@@ -173,6 +191,23 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
                         accountId,
                         email,
                     });
+                }
+
+                const providerMessageIds = addedEmails.map((email) => email.providerMessageId).filter((id): id is string => Boolean(id));
+
+                if (providerMessageIds.length > 0) {
+                    const syncedEmailIds = await EmailRepository.getEmailIdsByProviderMessageIds(providerMessageIds, accountId);
+
+                    if (syncedEmailIds && syncedEmailIds.length > 0) {
+                        eventBus.publish(SYSTEM_EVENT.EMAIL_BATCH_SYNCED, {
+                            accountId,
+                            userId,
+                            emailIds: syncedEmailIds,
+                            batchSize: syncedEmailIds.length,
+                            timestamp: Date.now(),
+                        });
+                        logger.info(`Published EMAIL_BATCH_SYNCED event for full sync: ${syncedEmailIds.length} emails`);
+                    }
                 }
             }
 

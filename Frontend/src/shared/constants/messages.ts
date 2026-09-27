@@ -74,3 +74,10 @@ export const DASHBOARD_LABELS = {
         PERCENTAGE: 'Share',
     },
 } as const;
+
+export const EMAIL_LABELS = {
+    KEYBOARD_SHORTCUTS: {
+        LABEL: 'Keyboard Shortcuts',
+        DESCRIPTION: 'Press these shortcut keys anywhere in your mailbox to trigger quick actions.',
+    },
+} as const;

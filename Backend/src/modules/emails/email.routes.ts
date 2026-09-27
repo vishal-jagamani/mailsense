@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { authMiddleware, validate } from '@middlewares';
+import { composeRateLimiter } from '@security';
 import { handleRequest } from 'shared/utils/index.js';
 import { EmailController } from './email.controller.js';
 import {
@@ -43,7 +44,7 @@ router.post('/unread', validate({ body: unreadEmailSchema }), handleRequest(emai
 
 router.post('/search', validate({ body: searchEmailSchema }), handleRequest(emailController.searchEmails));
 
-router.post('/compose', validate({ body: composeEmailSchema }), handleRequest(emailController.composeEmail));
+router.post('/compose', composeRateLimiter, validate({ body: composeEmailSchema }), handleRequest(emailController.composeEmail));
 
 router.post('/searchOtherContacts', validate({ body: searchOtherContactsSchema }), handleRequest(emailController.searchOtherContacts));
 

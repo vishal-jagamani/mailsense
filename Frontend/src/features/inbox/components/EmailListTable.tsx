@@ -2,7 +2,7 @@
 
 import { Trash } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import { EmailAttributes } from '@mailsense/types';
@@ -17,17 +17,36 @@ interface EmailListTableProps {
     data: EmailAttributes[];
     page: number;
     selectedEmails?: string[];
+    focusedIndex?: number;
     onEmailSelect?: (emailIds: string[]) => void;
     onDeleteSuccess?: () => void;
+    onDeleteRequest?: (email: EmailAttributes) => void;
 }
 
-const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEmails, onEmailSelect, onDeleteSuccess }) => {
+const EmailListTable: React.FC<EmailListTableProps> = ({
+    data,
+    page,
+    selectedEmails,
+    focusedIndex,
+    onEmailSelect,
+    onDeleteSuccess,
+    onDeleteRequest,
+}) => {
     const isMobile = useIsMobile();
     const router = useRouter();
 
     const { mutateAsync } = useDeleteEmail();
 
-    const handleTrashIconClick = async (email: EmailAttributes) => {
+    useEffect(() => {
+        if (typeof focusedIndex === 'number' && focusedIndex >= 0 && data[focusedIndex]) {
+            const targetElement = document.getElementById(data[focusedIndex]._id);
+            if (targetElement) {
+                targetElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        }
+    }, [focusedIndex, data]);
+
+    const handleTrashIconClick = async (email: EmailAttributes): Promise<void> => {
         try {
             const res = await mutateAsync({ emailIds: [email._id], trash: true });
             if (res && res.status) {
@@ -42,54 +61,63 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
     };
 
     return (
-        <>
-            <div className="flex h-full w-full flex-col">
-                {/* Fixed Header */}
-                <div className="bg-secondary sticky top-0 z-10 rounded-t-md">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-10">
-                                    <Checkbox
-                                        id="select-all"
-                                        aria-label="Select all"
-                                        onClick={() => {
-                                            if ((selectedEmails || []).length === data.length) {
-                                                onEmailSelect?.([]);
-                                            } else {
-                                                onEmailSelect?.(data.map((email) => email._id));
-                                            }
-                                        }}
-                                        className="cursor-pointer"
-                                    />
-                                </TableHead>
-                                {isMobile ? (
-                                    <>
-                                        <TableHead className="w-80">Details</TableHead>
-                                        <TableHead className="w-12 whitespace-nowrap">Date</TableHead>
-                                    </>
-                                ) : (
-                                    <>
-                                        <TableHead className="w-56">From</TableHead>
-                                        <TableHead className="max-w-60">Subject</TableHead>
-                                        <TableHead className="w-28 whitespace-nowrap">Date</TableHead>
-                                    </>
-                                )}
-                                <TableHead className="w-14 whitespace-nowrap"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                    </Table>
-                </div>
+        <div className="flex h-full w-full flex-col">
+            {/* Fixed Header */}
+            <div className="bg-secondary sticky top-0 z-10 rounded-t-md">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-10">
+                                <Checkbox
+                                    id="select-all"
+                                    aria-label="Select all"
+                                    onClick={() => {
+                                        if ((selectedEmails || []).length === data.length) {
+                                            onEmailSelect?.([]);
+                                        } else {
+                                            onEmailSelect?.(data.map((email) => email._id));
+                                        }
+                                    }}
+                                    className="cursor-pointer"
+                                />
+                            </TableHead>
+                            {isMobile ? (
+                                <>
+                                    <TableHead className="w-80">Details</TableHead>
+                                    <TableHead className="w-12 whitespace-nowrap">Date</TableHead>
+                                </>
+                            ) : (
+                                <>
+                                    <TableHead className="w-56">From</TableHead>
+                                    <TableHead className="max-w-60">Subject</TableHead>
+                                    <TableHead className="w-28 whitespace-nowrap">Date</TableHead>
+                                </>
+                            )}
+                            <TableHead className="w-14 whitespace-nowrap"></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                </Table>
+            </div>
 
-                {/* Scrollable Body */}
-                <div className="flex-1 overflow-y-auto">
-                    <Table>
-                        <tbody>
-                            {data.map((email) => (
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto">
+                <Table>
+                    <tbody>
+                        {data.map((email, index) => {
+                            const isSelected = selectedEmails?.includes(email._id);
+                            const isFocused = focusedIndex === index;
+
+                            return (
                                 <TableRow
                                     key={email._id}
                                     id={email._id}
-                                    className={`cursor-pointer ${selectedEmails?.includes(email._id) ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800' : ''} ${!email.isRead && selectedEmails?.includes(email._id) ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800' : !email.isRead ? 'bg-muted hover:bg-muted' : ''}`}
+                                    className={`cursor-pointer transition-colors ${isFocused ? 'ring-primary shadow-sm ring-2 ring-inset' : ''}${
+                                        isSelected
+                                            ? 'bg-blue-500 hover:bg-blue-600 dark:bg-blue-800 dark:hover:bg-blue-800'
+                                            : !email.isRead
+                                              ? 'bg-muted/70 hover:bg-muted font-medium'
+                                              : 'hover:bg-muted/40'
+                                    }`}
                                     onClick={() => {
                                         router.push(`/inbox/${email.accountId}/email/${email._id}?page=${page}`);
                                     }}
@@ -97,12 +125,12 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                                     <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
                                         <Checkbox
                                             id={email._id}
-                                            checked={selectedEmails?.includes(email._id)}
-                                            onCheckedChange={(checked) => {
-                                                if (checked) {
-                                                    onEmailSelect?.([...(selectedEmails || []), email._id]);
+                                            checked={isSelected}
+                                            onClick={() => {
+                                                if (isSelected) {
+                                                    onEmailSelect?.((selectedEmails || []).filter((id: string) => id !== email._id));
                                                 } else {
-                                                    onEmailSelect?.((selectedEmails || []).filter((id) => id !== email._id));
+                                                    onEmailSelect?.([...(selectedEmails || []), email._id]);
                                                 }
                                             }}
                                             className="cursor-pointer"
@@ -118,9 +146,11 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                                         <>
                                             <TableCell className="w-44">
                                                 <div className="flex items-center gap-1.5 truncate">
-                                                    <span className="truncate">{email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}</span>
+                                                    <span className="truncate">
+                                                        {email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}
+                                                    </span>
                                                     {email.threadCount && email.threadCount > 1 ? (
-                                                        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                                                        <span className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-[10px] font-semibold">
                                                             {email.threadCount}
                                                         </span>
                                                     ) : null}
@@ -140,18 +170,22 @@ const EmailListTable: React.FC<EmailListTableProps> = ({ data, page, selectedEma
                                             onClick={(e) => {
                                                 e.stopPropagation();
                                                 if ((selectedEmails || []).length === 0) {
-                                                    handleTrashIconClick(email);
+                                                    if (onDeleteRequest) {
+                                                        onDeleteRequest(email);
+                                                    } else {
+                                                        handleTrashIconClick(email);
+                                                    }
                                                 }
                                             }}
                                         />
                                     </TableCell>
                                 </TableRow>
-                            ))}
-                        </tbody>
-                    </Table>
-                </div>
+                            );
+                        })}
+                    </tbody>
+                </Table>
             </div>
-        </>
+        </div>
     );
 };
 

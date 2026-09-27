@@ -1,4 +1,4 @@
-import { AxiosRequestConfig } from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
 import { OUTLOOK_SECRETS } from '@config';
 import { LOGGER_MODULE, OAUTH_ACCESS_TOKEN_URI } from '@constants';
@@ -15,6 +15,9 @@ import { createLogger } from '@observability';
 import { apiRequest, decrypt, encrypt } from 'shared/utils/index.js';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
 
+import { NotFoundError } from '@errors';
+import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { Readable } from 'stream';
 import {
     GetDeltaMessageChangesResponse,
     OutlookCreateMessagePayload,
@@ -25,7 +28,6 @@ import {
     OutlookUploadSessionResponse,
 } from './outlook.types.js';
 import { buildOutlookMessagePayload } from './outlook.utils.js';
-import { NotFoundError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.OUTLOOK_CLIENT);
 
@@ -515,6 +517,35 @@ export class OutlookApi {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookApi.getAttachment: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    static async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
+        try {
+            const accessToken = await OutlookApi.fetchAccessToken(accountId);
+            const options: AxiosRequestConfig = {
+                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.ATTACHMENT(messageId, attachmentId)}`,
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                },
+                responseType: 'stream',
+            };
+            const response = await axios.request<Readable>(options);
+            const contentType = (response.headers['content-type'] as string) || 'application/octet-stream';
+            const contentLengthHeader = response.headers['content-length'];
+            const contentLength = contentLengthHeader ? Number(contentLengthHeader) : undefined;
+
+            return {
+                stream: response.data,
+                mimeType: contentType,
+                filename: 'attachment',
+                contentLength,
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in OutlookApi.getAttachmentStream: ${errorMessage}`, { error: err, accountId, messageId, attachmentId });
             throw err;
         }
     }

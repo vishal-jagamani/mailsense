@@ -1,4 +1,5 @@
 import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
+import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
 import {
     EmailAttributes,
     OutlookMessageObjectFull,
@@ -53,6 +54,10 @@ export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenRe
 
     async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
         return this.outlookService.getAttachment(accountId, messageId, attachmentId);
+    }
+
+    async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
+        return await this.outlookService.getAttachmentStream(accountId, messageId, attachmentId);
     }
 
     async deleteEmails(emailIds: string[], accountId: string, trash?: boolean): Promise<void> {

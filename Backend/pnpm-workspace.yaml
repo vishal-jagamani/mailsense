@@ -6,4 +6,4 @@ allowBuilds:
   protobufjs: true
   unrs-resolver: true
 minimumReleaseAgeExclude:
-  - '@mailsense/types@1.4.1'
+  - '@mailsense/types@1.4.1 || 1.5.0'

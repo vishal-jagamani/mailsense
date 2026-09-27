@@ -14,7 +14,14 @@ interface SearchHeaderProps {
 const SearchHeader: React.FC<SearchHeaderProps> = ({ value, onChange, className, placeholder }) => {
     return (
         <div className="flex w-full">
-            <Input value={value} onChange={(e) => onChange(e.target.value)} className={className} placeholder={placeholder} />
+            <Input
+                id="email-search-input"
+                type="search"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className={className}
+                placeholder={placeholder}
+            />
         </div>
     );
 };

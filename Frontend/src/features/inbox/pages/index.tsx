@@ -7,6 +7,8 @@ import APILoader from '@shared/components/apiLoader';
 import Loader from '@shared/components/loader';
 import PaginationComponent from '@shared/components/table/Pagination';
 import { useIsMobile } from '@shared/hooks';
+import KeyboardShortcutsModal from '@features/emails/components/KeyboardShortcutsModal';
+import DeleteModal from '@features/emails/components/DeleteModal';
 import EmailListHeader from '../components/EmailListHeader';
 import EmailListTable from '../components/EmailListTable';
 import { useInboxPage } from '../hooks';
@@ -17,9 +19,9 @@ const InboxPage: React.FC = () => {
     const {
         emails: { data: emailsData, fetchEmailsData, isLoadingEmails },
         emailFilterOptions: { data: emailFilterOptions, isLoading: isLoadingEmailFilters },
-        actions: { handleEmailSelect, handlePageSizeChange, handleResetPage, handleResetSelection },
-        states: { selectedEmails, page, pageSize, searchValue, filter, isSyncingInProgress },
-        setters: { setPage, setSearchValue, setFilter },
+        actions: { handleEmailSelect, handlePageSizeChange, handleResetPage, handleResetSelection, handleConfirmDelete },
+        states: { selectedEmails, page, pageSize, searchValue, filter, isSyncingInProgress, focusedIndex, isShortcutsModalOpen, emailsToDelete },
+        setters: { setPage, setSearchValue, setFilter, setIsShortcutsModalOpen, setEmailsToDelete },
     } = useInboxPage();
 
     return (
@@ -38,6 +40,7 @@ const InboxPage: React.FC = () => {
                         handleResetPage={handleResetPage}
                         emailFilterOptions={emailFilterOptions || []}
                         fetchEmailsData={fetchEmailsData}
+                        onOpenShortcutsModal={() => setIsShortcutsModalOpen(true)}
                     />
 
                     {/* Active Background Sync Banner */}
@@ -55,8 +58,10 @@ const InboxPage: React.FC = () => {
                             data={emailsData?.data || []}
                             page={page}
                             selectedEmails={selectedEmails}
+                            focusedIndex={focusedIndex}
                             onEmailSelect={handleEmailSelect}
                             onDeleteSuccess={fetchEmailsData}
+                            onDeleteRequest={(email) => setEmailsToDelete([email._id])}
                         />
                     </div>
                     <PaginationComponent
@@ -68,6 +73,20 @@ const InboxPage: React.FC = () => {
                     />
                 </div>
             </div>
+            <KeyboardShortcutsModal isOpen={isShortcutsModalOpen} onClose={() => setIsShortcutsModalOpen(false)} />
+            <DeleteModal
+                open={emailsToDelete.length > 0}
+                onOpenChange={(open) => {
+                    if (!open) setEmailsToDelete([]);
+                }}
+                onDelete={handleConfirmDelete}
+                title={emailsToDelete.length > 1 ? 'Delete Emails' : 'Delete Email'}
+                description={
+                    emailsToDelete.length > 1
+                        ? `Are you sure you want to delete ${emailsToDelete.length} emails?`
+                        : 'Are you sure you want to delete this email?'
+                }
+            />
         </>
     );
 };

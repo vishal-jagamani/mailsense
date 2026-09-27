@@ -7,6 +7,28 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-09-27
+
+### Added
+- **Optimistic UI Rollbacks (`UI-NEXT-01`):** Enhanced email mutations (`starEmail`, `unreadEmail`, `moveEmails`) in `Frontend/src/features/emails/api/email.mutations.ts` with React Query `onMutate` cache snapshots and contextual error recovery toasts (`sonner`), guaranteeing automatic state restoration to the pre-mutation snapshot upon network or server failures.
+- **Keyboard Navigation & Shortcuts Engine (`UI-NEXT-02`):**
+  - Added `useEmailKeyboardShortcuts` hook in `Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts` with `isInputElement` focus guards in `Frontend/src/features/emails/utils/emails.ts`, supporting `j`/`k` (cursor move), `Enter`/`o` (open email), `s` (star), `u` (unread), `e` (archive), `Delete`/`Backspace` (trash), `c` (compose), `/` (search focus), and `?` (shortcuts cheat-sheet dialog).
+  - Fully wired `useEmailKeyboardShortcuts` into `useInboxPage` and `useFolderEmailListPage`, connecting keyboard actions directly to React Query mutations (`starEmail`, `unreadEmail`, `archiveEmail`, `deleteEmail`), composer modal (`openCompose`), and page navigation (`router.push`).
+  - Implemented complete bulk operations parity across keyboard shortcuts and mouse actions: when checkboxes are selected (`selectedEmails.length > 0`), shortcuts (`s`, `u`, `e`, `Delete`/`Backspace`) and toolbar options in `EmailMenuBarOptions` apply across all selected emails simultaneously, update local UI state optimistically, show contextual count toasts (e.g. `X emails starred / marked as unread / archived / deleted`), send all selected IDs in mutation payloads, and reset selections cleanly.
+  - Added delete confirmation parity via `DeleteModal` (`Frontend/src/features/emails/components/DeleteModal.tsx`): clicking the trash icon in `EmailListTable` or `EmailMenuBarOptions`, or pressing `Delete`/`Backspace` opens the confirmation dialog with pluralized count titles/descriptions, supporting full window capture key navigation (`Enter` to confirm deletion and `Escape` to cancel and close).
+  - Enhanced `useInboxEmailMenuBarOptions` and `MoveToFolderDropdown` with `allEmails` support, archive option, and count-based toast feedback for consistent parity.
+  - Added visible active-row cursor focus ring (`ring-2 ring-primary ring-inset`) and automatic smooth scrolling (`scrollIntoView`) in `Frontend/src/features/inbox/components/EmailListTable.tsx` via `focusedIndex`.
+  - Added `id="email-search-input"` to `Frontend/src/shared/components/inputs/SearchHeader.tsx` to ensure pressing `/` instantly focuses the search input.
+  - Added accessible `Keyboard` shortcut trigger buttons in `EmailListHeader`, `FolderEmailListHeader`, and `AccountInboxPage` toolbars, and integrated `<KeyboardShortcutsModal />` in all inbox and folder view pages.
+- **Accessible Shortcuts Modal:** Integrated `KeyboardShortcutsModal` in `Frontend/src/features/emails/components/KeyboardShortcutsModal.tsx` presenting organized keybinding categories (Navigation, Actions, Composer & Search) styled with accessible Radix primitives and centralized constants (`DEFAULT_KEYBOARD_SHORTCUT_GROUPS`).
+- **Entity Type Definitions:** Created `@entities/email` (`model/email.types.ts`) consolidating mutation parameter, mutation context, keyboard shortcut hook parameters, and modal props interfaces.
+- **Email Service Compatibility (`ARCH-NEXT-01`):** Verified full backward compatibility of all email endpoints, query hooks, and mutation payloads with backend CQRS decomposition (`EmailReadService`, `EmailWriteService`, `EmailService` facade).
+- **Centralized Attachment Endpoint:** Updated `Frontend/src/features/emails/utils/attachments.ts` to consume centralized `EMAILS_API_ENDPOINTS.ATTACHMENT(emailId, attachmentId)` from `Frontend/src/shared/api/endpoints.ts` for file download and preview requests.
+- **Rate Limit (HTTP 429) Handling:** Enhanced `extractApiError` in `Frontend/src/shared/api/errors.ts` to recognize HTTP 429 rate limit responses, extracting countdown advice (`retryAfter`) and surfacing user-friendly messages requesting the user to wait before retrying.
+
+### Fixed
+- **ErrorBoundary & Bulk API Resilience:** Resolved issue where an archive HTTP 500 or async rejection triggered the full-screen `ErrorBoundary` component. Removed visual error state triggering from `window.onunhandledrejection` in `ErrorBoundary.tsx` (routing rejections to monitoring instead), and standardized `useInboxPage`, `useFolderEmailListPage`, and `useInboxEmailMenuBarOptions` on React Query's `.mutate()` with `onError` handlers, displaying polite sonner toasts advising the user to *"Please retry in some time"* while rolling back optimistic UI state and refetching data to maintain synchronization.
+
 ## [3.3.0] - 2026-09-26
 
 ### Fixed

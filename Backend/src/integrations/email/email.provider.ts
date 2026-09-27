@@ -2,7 +2,7 @@ import { SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types
 import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
-import { IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
+import { AttachmentStreamResult, IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
 
 export interface SyncResult {
     addedEmails: EmailInput[] | Partial<EmailInput>[];
@@ -30,6 +30,7 @@ export interface IEmailProvider<TAuthToken = IEmailTAuthToken, TUserProfile = IE
 
     // Attachment Operations
     getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }>;
+    getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult>;
 
     // Folder/Label Operations
     getAllFolders(accountId: string, userId: string): Promise<Partial<FolderInput>[]>;
