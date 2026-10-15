@@ -1,6 +1,5 @@
 'use client';
 
-import { EmailAttributes } from '@mailsense/types';
 import React from 'react';
 
 import DeleteModal from '@features/emails/components/DeleteModal';
@@ -8,14 +7,7 @@ import MoveToFolderDropdown from '@features/emails/components/MoveToFolderDropdo
 import APILoader from '@shared/components/apiLoader';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { useInboxEmailMenuBarOptions } from '../hooks';
-
-interface EmailMenuBarOptionsProps {
-    emailIds: string[];
-    allEmails?: EmailAttributes[];
-    onRefetchEmails: () => void;
-    onResetSelection: () => void;
-    onResetPage: () => void;
-}
+import { EmailMenuBarOptionsProps } from '../types/inbox.types';
 
 const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, allEmails, onRefetchEmails, onResetSelection, onResetPage }) => {
     const {

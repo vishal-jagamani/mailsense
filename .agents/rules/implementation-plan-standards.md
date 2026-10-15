@@ -518,7 +518,23 @@ Scale section depth to the complexity of the feature:
 ### 4.4 Strict Type Safety & Coding Standards
 
 - **No `any`, `never`, or `unknown` Types:** Never use `any`, `never`, or `unknown` as type placeholders, return types, or parameter types under any circumstances. Always use explicit, well-defined TypeScript interfaces or generic constraints.
-- **No Inline Object Types:** Do not define inline object types (e.g. `{ accountId: string, email: string }`) in components, hooks, controllers, or service methods. Always define and import proper interfaces from `@mailsense/types` (or dedicated feature interface files). An inline type definition is permitted **ONLY** if it contains a maximum of 1 or 2 primitive keys.
+- **Dedicated Types Files Only:** All types, interfaces, enums, and DTOs MUST be defined exclusively in dedicated types files (`@mailsense/types` for shared contracts, `features/*/types/*.types.ts` for frontend, `modules/*/interfaces/*.interface.ts` for backend). NEVER declare interfaces or types inside component, hook, controller, service, repository, or utility files.
+- **Strictly Zero Inline Types Anywhere:** Never define inline object types (e.g. `{ accountId: string }`, `{ id: string }`) across the codebase. Every parameter, return type, component prop, state, and query option MUST use a named interface/type imported from a dedicated types file.
+- **Code Size Guardrails:** Plan architecture according to [MailSense Coding Standards](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md):
+  - Target files ≤200 lines (hard limit 300).
+  - Target components ≤150 lines (hard limit 200).
+  - Target hooks ≤80 lines (hard limit 120).
+  - Target functions ≤30 lines (hard limit 50).
+  - Maximum cyclomatic complexity 10 (preferred ≤5), maximum nesting depth 4 (preferred ≤3).
+- **Boundary-Based Error Handling:** Plan error handling at meaningful architectural boundaries (controllers, services, provider integrations, background workers, and API clients). Do NOT plan `try/catch` blocks in repositories, utility functions, React components, or custom hooks.
+- **Standardized Folder Structure & Naming Conventions:** Plan directory and file structures adhering strictly to:
+  - Universal `kebab-case` for all directories (`modules/accounts/`, `features/email-thread/`, `features/compose-email/`).
+  - Backend modules organized into categorized subdirectories (`controllers/`, `services/`, `repositories/`, `models/`, `schemas/`, `interfaces/`, `routes/`) with barrel exports `index.ts`.
+  - Backend integration clients and services organized into `clients/` and `services/` with `index.ts`.
+  - Backend files named `kebab-case.<role>.ts`.
+  - Frontend React components named `PascalCase.tsx` (never anonymous `index.tsx` component folders).
+  - Frontend custom hooks named `camelCase.ts` (`use*`).
+  - Frontend queries, APIs, and types named `<entity>.queries.ts`, `<entity>.api.ts`, `<entity>.types.ts`.
 
 ---
 
@@ -570,4 +586,11 @@ When a plan is fully implemented:
 | Duplicate the master roadmap content in individual plans           | Reference the roadmap, don't copy it                                         |
 | Duplicate proposed `@mailsense/types` code or tasks in feature plans | Define `@mailsense/types` changes exclusively in `types-implementation-plan.md` |
 | Use `any`, `never`, or `unknown` types in backend or frontend      | Always use proper, compiler-enforced interfaces from `@mailsense/types`      |
-| Define inline object types across functions or components          | Import exported interface definitions from types files (inline max 1–2 keys) |
+| Define inline object types anywhere (even 1–2 keys)                | Strictly define and import named interfaces/types from dedicated types files |
+| Declare interfaces/types in components, hooks, services, repos     | Declare all types exclusively in dedicated types files                       |
+| Plan `try/catch` in repositories, utils, components, or hooks      | Handle errors at architectural boundaries only (controllers, services, etc.) |
+| Plan God services or God components violating code size limits     | Break features into modular, focused components, hooks, and services         |
+| Plan direct DB access in services or direct API calls in UI       | Follow strict layered architecture (UI → Hook → Query → Client; Controller → Service → Repo) |
+| Plan camelCase or PascalCase directories (e.g. `composeEmail/`)    | Strictly plan lowercase `kebab-case` directories                             |
+| Plan anonymous `index.tsx` component directories (`folder-card/index.tsx`) | Directly name component files in `PascalCase.tsx` (`FolderCard.tsx`)         |
+| Plan flat module files without categorized subdirectories          | Group module layers into `controllers/`, `services/`, etc. with `index.ts`   |

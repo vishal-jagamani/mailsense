@@ -22,7 +22,7 @@ import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { createLogger } from '@observability';
 import { BatchProcessor, compressString } from 'shared/utils/index.js';
-import { GmailApi } from './gmail.client.js';
+import { GmailClient } from './clients/index.js';
 import {
     ExtractMessageChangesResponse,
     GetGmailMessagesResponse,
@@ -38,7 +38,7 @@ const logger = createLogger(LOGGER_MODULE.GMAIL_SERVICE);
 export class GmailService {
     async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
         try {
-            const response = await GmailApi.getAccessTokenFromCode(code);
+            const response = await GmailClient.getAccessTokenFromCode(code);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -49,7 +49,7 @@ export class GmailService {
 
     async getUserProfileFromAccessToken(accessToken: string): Promise<GmailUserProfile> {
         try {
-            const response = await GmailApi.getUserProfileFromAccessToken(accessToken);
+            const response = await GmailClient.getUserProfileFromAccessToken(accessToken);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -67,7 +67,7 @@ export class GmailService {
             if (!account) {
                 throw new NotFoundError('Account', accountId);
             }
-            const emails = await GmailApi.fetchEmails(accountId, 500);
+            const emails = await GmailClient.fetchEmails(accountId, 500);
             const parsedEmails = await this.parseEmailsIntoPlainObjects(accountId, emails);
             return { emails: parsedEmails.emails, lastSyncCursor: parsedEmails.lastSyncCursor };
         } catch (err) {
@@ -81,7 +81,7 @@ export class GmailService {
         try {
             const emails: EmailInput[] = [];
             for (const messageId of messagesIds) {
-                const emailDetails = await GmailApi.fetchEmailById(messageId, accountId);
+                const emailDetails = await GmailClient.fetchEmailById(messageId, accountId);
                 const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
                 emails.push(emailObject);
             }
@@ -96,13 +96,13 @@ export class GmailService {
     async getMessagesAfterLastHistory(accountId: string, historyId: string): Promise<MessagesAfterLastHistoryResponse | null> {
         try {
             if (!historyId) return null;
-            const historyDetails = await GmailApi.getHistory(accountId, historyId);
+            const historyDetails = await GmailClient.getHistory(accountId, historyId);
             if (!historyDetails) return null;
             const { addedMessageIds, deletedMessageIds } = this.extractMessageChanges(historyDetails);
             const addedMessages: EmailInput[] = [];
             if (addedMessageIds.length) {
                 for (const messageId of addedMessageIds) {
-                    const emailDetails = await GmailApi.fetchEmailById(messageId, accountId);
+                    const emailDetails = await GmailClient.fetchEmailById(messageId, accountId);
                     const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
                     addedMessages.push(emailObject);
                 }
@@ -147,7 +147,7 @@ export class GmailService {
 
             const parsedEmails = await batchProcessor.processBatches(emails.messages, async (email: { id: string; threadId: string }) => {
                 try {
-                    const emailDetails = await GmailApi.fetchEmailById(email.id, accountId);
+                    const emailDetails = await GmailClient.fetchEmailById(email.id, accountId);
                     const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
                     return {
                         emailObject,
@@ -190,9 +190,24 @@ export class GmailService {
             providerMessageId: emailDetails.id,
             threadId: emailDetails.threadId,
             from: headers.from || '',
-            to: headers.to || '',
-            cc: headers.cc || '',
-            bcc: headers.bcc || '',
+            to: headers.to
+                ? headers.to
+                      .split(',')
+                      .map((e) => e.trim())
+                      .filter(Boolean)
+                : [],
+            cc: headers.cc
+                ? headers.cc
+                      .split(',')
+                      .map((e) => e.trim())
+                      .filter(Boolean)
+                : [],
+            bcc: headers.bcc
+                ? headers.bcc
+                      .split(',')
+                      .map((e) => e.trim())
+                      .filter(Boolean)
+                : [],
             subject: headers.subject || '',
             body: emailDetails.payload?.body?.data || '',
             bodyHtml: compressString(htmlBody || ''),
@@ -208,7 +223,7 @@ export class GmailService {
         try {
             if (trash) {
                 for (const emailId of emailIds) {
-                    const email = await GmailApi.trashEmail(emailId, accountId);
+                    const email = await GmailClient.trashEmail(emailId, accountId);
                     await EmailRepository.updateEmailByProviderMessageId(email.id, {
                         folders: email?.labelIds || [],
                     });
@@ -216,7 +231,7 @@ export class GmailService {
                 }
                 return;
             } else {
-                const response = await GmailApi.permanentlyDeleteEmails(emailIds, accountId);
+                const response = await GmailClient.permanentlyDeleteEmails(emailIds, accountId);
                 await EmailRepository.deleteManyEmails(emailIds);
                 return response;
             }
@@ -230,7 +245,7 @@ export class GmailService {
     async archiveEmails(emailIds: string[], accountId: string, archive: boolean) {
         try {
             for (const emailId of emailIds) {
-                const email = await GmailApi.archiveEmail(emailId, accountId, archive);
+                const email = await GmailClient.archiveEmail(emailId, accountId, archive);
                 const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(email);
                 await EmailRepository.updateEmail(email.id, {
                     ...email,
@@ -250,7 +265,7 @@ export class GmailService {
     async starEmails(emails: { id: string; providerMessageId: string }[], accountId: string, star: boolean) {
         try {
             for (const email of emails) {
-                const updatedEmail = await GmailApi.starEmail(email.providerMessageId, accountId, star);
+                const updatedEmail = await GmailClient.starEmail(email.providerMessageId, accountId, star);
                 const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(updatedEmail);
                 await EmailRepository.updateEmail(email.id, {
                     ...email,
@@ -270,7 +285,7 @@ export class GmailService {
     async unreadEmails(emailIds: string[], accountId: string, unread: boolean) {
         try {
             for (const emailId of emailIds) {
-                const email = await GmailApi.unreadEmail(emailId, accountId, unread);
+                const email = await GmailClient.unreadEmail(emailId, accountId, unread);
                 const isRead = !email.labelIds.includes(GMAIL_LABELS.UNREAD);
                 await EmailRepository.updateEmailByProviderMessageId(email.id, {
                     folders: email.labelIds || [],
@@ -287,11 +302,11 @@ export class GmailService {
 
     async getAllLabels(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {
         try {
-            const labels = await GmailApi.getAllLabels(accountId);
+            const labels = await GmailClient.getAllLabels(accountId);
             const batchProcessor = new BatchProcessor<GmailLabel, Partial<FolderInput>>(3, 200); // Process 3 labels at a time with 200ms delay
 
             const folderInputs = await batchProcessor.processBatches(labels, async (item) => {
-                const label = await GmailApi.getLabelDetails(accountId, item.id);
+                const label = await GmailClient.getLabelDetails(accountId, item.id);
                 return GmailUtils.parseGmailLabelObject(accountId, userId, label);
             });
 
@@ -305,7 +320,7 @@ export class GmailService {
 
     async getLabelDetails(accountId: string, labelId: string): Promise<GmailLabel> {
         try {
-            const label = await GmailApi.getLabelDetails(accountId, labelId);
+            const label = await GmailClient.getLabelDetails(accountId, labelId);
             return label;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -316,8 +331,8 @@ export class GmailService {
 
     async createLabel(userId: string, accountId: string, labelName: string): Promise<UpdateAPIResponse> {
         try {
-            const label = await GmailApi.createLabel(accountId, labelName);
-            const createdLabel = await GmailApi.getLabelDetails(accountId, label.id);
+            const label = await GmailClient.createLabel(accountId, labelName);
+            const createdLabel = await GmailClient.getLabelDetails(accountId, label.id);
             const folderObject = GmailUtils.parseGmailLabelObject(accountId, userId, createdLabel);
             await FolderRepository.createFolder(folderObject);
             return { status: true, message: 'Label created successfully' };
@@ -330,7 +345,7 @@ export class GmailService {
 
     async updateLabel(accountId: string, labelId: string, labelName: string): Promise<UpdateAPIResponse> {
         try {
-            await GmailApi.updateLabel(accountId, labelId, labelName);
+            await GmailClient.updateLabel(accountId, labelId, labelName);
             const folderBody: Partial<FolderDocument> = {
                 name: labelName,
                 normalizedName: labelName.toLowerCase().trim(),
@@ -346,7 +361,7 @@ export class GmailService {
 
     async deleteLabel(accountId: string, labelId: string): Promise<UpdateAPIResponse> {
         try {
-            await GmailApi.deleteLabel(accountId, labelId);
+            await GmailClient.deleteLabel(accountId, labelId);
             await FolderRepository.deleteFolderByProviderFolderId(labelId);
             return { status: true, message: 'Label deleted successfully' };
         } catch (err) {
@@ -363,8 +378,8 @@ export class GmailService {
                 attachments && attachments.length > 0
                     ? GmailUtils.constructGmailMimeMessage(to, subject, body, attachments)
                     : GmailUtils.buildGmailRawString(to, subject, body);
-            const response = await GmailApi.sendMessage(accountId, { raw });
-            const emailDetails = await GmailApi.fetchEmailById(response.id, accountId);
+            const response = await GmailClient.sendMessage(accountId, { raw });
+            const emailDetails = await GmailClient.fetchEmailById(response.id, accountId);
             const emilData = this.transformGmailMessageToEmailInput(emailDetails, accountId);
             await EmailRepository.upsertEmailsInBulk([emilData]);
             return response;
@@ -378,7 +393,7 @@ export class GmailService {
 
     async searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]> {
         try {
-            const response = await GmailApi.searchContacts(accountId, searchText);
+            const response = await GmailClient.searchContacts(accountId, searchText);
             const contacts =
                 response.results
                     ?.map((result) => {
@@ -403,7 +418,7 @@ export class GmailService {
         attachmentId: string,
     ): Promise<{ data: Buffer; mimeType: string; filename: string }> {
         try {
-            return await GmailApi.getAttachment(accountId, messageId, attachmentId);
+            return await GmailClient.getAttachment(accountId, messageId, attachmentId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.searchContacts: ${errorMessage}`, { error: err });
@@ -413,7 +428,7 @@ export class GmailService {
 
     public async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
         try {
-            return await GmailApi.getAttachmentStream(accountId, messageId, attachmentId);
+            return await GmailClient.getAttachmentStream(accountId, messageId, attachmentId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.getAttachmentStream: ${errorMessage}`, { error: err });
@@ -421,11 +436,11 @@ export class GmailService {
         }
     }
 
-    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds: string[] = []): Promise<void> {
+    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds: string[] = []): Promise<UpdateAPIResponse> {
         try {
-            if (!emailIds.length) return;
-            const response = await GmailApi.batchModifyLabels(accountId, emailIds, targetFolderIds, removeFolderIds);
-            console.log({ response });
+            if (!emailIds.length) return { status: true, message: 'No emails to move' };
+            await GmailClient.batchModifyLabels(accountId, emailIds, targetFolderIds, removeFolderIds);
+            return { status: true, message: 'Emails moved successfully' };
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error('Failed to move emails in GmailService', { accountId, emailIds, targetFolderIds, removeFolderIds, error: errorMessage });

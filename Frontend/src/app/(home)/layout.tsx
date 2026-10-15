@@ -1,11 +1,12 @@
 'use client';
 
-import ComposeEmail from '@features/emails/components/composeEmail';
+import ComposeEmail from '@features/emails/components/compose-email';
 import BreadcrumbComponent from '@shared/components/breadcrumb';
 import { AppSidebar } from '@shared/components/sidebar/app-sidebar';
+import { HomeLayoutProps } from '@shared/types';
 import { SidebarProvider } from '@shared/ui/sidebar';
 
-export default function HomeLayout({ children }: { children: React.ReactNode }) {
+export default function HomeLayout({ children }: HomeLayoutProps) {
     return (
         <SidebarProvider>
             <div className="flex h-screen w-screen overflow-hidden">

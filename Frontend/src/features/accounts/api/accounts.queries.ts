@@ -1,6 +1,7 @@
 import { AccountProviders } from '@entities/account';
 import { AccountAttributes, UpdateAPIResponse } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
+import { trackUserAction } from '@shared/monitoring';
 import { useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, syncAllAccounts } from './accounts.api';
@@ -62,7 +63,7 @@ export const useSyncAllAccounts = () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.ACCOUNTS] });
             return result;
         } catch (error) {
-            console.error('Sync all accounts error:', error);
+            trackUserAction('api.error', 'Sync all accounts error', 'error');
             throw error;
         }
     };

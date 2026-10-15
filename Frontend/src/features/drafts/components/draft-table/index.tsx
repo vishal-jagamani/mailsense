@@ -4,6 +4,7 @@ import { FileText } from 'lucide-react';
 import React from 'react';
 
 import DataNotFound from '@shared/components/common/DataNotFound';
+import { trackUserAction } from '@shared/monitoring';
 import { DraftListTableProps } from '../../types';
 import DraftListTableBody from './DraftListTableBody';
 import DraftListTableHeader from './DraftListTableHeader';
@@ -31,7 +32,7 @@ export const DraftListTable: React.FC<DraftListTableProps> = ({ data, selectedDr
                 onDraftSelect(selectedDrafts.filter((id) => id !== draftId));
             }
         } catch (error) {
-            console.error('Error changing draft selection', error);
+            trackUserAction('ui.click', 'Draft selection error', 'warn');
         }
     };
 

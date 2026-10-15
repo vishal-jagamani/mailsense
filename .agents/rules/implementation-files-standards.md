@@ -51,16 +51,27 @@ Every implementation document MUST organize code changes into **two main section
 
 _(Note: Shared type contract updates in `@mailsense/types` should be referenced at the beginning of the Backend section if applicable)._
 
-### 2.2 Strict Try-Catch Block Requirement on Every Function
+### 2.2 Meaningful Boundary-Based Error Handling
 
-- **Every single function and method** (service methods, controller handlers, API wrapper functions, custom hooks, event listeners, background workers) MUST contain an explicit `try / catch` block.
-- **Error Handling Standards**:
-  - `catch` blocks MUST properly handle errors (e.g. logging with context, wrapping and re-throwing domain/HTTP errors, or passing to error middleware).
+- Error handling MUST happen at **meaningful architectural boundaries**, not blindly on every function.
+- **Mandatory Boundaries for `try / catch`:**
+  - **Controllers (HTTP boundary):** Wrap request extraction, service calls, and response rendering.
+  - **Services (Business boundary):** Orchestrate repositories/providers, catch third-party exceptions, wrap in domain errors.
+  - **Provider Integrations (API boundary):** External Google, Microsoft, Auth0, S3 calls; normalize third-party errors.
+  - **API Clients (HTTP client boundary):** Wrap Axios/Fetch calls; normalize API error payloads.
+  - **Background Workers (Job boundary):** Handle processor execution, job retry policies, failed job logging.
+- **Where `try / catch` is STRICTLY UNNECESSARY & FORBIDDEN:**
+  - **Repositories (Backend):** NO `try/catch`. Pure database access queries must execute directly so errors bubble up naturally to services/controllers.
+  - **Utilities (Backend & Frontend):** NO `try/catch`. Pure utility functions (formatting, date calculations, string normalization) perform no I/O.
+  - **React Components (Frontend):** NO `try/catch`. UI rendering layer errors are caught by React Error Boundaries (`ErrorBoundary.tsx`). Never wrap JSX or component bodies in `try/catch`.
+  - **Custom Hooks (Frontend):** NO `try/catch`. Server state errors are managed natively by React Query (`isError`, `error`, `onError`).
+- **Strict Error Handling Rules**:
+  - `catch` blocks MUST properly handle errors (logging with structured context via `logger.error`, wrapping and re-throwing domain errors, or delegating to Express error middleware).
   - Empty `catch` blocks (`catch (e) {}`) are **STRICTLY FORBIDDEN**.
   - Swallowing exceptions silently or returning dummy empty objects/ArrayBuffers to conceal failures is **STRICTLY FORBIDDEN**.
 
 ```typescript
-// ✅ CORRECT: Comprehensive try/catch handling with logging and error propagation
+// ✅ CORRECT: Meaningful boundary handling in Service
 public static async getThread(emailId: string): Promise<GetThreadResponse> {
   try {
     const email = await EmailRepository.getEmail(emailId);
@@ -76,10 +87,23 @@ public static async getThread(emailId: string): Promise<GetThreadResponse> {
   }
 }
 
-// ❌ INCORRECT: Missing try/catch block
-public static async getThread(emailId: string): Promise<GetThreadResponse> {
-  const email = await EmailRepository.getEmail(emailId);
-  return { thread: [], threadId: email.threadId };
+// ✅ CORRECT: Repository method — NO try/catch (bubbles up to service)
+public static async getEmail(emailId: string): Promise<EmailDocument | null> {
+  return Email.findById(emailId).lean();
+}
+
+// ✅ CORRECT: Pure utility function — NO try/catch
+export function normalizeSubject(subject: string): string {
+  return subject.trim().replace(/^(Re|Fwd):\s*/i, '');
+}
+
+// ❌ INCORRECT: Meaningless try/catch in repository or utility
+public static async getEmail(emailId: string): Promise<EmailDocument | null> {
+  try {
+    return await Email.findById(emailId).lean();
+  } catch (error) {
+    throw error;
+  }
 }
 ```
 
@@ -90,30 +114,33 @@ public static async getThread(emailId: string): Promise<GetThreadResponse> {
 - **No `unknown`**: Do not use `unknown` in place of proper TypeScript interfaces, DTOs, or generic constraints. For `catch (error)` parameters, use standard error narrowing (e.g., `error instanceof Error ? error.message : String(error)`).
 - **Strict Generic Parameters**: All generic parameters, API response payloads, and database queries MUST be typed using explicit contracts (e.g. `AxiosResponse<ApiResponse<EmailAttributes>>`).
 
-### 2.4 No Inline Types (Unless Max 1 or 2 Primitive Keys)
+### 2.4 Dedicated Types Files Only (No Types in Feature/Code Files)
 
-- **Named Interfaces Required**: Do NOT define inline object type signatures with 3 or more properties in function arguments, return types, component props, or service methods. Always define and import named TypeScript interfaces/types from `@mailsense/types` or feature interface files.
-- **Single Exception**: Inline object type definitions are permitted **ONLY** if they contain a maximum of 1 or 2 primitive keys (e.g., `{ id: string; name: string }` or `{ email: string; isPrimary: boolean }`).
+- **Dedicated Types Files Required**: All TypeScript types, interfaces, enums, and DTOs MUST be declared **exclusively** inside dedicated types files:
+  - **Shared contracts** (backend & frontend): MUST reside in `@mailsense/types` (`mailsense-types/src/...`).
+  - **Frontend-specific types**: MUST reside in dedicated feature types files (e.g. `Frontend/src/features/<feature>/types/<name>.types.ts` or `Frontend/src/shared/types/...`).
+  - **Backend-specific types**: MUST reside in dedicated module interface files (e.g. `Backend/src/modules/<module>/<name>.interface.ts` or `Backend/src/core/types/...`).
+- **Forbidden Locations for Type Declarations**: NEVER declare `interface` or `type` definitions inside components (`*.tsx`), custom hooks (`use*.ts`), controllers (`*.controller.ts`), services (`*.service.ts`), repositories (`*.repository.ts`), or utilities (`*.utils.ts`).
+
+### 2.5 Strictly Zero Inline Types Anywhere in Entire Codebase
+
+- **No Inline Object Types**: Inline object type definitions (e.g. `param: { id: string }`, `options: { force?: boolean }`, `useState<{ count: number }>()`, or component props `({ name }: { name: string })`) are **STRICTLY PROHIBITED** across the entire codebase — even for 1–2 primitive keys.
+- **Always Import Named Interfaces/Types**: Every function parameter, return type, component prop, state object, and query option MUST use an explicit named interface or type imported from its dedicated types file.
 
 ```typescript
-// ✅ CORRECT: Named interface for complex object structures
-export interface FetchThreadParams {
-  emailId: string;
-  accountId: string;
-  includeAttachments: boolean;
-  pageLimit: number;
-}
+// ✅ CORRECT: Named interface imported from dedicated types file
+import { FetchThreadParams, GetThreadResponse } from '../types/email.types.js';
 
 export async function fetchThread(params: FetchThreadParams): Promise<GetThreadResponse> { ... }
 
-// ✅ CORRECT: Inline type allowed because it has at most 2 primitive keys
+// ❌ INCORRECT: Inline object type (even with 1-2 keys)
 export function formatRecipient(input: { email: string; name: string }): string { ... }
 
-// ❌ INCORRECT: Inline object type with 3+ keys
-export function fetchThread(params: { emailId: string; accountId: string; includeAttachments: boolean }): Promise<void> { ... }
+// ❌ INCORRECT: Declaring interface inside a service, controller, hook, or component file
+export interface FetchThreadParams { ... } // Must be in a dedicated *.types.ts / *.interface.ts file!
 ```
 
-### 2.5 Centralized Constants for API Endpoints
+### 2.6 Centralized Constants for API Endpoints
 
 - **No Hardcoded Endpoints/URLs**: Do NOT hardcode API endpoint strings or URL paths directly inside client or provider integration methods (e.g., `${GMAIL_API_BASE_URL}/users/me/messages/batchModify`, `${OUTLOOK_API_BASE_URL}/me/messages/${id}/move`, or hardcoded API route strings).
 - **Use Module Constants**: Always export and import centralized constants (e.g., `GMAIL_APIs`, `OUTLOOK_APIs`, `EMAILS_API_ENDPOINTS`) and concatenate base URLs with exported constant properties or helper functions (e.g. `${GMAIL_API_BASE_URL}${GMAIL_APIs.BATCH_MODIFY}`, `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MOVE_MESSAGE(messageId)}`).
@@ -132,6 +159,48 @@ const options: AxiosRequestConfig = {
   method: 'POST',
 };
 ```
+
+### 2.7 Code Size, Complexity & Nesting Standards
+
+All proposed implementations must comply with the engineering guardrails defined in [MailSense Coding Standards](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md):
+
+- **File Length Limits:**
+  - React Component: Preferred ≤150 lines, hard limit 200 lines.
+  - Page Component: Preferred ≤180 lines, hard limit 250 lines.
+  - Custom Hook: Preferred ≤80 lines, hard limit 120 lines.
+  - React Query File: Preferred ≤120 lines, hard limit 180 lines.
+  - Controller Class: Preferred ≤150 lines, hard limit 200 lines.
+  - Service Class: Preferred ≤200 lines, hard limit 250 lines.
+  - Repository Class: Preferred ≤180 lines, hard limit 250 lines.
+  - Provider / Client Class: Preferred ≤250 lines, hard limit 350 lines.
+  - Utility File: Preferred ≤100 lines, hard limit 150 lines.
+- **Function / Method Limits:**
+  - Length: Preferred ≤30 lines, hard limit 50 lines.
+  - Parameters: Preferred ≤4 parameters, hard limit 6 (use named interface objects beyond 4).
+  - Nesting Depth: Preferred ≤3 levels, hard limit 4 levels (use early returns and guard clauses).
+  - Cyclomatic Complexity: Preferred ≤5, hard limit 10.
+
+### 2.8 Standardized Folder Structure & Naming Conventions
+
+All planned implementations MUST strictly adhere to the standardized directory structure and naming conventions:
+
+- **Universal Directory Naming**: Every directory across Backend and Frontend MUST be strictly lowercase **`kebab-case`** (e.g. `features/compose-email/`, NOT `composeEmail/`).
+- **Backend Module Subdirectory Architecture**: Decomposed modules MUST organize files into categorized subdirectories with barrel exports (`index.ts`):
+  - `controllers/`: `<entity>-<concern>.controller.ts` + `index.ts`
+  - `services/`: `<entity>-<concern>.service.ts` + `index.ts`
+  - `repositories/`: `<entity>.repository.ts` + `index.ts`
+  - `models/`: `<entity>.model.ts` + `index.ts`
+  - `schemas/`: `<entity>-<concern>.schema.ts` + `index.ts`
+  - `interfaces/`: `<entity>.interface.ts` (strictly dedicated types files) + `index.ts`
+  - `routes/`: `<entity>.routes.ts` + `index.ts`
+- **Backend Integration Clients & Services**: Organized into `clients/` and `services/` with `index.ts`.
+- **Frontend File Naming Standards**:
+  - React Components: Strictly **`PascalCase.tsx`** matching component export (e.g. `EmailCard.tsx`, `FolderEmailListHeader.tsx`).
+  - Custom Hooks: Strictly **`camelCase.ts`** with `use` prefix (e.g. `useInboxPage.ts`, `useEmailActions.ts`).
+  - React Query Files: `<entity>.queries.ts` (e.g. `inbox.queries.ts`).
+  - API Client Files: `<entity>.api.ts` (e.g. `emails.api.ts`).
+  - Dedicated Types Files: `<entity>.types.ts` (e.g. `email.types.ts`).
+- **Elimination of Anonymous `index.tsx`**: Never create anonymous component files like `folder-email-list-header/index.tsx`. Name the file directly as `FolderEmailListHeader.tsx`.
 
 ---
 
@@ -255,8 +324,18 @@ cd Frontend && npx tsc --noEmit
 
 | ❌ Don't                                                                                | ✅ Do Instead                                                                        |
 | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Use `any`, `never`, or `unknown` as type placeholders                                   | Define and import explicit interfaces from `@mailsense/types`                        |
-| Pass inline object types with $\ge 3$ keys (e.g. `{ a: string, b: string, c: string }`) | Define a named interface (e.g. `export interface Params { ... }`)                    |
+| Use `any`, `never`, or `unknown` anywhere in codebase                                   | Define and import explicit interfaces/types from dedicated types files               |
+| Define inline object types anywhere (even 1–2 keys like `{ id: string }`)             | Strictly define and import named interfaces/types from dedicated types files         |
+| Declare `interface` or `type` inside component, hook, service, controller, repo, utils  | Declare all types exclusively in dedicated `*.types.ts` or `*.interface.ts` files     |
+| Wrap `try/catch` in repositories, utilities, React components, or custom hooks          | Handle errors at architectural boundaries only (controllers, services, providers)   |
 | Place Backend after Frontend or mix them together                                       | Always put **Backend** implementation first, followed by **Frontend** implementation |
 | Document truncated pseudocode (`// implement later`)                                    | Provide complete, copy-pasteable, production-ready TypeScript code snippets          |
 | Hardcode API endpoint strings directly inside client integration code                   | Export and reference centralized constants (`GMAIL_APIs`, `OUTLOOK_APIs`, `EMAILS_API_ENDPOINTS`) |
+| Create God components (>150 lines) or God hooks (>80 lines)                             | Decompose into small, focused sub-components and single-purpose hooks                |
+| Write functions exceeding 30–50 lines or nesting depth >3–4                             | Refactor with guard clauses, early returns, and extracted helper methods             |
+| Call APIs directly inside React components                                              | Use React Query hooks (`useQuery` / `useMutation`) via feature API clients           |
+| Query MongoDB models directly inside services or controllers                            | Encapsulate all database queries inside Repository methods                           |
+| Duplicate server state in Zustand                                                       | React Query owns server state; Zustand is restricted to UI/client state              |
+| Use camelCase or PascalCase for directories (e.g. `composeEmail/`)                      | Strictly use lowercase `kebab-case` for all directories                              |
+| Create anonymous `index.tsx` component directories (`folder-email-list-header/index.tsx`)| Name component files directly in `PascalCase.tsx` (`FolderEmailListHeader.tsx`)      |
+| Place all module files flat at module root when scaling                                 | Group into categorized subdirectories (`controllers/`, `services/`, etc.) + `index.ts`|

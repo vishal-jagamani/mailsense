@@ -12,8 +12,8 @@ importers:
         specifier: ^3.1113.0
         version: 3.1113.0
       '@mailsense/types':
-        specifier: ^1.5.0
-        version: 1.5.0
+        specifier: ^1.6.0
+        version: 1.6.0
       '@sentry/node':
         specifier: ^10.70.0
         version: 10.70.0(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(supports-color@8.1.1)
@@ -729,8 +729,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.9':
     resolution: {integrity: sha512-3Belt6tdc8bPgAtbcmdtNJlirVoTmEb5e2gC94PnkwEW9jI6CAHUeoG85tjWP5WquqfavoMtMwiG4P926ZKKuQ==}
 
-  '@mailsense/types@1.5.0':
-    resolution: {integrity: sha512-2bYbh7ivcBcAz+JSStYxepl00A38eUmNRDz/bHySGV7ql6+uc9IYQAoOKOCIX23TTqRkDoVOvnO3eO+IF72aDg==}
+  '@mailsense/types@1.6.0':
+    resolution: {integrity: sha512-mTe7iVhc09xi+L4U7Da0a/PBrWRdZm83LAwPRiOHOX26fNHtfQuFiHPBzWkPBUikncbyYkm4Ci8NB03uAp65eg==}
 
   '@mongodb-js/saslprep@1.5.0':
     resolution: {integrity: sha512-Hk1SKJCMcCos38+vqDnZzlIo4XRj9yCGzYkjB4LcqpeXRIYfia1UWTz+VrueLxoU+uSRJzgkufxoRZg8gi52YA==}
@@ -4001,7 +4001,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@mailsense/types@1.5.0': {}
+  '@mailsense/types@1.6.0': {}
 
   '@mongodb-js/saslprep@1.5.0':
     dependencies:

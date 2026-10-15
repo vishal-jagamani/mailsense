@@ -1,6 +1,7 @@
 import { Job } from 'bullmq';
 
 import { LOGGER_MODULE } from '@constants';
+import { NotFoundError, SyncError } from '@errors';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { SyncResult } from '@integrations/email/email.provider.js';
 import { ACCOUNT_PROVIDER, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
@@ -9,19 +10,10 @@ import { EmailRepository } from '@modules/emails/email.repository.js';
 import { FolderService } from '@modules/folders/folder.service.js';
 import { monitoring } from '@monitoring';
 import { createLogger, setTraceContext } from '@observability';
+import { ErrorWithStatus, SuccessStatusResponse } from '@types';
 import { eventBus } from '../../core/events/event-bus.js';
 import { RefreshTokenPayload, SyncAccountPayload } from '../../core/queue/queue.service.js';
 import { refreshTokenProcessor } from './refresh-token.processor.js';
-import { NotFoundError, SyncError } from '@errors';
-
-interface ErrorWithStatus {
-    status?: number;
-    statusCode?: number;
-    response?: {
-        status?: number;
-        statusCode?: number;
-    };
-}
 
 const logger = createLogger(LOGGER_MODULE.SYNC_ACCOUNT_PROCESSOR);
 
@@ -91,7 +83,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
     } catch (error) {
         if (isTokenExpiryError(error as Error | ErrorWithStatus)) {
             logger.info(`🔑 Token validation failed for account ${accountId}. Running inline token refresh...`);
-            await refreshTokenProcessor({ data: { accountId } } as Job<RefreshTokenPayload, { status: boolean }>);
+            await refreshTokenProcessor({ data: { accountId } } as Job<RefreshTokenPayload, SuccessStatusResponse>);
 
             const updatedAccount = await AccountRepository.getAccountById(accountId);
             if (!updatedAccount || !updatedAccount.active) {
@@ -160,7 +152,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
         } catch (error) {
             if (isTokenExpiryError(error as Error | ErrorWithStatus)) {
                 logger.info(`🔑 Token validation failed during full sync for account ${accountId}. Running inline token refresh...`);
-                await refreshTokenProcessor({ data: { accountId } } as Job<RefreshTokenPayload, { status: boolean }>);
+                await refreshTokenProcessor({ data: { accountId } } as Job<RefreshTokenPayload, SuccessStatusResponse>);
 
                 const updatedAccount = await AccountRepository.getAccountById(accountId);
                 if (!updatedAccount || !updatedAccount.active) {

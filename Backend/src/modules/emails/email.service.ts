@@ -5,7 +5,6 @@ import {
     GetEmailsResponse,
     GetFiltersResponse,
     GetThreadResponse,
-    MoveEmailsResponse,
     PaginatedDataResponse,
     SearchEmailsParams,
     SearchOtherContactsResponse,
@@ -16,6 +15,7 @@ import { EmailReadService } from './email-read.service.js';
 import { EmailWriteService } from './email-write.service.js';
 import { EmailDocument, EmailInput } from './email.model.js';
 import { ComposeEmailBody } from './email.schema.js';
+import { GmailAttachmentBufferResult } from '@integrations/gmail/gmail.types.js';
 
 export class EmailService {
     private readService: EmailReadService;
@@ -57,7 +57,7 @@ export class EmailService {
         return await this.readService.getThread(emailId);
     }
 
-    public async downloadAttachment(emailId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+    public async downloadAttachment(emailId: string, attachmentId: string): Promise<GmailAttachmentBufferResult> {
         return await this.readService.downloadAttachment(emailId, attachmentId);
     }
 
@@ -94,7 +94,7 @@ export class EmailService {
         emailIds: string[],
         targetFolderIds: string[],
         removeFolderIds: string[] = [],
-    ): Promise<MoveEmailsResponse> {
+    ): Promise<UpdateAPIResponse> {
         return await this.writeService.moveEmails(userId, emailIds, targetFolderIds, removeFolderIds);
     }
 }

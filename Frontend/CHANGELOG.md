@@ -7,6 +7,18 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-10-15
+
+### Added
+- **Hook Extraction & Bulk Action Deduplication (`UI-REFACTOR-01`):** Added `useEmailActions` custom hook in `Frontend/src/features/emails/hooks/useEmailActions.ts`, extracting and unifying bulk email selection, starring, marking unread, archiving, and deletion orchestration across `useInboxPage` and `useFolderEmailListPage`.
+- **Folder Card Modularization (`UI-REFACTOR-02`):** Decomposed `FolderCard.tsx` into modular sub-components `FolderCardHeader` and `FolderCardActions` under `Frontend/src/features/folders/components/`.
+- **Explicit Component Naming:** Replaced nested anonymous component directory `Frontend/src/features/folders/components/folder-email-list-header/index.tsx` with explicit component file `Frontend/src/features/folders/components/FolderEmailListHeader.tsx`.
+
+### Changed
+- **Shared Type Contracts (@mailsense/types v1.6.0):** Integrated `@mailsense/types` `1.6.0`, consuming strictly normalized `string[]` arrays for `to`, `cc`, and `bcc` recipient fields across email cards, thread conversation views, search result items, and compose recipient chips.
+- **Directory Standardization:** Renamed `Frontend/src/features/composeEmail` to strictly kebab-case `Frontend/src/features/compose-email`.
+- **Account Mutation Typing:** Updated account settings mutation hooks to use dedicated `UpdateAccountSettingsRequest` interface from `@mailsense/types`.
+
 ## [3.4.0] - 2026-09-27
 
 ### Added

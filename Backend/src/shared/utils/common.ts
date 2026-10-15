@@ -1,6 +1,7 @@
 import { DATE_RANGE } from '@mailsense/types';
+import { GetDataRangeResponse } from '@types';
 
-export const getDateRange = (dateRange: DATE_RANGE): { startDate: Date; endDate: Date } => {
+export const getDateRange = (dateRange: DATE_RANGE): GetDataRangeResponse => {
     const now = new Date();
     const endDate = new Date(now);
 

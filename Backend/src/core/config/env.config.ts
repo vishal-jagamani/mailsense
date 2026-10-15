@@ -89,6 +89,7 @@ class EnvConfig {
 
         const result = schema.safeParse(process.env);
         if (!result.success) {
+            // eslint-disable-next-line no-console
             console.error('❌ Invalid environment variables:', z.flattenError(result.error));
             process.exit(1);
         }

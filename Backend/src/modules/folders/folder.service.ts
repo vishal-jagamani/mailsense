@@ -13,8 +13,6 @@ import { FolderRepository } from './folder.repository.js';
 const logger = createLogger(LOGGER_MODULE.FOLDER_SERVICE);
 
 export class FolderService {
-    constructor() {}
-
     public async syncFolders(accountId: string): Promise<UpdateAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(accountId, { provider: 1, userId: 1 });

@@ -11,7 +11,7 @@ export class FolderController {
         this.folderService = new FolderService();
     }
 
-    public syncFolders = async (req: Request<{ accountId: string }, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+    public syncFolders = async (req: Request<GetAccountFoldersSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { accountId } = req.params;
             if (!accountId) {

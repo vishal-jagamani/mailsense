@@ -1,17 +1,18 @@
 import { Job } from 'bullmq';
 
 import { LOGGER_MODULE } from '@constants';
+import { NotFoundError, SyncError } from '@errors';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { ACCOUNT_PROVIDER } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { monitoring } from '@monitoring';
 import { createLogger, setTraceContext } from '@observability';
 import { getRedisConnection, RefreshTokenPayload } from '@queue';
-import { NotFoundError, SyncError } from '@errors';
+import { SuccessStatusResponse } from '@types';
 
 const logger = createLogger(LOGGER_MODULE.REFRESH_TOKEN_PROCESSOR);
 
-export const refreshTokenProcessor = async (job: Job<RefreshTokenPayload, { status: boolean }>): Promise<{ status: boolean }> => {
+export const refreshTokenProcessor = async (job: Job<RefreshTokenPayload, SuccessStatusResponse>): Promise<SuccessStatusResponse> => {
     const { accountId } = job.data;
     logger.info(`🔄 Processing token refresh request for account: ${accountId}`);
 
