@@ -12,8 +12,8 @@ importers:
         specifier: ^4.26.0
         version: 4.30.0(next@16.1.1(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@mailsense/types':
-        specifier: ^1.5.0
-        version: 1.5.0
+        specifier: ^1.6.0
+        version: 1.6.0
       '@radix-ui/react-alert-dialog':
         specifier: ^1.1.23
         version: 1.1.23(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -573,8 +573,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@mailsense/types@1.5.0':
-    resolution: {integrity: sha512-2bYbh7ivcBcAz+JSStYxepl00A38eUmNRDz/bHySGV7ql6+uc9IYQAoOKOCIX23TTqRkDoVOvnO3eO+IF72aDg==}
+  '@mailsense/types@1.6.0':
+    resolution: {integrity: sha512-mTe7iVhc09xi+L4U7Da0a/PBrWRdZm83LAwPRiOHOX26fNHtfQuFiHPBzWkPBUikncbyYkm4Ci8NB03uAp65eg==}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     resolution: {integrity: sha512-oTXEIha4SsuXdTA4Iyskj0kpdx2yVXdhd75c2v3xGrHFfVMsbhTPZU/nMPL4sWKo4pBHm3aucLaqGlF696dTyQ==}
@@ -4765,7 +4765,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@mailsense/types@1.5.0': {}
+  '@mailsense/types@1.6.0': {}
 
   '@napi-rs/lzma-linux-x64-gnu@1.5.1':
     optional: true
