@@ -11,6 +11,7 @@ import { Button } from '@shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { useMoveEmailsMutation } from '../api/email.mutations';
+import { trackUserAction } from '@shared/monitoring';
 
 interface MoveToFolderDropdownProps {
     emailIds: string[];
@@ -145,7 +146,7 @@ export const MoveToFolderDropdown: React.FC<MoveToFolderDropdownProps> = ({
                     }
                 },
                 onError: (error: Error) => {
-                    console.error('Failed to move emails to folder:', error);
+                    trackUserAction('ui.click', 'MoveToFolderDropdown failure', 'error');
                     setIsOpen(false);
                     setSearchQuery('');
                 },

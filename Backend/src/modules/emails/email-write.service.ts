@@ -1,128 +1,37 @@
 import { LOGGER_MODULE } from '@constants';
-import { BadRequestError, ForbiddenError, NotFoundError } from '@errors';
+import { ForbiddenError, NotFoundError } from '@errors';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { AccountBatchMoveTaskResult } from '@integrations/email/email.provider.types.js';
-import { ACCOUNT_PROVIDER, MoveEmailsResponse, SuccessAPIResponse, UpdateAPIResponse } from '@mailsense/types';
+import { IEmailProvider } from '@integrations/email/email.provider.js';
+import { ACCOUNT_PROVIDER, PerAccountActionContext, SuccessAPIResponse, UpdateAPIResponse } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { AttachmentsService } from '@modules/attachments/attachment.service.js';
-import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { createLogger } from '@observability';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
 import { EmailRepository } from './email.repository.js';
 import { ComposeEmailBody } from './email.schema.js';
+import { ComposeEmailAttachment } from './email.types.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 
 export class EmailWriteService {
     private attachmentsService: AttachmentsService;
 
-    constructor() {
-        this.attachmentsService = new AttachmentsService();
+    constructor(attachmentsService?: AttachmentsService) {
+        this.attachmentsService = attachmentsService || new AttachmentsService();
     }
 
-    public async deleteEmail(userId: string, emailIds: string[], trash?: boolean): Promise<UpdateAPIResponse> {
+    /**
+     * Centralized pipeline to group target emails by account, verify ownership,
+     * and execute provider operations with uniform boundary logging and error handling.
+     */
+    private async executePerAccountProviderAction(
+        userId: string,
+        emailIds: readonly string[],
+        actionDescription: string,
+        action: (context: PerAccountActionContext, provider: IEmailProvider) => Promise<void>,
+    ): Promise<UpdateAPIResponse> {
         try {
-            const emailList = await EmailRepository.getEmailsByIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            if (!emailList.length) {
-                throw new NotFoundError('Emails', emailIds.join(', '));
-            }
-            const accountIds = Array.from(new Set(emailList.map((email) => email.accountId)));
-            const userAccounts = await AccountRepository.getAccounts({
-                userId,
-                _id: { $in: accountIds },
-            });
-            if (userAccounts.length !== accountIds.length) {
-                throw new ForbiddenError('Unauthorized attempt to delete emails from unowned accounts');
-            }
-            const groupedEmails = Object.groupBy(emailList, (item) => item.accountId);
-            for (const [accountId, emails] of Object.entries(groupedEmails)) {
-                const account = userAccounts.find((acc) => acc._id.toString() === accountId);
-                if (!account || !emails) continue;
-                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-                // Extract providerMessageId for external provider deletion
-                await provider.deleteEmails(
-                    emails.map((email) => email.providerMessageId),
-                    accountId,
-                    trash,
-                );
-            }
-            return { status: true, message: 'Emails deleted successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.deleteEmail: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async archiveEmails(userId: string, emailIds: string[], archive: boolean): Promise<UpdateAPIResponse> {
-        try {
-            const emailList = await EmailRepository.getEmailsByIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            if (!emailList.length) {
-                throw new NotFoundError('Emails', emailIds.join(', '));
-            }
-            const accountIds = Array.from(new Set(emailList.map((email) => email.accountId)));
-            const userAccounts = await AccountRepository.getAccounts({
-                userId,
-                _id: { $in: accountIds },
-            });
-            if (userAccounts.length !== accountIds.length) {
-                throw new ForbiddenError('Unauthorized attempt to archive emails from unowned accounts');
-            }
-            const groupedEmails = Object.groupBy(emailList, (item) => item.accountId);
-            for (const [accountId, emails] of Object.entries(groupedEmails)) {
-                const account = userAccounts.find((acc) => acc._id.toString() === accountId);
-                if (!account || !emails) continue;
-                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-                await provider.archiveEmails(
-                    emails.map((email) => email.providerMessageId),
-                    accountId,
-                    archive,
-                );
-            }
-            return { status: true, message: 'Emails archived successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.archiveEmails: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async starEmails(userId: string, emailIds: string[], star: boolean): Promise<UpdateAPIResponse> {
-        try {
-            const emailList = await EmailRepository.getEmailsByIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            if (!emailList.length) {
-                throw new NotFoundError('Emails', emailIds.join(', '));
-            }
-            const accountIds = Array.from(new Set(emailList.map((email) => email.accountId)));
-            const userAccounts = await AccountRepository.getAccounts({
-                userId,
-                _id: { $in: accountIds },
-            });
-            if (userAccounts.length !== accountIds.length) {
-                throw new ForbiddenError('Unauthorized attempt to star emails from unowned accounts');
-            }
-            const groupedEmails = Object.groupBy(emailList, (item) => item.accountId);
-            for (const [accountId, emails] of Object.entries(groupedEmails)) {
-                const account = userAccounts.find((acc) => acc._id.toString() === accountId);
-                if (!account || !emails) continue;
-                const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-                await provider.starEmails(
-                    emails.map((email) => ({ id: String(email._id), providerMessageId: email.providerMessageId })),
-                    accountId,
-                    star,
-                );
-            }
-            return { status: true, message: `${star ? 'Starred' : 'Unstarred'} emails successfully` };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.starEmails: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async unreadEmails(userId: string, emailIds: string[], unread: boolean): Promise<UpdateAPIResponse> {
-        try {
-            const emailList = await EmailRepository.getEmailsByIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            const emailList = await EmailRepository.getEmailsByIds([...emailIds], EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             if (!emailList.length) {
                 throw new NotFoundError('Emails', emailIds.join(', '));
             }
@@ -132,28 +41,60 @@ export class EmailWriteService {
                 userId,
                 _id: { $in: accountIds },
             });
+
             if (userAccounts.length !== accountIds.length) {
-                throw new ForbiddenError('Unauthorized attempt to update emails from unowned accounts');
+                throw new ForbiddenError(`Unauthorized attempt to ${actionDescription} emails from unowned accounts`);
             }
 
             const groupedEmails = Object.groupBy(emailList, (item) => item.accountId);
+
             for (const [accountId, emails] of Object.entries(groupedEmails)) {
                 const account = userAccounts.find((acc) => String(acc._id) === accountId);
                 if (!account || !emails) continue;
+
                 const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-                await provider.unreadEmails(
-                    emails.map((email) => email.providerMessageId),
-                    accountId,
-                    unread,
-                );
+                const accountEmailIds = emails.map((email) => String(email._id));
+                const providerMessageIds = emails.map((email) => email.providerMessageId);
+                await action({ accountId, emailIds: accountEmailIds, providerMessageIds }, provider);
             }
 
-            return { status: true, message: 'Unread emails status updated successfully' };
+            return {
+                status: true,
+                message: `Emails ${actionDescription} successfully`,
+            };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.unreadEmails: ${errorMessage}`, { error: err });
+            logger.error(`Error in EmailWriteService.${actionDescription}: ${errorMessage}`, { error: err });
             throw err;
         }
+    }
+
+    public async deleteEmail(userId: string, emailIds: string[], trash?: boolean): Promise<UpdateAPIResponse> {
+        return this.executePerAccountProviderAction(userId, emailIds, 'delete', async (ctx, provider) => {
+            await provider.deleteEmails(ctx.providerMessageIds, ctx.accountId, trash);
+        });
+    }
+
+    public async archiveEmails(userId: string, emailIds: string[], archive: boolean): Promise<UpdateAPIResponse> {
+        return this.executePerAccountProviderAction(userId, emailIds, 'archive', async (ctx, provider) => {
+            await provider.archiveEmails(ctx.providerMessageIds, ctx.accountId, archive);
+        });
+    }
+
+    public async starEmails(userId: string, emailIds: string[], star: boolean): Promise<UpdateAPIResponse> {
+        return this.executePerAccountProviderAction(userId, emailIds, star ? 'star' : 'unstar', async (ctx, provider) => {
+            const emailRefs = ctx.emailIds.map((id, index) => ({
+                id,
+                providerMessageId: ctx.providerMessageIds[index],
+            }));
+            await provider.starEmails(emailRefs, ctx.accountId, star);
+        });
+    }
+
+    public async unreadEmails(userId: string, emailIds: string[], unread: boolean): Promise<UpdateAPIResponse> {
+        return this.executePerAccountProviderAction(userId, emailIds, unread ? 'mark unread' : 'mark read', async (ctx, provider) => {
+            await provider.unreadEmails(ctx.providerMessageIds, ctx.accountId, unread);
+        });
     }
 
     public async composeEmail(userId: string, composeEmailData: ComposeEmailBody): Promise<SuccessAPIResponse> {
@@ -187,7 +128,7 @@ export class EmailWriteService {
             if (account.userId.toString() !== userId.toString()) {
                 throw new ForbiddenError('Unauthorized attempt to compose email from unowned account');
             }
-            const stagedFiles: { filename: string; mimeType: string; buffer: Buffer }[] = [];
+            const stagedFiles: ComposeEmailAttachment[] = [];
             if (attachmentIds && attachmentIds.length > 0) {
                 for (const attId of attachmentIds) {
                     const { stagedAttachment, stream } = await this.attachmentsService.getStagedAttachmentWithStream(attId);
@@ -213,7 +154,7 @@ export class EmailWriteService {
             await provider.sendMail({ accountId, to, subject, body, attachments: stagedFiles });
 
             if (attachmentIds && attachmentIds.length > 0) {
-                this.attachmentsService.cleanupStagedAttachments(attachmentIds);
+                await this.attachmentsService.cleanupStagedAttachments(attachmentIds);
             }
 
             return { status: true, message: 'Email composed and sent successfully' };
@@ -229,97 +170,9 @@ export class EmailWriteService {
         emailIds: string[],
         targetFolderIds: string[],
         removeFolderIds: string[] = [],
-    ): Promise<MoveEmailsResponse> {
-        try {
-            if (!emailIds.length) {
-                return { success: true, updatedCount: 0 };
-            }
-
-            const emailDocs = await EmailRepository.getEmailsByIds(emailIds, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-
-            if (!emailDocs.length) {
-                throw new NotFoundError('Emails', emailIds.join(', '));
-            }
-
-            const accountIds = Array.from(new Set(emailDocs.map((email) => email.accountId)));
-            const userAccounts = await AccountRepository.getAccounts({
-                userId,
-                _id: { $in: accountIds },
-            });
-
-            if (userAccounts.length !== accountIds.length) {
-                throw new ForbiddenError('Unauthorized attempt to move emails from unowned accounts');
-            }
-
-            const allFolderIds = [...targetFolderIds, ...removeFolderIds];
-            const folderDocs = await FolderRepository.getFoldersByIds(allFolderIds);
-            const folderMap = new Map<string, string>();
-            folderDocs.forEach((folder) => {
-                folderMap.set(String(folder._id), folder.providerFolderId);
-            });
-            const targetProviderFolderIds = targetFolderIds.map((id) => folderMap.get(id) || id);
-            const removeProviderFolderIds = removeFolderIds.map((id) => folderMap.get(id) || id);
-
-            const groupedEmails = Object.groupBy(emailDocs, (item) => item.accountId);
-
-            // Parallelized execution across accounts via Promise.allSettled
-            const movePromises = Object.entries(groupedEmails).map(async ([accountId, emails]): Promise<AccountBatchMoveTaskResult> => {
-                try {
-                    const account = userAccounts.find((acc) => String(acc._id) === accountId);
-                    if (!account || !emails || emails.length === 0) {
-                        return { accountId, successfulDbEmailIds: [], count: 0 };
-                    }
-
-                    const provider = EmailProviderFactory.getProvider(account.provider);
-                    const providerMessageIds = emails.map((email) => email.providerMessageId);
-                    await provider.moveEmails(providerMessageIds, accountId, targetProviderFolderIds, removeProviderFolderIds);
-
-                    return {
-                        accountId,
-                        successfulDbEmailIds: emails.map((email) => String(email._id)),
-                        count: emails.length,
-                    };
-                } catch (taskErr) {
-                    const errorMessage = taskErr instanceof Error ? taskErr.message : String(taskErr);
-                    logger.error('Account-level provider moveEmails failed', { accountId, error: errorMessage });
-                    throw taskErr;
-                }
-            });
-
-            const settledResults = await Promise.allSettled(movePromises);
-
-            const successfulDbEmailIds: string[] = [];
-            let updatedCount = 0;
-            const failedAccounts: string[] = [];
-
-            settledResults.forEach((result, index) => {
-                const accountId = Object.keys(groupedEmails)[index];
-                if (result.status === 'fulfilled') {
-                    successfulDbEmailIds.push(...result.value.successfulDbEmailIds);
-                    updatedCount += result.value.count;
-                } else {
-                    failedAccounts.push(accountId);
-                    logger.warn('Move operation rejected for account', {
-                        accountId,
-                        reason: result.reason instanceof Error ? result.reason.message : String(result.reason),
-                    });
-                }
-            });
-
-            // Update database records ONLY for emails whose provider move succeeded
-            if (successfulDbEmailIds.length > 0) {
-                await EmailRepository.updateFolders(successfulDbEmailIds, targetProviderFolderIds, removeProviderFolderIds);
-            }
-
-            if (updatedCount === 0 && failedAccounts.length > 0) {
-                throw new BadRequestError(`Failed to move emails across accounts: ${failedAccounts.join(', ')}`);
-            }
-
-            return { success: true, updatedCount };
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : String(error);
-            logger.error('Failed to execute moveEmails in EmailService', { emailIds, targetFolderIds, removeFolderIds, error: errorMessage });
-            throw error;
-        }
+    ): Promise<UpdateAPIResponse> {
+        return this.executePerAccountProviderAction(userId, emailIds, 'move', async (ctx, provider) => {
+            await provider.moveEmails(ctx.providerMessageIds, ctx.accountId, targetFolderIds, removeFolderIds);
+        });
     }
 }

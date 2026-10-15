@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
-import { useGetDraftByIdQuery } from '@features/drafts/api/draft.queries';
 import { useDeleteDraftMutation, useSendDraftMutation } from '@features/drafts/api/draft.mutations';
+import { useGetDraftByIdQuery } from '@features/drafts/api/draft.queries';
 import { useAutoSaveDraft } from '@features/drafts/hooks/useAutoSaveDraft';
 import { ComposeEmailRequestBody, UploadAttachmentResponse } from '@mailsense/types';
 import { axiosClient } from '@shared/api';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
+import { trackUserAction } from '@shared/monitoring';
 import { useAuthStore, useComposeEmailPopupStore } from '@shared/store';
 import { toast } from 'sonner';
 import { useComposeEmailMutation, useSearchOtherContactsMutation } from '../api/email.mutations';
@@ -97,7 +98,7 @@ export const useComposeEmail = () => {
             }
             handleClose();
         } catch (error) {
-            console.error('Error discarding draft', error);
+            trackUserAction('ui.click', 'Error discarding draft', 'warn');
             handleClose();
         }
     }, [draftId, activeDraftId, deleteDraft, handleClose]);
@@ -201,7 +202,7 @@ export const useComposeEmail = () => {
                 });
             }
         } catch (error) {
-            console.error('Error sending email', error);
+            trackUserAction('api.error', 'Error sending email', 'error');
             toast.error(MESSAGES.EMAILS.SEND_EMAIL_ERROR, { duration: UI_CONSTANTS.TOAST.DURATION });
         }
     };

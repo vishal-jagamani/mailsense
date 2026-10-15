@@ -1,128 +1,20 @@
-import axios, { AxiosRequestConfig } from 'axios';
-
-import { OUTLOOK_SECRETS } from '@config';
-import { LOGGER_MODULE, OAUTH_ACCESS_TOKEN_URI } from '@constants';
-import {
-    OUTLOOK_FOLDERS,
-    OutlookAttachmentObject,
-    OutlookMessageObjectFull,
-    OutlookMessagesResponse,
-    OutlookOAuthAccessTokenResponse,
-    OutlookUserProfile,
-} from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { createLogger } from '@observability';
-import { apiRequest, decrypt, encrypt } from 'shared/utils/index.js';
-import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from './outlook.constants.js';
-
-import { NotFoundError } from '@errors';
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
-import { Readable } from 'stream';
+import { OUTLOOK_FOLDERS, OutlookMessageObjectFull, OutlookMessagesResponse, OutlookUploadSessionResponse } from '@mailsense/types';
+import { apiRequest, logger } from '@utils';
+import { AxiosRequestConfig } from 'axios';
+import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs } from '../outlook.constants.js';
 import {
     GetDeltaMessageChangesResponse,
     OutlookCreateMessagePayload,
-    OutlookFolderObject,
-    OutlookFoldersResponse,
     OutlookPeopleSearchResponse,
     OutlookSendMailDirectPayload,
-    OutlookUploadSessionResponse,
-} from './outlook.types.js';
-import { buildOutlookMessagePayload } from './outlook.utils.js';
+} from '../outlook.types.js';
+import { buildOutlookMessagePayload } from '../outlook.utils.js';
+import { OutlookAuthClient } from './outlook-auth.client.js';
 
-const logger = createLogger(LOGGER_MODULE.OUTLOOK_CLIENT);
-
-export class OutlookApi {
-    async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
+export class OutlookMailClient {
+    static async getMessagesFromDeltaLink(accountId: string, deltaLink: string) {
         try {
-            const options: AxiosRequestConfig = {
-                url: OAUTH_ACCESS_TOKEN_URI.OUTLOOK,
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                data: {
-                    code,
-                    client_id: OUTLOOK_SECRETS.clientId,
-                    client_secret: OUTLOOK_SECRETS.clientSecret,
-                    redirect_uri: OUTLOOK_SECRETS.redirectUri,
-                    grant_type: 'authorization_code',
-                },
-            };
-            const response: OutlookOAuthAccessTokenResponse = await apiRequest(options);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.getAccessTokenFromCode: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    // Function to fetch access token from DB
-    static async fetchAccessToken(accountId: string): Promise<string> {
-        try {
-            const account = await AccountRepository.getAccountById(accountId);
-            if (!account) {
-                throw new NotFoundError('Account', accountId);
-            }
-            return account.accessTokenExpiry < Date.now() ? await this.refreshAccessToken(accountId) : decrypt(account.accessToken);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.fetchAccessToken: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    // Function to refresh the access token if it is expired
-    static async refreshAccessToken(accountId: string) {
-        try {
-            const account = await AccountRepository.getAccountById(accountId);
-            if (!account) {
-                throw new NotFoundError('Account', accountId);
-            }
-            const options: AxiosRequestConfig = {
-                url: OUTLOOK_TOKEN_URI,
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                data: {
-                    refresh_token: decrypt(account.refreshToken),
-                    client_id: OUTLOOK_SECRETS.clientId,
-                    client_secret: OUTLOOK_SECRETS.clientSecret,
-                    grant_type: 'refresh_token',
-                },
-            };
-            const response: OutlookOAuthAccessTokenResponse = await apiRequest(options);
-            await AccountRepository.updateAccountAccessToken(accountId, encrypt(response?.access_token), Date.now() + response?.expires_in * 1000);
-            return response?.access_token;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.refreshAccessToken: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async getUserProfileFromAccessToken(accessToken: string): Promise<OutlookUserProfile> {
-        try {
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}`,
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            };
-            const response: OutlookUserProfile = await apiRequest(options);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.getUserProfileFromAccessToken: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async getMessagesFromDeltaLink(accountId: string, deltaLink: string) {
-        try {
-            const accessToken = await OutlookApi.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: deltaLink,
                 method: 'GET',
@@ -141,7 +33,7 @@ export class OutlookApi {
 
     static async getMessages(accountId: string, nextPageUrl?: string) {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: nextPageUrl || `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}`,
                 method: 'GET',
@@ -160,7 +52,7 @@ export class OutlookApi {
 
     static async getMessageDetails(accountId: string, emailId: string): Promise<OutlookMessageObjectFull> {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}`,
                 method: 'GET',
@@ -183,7 +75,7 @@ export class OutlookApi {
 
     static async deleteEmail(emailId: string, accountId: string) {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}/move`,
                 method: 'POST',
@@ -205,7 +97,7 @@ export class OutlookApi {
 
     static async deleteEmailPermanently(emailId: string, accountId: string) {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}/permanentDelete`,
                 method: 'POST',
@@ -224,7 +116,7 @@ export class OutlookApi {
 
     static async archiveEmail(emailId: string, accountId: string) {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}/move`,
                 method: 'POST',
@@ -246,7 +138,7 @@ export class OutlookApi {
 
     static async unarchiveEmail(emailId: string, accountId: string) {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}/move`,
                 method: 'POST',
@@ -268,7 +160,7 @@ export class OutlookApi {
 
     static async unreadEmail(emailId: string, accountId: string, unread: boolean) {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}`,
                 method: 'PATCH',
@@ -290,7 +182,7 @@ export class OutlookApi {
 
     static async flagEmail(emailId: string, accountId: string, flag: boolean) {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MESSAGES}/${emailId}`,
                 method: 'PATCH',
@@ -312,115 +204,12 @@ export class OutlookApi {
         }
     }
 
-    static async getAllFolders(accountId: string): Promise<OutlookFoldersResponse> {
-        try {
-            const accessToken = await this.fetchAccessToken(accountId);
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.FOLDERS}`,
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            };
-            const response = await apiRequest<OutlookFoldersResponse>(options);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.getAllFolders: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    static async getFolderDetails(accountId: string, folderId: string): Promise<OutlookFolderObject> {
-        try {
-            const accessToken = await this.fetchAccessToken(accountId);
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.FOLDERS}/${folderId}`,
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            };
-            const response = await apiRequest<OutlookFolderObject>(options);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.getFolderDetails: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    static async createFolder(accountId: string, folderName: string, isHidden: boolean): Promise<OutlookFolderObject> {
-        try {
-            const accessToken = await this.fetchAccessToken(accountId);
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.FOLDERS}`,
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-                data: {
-                    displayName: folderName,
-                    isHidden,
-                },
-            };
-            const response = await apiRequest<OutlookFolderObject>(options);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.createFolder: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    static async updateFolder(accountId: string, folderId: string, folderName: string): Promise<OutlookFolderObject> {
-        try {
-            const accessToken = await this.fetchAccessToken(accountId);
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.FOLDERS}/${folderId}`,
-                method: 'PATCH',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'application/json',
-                },
-                data: {
-                    displayName: folderName,
-                },
-            };
-            const response = await apiRequest<OutlookFolderObject>(options);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.updateFolder: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    static async deleteFolder(accountId: string, folderId: string): Promise<void> {
-        try {
-            const accessToken = await this.fetchAccessToken(accountId);
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.FOLDERS}/${folderId}`,
-                method: 'DELETE',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            };
-            await apiRequest<void>(options);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.deleteFolder: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
     static async createDraftMessage(
         accountId: string,
         message: OutlookCreateMessagePayload | Partial<OutlookMessageObjectFull>,
     ): Promise<OutlookMessageObjectFull> {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/messages`,
                 method: 'POST',
@@ -442,7 +231,7 @@ export class OutlookApi {
 
     static async sendDraftMessage(accountId: string, messageId: string): Promise<void> {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/messages/${messageId}/send`,
                 method: 'POST',
@@ -460,7 +249,7 @@ export class OutlookApi {
 
     static async searchContacts(accountId: string, searchText: string): Promise<OutlookPeopleSearchResponse> {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/people`,
                 method: 'GET',
@@ -482,77 +271,9 @@ export class OutlookApi {
         }
     }
 
-    static async getMessageAttachments(accountId: string, messageId: string): Promise<OutlookAttachmentObject[]> {
-        try {
-            const accessToken = await OutlookApi.fetchAccessToken(accountId);
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.ATTACHMENTS(messageId)}`,
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-            };
-            const response = await apiRequest<{ value: OutlookAttachmentObject[] }>(options);
-            return response?.value || [];
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.getMessageAttachments: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    static async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<Buffer> {
-        try {
-            const accessToken = await OutlookApi.fetchAccessToken(accountId);
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.ATTACHMENT(messageId, attachmentId)}`,
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-                responseType: 'arraybuffer',
-            };
-            const response = await apiRequest<Buffer>(options);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.getAttachment: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    static async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
-        try {
-            const accessToken = await OutlookApi.fetchAccessToken(accountId);
-            const options: AxiosRequestConfig = {
-                url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.ATTACHMENT(messageId, attachmentId)}`,
-                method: 'GET',
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-                responseType: 'stream',
-            };
-            const response = await axios.request<Readable>(options);
-            const contentType = (response.headers['content-type'] as string) || 'application/octet-stream';
-            const contentLengthHeader = response.headers['content-length'];
-            const contentLength = contentLengthHeader ? Number(contentLengthHeader) : undefined;
-
-            return {
-                stream: response.data,
-                mimeType: contentType,
-                filename: 'attachment',
-                contentLength,
-            };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in OutlookApi.getAttachmentStream: ${errorMessage}`, { error: err, accountId, messageId, attachmentId });
-            throw err;
-        }
-    }
-
     static async sendMailDirect(accountId: string, payload: OutlookSendMailDirectPayload): Promise<void> {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const messageBody = buildOutlookMessagePayload(payload.to, payload.subject, payload.body, 'HTML');
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/sendMail`,
@@ -579,7 +300,7 @@ export class OutlookApi {
 
     static async createUploadSession(accountId: string, messageId: string, filename: string, size: number): Promise<OutlookUploadSessionResponse> {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.PROFILE}/messages/${messageId}/attachments/createUploadSession`,
                 method: 'POST',
@@ -628,7 +349,7 @@ export class OutlookApi {
 
     static async moveMessage(accountId: string, messageId: string, destinationId: string): Promise<OutlookMessageObjectFull> {
         try {
-            const accessToken = await this.fetchAccessToken(accountId);
+            const accessToken = await OutlookAuthClient.fetchAccessToken(accountId);
             const options: AxiosRequestConfig = {
                 url: `${OUTLOOK_API_BASE_URL}${OUTLOOK_APIs.MOVE_MESSAGE(messageId)}`,
                 method: 'POST',

@@ -1,4 +1,5 @@
 import { axiosClient, EMAILS_API_ENDPOINTS } from '@shared/api';
+import { trackUserAction } from '@shared/monitoring';
 
 export const handleDownload = async (
     emailId: string,
@@ -22,7 +23,7 @@ export const handleDownload = async (
         link.remove();
         window.URL.revokeObjectURL(url);
     } catch (err) {
-        console.error('Error downloading attachment:', err);
+        trackUserAction('api.error', 'Attachment download failed', 'error');
     } finally {
         setLoadingAttId(null);
     }
@@ -44,7 +45,7 @@ export const handlePreview = async (
         const url = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
         setPreviewUrl(url);
     } catch (err) {
-        console.error('Error previewing attachment:', err);
+        trackUserAction('api.error', 'Attachment preview failed', 'error');
     } finally {
         setLoadingAttId(null);
     }

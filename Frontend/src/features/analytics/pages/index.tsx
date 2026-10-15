@@ -3,6 +3,7 @@
 import { AlertCircle } from 'lucide-react';
 import React, { useState } from 'react';
 
+import { trackUserAction } from '@shared/monitoring';
 import { Button } from '@shared/ui/button';
 import {
     AccountActivityGrid,
@@ -26,7 +27,7 @@ const DashboardPage: React.FC = () => {
             setIsRefreshing(true);
             await actions.handleRefresh();
         } catch (error) {
-            console.error('Failed to manually refresh dashboard page', error);
+            trackUserAction('ui.click', 'Failed to manually refresh dashboard page');
         } finally {
             setIsRefreshing(false);
         }

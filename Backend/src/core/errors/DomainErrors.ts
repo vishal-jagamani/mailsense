@@ -206,3 +206,21 @@ export class ExternalServiceError extends AppError {
         this.serviceName = serviceName;
     }
 }
+
+export class ConfigurationError extends AppError {
+    public readonly configKey?: string;
+
+    constructor(message: string, configKey?: string, suggestedAction?: string, traceId?: string) {
+        super({
+            message,
+            httpStatus: 500,
+            errorCode: ErrorCode.CONFIGURATION_ERROR,
+            isOperational: false,
+            description: 'A critical system configuration or environment variable is missing or malformed.',
+            suggestedAction: suggestedAction ?? 'Verify environment variables and service credentials in .env configuration.',
+            traceId,
+            context: configKey ? { resource: configKey } : undefined,
+        });
+        this.configKey = configKey;
+    }
+}

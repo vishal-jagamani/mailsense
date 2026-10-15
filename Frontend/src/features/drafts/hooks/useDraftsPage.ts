@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 
 import { EMAILS_PAGE_SIZE, HOME_ROUTES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
+import { trackUserAction } from '@shared/monitoring';
 import { useBreadcrumbStore, useComposeEmailPopupStore } from '@shared/store';
 import { useDeleteDraftMutation } from '../api/draft.mutations';
 import { useGetUserDraftsQuery } from '../api/draft.queries';
@@ -67,7 +68,7 @@ export const useDraftsPage = (): UseDraftsPageResult => {
                 toast.error('Failed to delete draft');
             }
         } catch (error) {
-            console.error('Error deleting draft', error);
+            trackUserAction('ui.click', 'Error deleting draft', 'error');
             toast.error('Error deleting draft');
         }
     };
@@ -82,7 +83,7 @@ export const useDraftsPage = (): UseDraftsPageResult => {
             setSelectedDrafts([]);
             refetch();
         } catch (error) {
-            console.error('Error in bulk draft deletion', error);
+            trackUserAction('ui.click', 'Error in bulk draft deletion', 'error');
             toast.error('Failed to delete selected drafts');
         }
     };

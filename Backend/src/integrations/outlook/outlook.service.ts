@@ -15,7 +15,6 @@ import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { createLogger } from '@observability';
 import { compressString, decompressString } from 'shared/utils/index.js';
-import { OutlookApi } from './outlook.client.js';
 import {
     OUTLOOK_API_BASE_URL,
     OUTLOOK_API_PARAMS,
@@ -32,19 +31,14 @@ import {
 } from './outlook.types.js';
 import * as OutlookUtils from './outlook.utils.js';
 import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { OutlookClient } from './clients/index.js';
 
 const logger = createLogger(LOGGER_MODULE.OUTLOOK_SERVICE);
 
 export class OutlookService {
-    private outlookApi: OutlookApi;
-
-    constructor() {
-        this.outlookApi = new OutlookApi();
-    }
-
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
         try {
-            const response = await this.outlookApi.getAccessTokenFromCode(code);
+            const response = await OutlookClient.getAccessTokenFromCode(code);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -55,7 +49,7 @@ export class OutlookService {
 
     async getUserProfileFromAccessToken(accessToken: string): Promise<OutlookUserProfile> {
         try {
-            const response = await this.outlookApi.getUserProfileFromAccessToken(accessToken);
+            const response = await OutlookClient.getUserProfileFromAccessToken(accessToken);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -67,7 +61,7 @@ export class OutlookService {
     async getMessagesAfterLastDelta(accountId: string, deltaLink: string): Promise<GetOutlookDeltaMessagesResponse | null> {
         try {
             if (!deltaLink) return null;
-            const response = await this.outlookApi.getMessagesFromDeltaLink(accountId, deltaLink);
+            const response = await OutlookClient.getMessagesFromDeltaLink(accountId, deltaLink);
             const { addedEmails, deletedEmailIds } = await this.extractDeltaMessagesChanges(response.value);
             let newAddedEmails: Partial<EmailInput>[] = [];
             if (addedEmails.length) {
@@ -117,7 +111,7 @@ export class OutlookService {
             if (dbEmail) {
                 let attachments = dbEmail.attachments || [];
                 if (attachments.length === 0) {
-                    const outlookAttachments = await OutlookApi.getMessageAttachments(accountId, emailId);
+                    const outlookAttachments = await OutlookClient.getMessageAttachments(accountId, emailId);
                     attachments = OutlookUtils.extractOutlookAttachments(outlookAttachments);
                 }
                 return {
@@ -128,7 +122,7 @@ export class OutlookService {
                     attachments,
                 };
             }
-            const email = await OutlookApi.getMessageDetails(accountId, emailId);
+            const email = await OutlookClient.getMessageDetails(accountId, emailId);
             const parsedEmail = await this.parseEmailDetailsIntoPlainObject(accountId, email);
             return parsedEmail;
         } catch (err) {
@@ -144,7 +138,7 @@ export class OutlookService {
             const emails: OutlookMessageObjectFull[] = [];
             let deltaLink: string = '';
             while (url) {
-                const response = await OutlookApi.getMessages(accountId, url);
+                const response = await OutlookClient.getMessages(accountId, url);
                 emails.push(...response.value);
                 if (response['@odata.deltaLink']) {
                     deltaLink = response['@odata.deltaLink'];
@@ -169,7 +163,7 @@ export class OutlookService {
                 emailResponseData.map(async (email) => {
                     let attachments: EmailAttachment[] = [];
                     if (email.hasAttachments) {
-                        const outlookAttachments = await OutlookApi.getMessageAttachments(accountId, email.id);
+                        const outlookAttachments = await OutlookClient.getMessageAttachments(accountId, email.id);
                         attachments = OutlookUtils.extractOutlookAttachments(outlookAttachments);
                     }
                     const emailObject: Partial<EmailInput> = {
@@ -203,7 +197,7 @@ export class OutlookService {
             if (email.attachments && email.attachments.length > 0) {
                 attachments = OutlookUtils.extractOutlookAttachments(email.attachments);
             } else if (email.hasAttachments) {
-                const outlookAttachments = await OutlookApi.getMessageAttachments(accountId, email.id);
+                const outlookAttachments = await OutlookClient.getMessageAttachments(accountId, email.id);
                 attachments = OutlookUtils.extractOutlookAttachments(outlookAttachments);
             }
 
@@ -236,7 +230,7 @@ export class OutlookService {
         try {
             if (trash) {
                 for (const emailId of emailIds) {
-                    const movedMessage = await OutlookApi.deleteEmail(emailId, accountId);
+                    const movedMessage = await OutlookClient.deleteEmail(emailId, accountId);
                     const email = await EmailRepository.getEmailsByProviderMessageIds([emailId], { folders: 1 });
                     const folders = email?.[0]?.folders || [];
 
@@ -252,7 +246,7 @@ export class OutlookService {
                 }
             } else {
                 for (const emailId of emailIds) {
-                    await OutlookApi.deleteEmailPermanently(emailId, accountId);
+                    await OutlookClient.deleteEmailPermanently(emailId, accountId);
                 }
                 await EmailRepository.deleteManyEmails(emailIds);
             }
@@ -268,8 +262,8 @@ export class OutlookService {
         try {
             for (const emailId of emailIds) {
                 const movedMessage = archive
-                    ? await OutlookApi.archiveEmail(emailId, accountId)
-                    : await OutlookApi.unarchiveEmail(emailId, accountId);
+                    ? await OutlookClient.archiveEmail(emailId, accountId)
+                    : await OutlookClient.unarchiveEmail(emailId, accountId);
 
                 // Update providerMessageId if it changed during move
                 if (movedMessage?.id && movedMessage.id !== emailId) {
@@ -289,7 +283,7 @@ export class OutlookService {
     async unreadEmails(emailIds: string[], accountId: string, unread: boolean): Promise<void> {
         try {
             for (const emailId of emailIds) {
-                await OutlookApi.unreadEmail(emailId, accountId, unread);
+                await OutlookClient.unreadEmail(emailId, accountId, unread);
                 await EmailRepository.updateEmailByProviderMessageId(emailId, {
                     isRead: !unread,
                 });
@@ -305,7 +299,7 @@ export class OutlookService {
     async flagEmails(emailIds: string[], accountId: string, flag: boolean): Promise<void> {
         try {
             for (const emailId of emailIds) {
-                await OutlookApi.flagEmail(emailId, accountId, flag);
+                await OutlookClient.flagEmail(emailId, accountId, flag);
                 const email = await EmailRepository.getEmailsByProviderMessageIds([emailId], { _id: 1, folders: 1 });
                 if (email.length > 0) {
                     const folders = email[0].folders ?? [];
@@ -325,7 +319,7 @@ export class OutlookService {
 
     async getAllFolders(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {
         try {
-            const folders = await OutlookApi.getAllFolders(accountId);
+            const folders = await OutlookClient.getAllFolders(accountId);
             const folderInputs: Partial<FolderInput>[] = folders.value.map((folder) =>
                 OutlookUtils.parseOutlookFolderObject(accountId, userId, folder),
             );
@@ -339,7 +333,7 @@ export class OutlookService {
 
     async getFolderDetails(accountId: string, folderId: string): Promise<OutlookFolderObject> {
         try {
-            const folder = await OutlookApi.getFolderDetails(accountId, folderId);
+            const folder = await OutlookClient.getFolderDetails(accountId, folderId);
             return folder;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -350,7 +344,7 @@ export class OutlookService {
 
     async createFolder(userId: string, accountId: string, folderName: string, isHidden: boolean): Promise<UpdateAPIResponse> {
         try {
-            const folder = await OutlookApi.createFolder(accountId, folderName, isHidden);
+            const folder = await OutlookClient.createFolder(accountId, folderName, isHidden);
             const folderBody = OutlookUtils.parseOutlookFolderObject(accountId, userId, folder);
             await FolderRepository.createFolder(folderBody);
             return { status: true, message: 'Folder created successfully' };
@@ -363,7 +357,7 @@ export class OutlookService {
 
     async updateFolder(accountId: string, folderId: string, folderName: string): Promise<UpdateAPIResponse> {
         try {
-            await OutlookApi.updateFolder(accountId, folderId, folderName);
+            await OutlookClient.updateFolder(accountId, folderId, folderName);
             const folderBody: Partial<FolderDocument> = {
                 name: folderName,
                 normalizedName: folderName.toLowerCase().trim(),
@@ -379,7 +373,7 @@ export class OutlookService {
 
     async deleteFolder(accountId: string, folderId: string): Promise<UpdateAPIResponse> {
         try {
-            await OutlookApi.deleteFolder(accountId, folderId);
+            await OutlookClient.deleteFolder(accountId, folderId);
             await FolderRepository.deleteFolderByProviderFolderId(folderId);
             return { status: true, message: 'Folder deleted successfully' };
         } catch (err) {
@@ -408,14 +402,14 @@ export class OutlookService {
                 smallAttachments.length > 0 ? smallAttachments : undefined,
             );
 
-            const draft = await OutlookApi.createDraftMessage(accountId, messageBody);
+            const draft = await OutlookClient.createDraftMessage(accountId, messageBody);
 
             for (const attachment of largeAttachments) {
-                const session = await OutlookApi.createUploadSession(accountId, draft.id, attachment.filename, attachment.buffer.length);
+                const session = await OutlookClient.createUploadSession(accountId, draft.id, attachment.filename, attachment.buffer.length);
 
                 for (let start = 0; start < attachment.buffer.length; start += OUTLOOK_ATTACHMENT_CHUNK_SIZE) {
                     const chunk = attachment.buffer.subarray(start, start + OUTLOOK_ATTACHMENT_CHUNK_SIZE);
-                    await OutlookApi.uploadChunk(session.uploadUrl, chunk, start, attachment.buffer.length);
+                    await OutlookClient.uploadChunk(session.uploadUrl, chunk, start, attachment.buffer.length);
                 }
             }
 
@@ -457,9 +451,9 @@ export class OutlookService {
     }
 
     private async finalizeSentOutlookDraft(accountId: string, draft: OutlookMessageObjectFull): Promise<OutlookMessageObjectFull> {
-        await OutlookApi.sendDraftMessage(accountId, draft.id);
+        await OutlookClient.sendDraftMessage(accountId, draft.id);
 
-        const emailDetails = await OutlookApi.getMessageDetails(accountId, draft.id);
+        const emailDetails = await OutlookClient.getMessageDetails(accountId, draft.id);
         const emailData = await this.parseEmailDetailsIntoPlainObject(accountId, emailDetails);
 
         await EmailRepository.upsertEmailsInBulk([emailData]);
@@ -469,7 +463,7 @@ export class OutlookService {
 
     async searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]> {
         try {
-            const response = await OutlookApi.searchContacts(accountId, searchText);
+            const response = await OutlookClient.searchContacts(accountId, searchText);
             const contacts = response.value
                 .filter((contact) => contact.scoredEmailAddresses && contact.scoredEmailAddresses.length > 0)
                 .map((contact) => ({
@@ -489,7 +483,7 @@ export class OutlookService {
         messageId: string,
         attachmentId: string,
     ): Promise<{ data: Buffer; mimeType: string; filename: string }> {
-        const buffer = await OutlookApi.getAttachment(accountId, messageId, attachmentId);
+        const buffer = await OutlookClient.getAttachment(accountId, messageId, attachmentId);
         return {
             data: Buffer.from(buffer),
             mimeType: 'application/octet-stream',
@@ -499,7 +493,7 @@ export class OutlookService {
 
     public async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
         try {
-            return await OutlookApi.getAttachmentStream(accountId, messageId, attachmentId);
+            return await OutlookClient.getAttachmentStream(accountId, messageId, attachmentId);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in OutlookService.getAttachmentStream: ${errorMessage}`, { error: err });
@@ -507,14 +501,17 @@ export class OutlookService {
         }
     }
 
-    async moveEmails(providerMessageIds: string[], accountId: string, targetFolderIds: string[]): Promise<void> {
+    async moveEmails(providerMessageIds: string[], accountId: string, targetFolderIds: string[]): Promise<UpdateAPIResponse> {
         try {
-            if (!providerMessageIds.length || !targetFolderIds.length) return;
+            if (!providerMessageIds.length || !targetFolderIds.length) {
+                return { status: true, message: 'No emails or folders specified' };
+            }
             const destinationId = targetFolderIds[0];
 
             for (const messageId of providerMessageIds) {
-                await OutlookApi.moveMessage(accountId, messageId, destinationId);
+                await OutlookClient.moveMessage(accountId, messageId, destinationId);
             }
+            return { status: true, message: 'Emails moved successfully' };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Failed to move emails in OutlookService: ${errorMessage}`, { error: err });

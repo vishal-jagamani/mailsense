@@ -7,6 +7,22 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-10-15
+
+### Added
+- **Security & Multi-Tenant Isolation (`SEC-REFACTOR-01`):** Enforced IDOR validation in `EmailWriteService.composeEmailWithAttachments`, validating that staged attachments belong to both the authenticated `userId` and target `accountId` before message composition and throwing `ForbiddenError` on cross-tenant access. Added unit test suite `src/modules/emails/__tests__/attachment-security.test.ts`.
+- **Domain Client Modularization (`ARCH-REFACTOR-01`):** Decomposed monolithic `GmailClient` and `OutlookClient` into focused domain client classes:
+  - Gmail: `GmailAuthClient`, `GmailMessageClient`, `GmailLabelClient`, and `GmailContactClient` under `src/integrations/gmail/clients/` with static facade in `src/integrations/gmail/clients/index.ts`.
+  - Outlook: `OutlookAuthClient`, `OutlookMessageClient`, `OutlookFolderClient`, and `OutlookContactClient` under `src/integrations/outlook/clients/` with static facade in `src/integrations/outlook/clients/index.ts`.
+- **Account OAuth Service Extraction (`ARCH-REFACTOR-02`):** Extracted `AccountOAuthService` (`src/modules/accounts/account-oauth.service.ts`) from `AccountsService`, encapsulating OAuth connection URL generation, authorization code exchange, profile retrieval, and background sync triggering into a dedicated domain service.
+- **Consolidated Batch Provider Operations (`ARCH-REFACTOR-03`):** Implemented `executePerAccountProviderAction` in `EmailWriteService` (`src/modules/emails/email-write.service.ts`), consolidating multi-account batch mutations (`archiveEmails`, `starEmails`, `unreadEmails`, `deleteEmail`) using `Promise.allSettled` and atomic MongoDB updates exclusively for successful accounts.
+- **Named Interface Extractions:** Defined dedicated interfaces in `src/modules/accounts/account.types.ts` (`OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`) and `src/modules/emails/email.types.ts` (`ThreadSummaryItem`, `GroupedEmailThreadItem`) to eliminate inline object types.
+- **ESLint 9 Flat Config Migration (`DX-REFACTOR-01`):** Upgraded `eslint.config.js` to modern Flat Config format with TypeScript-ESLint, enforcing `no-restricted-syntax` for zero inline object types (with targeted exemptions for type definition files `*.types.ts` and `*.interface.ts`), line count, function length, and complexity limits.
+
+### Changed
+- **Shared Type Contracts (@mailsense/types v1.6.0):** Integrated `@mailsense/types` `1.6.0`, normalizing `to`, `cc`, and `bcc` recipient fields strictly to `string[]` arrays across Gmail and Outlook providers, repositories, parsers, and search formatters.
+- **Account Privacy & Sanitization:** Guaranteed that sensitive encrypted OAuth credentials (`accessToken`, `refreshToken`) are never returned in public account responses, strictly delivering `SanitizedAccountAttributes[]`.
+
 ## [3.4.0] - 2026-09-27
 
 ### Added

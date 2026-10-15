@@ -2,6 +2,7 @@ import { Redis, RedisOptions } from 'ioredis';
 
 import { REDIS_CONFIG } from '@config';
 import { LOGGER_MODULE } from '@constants';
+import { ConfigurationError } from '@errors';
 import { createLogger } from '@observability';
 
 const logger = createLogger(LOGGER_MODULE.REDIS_CONNECTION);
@@ -28,7 +29,7 @@ export const getRedisConnection = (): Redis => {
     const redisUrl = REDIS_CONFIG.url || process.env.SERVICE_URI;
 
     if (!redisUrl) {
-        throw new Error('Redis connection URL is missing. Please configure REDIS_URL or SERVICE_URI.');
+       throw new ConfigurationError('Redis connection URL is missing. Please configure REDIS_URL or SERVICE_URI.', 'REDIS_URL');
     }
 
     logger.info(`🔌 Connecting to Redis`);

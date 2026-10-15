@@ -1,5 +1,6 @@
 import { AnyBulkWriteOperation, FilterQuery, FlattenMaps, PipelineStage, ProjectionType, SortOrder } from 'mongoose';
 import { Email, EmailDocument, EmailInput } from './email.model.js';
+import { GroupedEmailThreadItem, ThreadSummaryItem } from './email.types.js';
 
 export class EmailRepository {
     public static async upsertEmailsInBulk(emails: Partial<EmailInput>[]) {
@@ -123,7 +124,7 @@ export class EmailRepository {
     public static async getThreadSummaries(
         accountIds: string[],
         threadIds: string[],
-    ): Promise<{ threadId: string; count: number; latestAt: Date }[]> {
+    ): Promise<ThreadSummaryItem[]> {
         return Email.aggregate([
             { $match: { accountId: { $in: accountIds }, threadId: { $in: threadIds } } },
             { $group: { _id: '$threadId', count: { $sum: 1 }, latestAt: { $max: '$receivedAt' } } },
@@ -136,7 +137,7 @@ export class EmailRepository {
         size: number,
         page: number,
         fields: ProjectionType<EmailDocument>,
-    ): Promise<(FlattenMaps<EmailDocument> & { threadCount: number })[]> {
+    ): Promise<(FlattenMaps<EmailDocument> & GroupedEmailThreadItem)[]> {
         const pipeline: PipelineStage[] = [
             { $match: searchQuery },
             { $sort: { receivedAt: -1 } },

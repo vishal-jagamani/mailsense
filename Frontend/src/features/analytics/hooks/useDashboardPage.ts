@@ -7,6 +7,7 @@ import { ALL_ACCOUNTS_FILTER_ID, DEFAULT_ANALYTICS_TIMEFRAME, HOME_ROUTES, TIMEF
 import { useAuthStore, useBreadcrumbStore } from '@shared/store';
 import { useGetDashboardAnalyticsQuery } from '../api/analytics.queries';
 import { CustomDateRangeState, UseDashboardPageResult, UseDashboardParams } from '../types';
+import { trackUserAction } from '@shared/monitoring';
 
 export const useDashboardPage = (params?: UseDashboardParams): UseDashboardPageResult => {
     const currentUser = useAuthStore((state) => state.user);
@@ -59,7 +60,8 @@ export const useDashboardPage = (params?: UseDashboardParams): UseDashboardPageR
         refetch: refetchAnalytics,
     } = useGetDashboardAnalyticsQuery(queryParams, Boolean(currentUser?.id && activeAccounts.length > 0));
 
-    const isInitialLoading = isAuthLoading || !currentUser?.id || isAccountsLoading || (activeAccounts.length > 0 && analyticsDataLoading && !analyticsData);
+    const isInitialLoading =
+        isAuthLoading || !currentUser?.id || isAccountsLoading || (activeAccounts.length > 0 && analyticsDataLoading && !analyticsData);
 
     const handleSetSelectedAccountId = (accountId: string): void => {
         setSelectedAccountId(accountId);
@@ -78,7 +80,7 @@ export const useDashboardPage = (params?: UseDashboardParams): UseDashboardPageR
             await refetchAnalytics();
             toast.success('Dashboard analytics refreshed');
         } catch (refreshError) {
-            console.error('Failed to refresh dashboard analytics', refreshError);
+            trackUserAction('api.error', 'Failed to refresh dashboard analytics');
             toast.error('Failed to refresh analytics');
         }
     };

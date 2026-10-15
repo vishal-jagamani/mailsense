@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 
+import { trackUserAction } from '@shared/monitoring';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -38,8 +39,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange, onDelete,
                     onOpenChange(false);
                 }
             } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                console.error('Error handling delete confirmation keydown:', errorMessage);
+                trackUserAction('ui.click', 'DeleteModal keydown error', 'warn');
             }
         };
 

@@ -6,3 +6,8 @@ export interface DataNotFoundProps {
     description?: string;
     icon?: LucideIcon;
 }
+
+export interface HomeLayoutProps {
+    readonly children: React.ReactNode;
+}
+

@@ -35,3 +35,19 @@ export interface GmailParsedEmailResult {
     historyId: string;
     receivedAt: Date;
 }
+
+export interface GmailRawMessagePayload {
+    raw: string;
+}
+
+export interface GmailAttachmentDataResponse {
+    data: string;
+    size: number;
+}
+
+export interface GmailAttachmentBufferResult {
+    data: Buffer;
+    mimeType: string;
+    filename: string;
+}
+

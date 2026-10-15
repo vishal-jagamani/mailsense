@@ -4,7 +4,6 @@ import { errorHandler } from '@middlewares';
 import { createHelmetMiddleware, defaultApiRateLimiter } from '@security';
 import cors from 'cors';
 import express, { Application, Request, Response } from 'express';
-import path from 'path';
 import indexRoutes from 'routes.js';
 import { requestLoggerMiddleware, traceMiddleware } from './core/observability/index.js';
 
@@ -38,9 +37,6 @@ export class App {
         // 5. Parse JSON and URL encoded request bodies
         this.expressApp.use(express.json());
         this.expressApp.use(express.urlencoded({ extended: true }));
-
-        // 6. Serve static files
-        this.expressApp.use(express.static(path.join(this.__dirname, '/')));
     }
 
     private setupRoutes(): void {

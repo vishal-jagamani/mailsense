@@ -69,3 +69,12 @@ export interface ProviderErrorResponse {
     };
     message?: string;
 }
+
+export interface ErrorWithStatus {
+    status?: number;
+    statusCode?: number;
+    response?: {
+        status?: number;
+        statusCode?: number;
+    };
+}
