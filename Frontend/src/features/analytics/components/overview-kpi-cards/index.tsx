@@ -4,6 +4,7 @@ import { FileText, Inbox, Mail, MailCheck, Minus, Send, Star, TrendingDown, Tren
 import React from 'react';
 
 import { MetricCardConfig, OverviewKpiCardsProps } from '@features/analytics/types';
+import { trackUserAction } from '@shared/monitoring';
 import { Card } from '@shared/ui/card';
 import { Skeleton } from '@shared/ui/skeleton';
 
@@ -15,7 +16,7 @@ export const OverviewKpiCards: React.FC<OverviewKpiCardsProps> = ({ overview, is
             }
             return new Intl.NumberFormat('en-US').format(value);
         } catch (error) {
-            console.error('Failed to format metric number', error);
+            trackUserAction('ui.click', 'Failed to format metric number', 'warn');
             return String(value ?? 0);
         }
     };

@@ -1,8 +1,6 @@
-import { MAILSENSE_BASE_URL } from '@config';
 import { ACCOUNT_PROVIDERS, LOGGER_MODULE } from '@constants';
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { BadRequestError, ForbiddenError, NotFoundError } from '@errors';
 import {
-    ACCOUNT_PROVIDER,
     ACCOUNT_SYNC_JOB_STATUS,
     ACCOUNT_SYNC_JOB_TRIGGER_TYPE,
     AccountProviderType,
@@ -13,19 +11,21 @@ import { EmailRepository } from '@modules/emails/email.repository.js';
 import { createLogger } from '@observability';
 import { QueueService } from 'core/queue/queue.service.js';
 import { SchedulerService } from 'core/queue/scheduler.service.js';
-import * as GmailUtils from 'integrations/gmail/gmail.utils.js';
-import * as OutlookUtils from 'integrations/outlook/outlook.utils.js';
-import { decrypt, encrypt } from 'shared/utils/index.js';
-import { AccountDocument, AccountInput } from './account.model.js';
+import { AccountOAuthService } from './account-oauth.service.js';
+import { AccountDocument } from './account.model.js';
 import { AccountRepository } from './account.repository.js';
 import { UpdateAccountSettingsSchema } from './account.schema.js';
+import { OAuthCallbackParams, OAuthConnectResponse, SyncAccountJobResponse, SyncAccountsResponse } from './account.types.js';
 import { SyncJobRepository } from './sync-job.repository.js';
-import { BadRequestError, ForbiddenError, NotFoundError } from '@errors';
 
 const logger = createLogger(LOGGER_MODULE.ACCOUNT_SERVICE);
 
 export class AccountsService {
-    constructor() {}
+    private readonly accountOAuthService: AccountOAuthService;
+
+    constructor(accountOAuthService?: AccountOAuthService) {
+        this.accountOAuthService = accountOAuthService || new AccountOAuthService();
+    }
 
     private sanitizeAccount(account: AccountDocument): SanitizedAccountAttributes {
         try {
@@ -114,9 +114,10 @@ export class AccountsService {
      * Fetches all accounts from the database.
      * @returns A promise that resolves to an array of accounts.
      */
-    async getAccounts(userId: string): Promise<AccountInput[]> {
+    async getAccounts(userId: string): Promise<SanitizedAccountAttributes[]> {
         try {
-            return AccountRepository.getAccounts({ userId });
+            const accounts = await AccountRepository.getAccounts({ userId });
+            return accounts.map((acc: AccountDocument) => this.sanitizeAccount(acc));
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in AccountsService.getAccounts: ${errorMessage}`, { error: err });
@@ -143,22 +144,8 @@ export class AccountsService {
      * @param provider The provider for which to generate the consent URL.
      * @returns A promise that resolves to the consent URL & redirects to it.
      */
-    async connect(provider: string): Promise<{ url: string }> {
-        try {
-            if (provider === ACCOUNT_PROVIDER.GMAIL) {
-                const url = await GmailUtils.buildGmailOAuthConsentURL();
-                return { url };
-            } else if (provider === ACCOUNT_PROVIDER.OUTLOOK) {
-                const url = await OutlookUtils.buildOutlookOAuthConsentURL();
-                return { url };
-            } else {
-                throw new BadRequestError('Invalid provider');
-            }
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.connect: ${errorMessage}`, { error: err });
-            throw err;
-        }
+    async connect(provider: string): Promise<OAuthConnectResponse> {
+        return this.accountOAuthService.connect(provider);
     }
 
     /**
@@ -167,52 +154,13 @@ export class AccountsService {
      * @param params The query parameters from the callback.
      * @returns A promise that resolves when the callback is handled and redirects to the home page.
      */
-    async callback(provider: string, params: { code: string; state: string }): Promise<string> {
-        try {
-            const { code, state } = params;
-            let userDetails;
-            try {
-                const decryptedState = decrypt(state);
-                userDetails = JSON.parse(decryptedState);
-            } catch (err) {
-                const errorMessage = err instanceof Error ? err.message : String(err);
-                logger.error(`Error in AccountsService.callback: ${errorMessage}`, { error: err });
-                throw err;
-            }
-            const emailProvider = EmailProviderFactory.getProvider(provider as ACCOUNT_PROVIDER);
-            const { access_token, refresh_token, expires_in, scope } = await emailProvider.getAccessTokenFromCode(code);
-            const userProfile = await emailProvider.getUserProfileFromAccessToken(access_token);
-            const emailAddress = 'email' in userProfile ? userProfile.email : userProfile.mail;
-            const account: Partial<AccountInput> = {
-                userId: userDetails?.id,
-                provider: provider as ACCOUNT_PROVIDER,
-                emailAddress,
-                userProfileDetails: userProfile,
-                accessToken: encrypt(access_token),
-                refreshToken: encrypt(refresh_token),
-                accessTokenExpiry: Date.now() + expires_in * 1000,
-                refreshTokenExpiry: expires_in,
-                scope,
-                syncEnabled: false,
-                syncInterval: 60,
-                lastSyncedAt: Date.now(),
-                active: true,
-            };
-            const savedAccount = await AccountRepository.upsertAccount(account);
-
-            // Register repeatable sync schedulers for newly authenticated accounts
-            await SchedulerService.upsertAccountRepeatableJob(String(savedAccount._id));
-
-            this.syncAccount(userDetails?.id, String(savedAccount._id));
-            return MAILSENSE_BASE_URL;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in AccountsService.callback: ${errorMessage}`, { error: err });
-            throw err;
-        }
+    async callback(provider: string, params: OAuthCallbackParams): Promise<string> {
+        return this.accountOAuthService.handleCallback(provider, params, (userId, accountId) => {
+            this.syncAccount(userId, accountId);
+        });
     }
 
-    async syncAccounts(userId: string): Promise<{ status: boolean; message: string; jobIds: string[] }> {
+    async syncAccounts(userId: string): Promise<SyncAccountsResponse> {
         try {
             const accounts = await AccountRepository.getAccounts({ userId, active: true });
             if (!accounts.length) return { status: true, message: 'Accounts not found', jobIds: [] };
@@ -247,7 +195,7 @@ export class AccountsService {
         }
     }
 
-    async syncAccount(userId: string, accountId: string): Promise<{ status: boolean; message: string; jobId?: string }> {
+    async syncAccount(userId: string, accountId: string): Promise<SyncAccountJobResponse> {
         try {
             logger.info('Account sync requested', { accountId, userId });
             const account = await AccountRepository.getAccountById(accountId);
@@ -317,12 +265,16 @@ export class AccountsService {
         }
     }
 
-    public async updateAccountSettings(accountId: string, settings: UpdateAccountSettingsSchema): Promise<UpdateAPIResponse> {
+    public async updateAccountSettings(userId: string, accountId: string, settings: UpdateAccountSettingsSchema): Promise<UpdateAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(accountId);
             if (!account) {
                 throw new NotFoundError('Account', accountId);
             }
+            if (account.userId.toString() !== userId.toString()) {
+                throw new ForbiddenError('Cannot modify settings of an account belonging to another user');
+            }
+
             await AccountRepository.updateAccount(accountId, settings);
 
             // Re-evaluates schedule in BullMQ

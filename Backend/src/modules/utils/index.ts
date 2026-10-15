@@ -1,10 +1,10 @@
 import { Router } from 'express';
 
-import { GmailApi } from '@integrations/gmail/gmail.client.js';
+import { GmailClient } from '@integrations/gmail/clients/index.js';
+import { OutlookClient } from '@integrations/outlook/clients/index.js';
 import { ACCOUNT_PROVIDER } from '@mailsense/types';
 import { authMiddleware } from '@middlewares';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { OutlookApi } from '@integrations/outlook/outlook.client.js';
 import { decrypt } from 'shared/utils/index.js';
 
 const router = Router();
@@ -25,9 +25,9 @@ router.get('/getAccountAccessToken', async (req, res) => {
     }
     let accessToken;
     if (account.provider === ACCOUNT_PROVIDER.GMAIL) {
-        accessToken = await GmailApi.fetchAccessToken(String(accountId));
+        accessToken = await GmailClient.fetchAccessToken(String(accountId));
     } else if (account.provider === ACCOUNT_PROVIDER.OUTLOOK) {
-        accessToken = await OutlookApi.fetchAccessToken(String(accountId));
+        accessToken = await OutlookClient.fetchAccessToken(String(accountId));
     }
     res.send({ accessToken });
 });

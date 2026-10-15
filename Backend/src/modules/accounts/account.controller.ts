@@ -8,6 +8,7 @@ import {
     UpdateAccountSettingsSchema,
 } from './account.schema.js';
 import { AccountsService } from './account.service.js';
+import { OAuthCallbackParams } from './account.types.js';
 
 export class AccountsController {
     private accountsService: AccountsService;
@@ -86,7 +87,7 @@ export class AccountsController {
     };
 
     public callback = async (
-        req: Request<ConnectAccountSchema, object, object, { code: string; state: string }>,
+        req: Request<ConnectAccountSchema, object, object, OAuthCallbackParams>,
         res: Response,
         next: NextFunction,
     ): Promise<void> => {
@@ -157,11 +158,15 @@ export class AccountsController {
         next: NextFunction,
     ): Promise<void> => {
         try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User authentication required');
+            }
             const accountId = req.params.accountId;
             if (!accountId) {
                 throw new BadRequestError('Account ID is required');
             }
-            const response = await this.accountsService.updateAccountSettings(accountId, req.body);
+            const response = await this.accountsService.updateAccountSettings(userId, accountId, req.body);
             res.status(200).send(response);
         } catch (error) {
             next(error);

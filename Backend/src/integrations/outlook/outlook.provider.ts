@@ -11,7 +11,7 @@ import {
 import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
-import { OutlookApi } from './outlook.client.js';
+import { OutlookClient } from './clients/index.js';
 import { OutlookService } from './outlook.service.js';
 
 export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenResponse, OutlookUserProfile, OutlookMessageObjectFull> {
@@ -102,10 +102,10 @@ export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenRe
     }
 
     async refreshAccessToken(accountId: string): Promise<string> {
-        return OutlookApi.refreshAccessToken(accountId);
+        return OutlookClient.refreshAccessToken(accountId);
     }
 
-    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], _removeFolderIds?: string[]): Promise<void> {
-        await this.outlookService.moveEmails(emailIds, accountId, targetFolderIds);
+    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], _removeFolderIds?: string[]): Promise<UpdateAPIResponse> {
+        return await this.outlookService.moveEmails(emailIds, accountId, targetFolderIds);
     }
 }

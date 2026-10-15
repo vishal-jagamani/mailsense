@@ -7,6 +7,22 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-10-15
+
+### Added
+- **Security & Multi-Tenant Data Protection (`SEC-REFACTOR-01`):** Hardened staged email attachments against IDOR vulnerabilities by strictly verifying that staging records belong to both the authenticated user and the target email account prior to message composition or deletion. Added automated unit and integration security test suites validating cross-tenant rejection.
+- **Domain Client Modularization (`ARCH-REFACTOR-01`):** Decomposed monolithic `GmailClient` and `OutlookClient` into focused, single-responsibility domain clients (`AuthClient`, `MessageClient`, `LabelClient`/`FolderClient`, and `ContactClient`) with unified static facades (`Backend/src/integrations/gmail/clients/index.ts` and `Backend/src/integrations/outlook/clients/index.ts`).
+- **Account OAuth Service Extraction (`ARCH-REFACTOR-02`):** Extracted `AccountOAuthService` from `AccountsService`, encapsulating OAuth URL generation, authorization code exchange, profile retrieval, and background sync triggering into a dedicated domain service.
+- **Consolidated Batch Provider Operations (`ARCH-REFACTOR-03`):** Implemented `executePerAccountProviderAction` in `EmailWriteService` to provide resilient, parallelized (`Promise.allSettled`) cross-account batch mutations (`star`, `unread`, `archive`, `delete`) with atomic database synchronization only for accounts that succeed.
+- **Frontend Hook Deduplication (`UI-REFACTOR-01`):** Extracted reusable `useEmailActions` custom hook (`Frontend/src/features/emails/hooks/useEmailActions.ts`), unifying bulk email selection, starring, reading, archiving, and deletion orchestration across Unified Inbox and Folder Email List views.
+- **Folder Card Modularization (`UI-REFACTOR-02`):** Decomposed `FolderCard.tsx` into focused sub-components (`FolderCardHeader`, `FolderCardActions`) and replaced anonymous folder components with explicitly named `FolderEmailListHeader.tsx`.
+- **Engineering Standards & ESLint 9 Flat Config (`DX-REFACTOR-01`):** Upgraded backend lint configuration to ESLint 9 Flat Config with TypeScript-ESLint, enforcing strictly zero inline object types across services and controllers, function size boundaries, and complexity guardrails.
+
+### Changed
+- **Shared Type Contracts (@mailsense/types v1.6.0):** Integrated `@mailsense/types` `1.6.0`, normalizing `to`, `cc`, and `bcc` recipient fields strictly to `string[]` arrays across backend providers, repositories, parsers, and frontend recipient chips.
+- **Account Privacy & Sanitization:** Guaranteed that sensitive encrypted OAuth credentials (`accessToken`, `refreshToken`) are never returned in public account responses, strictly delivering `SanitizedAccountAttributes[]`.
+- **Directory Standardization:** Renamed `Frontend/src/features/composeEmail` to strictly kebab-case `Frontend/src/features/compose-email`.
+
 ## [3.4.0] - 2026-09-27
 
 ### Added

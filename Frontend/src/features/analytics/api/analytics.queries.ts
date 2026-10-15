@@ -1,6 +1,7 @@
 import { AnalyticsQueryParams, DashboardAnalyticsResponse } from '@mailsense/types';
 import { ANALYTICS_QUERY_KEYS } from '@shared/api';
 import { ANALYTICS_STALE_TIME_MS } from '@shared/constants';
+import { trackUserAction } from '@shared/monitoring';
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { fetchDashboardAnalytics } from './analytics.api';
 
@@ -17,7 +18,7 @@ export const useGetDashboardAnalyticsQuery = (
             refetchOnWindowFocus: true,
         });
     } catch (error) {
-        console.error('Failed to initialize useGetDashboardAnalyticsQuery hook', { params, error });
+        trackUserAction('ui.click', 'Failed to initialize useGetDashboardAnalyticsQuery hook');
         throw error;
     }
 };

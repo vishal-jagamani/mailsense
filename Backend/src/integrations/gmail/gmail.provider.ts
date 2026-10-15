@@ -13,7 +13,7 @@ import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { decompressString, decrypt } from '@utils';
-import { GmailApi } from './gmail.client.js';
+import { GmailClient } from './clients/index.js';
 import { GmailService } from './gmail.service.js';
 
 export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenResponse, GmailUserProfile, Partial<GmailMessageObjectFull>> {
@@ -118,10 +118,10 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
         if (!account) {
             throw new NotFoundError('Account', accountId);
         }
-        return GmailApi.refreshAccessToken(accountId, decrypt(account.refreshToken));
+        return GmailClient.refreshAccessToken(accountId, decrypt(account.refreshToken));
     }
 
-    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds?: string[]): Promise<void> {
-        await this.gmailService.moveEmails(emailIds, accountId, targetFolderIds, removeFolderIds || []);
+    async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds?: string[]): Promise<UpdateAPIResponse> {
+        return await this.gmailService.moveEmails(emailIds, accountId, targetFolderIds, removeFolderIds || []);
     }
 }

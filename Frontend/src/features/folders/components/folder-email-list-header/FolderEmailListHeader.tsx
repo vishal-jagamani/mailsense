@@ -3,30 +3,17 @@
 import { Keyboard } from 'lucide-react';
 import React from 'react';
 
-import { AccountAttributes, EmailAttributes, Filter, FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
 import EmailMenuBarOptions from '@features/inbox/components/EmailMenuBarOptions';
+import { Filter, FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { DATE_RANGE_DROPDOWN_OPTIONS, UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
 import { Button } from '@shared/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
+import { FolderEmailListHeaderProps } from '../../types/folders.types';
 
-interface FolderEmailListHeaderProps {
-    searchValue: string;
-    setSearchValue: (value: string) => void;
-    accounts: AccountAttributes[];
-    filter: Filter | null;
-    setFilter: (value: Filter) => void;
-    selectedEmails: string[];
-    allEmails?: EmailAttributes[];
-    handleResetSelection: () => void;
-    handleResetPage: () => void;
-    fetchEmailsData: () => void;
-    onOpenShortcutsModal?: () => void;
-}
-
-const FolderEmailListHeader: React.FC<FolderEmailListHeaderProps> = (props) => {
+export const FolderEmailListHeader: React.FC<FolderEmailListHeaderProps> = (props) => {
     const {
         searchValue,
         setSearchValue,
@@ -103,8 +90,8 @@ const FolderEmailListHeader: React.FC<FolderEmailListHeaderProps> = (props) => {
                     <div className="flex w-full justify-between">
                         <FilterModal filter={filter} onFilterChange={(value: Filter) => setFilter(value)} filterOptions={filterOptions} />
                         <EmailMenuBarOptions
-                            emailIds={selectedEmails}
-                            allEmails={allEmails}
+                            emailIds={[...selectedEmails]}
+                            allEmails={allEmails ? [...allEmails] : undefined}
                             onResetSelection={handleResetSelection}
                             onResetPage={handleResetPage}
                             onRefetchEmails={fetchEmailsData}
@@ -116,8 +103,8 @@ const FolderEmailListHeader: React.FC<FolderEmailListHeaderProps> = (props) => {
                     <FilterModal filter={filter} onFilterChange={(value: Filter) => setFilter(value)} filterOptions={filterOptions} />
                     <SearchHeader value={searchValue} onChange={setSearchValue} placeholder={UI_CONSTANTS.PLACEHOLDERS.SEARCH_EMAILS} />
                     <EmailMenuBarOptions
-                        emailIds={selectedEmails}
-                        allEmails={allEmails}
+                        emailIds={[...selectedEmails]}
+                        allEmails={allEmails ? [...allEmails] : undefined}
                         onRefetchEmails={fetchEmailsData}
                         onResetSelection={handleResetSelection}
                         onResetPage={handleResetPage}

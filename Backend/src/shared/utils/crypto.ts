@@ -2,12 +2,13 @@ import { ENCRYPTION_KEY } from '@config';
 import { CRYPTO } from '@constants';
 import crypto from 'crypto';
 import { logger } from './logger.js';
+import { ConfigurationError } from '@errors';
 
 const cryptoKey = Buffer.from(ENCRYPTION_KEY, 'base64');
 
 if (cryptoKey.length !== 32) {
     logger.error('❌ ENCRYPTION_KEY must be 32 bytes (base64-encoded)');
-    throw new Error('❌ ENCRYPTION_KEY must be 32 bytes (base64-encoded)');
+    throw new ConfigurationError('ENCRYPTION_KEY must be 32 bytes (base64-encoded)', 'ENCRYPTION_KEY');
 }
 
 // Encrypt data
