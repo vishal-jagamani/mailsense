@@ -2,8 +2,11 @@ import { NODE_ENV } from '@config';
 import { AppError, AxiosApiError, ErrorCode } from '@errors';
 import { monitoring } from '@monitoring';
 import { ErrorResponsePayload } from '@types';
+import { LOGGER_MODULE } from '@constants';
+import { createLogger } from '@observability';
 import { NextFunction, Request, Response } from 'express';
-import { logger } from '../shared/utils/logger.js';
+
+const logger = createLogger(LOGGER_MODULE.SERVER);
 
 export const errorHandler = (err: unknown, req: Request, res: Response, _next: NextFunction): void => {
     try {

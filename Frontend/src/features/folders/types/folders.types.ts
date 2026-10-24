@@ -1,5 +1,10 @@
 import { AccountAttributes, CreateFolderBodyParams, EmailAttributes, Filter, FolderAttributes } from '@mailsense/types';
 
+export interface UpdateFolderMutationVariables {
+    readonly id: string;
+    readonly body: CreateFolderBodyParams;
+}
+
 export interface RenameFolderState {
     readonly renameFolderFlag: boolean;
     readonly renameFolderId: string;

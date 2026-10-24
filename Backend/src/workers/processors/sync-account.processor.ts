@@ -72,7 +72,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
 
     // 1. Sync Folders & Labels
     logger.info(`Syncing folders for account: ${accountId}`);
-    await folderService.syncFolders(accountId);
+    await folderService.syncFolders(userId, accountId);
 
     // 2. Sync Emails (Incremental vs Full Sync)
     logger.info(`Fetching email updates for account: ${accountId} (Cursor: ${account.lastSyncCursor || 'None'})`);

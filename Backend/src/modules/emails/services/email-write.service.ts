@@ -6,10 +6,10 @@ import { ACCOUNT_PROVIDER, PerAccountActionContext, SuccessAPIResponse, UpdateAP
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { AttachmentsService } from '@modules/attachments/attachment.service.js';
 import { createLogger } from '@observability';
-import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
-import { EmailRepository } from './email.repository.js';
-import { ComposeEmailBody } from './email.schema.js';
-import { ComposeEmailAttachment } from './email.types.js';
+import { EMAIL_LIST_DB_FIELD_MAPPING } from '../email.constants.js';
+import { EmailRepository } from '../email.repository.js';
+import { ComposeEmailBody } from '../email.schema.js';
+import { ComposeEmailAttachment } from '../email.types.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 
@@ -125,7 +125,7 @@ export class EmailWriteService {
             if (!account) {
                 throw new NotFoundError('Account', accountId);
             }
-            if (account.userId.toString() !== userId.toString()) {
+            if (account.userId !== userId) {
                 throw new ForbiddenError('Unauthorized attempt to compose email from unowned account');
             }
             const stagedFiles: ComposeEmailAttachment[] = [];

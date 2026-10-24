@@ -53,7 +53,7 @@ const UserAccountSettingsSchema = new Schema<UserAccountSettings>(
 
 const UserSettingsSchema = new Schema<UserSettingsDocument>(
     {
-        userId: { type: String, required: true, index: true },
+        userId: { type: String, required: true },
         account: { type: UserAccountSettingsSchema, default: () => ({}) },
     },
     { timestamps: true, versionKey: false },

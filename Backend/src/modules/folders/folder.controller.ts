@@ -14,10 +14,14 @@ export class FolderController {
     public syncFolders = async (req: Request<GetAccountFoldersSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { accountId } = req.params;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
             if (!accountId) {
                 throw new BadRequestError('Account ID is required');
             }
-            const folders = await this.folderService.syncFolders(accountId);
+            const folders = await this.folderService.syncFolders(userId, accountId);
             res.send(folders);
         } catch (error) {
             next(error);
@@ -44,10 +48,14 @@ export class FolderController {
     public getFolder = async (req: Request<GetFolderSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { folderId } = req.params;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
             if (!folderId) {
                 throw new BadRequestError('Folder ID is required');
             }
-            const folder = await this.folderService.getFolder(folderId);
+            const folder = await this.folderService.getFolder(userId, folderId);
             res.send(folder);
         } catch (error) {
             next(error);
@@ -61,10 +69,14 @@ export class FolderController {
     ): Promise<void> => {
         try {
             const { accountId } = req.params;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
             if (!accountId) {
                 throw new BadRequestError('Account ID is required');
             }
-            const folders = await this.folderService.getAccountFolders(accountId);
+            const folders = await this.folderService.getAccountFolders(userId, accountId);
             res.send(folders);
         } catch (error) {
             next(error);
@@ -74,10 +86,14 @@ export class FolderController {
     public createFolder = async (req: Request<object, object, CreateFolderSchema, object>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const { folderName, accountId } = req.body;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
             if (!folderName || !accountId) {
                 throw new BadRequestError('Folder name and account ID are required');
             }
-            const folder = await this.folderService.createFolder(accountId, folderName);
+            const folder = await this.folderService.createFolder(userId, accountId, folderName);
             res.send(folder);
         } catch (error) {
             next(error);

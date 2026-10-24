@@ -11,12 +11,12 @@ import {
 import { axiosClient, EMAILS_API_ENDPOINTS } from '@shared/api';
 
 export async function getEmailDetails(emailId: string): Promise<EmailAttributes> {
-    const { data } = await axiosClient.get(EMAILS_API_ENDPOINTS.DETAILS(emailId));
+    const { data } = await axiosClient.get<EmailAttributes>(EMAILS_API_ENDPOINTS.DETAILS(emailId));
     return data;
 }
 
 export async function getThread(emailId: string): Promise<GetThreadResponse> {
-    const { data } = await axiosClient.get(EMAILS_API_ENDPOINTS.THREAD(emailId));
+    const { data } = await axiosClient.get<GetThreadResponse>(EMAILS_API_ENDPOINTS.THREAD(emailId));
     return data;
 }
 
@@ -48,4 +48,11 @@ export async function searchOtherContacts(searchText: string): Promise<APIRespon
 export async function moveEmails(body: MoveEmailsRequestBody): Promise<MoveEmailsResponse> {
     const { data } = await axiosClient.post<MoveEmailsResponse>(EMAILS_API_ENDPOINTS.MOVE, body);
     return data;
+}
+
+export async function downloadAttachment(emailId: string, attachmentId: string): Promise<Blob> {
+    const response = await axiosClient.get(EMAILS_API_ENDPOINTS.ATTACHMENT(emailId, attachmentId), {
+        responseType: 'blob',
+    });
+    return response.data;
 }

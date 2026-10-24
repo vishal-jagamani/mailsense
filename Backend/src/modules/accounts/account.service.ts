@@ -61,7 +61,7 @@ export class AccountsService {
             if (!account) {
                 throw new NotFoundError('Account', accountId);
             }
-            if (userId && account.userId.toString() !== userId.toString()) {
+            if (userId && account.userId !== userId) {
                 throw new ForbiddenError('Access to specified account is denied');
             }
             return this.sanitizeAccount(account);
@@ -83,7 +83,7 @@ export class AccountsService {
             if (!account) {
                 throw new NotFoundError('Account', accountId);
             }
-            if (account.userId.toString() !== userId.toString()) {
+            if (account.userId !== userId) {
                 throw new ForbiddenError('Cannot delete an account belonging to another user');
             }
             await this.initiateAccountDeletion(accountId);
@@ -203,7 +203,7 @@ export class AccountsService {
                 throw new NotFoundError('Account', accountId);
             }
 
-            if (account.userId.toString() !== userId.toString()) {
+            if (account.userId !== userId) {
                 throw new ForbiddenError('Cannot trigger sync for an account belonging to another user');
             }
 
@@ -246,7 +246,7 @@ export class AccountsService {
                 throw new NotFoundError('Account', accountId);
             }
 
-            if (account.userId.toString() !== userId.toString()) {
+            if (account.userId !== userId) {
                 throw new ForbiddenError('Cannot modify an account belonging to another user');
             }
 
@@ -271,7 +271,7 @@ export class AccountsService {
             if (!account) {
                 throw new NotFoundError('Account', accountId);
             }
-            if (account.userId.toString() !== userId.toString()) {
+            if (account.userId !== userId) {
                 throw new ForbiddenError('Cannot modify settings of an account belonging to another user');
             }
 

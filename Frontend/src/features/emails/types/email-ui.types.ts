@@ -1,4 +1,14 @@
-import { EmailAttachment, EmailAttributes, Filter, FilterOption, FolderAttributes, PaginatedDataResponse } from '@mailsense/types';
+import {
+    AccountAttributes,
+    EmailAttachment,
+    EmailAttributes,
+    Filter,
+    FilterOption,
+    FolderAttributes,
+    GetThreadResponse,
+    PaginatedDataResponse,
+    UpdateAPIResponse,
+} from '@mailsense/types';
 import { Dispatch, MouseEvent, SetStateAction } from 'react';
 
 // ==========================================
@@ -192,4 +202,37 @@ export interface UseInboxPageReturnParams {
         setIsShortcutsModalOpen: (open: boolean) => void;
         setEmailsToDelete: (emails: string[]) => void;
     };
+}
+
+export interface EmailsPageAccountState {
+    readonly data: AccountAttributes | undefined;
+    readonly isLoadingAccount: boolean;
+}
+
+export interface EmailsPageEmailState {
+    readonly data: EmailAttributes | undefined;
+    readonly isLoadingEmail: boolean;
+}
+
+export interface EmailsPageThreadState {
+    readonly data: GetThreadResponse | undefined;
+    readonly isLoadingThread: boolean;
+}
+
+export interface EmailsPageUnreadOperationState {
+    readonly trigger: (emailIds: string[], unread: boolean) => void;
+    readonly unreadEmailLoading: boolean;
+    readonly unreadEmailSuccess: UpdateAPIResponse | undefined;
+}
+
+export interface EmailsPageSetterState {
+    readonly setIsManualUnreadOperation: (value: boolean) => void;
+}
+
+export interface UseEmailsPageReturnParams {
+    readonly account: EmailsPageAccountState;
+    readonly email: EmailsPageEmailState;
+    readonly thread: EmailsPageThreadState;
+    readonly unreadEmail: EmailsPageUnreadOperationState;
+    readonly setter: EmailsPageSetterState;
 }

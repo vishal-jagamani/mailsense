@@ -2,36 +2,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { useGetAccountDetailsQuery } from '@features/accounts/api/accounts.queries';
-import { AccountAttributes, EmailAttributes, GetThreadResponse, UpdateAPIResponse } from '@mailsense/types';
 import { HOME_ROUTES } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
 import { useUnreadEmailMutation } from '../api/email.mutations';
 import { useGetEmailDetailsQuery, useGetThreadQuery } from '../api/email.queries';
+import { UseEmailsPageReturnParams } from '../types/email-ui.types';
 
-interface useEmailsPageReturnParams {
-    account: {
-        data: AccountAttributes | undefined;
-        isLoadingAccount: boolean;
-    };
-    email: {
-        data: EmailAttributes | undefined;
-        isLoadingEmail: boolean;
-    };
-    thread: {
-        data: GetThreadResponse | undefined;
-        isLoadingThread: boolean;
-    };
-    unreadEmail: {
-        trigger: (emailIds: string[], unread: boolean) => void;
-        unreadEmailLoading: boolean;
-        unreadEmailSuccess: UpdateAPIResponse | undefined;
-    };
-    setter: {
-        setIsManualUnreadOperation: (value: boolean) => void;
-    };
-}
-
-export const useEmailsPage = (accountId: string, emailId: string): useEmailsPageReturnParams => {
+export const useEmailsPage = (accountId: string, emailId: string): UseEmailsPageReturnParams => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const page = searchParams.get('page');

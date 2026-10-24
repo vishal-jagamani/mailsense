@@ -8,11 +8,707 @@
 
 ### 📋 Audit Version Index
 
-| Version                    | Release Date | Audit Stage                         | Status    | Highlights                                                                                                               |
-| -------------------------- | ------------ | ----------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------ |
-| [1.2.0](#120---2026-09-27) | 2026-09-27   | Deep Structural & Refactoring Audit | COMPLETED | Folder structure, file length standards, OOP patterns, code duplication, 8 new bugs, 22 refactorings, ESLint enforcement |
-| [1.1.0](#110---2026-09-26) | 2026-09-26   | Post-Stabilization Audit            | COMPLETED | Remediated 12 bugs, 7 security gaps, domain errors, optimizations & next findings                                        |
-| [1.0.0](#100---2026-09-21) | 2026-09-21   | Initial Baseline Health Audit       | COMPLETED | Initial inventory, 12 bugs identified, security holes, remediation roadmap                                               |
+| Version                    | Release Date | Audit Stage                                     | Status    | Highlights                                                                                                                                       |
+| -------------------------- | ------------ | ----------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [1.3.0](#130---2026-10-15) | 2026-10-15   | Post-Refactoring & Architecture Hardening Audit | COMPLETED | Verified v1.2.0 remediation (15 resolved, 6 partial, 4 unresolved), 3 critical IDOR findings, duplicate index warning, ESLint enforcement status |
+| [1.2.0](#120---2026-09-27) | 2026-09-27   | Deep Structural & Refactoring Audit             | COMPLETED | Folder structure, file length standards, OOP patterns, code duplication, 8 new bugs, 22 refactorings, ESLint enforcement                         |
+| [1.1.0](#110---2026-09-26) | 2026-09-26   | Post-Stabilization Audit                        | COMPLETED | Remediated 12 bugs, 7 security gaps, domain errors, optimizations & next findings                                                                |
+| [1.0.0](#100---2026-09-21) | 2026-09-21   | Initial Baseline Health Audit                   | COMPLETED | Initial inventory, 12 bugs identified, security holes, remediation roadmap                                                                       |
+
+---
+
+## [1.3.0] - 2026-10-15
+
+### 📋 File Audit Details
+
+| Field            | Value                |
+| ---------------- | -------------------- |
+| **Created**      | 2026-10-15 15:30 IST |
+| **Last Updated** | 2026-10-15 15:30 IST |
+
+### 📦 Repository Versions (at time of audit)
+
+| Repository           | Package              | Version  | Notes                                                                                                     |
+| -------------------- | -------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
+| `mailsense-types`    | `@mailsense/types`   | `v1.6.0` | Shared type contracts — normalized `EmailAttributes.to/cc/bcc: string[]`, `PerAccountActionContext` added |
+| `mailsense/Backend`  | `mailsense-backend`  | `v3.5.0` | Decomposed integration clients, AccountOAuthService extraction, sanitized accounts, per-account DRY       |
+| `mailsense/Frontend` | `mailsense-frontend` | `v3.5.0` | Extracted `useEmailActions` / `useEmailPagination`, PascalCase components, kebab-case compose-email       |
+
+---
+
+### 1. Executive Summary & Audit Context
+
+The **v1.3.0 Post-Refactoring & Architecture Hardening Audit** is the fourth iteration of the MailSense codebase health audit series. Following the completion of the major `v3.5.0` refactoring milestone (encompassing shared contract normalization in `@mailsense/types` `v1.6.0`, backend integration client decomposition into `clients/`, `AccountOAuthService` extraction, and frontend page hook deduplication via `useEmailActions`), this audit assesses:
+
+1. **Previous Audit Verification:** Systematic verification of all 25 remediation and structural items defined in the v1.2.0 roadmap.
+2. **Security & Multi-Tenant Isolation:** Deep scan for IDOR vulnerabilities and authorization gaps across newly decomposed controllers and services.
+3. **Standards Compliance:** Verification of file sizes, method complexities, and strictly zero inline types under active ESLint rules.
+4. **Architecture Maturity:** Evaluation of singleton usage, database boundary isolation, and error handling conformance.
+
+**Key Findings Overview:**
+
+- **Major Wins:** 15 remediation items from v1.2.0 were fully resolved. `express.static` project-root mount was eliminated, accounts list responses are strictly sanitized (`SanitizedAccountAttributes`), `EmailWriteService` reduced from 326 to 179 lines via `executePerAccountProviderAction`, Gmail and Outlook clients are now modularized under `clients/`, and `useInboxPage.ts` dropped from 529 to ~223 lines by extracting shared actions.
+- **Critical Unresolved & New Security Gaps:**
+  1. **BUG-V13-01 (P0):** The attachment ownership check in [`email-write.service.ts:136-139`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-write.service.ts#L136-L139) is **still commented out**, causing `attachment-security.test.ts` to fail and leaving an active IDOR vulnerability in email composition.
+  2. **BUG-V13-02 (P0):** `EmailController` endpoints `getThread`, `getEmail`, `downloadAttachment`, and `downloadAttachmentStream` in [`email.controller.ts:215-254`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts#L215-L254) and [`email-read.service.ts:183-332`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-read.service.ts#L183-L332) do **not verify user ownership of the parent account**, permitting cross-tenant email reading and attachment downloads.
+  3. **BUG-V13-03 (P0):** `FolderController` endpoints `syncFolders`, `getFolder`, `getAccountFolders`, and `createFolder` in [`folder.controller.ts:14-85`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.controller.ts#L14-L85) and [`folder.service.ts:16-110`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.service.ts#L16-L110) do **not verify account ownership**, allowing cross-tenant folder listing and syncing.
+  4. **BUG-V13-05 (P1):** Duplicate schema index on `{"userId": 1}` in [`user.model.ts:56,63`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.model.ts#L56-L63) triggers Mongoose startup warnings.
+  5. **ESLint Enforcement:** Active rules in `eslint.config.mjs` flag 39 errors in Backend and 101 errors in Frontend, predominantly due to inline object types in UI primitives and controllers.
+
+---
+
+### 2. Previous Audit Verification (v1.2.0 Roadmap Evaluation)
+
+Every item from the v1.2.0 remediation roadmap has been systematically verified against active source code:
+
+| Finding ID         | Title                                                         | Status        | Verification (File Link + Evidence)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------------ | ------------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **BUG-V12-01**     | Remove / scope `express.static` root exposure                 | ✅ RESOLVED   | [`app.ts:43-52`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/app.ts#L43-L52) — Project root `express.static(path.join(this.__dirname, "/"))` was completely removed.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **BUG-V12-02**     | Uncomment attachment ownership validation                     | ❌ UNRESOLVED | [`email-write.service.ts:136-139`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-write.service.ts#L136-L139) — Ownership validation block remains commented out. Causes `attachment-security.test.ts` to fail. Re-documented as **BUG-V13-01**.                                                                                                                                                                                                                                                                                                                                                                                    |
+| **BUG-V12-03**     | Remove `console.log({ response })` from Gmail service         | ✅ RESOLVED   | [`gmail.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts) — Verified zero occurrences of `console.log` in Gmail service.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **BUG-V12-04**     | Add userId verification in `updateAccountSettings`            | ✅ RESOLVED   | [`account.controller.ts:160-170`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.controller.ts#L160-L170) & [`account.service.ts:145-165`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.service.ts#L145-L165) — `userId` extracted from `req.user.id`, validated against `account.userId`, verified by passing [`account-settings-security.test.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/__tests__/account-settings-security.test.ts).                                                                                       |
+| **BUG-V12-05**     | Sanitize `getAccounts` response to strip OAuth tokens         | ✅ RESOLVED   | [`account.service.ts:117-126`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.service.ts#L117-L126) — Returns `SanitizedAccountAttributes[]` mapped via `sanitizeAccount()`, stripping tokens. Verified by passing [`account-sanitization.test.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/__tests__/account-sanitization.test.ts).                                                                                                                                                                                                                                              |
+| **BUG-V12-06**     | Fix fire-and-forget `cleanupStagedAttachments` call           | ✅ RESOLVED   | [`email-write.service.ts:156-158`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-write.service.ts#L156-L158) — Added `await this.attachmentsService.cleanupStagedAttachments(attachmentIds)`.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **BUG-V12-07**     | Replace 15+ `console.error` with `trackUserAction()`          | ⚠️ PARTIALLY  | Replaced across all feature pages/modals. Residual `console.error` in [`useEmailKeyboardShortcuts.ts:142`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts#L142) and monitoring providers. Re-documented as **BUG-V13-06**.                                                                                                                                                                                                                                                                                                                                                                           |
+| **BUG-V12-08**     | Normalize `EmailAttributes.to/cc/bcc` to `string[]`           | ✅ RESOLVED   | [`emails.interfaces.ts:10-12`](file:///Users/vishaljagamani/Projects/Projects/mailsense-types/src/emails/emails.interfaces.ts#L10-L12) — Canonical contracts define `to: string[]`, `cc: string[]`, `bcc: string[]`. Released in `@mailsense/types` `v1.6.0`.                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **BUG-V12-09**     | Strictly eliminate all inline object types                    | ⚠️ PARTIALLY  | ESLint rule configured in `eslint.config.mjs`. Many feature interfaces cleaned, but 101 errors in Frontend (mostly UI primitives) and 39 in Backend remain. Re-documented as **BUG-V13-04**.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **BUG-V12-10**     | Extract types declared inside non-types files                 | ⚠️ PARTIALLY  | Extracted in `features/emails/types/email-ui.types.ts`, `features/folders/types/folders.types.ts`, `features/inbox/types/inbox.types.ts`, and Backend `*.types.ts`. Residual types remain in `analytics` and `drafts`. Re-documented as **BUG-V13-04**.                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **REFACTOR-FE-01** | Extract shared email action handlers into hooks               | ✅ RESOLVED   | [`useEmailActions.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailActions.ts) and [`useEmailPagination.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailPagination.ts) created. `useInboxPage.ts` reduced from 529 to 223 lines.                                                                                                                                                                                                                                                                                                                              |
+| **REFACTOR-FE-02** | Eliminate `useInboxEmailMenuBarOptions.ts` duplication        | ✅ RESOLVED   | [`useInboxEmailMenuBarOptions.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/hooks/useInboxEmailMenuBarOptions.ts) refactored to consume `useEmailActions`, dropping from 219 to 85 lines.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **REFACTOR-BE-01** | Extract OAuth callback flow from AccountsService              | ✅ RESOLVED   | [`account-oauth.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account-oauth.service.ts) created (91 lines) and injected into `AccountsService`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **REFACTOR-BE-02** | DRY per-account provider action in `EmailWriteService`        | ✅ RESOLVED   | [`email-write.service.ts:27-60`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-write.service.ts#L27-L60) — `executePerAccountProviderAction` consolidates archive, delete, star, unread, and move actions. File size reduced from 326 to 179 lines.                                                                                                                                                                                                                                                                                                                                                                                |
+| **REFACTOR-BE-03** | Unify GmailApi / OutlookApi method visibility                 | ✅ RESOLVED   | Both integration client suites standardized to `public static async` methods across [`integrations/gmail/clients/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/clients/) and [`integrations/outlook/clients/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/clients/).                                                                                                                                                                                                                                                                                                               |
+| **ENH-V12-10**     | Extract OAuth callback into `AccountOAuthService`             | ✅ RESOLVED   | Completed under REFACTOR-BE-01.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **ENH-V12-11**     | Split `outlook.client.ts` (651 lines)                         | ✅ RESOLVED   | Split into [`outlook-auth.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/clients/outlook-auth.client.ts), [`outlook-mail.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/clients/outlook-mail.client.ts), [`outlook-folder.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/clients/outlook-folder.client.ts), and [`outlook-attachment.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/clients/outlook-attachment.client.ts) with `clients/index.ts`. |
+| **ENH-V12-12**     | Split `gmail.client.ts` (506 lines)                           | ✅ RESOLVED   | Split into [`gmail-auth.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/clients/gmail-auth.client.ts), [`gmail-mail.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/clients/gmail-mail.client.ts), [`gmail-contacts.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/clients/gmail-contacts.client.ts), and [`gmail-attachment.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/clients/gmail-attachment.client.ts) with `clients/index.ts`.                     |
+| **ENH-V12-13**     | Adopt module-level singleton pattern for services             | ⚠️ PARTIALLY  | Constructor injection supported across services, but default `new Dependency()` instantiations remain in constructors.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **ENH-V12-14**     | Remove empty constructors from services                       | ✅ RESOLVED   | Empty constructor removed from [`folder.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.service.ts).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| **ENH-V12-15**     | Replace startup `throw new Error()` with `ConfigurationError` | ✅ RESOLVED   | [`redis.connection.ts:32`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/core/queue/redis.connection.ts#L32) and [`crypto.ts:10`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/shared/utils/crypto.ts#L10) throw typed `ConfigurationError`.                                                                                                                                                                                                                                                                                                                                                                                    |
+| **ENH-V12-22**     | Consolidate `entities/` into `features/*/types/`              | ❌ UNRESOLVED | `Frontend/src/entities/` still exists.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| **STRUCT-BE-01**   | Move `middlewares/` into `core/middlewares/`                  | ❌ UNRESOLVED | Middleware remains in `Backend/src/middlewares/`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **STRUCT-BE-02**   | Extract database connection into `core/database/`             | ❌ UNRESOLVED | Database bootstrap remains in `server.ts`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **STRUCT-BE-05**   | Standardize Backend modules in categorized subdirectories     | ⚠️ PARTIALLY  | Decomposed module files exist, but categorized folders (`controllers/`, `services/`, `repositories/`) are not yet universal across all modules.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **STRUCT-BE-06**   | Group integration clients into `clients/` and `services/`     | ✅ RESOLVED   | `integrations/gmail/clients/` and `integrations/outlook/clients/` created with barrel exports `index.ts`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **STRUCT-FE-04**   | Standardize Frontend component files to PascalCase            | ✅ RESOLVED   | `composeEmail/` renamed to `compose-email/`, `FolderCard.tsx` and `FolderEmailListHeader.tsx` created. Anonymous `index.tsx` eliminated.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+---
+
+### 3. Folder Structure Analysis
+
+#### 3.1 Backend Folder Structure Compliance & Standardization
+
+##### 3.1.1 Current vs Target Directory Topology
+
+The Backend follows a modular architecture, but several key feature modules have accumulated files flat at the root of their directory rather than adhering to the standardized categorized subdirectory structure prescribed by [Coding Standards Rule 5.5](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md).
+
+```mermaid
+graph TD
+    subgraph Current Flat Module Structure ["❌ Current Flat Structure (e.g. modules/emails/)"]
+        E1[email.controller.ts]
+        E2[email-read.service.ts]
+        E3[email-write.service.ts]
+        E4[email.service.ts]
+        E5[email.repository.ts]
+        E6[email.model.ts]
+        E7[email.routes.ts]
+        E8[email.validation.ts]
+        E9[email.types.ts]
+    end
+
+    subgraph Target Subdirectory Pattern ["✅ Target Standardized Subdirectory Pattern (Rule 5.5)"]
+        T1["controllers/ (email-query, email-mutation) + index.ts"]
+        T2["services/ (email-read, email-write, facade) + index.ts"]
+        T3["repositories/ (email.repository.ts) + index.ts"]
+        T4["models/ (email.model.ts) + index.ts"]
+        T5["schemas/ (email-query, email-mutation) + index.ts"]
+        T6["interfaces/ (email.interface.ts) + index.ts"]
+        T7["routes/ (email.routes.ts) + index.ts"]
+    end
+```
+
+##### 3.1.2 Module Subdirectory Pattern Audit (Rule 5.5)
+
+| Module | Current File Count (Flat) | Missing Categorized Subdirectories | Barrel Export Status | Refactoring Priority |
+|---|---:|---|---|---|
+| [`modules/accounts/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/) | 11 files flat | `controllers/`, `services/`, `repositories/`, `models/`, `schemas/`, `interfaces/`, `routes/` | ❌ Missing subdirectories | 🟡 P1 |
+| [`modules/emails/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/) | 10 files flat | `controllers/`, `services/`, `repositories/`, `models/`, `schemas/`, `interfaces/`, `routes/` | ❌ Missing subdirectories | 🟡 P1 |
+| [`modules/folders/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/) | 8 files flat | `controllers/`, `services/`, `repositories/`, `models/`, `schemas/`, `interfaces/`, `routes/` | ❌ Missing subdirectories | 🟠 P2 |
+| [`modules/drafts/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/drafts/) | 7 files flat | `controllers/`, `services/`, `repositories/`, `models/`, `schemas/`, `interfaces/`, `routes/` | ❌ Missing subdirectories | 🟠 P2 |
+| [`modules/analytics/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/) | 6 files flat | `controllers/`, `services/`, `repositories/`, `models/`, `schemas/`, `interfaces/`, `routes/` | ❌ Missing subdirectories | 🟠 P2 |
+| [`modules/user/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/) | 4 files flat | `controllers/`, `services/`, `repositories/`, `models/`, `schemas/`, `interfaces/`, `routes/` | ❌ Missing subdirectories | 🟢 P3 |
+| [`modules/utils/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/utils/) | 3 files flat | N/A — Ambiguous name; contains health/system endpoints. Rename to `modules/system/`. | ❌ Ambiguous naming | 🟢 P3 |
+
+##### 3.1.3 Integration Subdirectories Decomposition (Gmail & Outlook)
+
+The refactoring in v3.5.0 successfully grouped integration clients into [`integrations/gmail/clients/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/clients/) and [`integrations/outlook/clients/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/clients/) with `index.ts` barrel exports. However:
+- **Outlook Service:** [`outlook.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts) (521 lines) sits flat at the provider root. It must be decomposed into `integrations/outlook/services/outlook-sync.service.ts` and `integrations/outlook/services/outlook-mail.service.ts` with `services/index.ts`.
+- **Gmail Service:** [`gmail.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts) (450 lines) sits flat at the provider root. It must be decomposed into `integrations/gmail/services/gmail-sync.service.ts` and `integrations/gmail/services/gmail-mail.service.ts` with `services/index.ts`.
+
+##### 3.1.4 Core Infrastructure Restructuring
+
+- **STRUCT-BE-01:** `Backend/src/middlewares/` currently sits at `src/` root. In accordance with layered architecture standards, all cross-cutting middlewares (`auth.ts`, `error.handler.ts`, `rate-limiter.middleware.ts`, `validate-schema.ts`) must be moved to [`Backend/src/core/middlewares/`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/core/).
+- **STRUCT-BE-02:** MongoDB initialization, Mongoose event listeners, and connection pooling logic currently reside directly in [`server.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/server.ts). This violates separation of concerns. Database bootstrapping must be encapsulated in `Backend/src/core/database/connection.ts`.
+
+---
+
+#### 3.2 Frontend Folder Structure & Anonymous `index.tsx` Audit
+
+##### 3.2.1 Directory Naming Standards Compliance
+
+- **Universal Kebab-Case (Rule 8.1):** ✅ 100% compliant. All feature directories (`features/emails/`, `features/inbox/`, `features/folders/`, `features/analytics/`, `features/drafts/`) and subdirectories adhere strictly to lowercase kebab-case (including the recent rename of `composeEmail/` to `compose-email/`).
+
+##### 3.2.2 Elimination of Anonymous `index.tsx` Components (Rule 8.4)
+
+[Coding Standards Rule 8.4](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md) strictly prohibits creating component directories containing only an anonymous `index.tsx` file (e.g., `component-folder/index.tsx`), which degrades IDE navigation, introduces ambiguous tab titles, and obscures component exports.
+
+An exhaustive scan across `Frontend/src/` identified **27 anonymous `index.tsx` files** requiring renaming to `PascalCase.tsx`:
+
+| Current Anonymous Path | Exported Component Symbol | Target File Path (Rule 8.4 Compliant) | Priority |
+|---|---|---|---|
+| `Frontend/src/features/analytics/components/charts/email-volume-chart/index.tsx` | `EmailVolumeChart` | `.../email-volume-chart/EmailVolumeChart.tsx` | 🟡 P1 |
+| `Frontend/src/features/analytics/components/charts/response-time-chart/index.tsx` | `ResponseTimeChart` | `.../response-time-chart/ResponseTimeChart.tsx` | 🟡 P1 |
+| `Frontend/src/features/analytics/components/charts/top-senders-chart/index.tsx` | `TopSendersChart` | `.../top-senders-chart/TopSendersChart.tsx` | 🟡 P1 |
+| `Frontend/src/features/analytics/components/kpi-cards/index.tsx` | `KpiCards` | `.../kpi-cards/KpiCards.tsx` | 🟡 P1 |
+| `Frontend/src/features/analytics/components/kpi-cards/kpi-card-item/index.tsx` | `KpiCardItem` | `.../kpi-card-item/KpiCardItem.tsx` | 🟡 P1 |
+| `Frontend/src/features/analytics/components/overview-cards/index.tsx` | `OverviewCards` | `.../overview-cards/OverviewCards.tsx` | 🟡 P1 |
+| `Frontend/src/features/analytics/components/overview-cards/overview-card-item/index.tsx` | `OverviewCardItem` | `.../overview-card-item/OverviewCardItem.tsx` | 🟡 P1 |
+| `Frontend/src/features/analytics/components/response-time-cards/index.tsx` | `ResponseTimeCards` | `.../response-time-cards/ResponseTimeCards.tsx` | 🟡 P1 |
+| `Frontend/src/features/analytics/components/response-time-cards/response-time-card-item/index.tsx` | `ResponseTimeCardItem` | `.../response-time-card-item/ResponseTimeCardItem.tsx` | 🟡 P1 |
+| `Frontend/src/features/drafts/components/draft-actions/index.tsx` | `DraftActions` | `.../draft-actions/DraftActions.tsx` | 🟡 P1 |
+| `Frontend/src/features/drafts/components/draft-table/index.tsx` | `DraftTable` | `.../draft-table/DraftTable.tsx` | 🟡 P1 |
+| `Frontend/src/features/drafts/components/draft-table-header/index.tsx` | `DraftTableHeader` | `.../draft-table-header/DraftTableHeader.tsx` | 🟡 P1 |
+| `Frontend/src/features/drafts/components/draft-table-row/index.tsx` | `DraftTableRow` | `.../draft-table-row/DraftTableRow.tsx` | 🟡 P1 |
+| `Frontend/src/features/drafts/components/draft-table-skeleton/index.tsx` | `DraftTableSkeleton` | `.../draft-table-skeleton/DraftTableSkeleton.tsx` | 🟡 P1 |
+| `Frontend/src/features/drafts/components/drafts-empty-state/index.tsx` | `DraftsEmptyState` | `.../drafts-empty-state/DraftsEmptyState.tsx` | 🟡 P1 |
+| `Frontend/src/features/emails/components/thread-view/index.tsx` | `ThreadView` | `.../thread-view/ThreadView.tsx` | 🟡 P1 |
+| `Frontend/src/features/emails/components/thread-view/thread-message/index.tsx` | `ThreadMessage` | `.../thread-message/ThreadMessage.tsx` | 🟡 P1 |
+| `Frontend/src/features/emails/components/thread-view/thread-view-skeleton/index.tsx` | `ThreadViewSkeleton` | `.../thread-view-skeleton/ThreadViewSkeleton.tsx` | 🟡 P1 |
+| `Frontend/src/features/folders/components/body/index.tsx` | `FolderBody` | `.../body/FolderBody.tsx` | 🟡 P1 |
+| `Frontend/src/features/folders/components/body/folder-list/index.tsx` | `FolderList` | `.../folder-list/FolderList.tsx` | 🟡 P1 |
+| `Frontend/src/features/folders/components/body/folder-list-skeleton/index.tsx` | `FolderListSkeleton` | `.../folder-list-skeleton/FolderListSkeleton.tsx` | 🟡 P1 |
+| `Frontend/src/features/folders/components/header/index.tsx` | `FolderHeader` | `.../header/FolderHeader.tsx` | 🟡 P1 |
+| `Frontend/src/features/folders/components/header/create-folder-dialog/index.tsx` | `CreateFolderDialog` | `.../create-folder-dialog/CreateFolderDialog.tsx` | 🟡 P1 |
+| `Frontend/src/features/inbox/components/empty-state/index.tsx` | `InboxEmptyState` | `.../empty-state/InboxEmptyState.tsx` | 🟡 P1 |
+| `Frontend/src/features/inbox/components/skeleton/index.tsx` | `InboxSkeleton` | `.../skeleton/InboxSkeleton.tsx` | 🟡 P1 |
+| `Frontend/src/features/inbox/components/table/index.tsx` | `InboxTable` | `.../table/InboxTable.tsx` | 🟡 P1 |
+| `Frontend/src/features/inbox/components/table-row/index.tsx` | `InboxTableRow` | `.../table-row/InboxTableRow.tsx` | 🟡 P1 |
+
+##### 3.2.3 Layer Consolidation: Entities & Shared Utilities
+
+1. **STRUCT-FE-02 (Elimination of `Frontend/src/entities/`):**
+   - `Frontend/src/entities/account/`, `Frontend/src/entities/email/`, and `Frontend/src/entities/folder/` define models and DTO interfaces that duplicate contracts in `@mailsense/types` and feature-specific types.
+   - **Remediation:** Remove `Frontend/src/entities/` and relocate unique frontend UI interfaces into `Frontend/src/features/<feature>/types/<entity>.types.ts`.
+2. **STRUCT-FE-03 (Consolidation of `Frontend/src/lib/`):**
+   - `Frontend/src/lib/` currently hosts a single file `utils.ts` exporting `cn()`.
+   - **Remediation:** Move `cn()` into `Frontend/src/shared/utils/cn.ts` (or `classnames.utils.ts`) and delete `Frontend/src/lib/`.
+
+---
+
+### 4. File Length & Function Length Standards Analysis
+
+#### 4.1 Master Code Size Standards & Thresholds
+
+Per MailSense [Coding Standards Rule 3.1](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md), line-count limits act as strict architectural boundaries:
+
+| Code Unit | Preferred Size | Refactoring Trigger | Hard Limit | Current Codebase Compliance |
+|---|---:|---:|---:|---|
+| General source file | ≤200 lines | >200 | 300 | ⚠️ 14 files exceed trigger |
+| React component | ≤150 lines | >150 | 200 | ⚠️ 3 components exceed trigger |
+| Page component | ≤180 lines | >180 | 250 | ✅ 100% compliant |
+| Function / Method | ≤30 lines | >30 | 50 | 🔴 18 functions exceed hard limit |
+| Custom hook | ≤80 lines | >80 | 120 | 🔴 4 hooks exceed hard limit |
+| Service class | ≤200 lines | >200 | 250 | 🔴 4 services exceed hard limit |
+| Repository class | ≤180 lines | >180 | 250 | ⚠️ 1 repository at hard limit |
+| Controller class | ≤150 lines | >150 | 200 | 🔴 1 controller exceeds hard limit |
+| Provider / Integration client | ≤250 lines | >250 | 350 | 🔴 3 integration files exceed hard limit |
+| Worker / Job processor | ≤150 lines | >150 | 200 | 🔴 1 worker processor exceeds hard limit |
+| Utility file | ≤100 lines | >100 | 150 | 🔴 2 utility files exceed hard limit |
+
+---
+
+#### 4.2 Comprehensive Backend File Length Inventory
+
+The following Backend source files currently exceed their respective line-count thresholds and require targeted refactoring:
+
+| File | Current Lines | Hard Limit | Excess % | Role / Category | Modularization & Decomposition Blueprint |
+|---|---:|---:|---:|---|---|
+| [`outlook.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts) | **521** | 350 | +48.8% | Integration Service | 🔴 **P1:** Split into `outlook-sync.service.ts` (sync history, delta tokens) and `outlook-mail.service.ts` (messages, folders, moves) with `services/index.ts`. |
+| [`gmail.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts) | **450** | 350 | +28.5% | Integration Service | 🔴 **P1:** Split into `gmail-sync.service.ts` (history IDs, full/incremental sync) and `gmail-mail.service.ts` (label modifications, send, draft sync) with `services/index.ts`. |
+| [`outlook-mail.client.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/clients/outlook-mail.client.ts) | **372** | 350 | +6.2% | Integration Client | ⚠️ **P2:** Extract folder modification and batch-move calls into `outlook-mail-batch.client.ts`. |
+| [`analytics.utils.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.utils.ts) | **354** | 150 | +136.0% | Utility | 🔴 **P2:** Split into `analytics-formatters.ts` (labeling, date intervals) and `analytics-calculators.ts` (KPI math, distributions). |
+| [`email-read.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-read.service.ts) | **333** | 250 | +33.2% | Service | 🔴 **P1:** Extract attachment stream proxying into `email-attachment-read.service.ts` and contact search into `email-search.service.ts`. |
+| [`sentry.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/core/monitoring/providers/sentry.provider.ts) | **307** | 250 | +22.8% | Infrastructure | ⚠️ Acceptable — SDK transaction telemetry and capture initialization boilerplate. |
+| [`account.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.service.ts) | **290** | 250 | +16.0% | Service | ⚠️ **P2:** Extract account sync job queue dispatching into `account-sync-coordinator.service.ts`. |
+| [`email.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts) | **269** | 200 | +34.5% | Controller | 🔴 **P2:** Split into `EmailQueryController` (read, thread, attachments) and `EmailMutationController` (move, status, compose). |
+| [`analytics.repository.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.repository.ts) | **253** | 250 | +1.2% | Repository | ⚠️ Acceptable — Complex MongoDB aggregation pipelines; well-encapsulated within static repository methods. |
+| [`gmail.utils.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.utils.ts) | **253** | 150 | +68.6% | Utility | 🔴 **P2:** Extract MIME message parsing and base64url decoding into `gmail-mime.utils.ts`. |
+| [`sync-account.processor.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/workers/processors/sync-account.processor.ts) | **219** | 200 | +9.5% | Worker Processor | ⚠️ **P1:** Extract cursor advancement and token refresh fallback into helper processor methods. |
+
+---
+
+#### 4.3 Comprehensive Frontend File Length Inventory
+
+The following Frontend source files currently exceed their line-count thresholds:
+
+| File | Current Lines | Hard Limit | Excess % | Role / Category | Modularization & Decomposition Blueprint |
+|---|---:|---:|---:|---|---|
+| [`sidebar.tsx`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/shared/ui/sidebar.tsx) | **605** | 300 | +101.6% | UI Primitive | ✅ Acceptable vendor primitive — shadcn/Radix compound sidebar primitive with context providers. |
+| [`MoveToFolderDropdown.tsx`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/components/MoveToFolderDropdown.tsx) | **241** | 200 | +20.5% | UI Component | 🔴 **P2:** Extract folder navigation and selection state into `useFolderSelector.ts` hook. Component renders pure menu. |
+| [`useComposeEmail.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useComposeEmail.ts) | **229** | 120 | +90.8% | Custom Hook | 🔴 **P2:** Extract auto-save draft timer into `useDraftAutoSave.ts` and attachment upload staging into `useAttachmentStaging.ts`. |
+| [`useInboxPage.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/hooks/useInboxPage.ts) | **223** | 120 | +85.8% | Custom Hook | ⚠️ Down from 529 lines. Further decompose into `useInboxFilters.ts` and `useInboxSelection.ts`. |
+| [`useEmailActions.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailActions.ts) | **215** | 120 | +79.1% | Custom Hook | 🔴 **P1:** Split into `useEmailStatusActions.ts` (star, unread, archive, trash) and `useEmailMoveActions.ts` (folder assignment). |
+| [`email.mutations.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/api/email.mutations.ts) | **196** | 180 | +8.8% | Query / Mutation | ⚠️ Slightly exceeds limit. Split into `email-status.mutations.ts` and `email-folder.mutations.ts`. |
+| [`EmailListTable.tsx`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/components/EmailListTable.tsx) | **192** | 150 | +28.0% | UI Component | ⚠️ **P2:** Extract row keyboard navigation and focus state styling into `EmailTableRow.tsx`. |
+
+---
+
+#### 4.4 Function & Method Size, Cyclomatic Complexity & Nesting Depth Analysis
+
+Per MailSense [Coding Standards Rules 3.1, 4.1 & 4.2](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md):
+- **Function Line Limit:** Preferred ≤30 lines, **Hard limit 50 lines**.
+- **Cyclomatic Complexity:** Preferred ≤5, **Hard limit 10**.
+- **Nesting Depth:** Preferred ≤3 levels, **Hard limit 4 levels**.
+
+##### 4.4.1 Backend Functions Exceeding Standards
+
+| Function / Method | Enclosing File | Line Count | Cyclomatic Complexity | Nesting Depth | Primary Concern & Remediation |
+|---|---|---:|---:|---:|---|
+| `syncAccountProcessor` | [`sync-account.processor.ts:38`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/workers/processors/sync-account.processor.ts#L38) | **144** (Limit 50) | **32** (Limit 10) | **6** (Limit 4) | 🔴 **P1 Hotspot:** Combines cursor parsing, token refresh fallback, provider delegation, and retry math. Extract into 4 focused private methods. |
+| `calculateTopSenders` | [`analytics.utils.ts:77`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.utils.ts#L77) | **80** (Limit 50) | **19** (Limit 10) | **6** (Limit 4) | 🔴 **P2 Hotspot:** Deep nested loop iterating over sender stats with multi-level conditionals. Use Map accumulator and functional pipeline. |
+| `formatResponseTimes` | [`analytics.utils.ts:259`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.utils.ts#L259) | **59** (Limit 50) | **13** (Limit 10) | **5** (Limit 4) | 🔴 **P2:** Complex bucketing into quartiles with nested ternary operators. Refactor with lookup tables and early returns. |
+| `error.handler` | [`error.handler.ts:8`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/middlewares/error.handler.ts#L8) | **67** (Limit 50) | **13** (Limit 10) | 3 | ⚠️ Long `switch`/`instanceof` ladder. Extract mapping table for domain error to HTTP status code. |
+| `BaseWorker.start` | [`base.worker.ts:14`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/workers/base.worker.ts#L14) | **65** (Limit 50) | **16** (Limit 10) | 3 | ⚠️ Worker event binding and lifecycle management. Split event hook registration into `bindWorkerEvents()`. |
+| `getAllEmails` | [`email-read.service.ts:30`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-read.service.ts#L30) | **64** (Limit 50) | **15** (Limit 10) | 3 | ⚠️ Query construction, folder ID translation, and search filtering combined in one method. Extract `buildEmailQueryFilter()`. |
+| `getOverviewCountsRaw` | [`analytics.repository.ts:18`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.repository.ts#L18) | **61** (Limit 50) | 4 | 2 | ⚠️ MongoDB aggregation pipeline definition. Encapsulate pipeline stage objects in private static helpers. |
+| `getGroupedEmails` | [`email.repository.ts:135`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.repository.ts#L135) | **59** (Limit 50) | 6 | 2 | ⚠️ MongoDB `$facet` aggregation definition. Pipeline syntax length; logic is declarative and clean. |
+| `authMiddleware` | [`auth.ts:51`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/middlewares/auth.ts#L51) | 48 | **23** (Limit 10) | 3 | ⚠️ Excessive branching on header types and token formats. Extract `extractBearerToken()` helper. |
+
+##### 4.4.2 Frontend Functions & Components Exceeding Standards
+
+| Function / Component | Enclosing File | Line Count | Cyclomatic Complexity | Nesting Depth | Primary Concern & Remediation |
+|---|---|---:|---:|---:|---|
+| `Sidebar` | [`sidebar.tsx:120`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/shared/ui/sidebar.tsx#L120) | **94** (Limit 50) | **12** (Limit 10) | 3 | ✅ Acceptable vendor compound UI primitive from shadcn. |
+| `SidebarProvider` | [`sidebar.tsx:45`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/shared/ui/sidebar.tsx#L45) | **76** (Limit 50) | 8 | 3 | ✅ Acceptable vendor UI state provider. |
+| `useInboxPage` | [`useInboxPage.ts:42`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/inbox/hooks/useInboxPage.ts#L42) | **72** (Limit 50) | 9 | 3 | ⚠️ Coordinate selection, pagination, and multi-folder switching. Extract filter handlers into sub-hooks. |
+| `MoveToFolderDropdown` | [`MoveToFolderDropdown.tsx:32`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/components/MoveToFolderDropdown.tsx#L32) | **68** (Limit 50) | 9 | 4 | 🔴 Handles folder tree recursive rendering, search filtering, and click mutations in JSX. Move tree logic into hook. |
+| `useComposeEmail` | [`useComposeEmail.ts:50`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useComposeEmail.ts#L50) | **65** (Limit 50) | 8 | 3 | 🔴 Bundles form state, attachment uploads, draft autosave timer, and send mutation. Extract sub-hooks. |
+
+---
+
+#### 4.5 Modularization Blueprint & Step-by-Step Refactoring Plan
+
+##### 4.5.1 Modularization of Integration Services (`outlook.service.ts` & `gmail.service.ts`)
+1. Create `Backend/src/integrations/outlook/services/`:
+   - `outlook-sync.service.ts` (≤220 lines): Handles delta token storage, pagination loops, and sync state management.
+   - `outlook-mail.service.ts` (≤250 lines): Handles single/batch message operations, folder synchronization, and draft creation.
+   - `index.ts`: Re-exports unified facade preserving backwards compatibility for consumers.
+2. Create `Backend/src/integrations/gmail/services/`:
+   - `gmail-sync.service.ts` (≤200 lines): Handles Gmail history ID progression, full sync, and incremental message fetching.
+   - `gmail-mail.service.ts` (≤220 lines): Handles label additions/removals, trash, send, and message batching.
+   - `index.ts`: Re-exports unified facade.
+
+##### 4.5.2 Modularization of Analytics Utilities (`analytics.utils.ts`)
+1. Split into:
+   - `Backend/src/modules/analytics/utils/analytics-formatters.ts` (≤100 lines): Date labeling, quartile titles, sender name formatting.
+   - `Backend/src/modules/analytics/utils/analytics-calculators.ts` (≤140 lines): Pure KPI math, top-senders Map reduce, response-time quantile distribution.
+   - `index.ts`: Re-export for seamless consumer imports.
+
+##### 4.5.3 Modularization of Frontend Custom Hooks (`useEmailActions.ts`)
+1. Split into:
+   - `Frontend/src/features/emails/hooks/useEmailStatusActions.ts` (≤100 lines): Star, unread, archive, trash actions with optimistic rollbacks.
+   - `Frontend/src/features/emails/hooks/useEmailMoveActions.ts` (≤90 lines): Folder move dialog state, account target mapping, and batch move execution.
+   - Re-export both via `features/emails/hooks/index.ts`.
+
+---
+
+### 5. OOP & Architectural Patterns Analysis (Backend)
+
+1. **Repetitive Class Instantiation vs Singleton Inversion:**
+   - Controllers still instantiate services via `new` (e.g. `EmailController` creates `this.emailService = new EmailService()`, `DraftController` creates `new DraftService()`, which in turn creates a second `EmailService`).
+   - `AccountsService` creates `new AccountOAuthService()`.
+   - **Recommendation:** Adopt exported module singletons (e.g. `export const emailService = new EmailService(...)`) and import them across controllers and dependent services to avoid redundant object instantiation.
+2. **Static Repositories Compliance:**
+   - All repositories (`AccountRepository`, `EmailRepository`, `FolderRepository`, `SyncJobRepository`, `AnalyticsRepository`) consistently use `public static async` methods. This complies with MailSense stateless data access standards.
+3. **Integration Client Standardization:**
+   - Both `GmailApi` and `OutlookApi` static clients now provide clean, predictable method contracts. The remaining step is breaking down `gmail.service.ts` and `outlook.service.ts` into specialized services.
+
+---
+
+### 6. Potential Bugs & Issues (v1.3.0 Findings)
+
+#### 🔴 Critical Bugs
+
+##### BUG-V13-01: Commented-Out Attachment Ownership Validation Causes Security IDOR & Test Failure
+
+- **File:** [`email-write.service.ts:136-139`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-write.service.ts#L136-L139)
+- **Status:** Unresolved from v1.2.0 (BUG-V12-02).
+- **Issue:**
+  ```typescript
+  // Verify attachment belongs to user and matches target account
+  // if (stagedAttachment.userId.toString() !== userId.toString() || stagedAttachment.accountId !== accountId) {
+  //     throw new ForbiddenError(`Unauthorized or invalid attachment ${attId}`);
+  // }
+  ```
+  Because this check is commented out, `attachment-security.test.ts` fails, and any authenticated user can reference any staged attachment by ID when sending an email.
+- **Remediation:** Uncomment and activate the guard block:
+  ```typescript
+  if (
+    stagedAttachment.userId.toString() !== userId.toString() ||
+    stagedAttachment.accountId !== accountId
+  ) {
+    throw new ForbiddenError(`Unauthorized or invalid attachment ${attId}`);
+  }
+  ```
+
+---
+
+##### BUG-V13-02: Cross-Tenant IDOR in `EmailController` & `EmailReadService` for Thread & Attachment Endpoints
+
+- **Files:** [`email.controller.ts:215-254`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts#L215-L254), [`email-read.service.ts:183-332`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-read.service.ts#L183-L332)
+- **Issue:**
+  The following endpoints extract `emailId` or `attachmentId` from request parameters but **never extract `req.user.id` or verify account ownership**:
+  - `GET /api/emails/:emailId` (`getEmail`)
+  - `GET /api/emails/thread/:emailId` (`getThread`)
+  - `GET /api/emails/:emailId/attachments/:attachmentId` (`downloadAttachment`)
+  - `GET /api/emails/:emailId/attachments/:attachmentId/stream` (`downloadAttachmentStream`)
+    Any authenticated user who guesses or discovers another tenant's `emailId` can read entire conversation threads and download private attachments.
+- **Remediation:** Extract `const userId = req.user?.id;` in `EmailController`, pass `userId` to `EmailReadService`, and verify `account.userId.toString() === userId.toString()` before returning email, thread, or attachment data.
+
+---
+
+##### BUG-V13-03: Cross-Tenant IDOR in `FolderController` & `FolderService`
+
+- **Files:** [`folder.controller.ts:14-85`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.controller.ts#L14-L85), [`folder.service.ts:16-110`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.service.ts#L16-L110)
+- **Issue:**
+  - `FolderController.syncFolders(accountId)`: Accepts `accountId` from route params without checking `userId`.
+  - `FolderController.getFolder(folderId)`: Fetches folder by ID without verifying that the parent account belongs to the user.
+  - `FolderController.getAccountFolders(accountId)`: Returns all folders for any `accountId`.
+  - `FolderController.createFolder(accountId, folderName)`: Allows creating folders in another user's account.
+- **Remediation:** Require `userId` in `syncFolders`, `getFolder`, `getAccountFolders`, and `createFolder`. Verify ownership via `AccountRepository.getAccountById(accountId, { userId: 1 })`.
+
+---
+
+#### 🟡 Medium Bugs & Warnings
+
+##### BUG-V13-04: ESLint Inline Object Types Violations Across Codebase
+
+- **Locations:** 39 occurrences in Backend (e.g. `email.controller.ts:47,79,215,228`, `draft.controller.ts:39,53,67`), 101 occurrences in Frontend (e.g. `shared/ui/*.tsx`, `shared/providers/auth.provider.tsx`).
+- **Issue:** MailSense Rule 2.3 mandates zero inline types. Running `pnpm lint` fails CI builds due to `no-restricted-syntax` detecting inline object types.
+- **Remediation:** Define explicit named interfaces in `*.types.ts` / `*.interface.ts` files and import them across all signatures.
+
+---
+
+##### BUG-V13-05: Mongoose Duplicate Schema Index on `{"userId": 1}` in `UserSettings`
+
+- **File:** [`user.model.ts:56,63`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.model.ts#L56-L63)
+- **Issue:**
+  ```typescript
+  userId: { type: String, required: true, index: true }, // Line 56
+  UserSettingsSchema.index({ userId: 1 }, { unique: true }); // Line 63
+  ```
+  Declaring `index: true` inside the field definition and `UserSettingsSchema.index()` causes Mongoose to emit a startup warning:
+  `[MONGOOSE] Warning: Duplicate schema index on {"userId":1} found.`
+- **Remediation:** Remove `index: true` from line 56, retaining the compound/unique definition at line 63.
+
+---
+
+##### BUG-V13-06: Residual `console.error` in Keyboard Shortcuts Hook
+
+- **File:** [`useEmailKeyboardShortcuts.ts:142`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts#L142)
+- **Issue:** Uses `console.error('Error handling keyboard navigation shortcut:', errorMessage)` instead of `trackUserAction()`.
+- **Remediation:** Replace with `trackUserAction('shortcuts.error', errorMessage, 'error')`.
+
+---
+
+##### BUG-V13-07: Monolithic Integration Services Exceed Size Standards
+
+- **Files:** [`outlook.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts) (521 lines), [`gmail.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts) (450 lines)
+- **Issue:** Exceed the 350-line hard limit for provider services. Both classes combine sync history orchestration, folder hierarchy sync, message mutation, and label handling.
+- **Remediation:** Decompose into `*-sync.service.ts` and `*-mail.service.ts` under `services/` subdirectories.
+
+---
+
+##### BUG-V13-08: Monolithic Custom Hook `useEmailActions.ts` Exceeds Hook Limit
+
+- **File:** [`useEmailActions.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailActions.ts) (215 lines)
+- **Issue:** While successfully eliminating duplication from `useInboxPage.ts`, the hook itself exceeds the 120-line hard limit by bundling star, unread, archive, trash, and folder move actions together.
+- **Remediation:** Split into `useEmailStatusActions.ts` (120 lines) and `useEmailMoveActions.ts` (95 lines).
+
+---
+
+### 7. Code Duplication & Refactoring Opportunities
+
+| ID                  | Description                                | Target Files                                                                           | Impact                                                                                  |
+| ------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **REFACTOR-V13-01** | Split `outlook.service.ts` (521 lines)     | `integrations/outlook/services/outlook-sync.service.ts`, `outlook-mail.service.ts`     | Reduces file size to ≤250 lines, isolates sync logic from user-triggered email actions. |
+| **REFACTOR-V13-02** | Split `gmail.service.ts` (450 lines)       | `integrations/gmail/services/gmail-sync.service.ts`, `gmail-mail.service.ts`           | Reduces file size to ≤220 lines, isolates polling/history sync from action execution.   |
+| **REFACTOR-V13-03** | Decompose `useEmailActions.ts` (215 lines) | `features/emails/hooks/useEmailStatusActions.ts`, `useEmailMoveActions.ts`             | Brings custom hooks within the ≤120 lines hard limit.                                   |
+| **REFACTOR-V13-04** | Split `analytics.utils.ts` (354 lines)     | `modules/analytics/utils/analytics-formatters.ts`, `analytics-calculators.ts`          | Eliminates cyclomatic complexity hotspot (19) and nested branching (depth 6).           |
+| **REFACTOR-V13-05** | Split `email.controller.ts` (269 lines)    | `modules/emails/controllers/email-query.controller.ts`, `email-mutation.controller.ts` | Brings controllers within the ≤150 lines standard.                                      |
+
+---
+
+### 8. Exception Handling & Logging Audit
+
+#### 8.1 Boundary Conformance Checklist
+
+| Layer                            | Policy                  | Audit Finding                                                                             | Status            |
+| -------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------- | ----------------- |
+| **Controllers (Backend)**        | `try / catch` REQUIRED  | All controllers catch exceptions and delegate to `next(error)`.                           | ✅ 100% Compliant |
+| **Services (Backend)**           | `try / catch` REQUIRED  | Services wrap operations in `try/catch`, log structured context, and throw domain errors. | ✅ 100% Compliant |
+| **Provider Integrations**        | `try / catch` REQUIRED  | Providers catch external network errors and throw `ProviderError`.                        | ✅ 100% Compliant |
+| **Workers (Backend)**            | `try / catch` REQUIRED  | Processors log errors and propagate for BullMQ retry policies.                            | ✅ 100% Compliant |
+| **API Clients (Frontend)**       | `try / catch` REQUIRED  | Axios interceptors normalize backend payloads into typed errors.                          | ✅ 100% Compliant |
+| **Repositories (Backend)**       | `try / catch` FORBIDDEN | Zero repositories contain `try/catch`. Database exceptions bubble up cleanly.             | ✅ 100% Compliant |
+| **Utilities (Backend/Frontend)** | `try / catch` FORBIDDEN | Pure functions operate without defensive `try/catch`.                                     | ✅ 100% Compliant |
+| **React Components**             | `try / catch` FORBIDDEN | Pure rendering handled without `try/catch`. Caught by `ErrorBoundary.tsx`.                | ✅ 100% Compliant |
+| **Custom Hooks**                 | `try / catch` FORBIDDEN | React Query handles errors via `isError` / `onError`.                                     | ✅ 100% Compliant |
+
+---
+
+### 9. Modifications & Enhancements (Backend + Frontend)
+
+#### 9.1 Backend Remediation Tasks
+
+| ID             | Enhancement                                                                                                                                                  | Priority | Effort    |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | --------- |
+| **ENH-V13-01** | Uncomment attachment ownership validation in `email-write.service.ts` (BUG-V13-01)                                                                           | 🔴 P0    | 5 min     |
+| **ENH-V13-02** | Add `userId` authorization to `getEmail`, `getThread`, `downloadAttachment` in `email.controller.ts` and `email-read.service.ts` (BUG-V13-02)                | 🔴 P0    | 30 min    |
+| **ENH-V13-03** | Add `userId` authorization to `syncFolders`, `getFolder`, `getAccountFolders`, `createFolder` in `folder.controller.ts` and `folder.service.ts` (BUG-V13-03) | 🔴 P0    | 30 min    |
+| **ENH-V13-04** | Fix duplicate index warning on `userId` in `user.model.ts` (BUG-V13-05)                                                                                      | 🟡 P1    | 5 min     |
+| **ENH-V13-05** | Decompose `outlook.service.ts` into `outlook-sync.service.ts` and `outlook-mail.service.ts` (BUG-V13-07 / REFACTOR-V13-01)                                   | 🟡 P1    | 2 hours   |
+| **ENH-V13-06** | Decompose `gmail.service.ts` into `gmail-sync.service.ts` and `gmail-mail.service.ts` (BUG-V13-07 / REFACTOR-V13-02)                                         | 🟡 P1    | 2 hours   |
+| **ENH-V13-07** | Split `analytics.utils.ts` into formatters and calculators (REFACTOR-V13-04)                                                                                 | 🟠 P2    | 1.5 hours |
+| **ENH-V13-08** | Split `email.controller.ts` into `EmailQueryController` and `EmailMutationController` (REFACTOR-V13-05)                                                      | 🟠 P2    | 1 hour    |
+| **ENH-V13-09** | Move `Backend/src/middlewares/` to `core/middlewares/` (STRUCT-BE-01)                                                                                        | 🟢 P3    | 30 min    |
+| **ENH-V13-10** | Extract database bootstrap from `server.ts` to `core/database/` (STRUCT-BE-02)                                                                               | 🟢 P3    | 30 min    |
+
+#### 9.2 Frontend Remediation Tasks
+
+| ID             | Enhancement                                                                                                                | Priority | Effort    |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------- | -------- | --------- |
+| **ENH-V13-11** | Replace residual `console.error` in `useEmailKeyboardShortcuts.ts:142` with `trackUserAction` (BUG-V13-06)                 | 🟡 P1    | 10 min    |
+| **ENH-V13-12** | Decompose `useEmailActions.ts` into `useEmailStatusActions.ts` and `useEmailMoveActions.ts` (BUG-V13-08 / REFACTOR-V13-03) | 🟡 P1    | 1.5 hours |
+| **ENH-V13-13** | Remediate Frontend ESLint inline object type errors across UI primitives and providers (BUG-V13-04)                        | 🟡 P1    | 2 hours   |
+| **ENH-V13-14** | Split `MoveToFolderDropdown.tsx` (241 lines) into component + `useFolderSelector.ts` hook                                  | 🟠 P2    | 45 min    |
+| **ENH-V13-15** | Split `useComposeEmail.ts` (229 lines) into auto-save and staging sub-hooks                                                | 🟠 P2    | 1 hour    |
+| **ENH-V13-16** | Consolidate `Frontend/src/entities/` into `features/*/types/` (ENH-V12-22)                                                 | 🟢 P3    | 1 hour    |
+| **ENH-V13-17** | Consolidate `Frontend/src/lib/` into `Frontend/src/shared/utils/` (STRUCT-FE-03)                                           | 🟢 P3    | 15 min    |
+
+---
+
+### 10. Add-On Sub-Feature Suggestions
+
+#### 📧 Email Management
+
+1. **Thread Read/Unread State Granularity:** Provide visual pills showing exactly which messages inside an expanded thread are unread versus read.
+2. **Batch Attachment Zip Download:** Enable a one-click "Download All Attachments as Zip" streamed from backend for multi-attachment emails.
+3. **Undo Send Countdown Floating Pill:** Visual 5–30s progress bar in the bottom corner with an interactive "Undo" button before dispatching to provider queues.
+
+#### 📁 Folders & Organization
+
+4. **Folder Re-Ordering & Favoriting:** Allow users to pin high-frequency folders (e.g. Work, Receipts) to a dedicated "Favorites" group in the sidebar.
+5. **Real-Time Unread Count Badges:** Dynamically badge folder list items with accurate unread counts using reactive React Query subscriptions.
+
+#### 📊 Analytics & Reporting
+
+6. **Provider Latency & Sync Health Card:** Dashboard tile showing sync duration, last cursor timestamp, and provider quota consumption per account.
+7. **Email Volume Sparklines:** Compact 7-day sparkline charts displayed next to each connected account in the settings view.
+
+---
+
+### 11. Codebase Health & Quality Scorecard
+
+| Assessment Dimension                   | v1.0.0       | v1.1.0       | v1.2.0       | v1.3.0 Current | Notes                                                                                                                             |
+| -------------------------------------- | ------------ | ------------ | ------------ | -------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **Type Safety & Contract Integrity**   | 82 / 100     | 98 / 100     | 97 / 100     | **96 / 100**   | `@mailsense/types` `v1.6.0` contracts normalized; residual inline types in UI primitives flag ESLint warnings.                    |
+| **Security & Multi-Tenant Isolation**  | 60 / 100     | 95 / 100     | 93 / 100     | **88 / 100**   | `express.static` fixed ✅, but commented-out attachment check (BUG-V13-01) + IDOR in Email/Folder read endpoints pull score down. |
+| **Exception Handling & Observability** | 55 / 100     | 94 / 100     | 96 / 100     | **98 / 100**   | Architectural boundary compliance is near perfect; all 15+ frontend feature `console.error` calls eliminated.                     |
+| **Database & Query Performance**       | 70 / 100     | 90 / 100     | 92 / 100     | **94 / 100**   | Compound indexes and streaming working cleanly; minor duplicate index cleanup needed.                                             |
+| **System Resilience & Concurrency**    | 65 / 100     | 78 / 100     | 90 / 100     | **92 / 100**   | `Promise.allSettled` per-account moves and BullMQ queues operating reliably.                                                      |
+| **Code Architecture & Modularity**     | 75 / 100     | 88 / 100     | 84 / 100     | **89 / 100**   | Integration clients split into `clients/` ✅, `AccountOAuthService` extracted ✅, `useInboxPage` down to 223 lines ✅.            |
+| **Code Organization & DRY**            | —            | —            | 78 / 100     | **88 / 100**   | `executePerAccountProviderAction` DRY'd write service ✅; `useEmailActions` eliminated 300+ duplicated lines ✅.                  |
+| **OOP & Design Patterns**              | —            | —            | 82 / 100     | **86 / 100**   | Static integration clients unified ✅; module singletons partially in place.                                                      |
+| **Overall Codebase Health Score**      | **72 / 100** | **94 / 100** | **89 / 100** | **91.4 / 100** | Healthy upward trajectory reflecting significant architectural deduplication and client modularization.                           |
+
+---
+
+### 12. Prioritized Remediation Roadmap
+
+#### 🔴 P0 — Fix Immediately (Security & Data Integrity)
+
+| #   | Finding ID     | Description                                                                                                                                                                                                                                                                                                                                                             | Estimated Effort |
+| --- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1   | **BUG-V13-01** | Uncomment attachment ownership validation in [`email-write.service.ts:136-139`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-write.service.ts#L136-L139). Fixes `attachment-security.test.ts`.                                                                                                                             | 5 min            |
+| 2   | **BUG-V13-02** | Add `userId` authorization to `getEmail`, `getThread`, `downloadAttachment` in [`email.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts) and [`email-read.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-read.service.ts).               | 30 min           |
+| 3   | **BUG-V13-03** | Add `userId` authorization to `syncFolders`, `getFolder`, `getAccountFolders`, `createFolder` in [`folder.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.controller.ts) and [`folder.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/folders/folder.service.ts). | 30 min           |
+
+#### 🟡 P1 — Fix This Sprint (Quality & Robustness)
+
+| #   | Finding ID     | Description                                                                                                                                                                                                                                                                                                                                                                             | Estimated Effort |
+| --- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 4   | **BUG-V13-05** | Remove duplicate `index: true` from `userId` in [`user.model.ts:56`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/user/user.model.ts#L56).                                                                                                                                                                                                              | 5 min            |
+| 5   | **BUG-V13-06** | Replace residual `console.error` in [`useEmailKeyboardShortcuts.ts:142`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts#L142) with `trackUserAction`.                                                                                                                                                         | 10 min           |
+| 6   | **BUG-V13-07** | Split monolithic integration services [`outlook.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts) (521 lines) and [`gmail.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/gmail/gmail.service.ts) (450 lines) into `*-sync.service.ts` and `*-mail.service.ts`. | 3 hours          |
+| 7   | **BUG-V13-08** | Decompose [`useEmailActions.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailActions.ts) (215 lines) into `useEmailStatusActions.ts` and `useEmailMoveActions.ts`.                                                                                                                                                              | 1.5 hours        |
+| 8   | **BUG-V13-04** | Remediate ESLint inline object types in Backend controllers and Frontend UI primitives.                                                                                                                                                                                                                                                                                                 | 2 hours          |
+
+#### 🟠 P2 — Refactoring Sprint (Architecture & DRY)
+
+| #   | Finding ID          | Description                                                                                                                                                                                                                     | Estimated Effort |
+| --- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 9   | **REFACTOR-V13-04** | Split [`analytics.utils.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.utils.ts) (354 lines) into formatters and calculators.                                            | 1.5 hours        |
+| 10  | **REFACTOR-V13-05** | Split [`email.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts) (269 lines) into `EmailQueryController` and `EmailMutationController`.                   | 1 hour           |
+| 11  | **ENH-V13-14**      | Extract folder tree state from [`MoveToFolderDropdown.tsx`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/components/MoveToFolderDropdown.tsx) (241 lines) into `useFolderSelector.ts`. | 45 min           |
+| 12  | **ENH-V13-15**      | Extract auto-save logic from [`useComposeEmail.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useComposeEmail.ts) (229 lines).                                                | 1 hour           |
+
+#### 🟢 P3 — Backlog (Optimization & Long-Term Maintenance)
+
+| #   | Finding ID       | Description                                                                                 | Estimated Effort |
+| --- | ---------------- | ------------------------------------------------------------------------------------------- | ---------------- |
+| 13  | **STRUCT-BE-01** | Move `Backend/src/middlewares/` into `Backend/src/core/middlewares/`.                       | 30 min           |
+| 14  | **STRUCT-BE-02** | Extract database bootstrap from `server.ts` into `Backend/src/core/database/connection.ts`. | 30 min           |
+| 15  | **ENH-V12-22**   | Consolidate `Frontend/src/entities/` into `Frontend/src/features/*/types/`.                 | 1 hour           |
+| 16  | **STRUCT-FE-03** | Consolidate `Frontend/src/lib/` into `Frontend/src/shared/utils/`.                          | 15 min           |
+
+---
+
+### 13. Architecture Maturity Assessment
+
+| Dimension                 | Current State                                                                                                                         | Target State                                                     | Gap                                                                        |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| **Service Decomposition** | Integration clients split ✅, AccountOAuthService split ✅, but `outlook.service.ts` (521) and `gmail.service.ts` (450) exceed limits | All services ≤250 lines, focused on single business capabilities | Split sync and mail capabilities into dedicated services under `services/` |
+| **Multi-Tenant Security** | Account settings and mutations authorized ✅; thread, attachment, and folder reads missing `userId` check                             | 100% of endpoints enforce strict tenant isolation via `userId`   | Add `userId` authorization across `EmailController` and `FolderController` |
+| **Code Reuse (DRY)**      | `executePerAccountProviderAction` DRY'd 5 backend methods ✅; `useEmailActions` unified frontend mutations ✅                         | Zero duplicated business workflows                               | Modularize `useEmailActions.ts` into status vs move sub-hooks              |
+| **Frontend Monitoring**   | 15+ feature `console.error` calls migrated to `trackUserAction()` ✅                                                                  | Zero raw `console.error` in feature code                         | Remediate 1 residual call in `useEmailKeyboardShortcuts.ts:142`            |
+| **Type Safety & Linting** | `@mailsense/types` `v1.6.0` normalized ✅; ESLint rules actively enforce zero inline types and complexity guardrails                  | Zero ESLint errors across Backend and Frontend                   | Resolve remaining inline type errors in UI primitives and controllers      |
+
+---
+
+### 14. ESLint Enforcement Configuration & Remediation Plan
+
+#### 14.1 Applied ESLint Rules & Enforcement Standards
+
+Both Backend and Frontend have strict ESLint flat configurations (`eslint.config.mjs`) configured to enforce MailSense architectural standards programmatically:
+
+| Rule Key | Severity | Target Standard | Enforced Constraint |
+|---|---|---|---|
+| `@typescript-eslint/no-explicit-any` | `error` | Rule 2.1 | Prohibits `any` under all circumstances. |
+| `no-restricted-syntax (unknown)` | `error` | Rule 2.1 | Prohibits `unknown` in place of explicit interfaces or generics. |
+| `no-restricted-syntax (never)` | `error` | Rule 2.1 | Prohibits `never` outside exhaustive switch checks. |
+| `no-restricted-syntax (TSTypeLiteral)` | `error` | Rule 2.3 | **Strictly zero inline object types.** All types must be named interfaces in dedicated types files. |
+| `no-restricted-syntax (CatchClause)` | `error` | Rule 6.3 | Prohibits empty catch blocks (`catch (e) {}`). All errors must be logged or rethrown. |
+| `no-console` | `error` | Rule 6.4 | Forbids raw `console.log` and `console.error`. |
+| `complexity` | `warn` (max: 10) | Rule 4.1 | Flags cyclomatic complexity exceeding 10. |
+| `max-lines` | `warn` (max: 300) | Rule 3.1 | Flags source files exceeding 300 lines. |
+| `max-lines-per-function` | `warn` (max: 50) | Rule 3.1 | Flags functions/methods exceeding 50 lines. |
+| `max-depth` | `warn` (max: 4) | Rule 4.2 | Flags nesting depth exceeding 4 levels. |
+| `max-params` | `warn` (max: 6) | Rule 3.2 | Flags functions with >6 parameters. |
+
+---
+
+#### 14.2 Backend ESLint Audit & Error Inventory
+
+- **Total Problems:** 85 (39 errors, 46 warnings)
+- **CI / Build Blocking Errors:** 39 errors (100% caused by `no-restricted-syntax` detecting inline object types)
+
+##### 14.2.1 Breakdown of 39 Backend Errors
+
+| File Location | Line Number | Offending Inline Syntax | Remediation / Dedicated Named Interface Target |
+|---|---:|---|---|
+| [`email.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts) | 47 | `res: Response<{ success: boolean; ... }>` | Import `ApiResponse<T>` from `@mailsense/types` |
+| [`email.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts) | 79 | `req: Request<unknown, unknown, { ids: string[] }>` | Define `BatchEmailActionBody` in `email.types.ts` |
+| [`email.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts) | 215 | `req: Request<{ emailId: string }>` | Define `EmailParams` in `email.types.ts` |
+| [`email.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts) | 228 | `req: Request<{ emailId: string; attachmentId: string }>` | Define `AttachmentParams` in `email.types.ts` |
+| [`draft.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/drafts/draft.controller.ts) | 39 | `req: Request<unknown, unknown, { accountId: string }>` | Define `CreateDraftBody` in `draft.types.ts` |
+| [`draft.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/drafts/draft.controller.ts) | 53 | `req: Request<{ draftId: string }>` | Define `DraftParams` in `draft.types.ts` |
+| [`draft.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/drafts/draft.controller.ts) | 67 | `res: Response<{ draft: DraftDocument }>` | Define `DraftResponse` in `draft.types.ts` |
+| [`account-oauth.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account-oauth.service.ts) | 43 | `tokens: { access_token: string; refresh_token?: string }` | Define `OAuthTokens` in `account.types.ts` |
+| [`analytics.repository.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.repository.ts) | 228 | `result: { _id: string; count: number }[]` | Define `AggregationCountResult` in `analytics.types.ts` |
+| [`analytics.utils.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.utils.ts) | 198 | `data: { date: string; value: number }[]` | Define `TimeSeriesDataPoint` in `analytics.types.ts` |
+| [`analytics.utils.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/analytics/analytics.utils.ts) | 331 | `summary: { total: number; average: number }` | Define `MetricSummary` in `analytics.types.ts` |
+| [`email-read.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-read.service.ts) | 98 | `filter: { folderId?: string; isRead?: boolean }` | Define `EmailReadFilter` in `email.types.ts` |
+| [`email-read.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email-read.service.ts) | 275 | `options: { limit?: number; offset?: number }` | Define `PaginationOptions` in `email.types.ts` |
+| [`outlook.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.provider.ts) | 55 | `payload: { messageId: string; folderId: string }` | Define `OutlookMoveMessagePayload` in `outlook.types.ts` |
+| [`outlook.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.provider.ts) | 75 | `header: { name: string; value: string }` | Define `EmailHeaderItem` in `outlook.types.ts` |
+| [`outlook.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts) | 135 | `syncResult: { deltaToken?: string; count: number }` | Define `OutlookSyncResult` in `outlook.types.ts` |
+| [`outlook.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts) | 430 | `batch: { id: string; method: string }[]` | Define `OutlookBatchRequestItem` in `outlook.types.ts` |
+| [`outlook.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/integrations/outlook/outlook.service.ts) | 485 | `folderMap: { [id: string]: string }` | Define `OutlookFolderMap` in `outlook.types.ts` |
+| [`ObjectStorageService.service.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/ObjectStorageService.service.ts) | 41 | `meta: { contentType: string; size: number }` | Define `ObjectStorageMetadata` in `object-storage.types.ts` |
+| [`validator.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/shared/utils/validator.ts) | 4 | `schema: { validate: Function }` | Define `JoiValidatorSchema` in `validator.types.ts` |
+
+*(Remaining 19 errors occur across repetitive inline response shapes and middleware callback parameters)*.
+
+##### 14.2.2 Backend Warnings Summary (46 warnings)
+- **`complexity` (>10):** 8 functions flagged (`syncAccountProcessor`: 32, `authMiddleware`: 23, `calculateTopSenders`: 19, `getDashboardAnalytics`: 18, `BaseWorker.start`: 16, `getAllEmails`: 15, `formatResponseTimes`: 13, `error.handler`: 13).
+- **`max-lines` (>300):** 5 files flagged (`outlook.service.ts`: 521, `gmail.service.ts`: 450, `outlook-mail.client.ts`: 372, `analytics.utils.ts`: 354, `email-read.service.ts`: 333).
+- **`max-lines-per-function` (>50):** 18 functions flagged (detailed in Section 4.4).
+- **`max-depth` (>4):** 3 functions flagged (`syncAccountProcessor`: 6, `calculateTopSenders`: 6, `formatResponseTimes`: 5).
+
+---
+
+#### 14.3 Frontend ESLint Audit & Error Inventory
+
+- **Total Problems:** 221 (101 errors, 120 warnings)
+- **CI / Build Blocking Errors:** 101 errors:
+  - 89 errors: `no-restricted-syntax` (inline object types in UI primitives and state providers)
+  - 8 errors: `no-restricted-syntax` (empty catch blocks)
+  - 4 errors: `no-console` (raw console logging in monitoring providers)
+
+##### 14.3.1 Breakdown of 89 Frontend Inline Object Type Errors (`TSTypeLiteral`)
+
+| Component / File Group | File Count | Error Count | Offending Syntax Examples | Target Named Interface Remediation |
+|---|---:|---:|---|---|
+| Radix/shadcn UI Primitives (`Frontend/src/shared/ui/`) | 12 files | **68 errors** | `({ className, ...props }: { className?: string } & ComponentProps)`, `variants: { variant: { default: "...", outline: "..." } }` | Define dedicated props interfaces in `shared/ui/types/<component>.types.ts` |
+| State Providers (`Frontend/src/shared/providers/`) | 3 files | **12 errors** | `({ children, initialUser }: { children: ReactNode; initialUser?: User })` | Define `AuthProviderProps` in `shared/providers/types/auth-provider.types.ts` |
+| Navigation & Stores (`Frontend/src/shared/stores/`) | 2 files | **5 errors** | `set((state: { crumbs: BreadcrumbItem[] }) => ...)` | Define `BreadcrumbStoreState` in `shared/stores/types/breadcrumb-store.types.ts` |
+| Feature Components (`Frontend/src/features/`) | 4 files | **4 errors** | Component prop inline destructuring in modals | Define `ModalProps` in `features/<feature>/types/` |
+
+##### 14.3.2 Breakdown of 8 Empty Catch Block Errors
+
+Empty catch blocks (`catch (e) {}`) conceal failures and violate MailSense Error Handling Standard 6.3:
+
+| File Location | Line Number | Empty Catch Pattern | Remediation |
+|---|---:|---|---|
+| [`console-frontend.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/providers/console-frontend.provider.ts) | 24 | `catch (e) {}` | Log structured warning or delegate to logger |
+| [`console-frontend.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/providers/console-frontend.provider.ts) | 48 | `catch (e) {}` | Log structured warning or delegate to logger |
+| [`console-frontend.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/providers/console-frontend.provider.ts) | 62 | `catch (e) {}` | Log structured warning or delegate to logger |
+| [`console-frontend.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/providers/console-frontend.provider.ts) | 78 | `catch (e) {}` | Log structured warning or delegate to logger |
+| [`sentry-frontend.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/providers/sentry-frontend.provider.ts) | 35 | `catch (err) {}` | Capture exception with Sentry or fallback logger |
+| [`sentry-frontend.provider.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/providers/sentry-frontend.provider.ts) | 59 | `catch (err) {}` | Capture exception with Sentry or fallback logger |
+| [`session.tracker.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/trackers/session.tracker.ts) | 18 | `catch (_) {}` | Log storage access failure to fallback logger |
+| [`session.tracker.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/trackers/session.tracker.ts) | 42 | `catch (_) {}` | Log storage access failure to fallback logger |
+
+##### 14.3.3 Breakdown of 4 `no-console` Errors
+- [`console-frontend.provider.ts:18`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/providers/console-frontend.provider.ts#L18): Raw `console.log` in initialization. Replace with structured telemetry dispatcher or disable for console provider specifically using `/* eslint-disable-next-line no-console */`.
+- [`console-frontend.provider.ts:45,55`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/core/monitoring/providers/console-frontend.provider.ts#L45): Raw `console.error`.
+
+---
+
+#### 14.4 Step-by-Step ESLint Remediation Roadmap (To Reach 0 Errors)
+
+```mermaid
+graph TD
+    Step1[Phase 1: Backend Zero Inline Types] --> Step2[Phase 2: Frontend Empty Catch & Console Fixes]
+    Step2 --> Step3[Phase 3: Frontend UI Primitives Typed Interfaces]
+    Step3 --> Step4[Phase 4: Warning Reductions via Service & Hook Modularization]
+    Step4 --> Step5[Phase 5: Automated CI Enforcement pnpm lint]
+```
+
+1. **Step 1: Remediate All 39 Backend Errors:**
+   - Create missing interfaces in `Backend/src/modules/emails/email.types.ts`, `draft.types.ts`, `account.types.ts`, `analytics.types.ts`, and `outlook.types.ts`.
+   - Replace all inline `req: Request<...>` and `res: Response<...>` shapes with imported named interfaces.
+   - Run `cd Backend && pnpm lint` to verify 0 errors.
+2. **Step 2: Remediate Frontend Empty Catch Blocks & Raw Console Calls:**
+   - Add structured exception logging inside the 8 empty catch blocks in `console-frontend.provider.ts`, `sentry-frontend.provider.ts`, and `session.tracker.ts`.
+   - Add targeted eslint-disable comments for the console provider itself where logging is its intended purpose.
+3. **Step 3: Remediate Frontend UI Primitives Inline Types:**
+   - Extract props interfaces for Radix/shadcn compound components into `Frontend/src/shared/ui/types/ui-primitives.types.ts`.
+   - Import explicit interfaces into `sidebar.tsx`, `field.tsx`, `dialog.tsx`, `menubar.tsx`, `dropdown-menu.tsx`, and `sheet.tsx`.
+   - Run `cd Frontend && pnpm lint` to verify 0 errors.
+4. **Step 4: Reduce Function Length & Complexity Warnings:**
+   - Execute the modularization blueprints for `outlook.service.ts`, `gmail.service.ts`, `sync-account.processor.ts`, and `useEmailActions.ts`.
+   - Ensure complexity ≤10 and function lines ≤50 across all modified files.
 
 ---
 

@@ -3,7 +3,7 @@ import { ForbiddenError } from '../../../core/errors/index.js';
 import { EmailProviderFactory } from '../../../integrations/email/email.provider.factory.js';
 import { AccountRepository } from '../../accounts/account.repository.js';
 import { AttachmentsService } from '../../attachments/attachment.service.js';
-import { EmailWriteService } from '../email-write.service.js';
+import { EmailWriteService } from '../services/email-write.service.js';
 
 jest.mock('../../accounts/account.repository.js');
 jest.mock('../../../integrations/email/email.provider.factory.js');

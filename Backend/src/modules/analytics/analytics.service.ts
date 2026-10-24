@@ -4,16 +4,7 @@ import { ANALYTICS_TIMEFRAME, AnalyticsQueryParams, DashboardAnalyticsResponse, 
 import { createLogger } from '@observability';
 import { AccountRepository } from '../accounts/account.repository.js';
 import { AnalyticsRepository } from './analytics.repository.js';
-import {
-    buildNoAccountsAnalyticsDashboardData,
-    calculateDateRange,
-    calculatePercentageChange,
-    calculateResponseTimeMetrics,
-    formatAccountBreakdown,
-    formatEmailVolumeTimeSeries,
-    formatOverviewMetrics,
-    formatTopSenders,
-} from './analytics.utils.js';
+import { buildNoAccountsAnalyticsDashboardData, calculateDateRange, calculatePercentageChange, calculateResponseTimeMetrics, formatAccountBreakdown, formatEmailVolumeTimeSeries, formatOverviewMetrics, formatTopSenders } from './utils/index.js';
 
 const logger = createLogger(LOGGER_MODULE.ANALYTICS_SERVICE);
 

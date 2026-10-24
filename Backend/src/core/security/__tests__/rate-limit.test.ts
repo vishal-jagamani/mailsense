@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import request from 'supertest';
-import { errorHandler } from '../../../middlewares/error.handler.js';
+import { errorHandler } from '../../middlewares/error.handler.js';
 import { syncRateLimiter } from '../rate-limit.config.js';
 
 describe('Rate Limiter Middleware', () => {

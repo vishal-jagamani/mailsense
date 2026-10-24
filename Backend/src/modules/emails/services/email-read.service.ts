@@ -1,7 +1,8 @@
 import { LOGGER_MODULE } from '@constants';
-import { NotFoundError } from '@errors';
+import { ForbiddenError, NotFoundError } from '@errors';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { GmailAttachmentBufferResult } from '@integrations/gmail/gmail.types.js';
 import {
     ACCOUNT_PROVIDER,
     APIResponse,
@@ -20,9 +21,9 @@ import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { createLogger } from '@observability';
 import { decompressString } from '@utils';
 import { FilterQuery } from 'mongoose';
-import { EMAIL_LIST_DB_FIELD_MAPPING } from './email.constants.js';
-import { EmailDocument, EmailInput } from './email.model.js';
-import { EmailRepository } from './email.repository.js';
+import { EMAIL_LIST_DB_FIELD_MAPPING } from '../email.constants.js';
+import { EmailDocument, EmailInput } from '../email.model.js';
+import { EmailRepository } from '../email.repository.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 
@@ -126,8 +127,17 @@ export class EmailReadService {
         }
     }
 
-    public async getEmails(accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
+    public async getEmails(userId: string, accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
         try {
+            const account = await AccountRepository.getAccountById(accountId);
+            if (!account) {
+                throw new NotFoundError('Account', accountId);
+            }
+
+            if (account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to access emails');
+            }
+
             const emails = await EmailRepository.getGroupedEmails({ accountId }, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             const total = await EmailRepository.countGroupedThreads({ accountId });
 
@@ -180,7 +190,7 @@ export class EmailReadService {
         }
     }
 
-    public async getEmail(emailId: string): Promise<EmailDocument | EmailInput | null> {
+    public async getEmail(userId: string, emailId: string): Promise<EmailDocument | EmailInput | null> {
         try {
             const email = await EmailRepository.getEmail(emailId);
             if (!email) {
@@ -190,6 +200,10 @@ export class EmailReadService {
             const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
             if (!account) {
                 throw new NotFoundError('Account', email.accountId);
+            }
+
+            if (account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to access email');
             }
 
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
@@ -245,11 +259,20 @@ export class EmailReadService {
         }
     }
 
-    public async getThread(emailId: string): Promise<GetThreadResponse> {
+    public async getThread(userId: string, emailId: string): Promise<GetThreadResponse> {
         try {
             const email = await EmailRepository.getEmail(emailId);
             if (!email) {
                 throw new NotFoundError('Email', emailId);
+            }
+
+            const account = await AccountRepository.getAccountById(email.accountId, { userId: 1 });
+            if (!account) {
+                throw new NotFoundError('Account', email.accountId);
+            }
+
+            if (account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to access email thread');
             }
 
             const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
@@ -272,7 +295,7 @@ export class EmailReadService {
         }
     }
 
-    public async downloadAttachment(emailId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
+    public async downloadAttachment(userId: string, emailId: string, attachmentId: string): Promise<GmailAttachmentBufferResult> {
         try {
             const email = await EmailRepository.getEmail(emailId);
             if (!email) {
@@ -282,6 +305,10 @@ export class EmailReadService {
             const account = await AccountRepository.getAccountById(email.accountId);
             if (!account) {
                 throw new NotFoundError('Account', email.accountId);
+            }
+
+            if (account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to access attachment');
             }
 
             const attachment = (email.attachments || []).find((att) => att.attachmentId === attachmentId);
@@ -301,7 +328,7 @@ export class EmailReadService {
         }
     }
 
-    public async downloadAttachmentStream(emailId: string, attachmentId: string): Promise<AttachmentStreamResult> {
+    public async downloadAttachmentStream(userId: string, emailId: string, attachmentId: string): Promise<AttachmentStreamResult> {
         try {
             const email = await EmailRepository.getEmail(emailId);
             if (!email) {
@@ -311,6 +338,10 @@ export class EmailReadService {
             const account = await AccountRepository.getAccountById(email.accountId);
             if (!account) {
                 throw new NotFoundError('Account', email.accountId);
+            }
+
+            if (account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to download attachment');
             }
 
             const attachment = (email.attachments || []).find((att) => att.attachmentId === attachmentId);

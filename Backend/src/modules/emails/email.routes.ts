@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { authMiddleware, validate } from '@middlewares';
 import { composeRateLimiter } from '@security';
 import { handleRequest } from 'shared/utils/index.js';
-import { EmailController } from './email.controller.js';
+import { emailMutationController, emailQueryController } from './controllers/index.js';
 import {
     archiveEmailSchema,
     composeEmailSchema,
@@ -20,36 +20,34 @@ import {
 
 const router = Router();
 
-const emailController = new EmailController();
-
 router.use(authMiddleware);
 
-router.post('/list', validate({ body: getAllEmailsSchema }), handleRequest(emailController.getAllEmails));
+router.post('/list', validate({ body: getAllEmailsSchema }), handleRequest(emailQueryController.getAllEmails));
 
-router.get('/list/:accountId', handleRequest(emailController.getEmails));
+router.get('/list/:accountId', handleRequest(emailQueryController.getEmails));
 
-router.get('/filters', handleRequest(emailController.getFilters));
+router.get('/filters', handleRequest(emailQueryController.getFilters));
 
-router.get('/details/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getEmail));
+router.get('/details/:emailId', validate({ params: getEmailSchema }), handleRequest(emailQueryController.getEmail));
 
-router.get('/attachment/:emailId/:attachmentId', validate({ params: downloadAttachmentSchema }), handleRequest(emailController.downloadAttachment));
+router.get('/attachment/:emailId/:attachmentId', validate({ params: downloadAttachmentSchema }), handleRequest(emailQueryController.downloadAttachment));
 
-router.post('/delete', validate({ body: deleteEmailSchema }), handleRequest(emailController.deleteEmail));
+router.post('/delete', validate({ body: deleteEmailSchema }), handleRequest(emailMutationController.deleteEmail));
 
-router.post('/archive', validate({ body: archiveEmailSchema }), handleRequest(emailController.archiveEmails));
+router.post('/archive', validate({ body: archiveEmailSchema }), handleRequest(emailMutationController.archiveEmails));
 
-router.post('/star', validate({ body: starEmailSchema }), handleRequest(emailController.starEmails));
+router.post('/star', validate({ body: starEmailSchema }), handleRequest(emailMutationController.starEmails));
 
-router.post('/unread', validate({ body: unreadEmailSchema }), handleRequest(emailController.unreadEmails));
+router.post('/unread', validate({ body: unreadEmailSchema }), handleRequest(emailMutationController.unreadEmails));
 
-router.post('/search', validate({ body: searchEmailSchema }), handleRequest(emailController.searchEmails));
+router.post('/search', validate({ body: searchEmailSchema }), handleRequest(emailQueryController.searchEmails));
 
-router.post('/compose', composeRateLimiter, validate({ body: composeEmailSchema }), handleRequest(emailController.composeEmail));
+router.post('/compose', composeRateLimiter, validate({ body: composeEmailSchema }), handleRequest(emailMutationController.composeEmail));
 
-router.post('/searchOtherContacts', validate({ body: searchOtherContactsSchema }), handleRequest(emailController.searchOtherContacts));
+router.post('/searchOtherContacts', validate({ body: searchOtherContactsSchema }), handleRequest(emailQueryController.searchOtherContacts));
 
-router.get('/thread/:emailId', validate({ params: getEmailSchema }), handleRequest(emailController.getThread));
+router.get('/thread/:emailId', validate({ params: getEmailSchema }), handleRequest(emailQueryController.getThread));
 
-router.post('/move', validate({ body: moveEmailsSchema }), handleRequest(emailController.moveEmails));
+router.post('/move', validate({ body: moveEmailsSchema }), handleRequest(emailMutationController.moveEmails));
 
 export default router;

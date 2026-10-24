@@ -13,8 +13,8 @@ import {
 } from '@mailsense/types';
 import { EmailReadService } from './email-read.service.js';
 import { EmailWriteService } from './email-write.service.js';
-import { EmailDocument, EmailInput } from './email.model.js';
-import { ComposeEmailBody } from './email.schema.js';
+import { EmailDocument, EmailInput } from '../email.model.js';
+import { ComposeEmailBody } from '../email.schema.js';
 import { GmailAttachmentBufferResult } from '@integrations/gmail/gmail.types.js';
 
 export class EmailService {
@@ -33,16 +33,16 @@ export class EmailService {
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         return await this.readService.getAllEmails(userId, size, page, filters);
     }
-    public async getEmails(accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
-        return await this.readService.getEmails(accountId, size, page);
+    public async getEmails(userId: string, accountId: string, size: number, page: number): Promise<GetEmailsResponse> {
+        return await this.readService.getEmails(userId, accountId, size, page);
     }
 
     public async getFilters(userId: string): Promise<GetFiltersResponse> {
         return await this.readService.getFilters(userId);
     }
 
-    public async getEmail(emailId: string): Promise<EmailDocument | EmailInput | null> {
-        return await this.readService.getEmail(emailId);
+    public async getEmail(userId: string, emailId: string): Promise<EmailDocument | EmailInput | null> {
+        return await this.readService.getEmail(userId, emailId);
     }
 
     public async searchEmails(params: SearchEmailsParams): Promise<PaginatedDataResponse<EmailDocument>> {
@@ -53,16 +53,16 @@ export class EmailService {
         return await this.readService.searchOtherContacts(userId, searchText);
     }
 
-    public async getThread(emailId: string): Promise<GetThreadResponse> {
-        return await this.readService.getThread(emailId);
+    public async getThread(userId: string, emailId: string): Promise<GetThreadResponse> {
+        return await this.readService.getThread(userId, emailId);
     }
 
-    public async downloadAttachment(emailId: string, attachmentId: string): Promise<GmailAttachmentBufferResult> {
-        return await this.readService.downloadAttachment(emailId, attachmentId);
+    public async downloadAttachment(userId: string, emailId: string, attachmentId: string): Promise<GmailAttachmentBufferResult> {
+        return await this.readService.downloadAttachment(userId, emailId, attachmentId);
     }
 
-    public async downloadAttachmentStream(emailId: string, attachmentId: string): Promise<AttachmentStreamResult> {
-        return await this.readService.downloadAttachmentStream(emailId, attachmentId);
+    public async downloadAttachmentStream(userId: string, emailId: string, attachmentId: string): Promise<AttachmentStreamResult> {
+        return await this.readService.downloadAttachmentStream(userId, emailId, attachmentId);
     }
 
     // ==========================================

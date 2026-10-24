@@ -13,11 +13,14 @@ import { FolderRepository } from './folder.repository.js';
 const logger = createLogger(LOGGER_MODULE.FOLDER_SERVICE);
 
 export class FolderService {
-    public async syncFolders(accountId: string): Promise<UpdateAPIResponse> {
+    public async syncFolders(userId: string, accountId: string): Promise<UpdateAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(accountId, { provider: 1, userId: 1 });
             if (!account) {
                 throw new NotFoundError('Account', accountId);
+            }
+            if (account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to sync account folders');
             }
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             const folderInputs = await provider.getAllFolders(accountId, account.userId);
@@ -68,12 +71,18 @@ export class FolderService {
         }
     }
 
-    public async getFolder(folderId: string): Promise<FolderDocument> {
+    public async getFolder(userId: string, folderId: string): Promise<FolderDocument> {
         try {
             const folder = await FolderRepository.getFolder(folderId);
             if (!folder) {
                 throw new NotFoundError('Folder', folderId);
             }
+
+            const account = await AccountRepository.getAccountById(folder.accountId, { userId: 1 });
+            if (!account || account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to access folder');
+            }
+
             return folder;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -82,11 +91,14 @@ export class FolderService {
         }
     }
 
-    public async getAccountFolders(accountId: string): Promise<PaginatedDataResponse<FolderDocument>> {
+    public async getAccountFolders(userId: string, accountId: string): Promise<PaginatedDataResponse<FolderDocument>> {
         try {
-            const account = await AccountRepository.getAccountById(accountId, { provider: 1 });
+            const account = await AccountRepository.getAccountById(accountId, { provider: 1, userId: 1 });
             if (!account) {
                 throw new NotFoundError('Account', accountId);
+            }
+            if (account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to access folders');
             }
             const folders = await FolderRepository.getAccountFolders(accountId);
             return { data: folders, size: folders.length, page: 1, total: folders.length };
@@ -97,11 +109,14 @@ export class FolderService {
         }
     }
 
-    public async createFolder(accountId: string, folderName: string): Promise<UpdateAPIResponse> {
+    public async createFolder(userId: string, accountId: string, folderName: string): Promise<UpdateAPIResponse> {
         try {
             const account = await AccountRepository.getAccountById(accountId, { provider: 1, userId: 1 });
             if (!account) {
                 throw new NotFoundError('Account', accountId);
+            }
+            if (account.userId !== userId) {
+                throw new ForbiddenError('Unauthorized attempt to create folder');
             }
             const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
             return provider.createFolder(account.userId, accountId, folderName);

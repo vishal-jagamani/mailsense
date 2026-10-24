@@ -7,6 +7,18 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+### Added
+- **Attachment Binary Download API:** Added `downloadAttachment` in `Frontend/src/features/emails/api/email.api.ts` wrapping `axiosClient` with `responseType: 'blob'` and strongly-typed `Promise<Blob>` return.
+- **Account Folder Synchronization API:** Added `syncAccountFolders` client method in `Frontend/src/features/folders/api/folder.api.ts` to trigger on-demand folder sync with connected providers.
+- **Dedicated Hook & Mutation Types (Zero Inline Types Standard):**
+  - Created `UpdateFolderMutationVariables` in `Frontend/src/features/folders/types/folders.types.ts` for typed folder update mutations.
+  - Created named state and return interfaces in `Frontend/src/features/emails/types/email-ui.types.ts`: `EmailsPageAccountState`, `EmailsPageEmailState`, `EmailsPageThreadState`, `EmailsPageUnreadOperationState`, `EmailsPageSetterState`, and `UseEmailsPageReturnParams`.
+
+### Changed
+- **Thread Query Resilience:** Enhanced `useGetThreadQuery` in `Frontend/src/features/emails/api/email.queries.ts` with a retry predicate that immediately stops retries on `403 Forbidden` or `404 Not Found` responses, preventing unnecessary network traffic on missing or unauthorized conversation threads.
+- **Folder Mutation Typing:** Refactored `useUpdateFolderMutation` in `Frontend/src/features/folders/api/folder.mutation.ts` to consume `UpdateFolderMutationVariables`, eliminating inline object types.
+- **Emails Page Hook Typing:** Refactored `useEmailsPage` in `Frontend/src/features/emails/hooks/useEmailsPage.ts` to use `UseEmailsPageReturnParams` imported from `email-ui.types.ts`, removing local inline interface definitions.
+
 ## [3.5.0] - 2026-10-15
 
 ### Added

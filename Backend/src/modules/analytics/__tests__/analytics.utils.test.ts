@@ -16,7 +16,7 @@ import {
     calculateResponseTimeMetrics,
     formatEmailVolumeTimeSeries,
     formatTopSenders
-} from '../analytics.utils.js';
+} from '../utils/index.js';
 
 describe('Analytics Utilities — Unit Test Suite', () => {
     describe('calculateDateRange', () => {

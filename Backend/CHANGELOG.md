@@ -7,6 +7,26 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Security
+- **Multi-Tenant Authorization Hardening (`BUG-V13-01`, `BUG-V13-02`, `BUG-V13-03`):**
+  - Enforced caller `userId` validation in `EmailQueryController` and `EmailReadService` for `getEmail`, `getThread`, `downloadAttachment`, and `downloadAttachmentStream`, blocking cross-tenant access to messages, threads, and binary attachments.
+  - Enforced caller `userId` validation in `FolderController` and `FolderService` for `syncFolders`, `getFolder`, `getAccountFolders`, and `createFolder`, throwing `ForbiddenError` when an unowned `accountId` is targeted.
+  - Activated staged attachment ownership validation in `EmailWriteService.composeEmailWithAttachments`, ensuring all attachment IDs belong to both the caller `userId` and the target `accountId`. Verified with `src/modules/emails/__tests__/attachment-security.test.ts`.
+
+### Added
+- **Database Connection Manager (`ARCH-V13-01`):** Extracted raw MongoDB connection logic from `server.ts` into enterprise `DatabaseConnectionManager` (`src/core/database/connection.ts`) with typed options, reconnect monitoring, and graceful shutdown handling. Added `@database` path alias.
+- **Categorized Email Module Subdirectories:**
+  - Decomposed `email.controller.ts` into `EmailQueryController` (`src/modules/emails/controllers/email-query.controller.ts`) and `EmailMutationController` (`src/modules/emails/controllers/email-mutation.controller.ts`) with barrel export `src/modules/emails/controllers/index.ts`.
+  - Decomposed `email.service.ts` into `EmailReadService` and `EmailWriteService` under `src/modules/emails/services/` with composite facade `src/modules/emails/services/email.service.ts`.
+- **Outlook Integration Modularization:** Decomposed monolithic `outlook.service.ts` into `OutlookSyncService` and `OutlookMailService` under `src/integrations/outlook/services/` with unified composite facade in `services/index.ts`.
+- **Analytics Utility Modularization:** Decomposed `analytics.utils.ts` into pure formatting helpers (`analytics-formatters.ts`) and statistical calculation algorithms (`analytics-calculators.ts`) under `src/modules/analytics/utils/` with barrel export `index.ts`.
+
+### Changed
+- **Core Middlewares Relocation:** Relocated cross-cutting middlewares from root `src/middlewares/` to `src/core/middlewares/` (`auth.ts`, `error.handler.ts`, `validator.ts`, `index.ts`), updating `@middlewares` path alias and route imports.
+- **Worker Processor Complexity Reduction:** Refactored `syncAccountProcessor` in `src/workers/processors/sync-account.processor.ts` into focused private helper methods, reducing cyclomatic complexity from 32 to $\le 8$ and nesting depth from 6 to $\le 3$.
+- **User Schema Index Deduplication:** Eliminated duplicate index warning on `userId` in `src/modules/user/user.model.ts`.
+- **Jest Path Mapping Alignment:** Updated `jest.config.js` `moduleNameMapper` with `@middlewares`, `@database`, `@security`, and `@queue` aliases to ensure clean test resolution.
+
 ## [3.5.0] - 2026-10-15
 
 ### Added

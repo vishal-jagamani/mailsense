@@ -7,6 +7,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Security
+- **Multi-Tenant Privacy & Account Isolation:** Hardened data access controls across all email, conversation thread, attachment, and folder operations to guarantee that accounts, messages, and files can only be accessed or downloaded by their verified owners.
+- **Attachment Staging Protection:** Enforced strict account and user ownership validation during email composition, preventing unverified or cross-account staged files from being attached to outbound messages.
+
+### Added
+- **Manual Folder Synchronization:** Added on-demand folder and label synchronization controls, allowing users to instantly pull the latest folder structures and updates directly from connected Gmail and Outlook mailboxes.
+- **Direct Attachment Downloads:** Streamlined attachment downloading for seamless, reliable file retrieval across connected mail accounts.
+
+### Changed
+- **Conversation Thread Stability:** Enhanced thread and email loading resilience with smarter retry handling, preventing screen freezes or endless loading loops when encountering inaccessible or deleted conversations.
+- **Mailbox Performance & Reliability:** Optimized background database connectivity and lifecycle management, resulting in faster and more dependable message syncing and navigation across unified and account-specific views.
+
 ## [3.5.0] - 2026-10-15
 
 ### Added

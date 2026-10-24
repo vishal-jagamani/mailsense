@@ -1,269 +1,288 @@
-import { BadRequestError, UnauthorizedError } from '@errors';
-import { GetAllEmailsFilters, MoveEmailsRequestBody } from '@mailsense/types';
-import { logger } from '@utils';
-import { NextFunction, Request, Response } from 'express';
-import {
-    ArchiveEmailBody,
-    ComposeEmailBody,
-    DeleteEmailSchema,
-    GetAllEmailsSchema,
-    SearchEmailBody,
-    SearchOtherContactsBody,
-    StarEmailBody,
-    UnreadEmailBody,
-} from './email.schema.js';
-import { EmailService } from './email.service.js';
+// import { BadRequestError, UnauthorizedError } from '@errors';
+// import { EmailEndpointParams, GetAllEmailsFilters, MoveEmailsRequestBody } from '@mailsense/types';
+// import { logger } from '@utils';
+// import { NextFunction, Request, Response } from 'express';
+// import {
+//     ArchiveEmailBody,
+//     ComposeEmailBody,
+//     DeleteEmailSchema,
+//     DownloadAttachmentSchema,
+//     GetAllEmailsSchema,
+//     GetEmailSchema,
+//     SearchEmailBody,
+//     SearchOtherContactsBody,
+//     StarEmailBody,
+//     UnreadEmailBody,
+// } from './email.schema.js';
+// import { EmailService } from './services/email.service.js';
+// import { GetAccountDetailsSchema } from '@modules/accounts/account.schema.js';
 
-export class EmailController {
-    private emailService: EmailService;
+// export class EmailController {
+//     private emailService: EmailService;
 
-    constructor() {
-        this.emailService = new EmailService();
-    }
+//     constructor() {
+//         this.emailService = new EmailService();
+//     }
 
-    public getAllEmails = async (req: Request<object, object, GetAllEmailsSchema>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const { size, page, filters } = req.body;
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const sizeValue = size ? Number(size) : 10;
-            const pageValue = page ? Number(page) : 1;
-            const filterValue = (filters || {
-                accountId: undefined,
-                dateRange: undefined,
-                folders: undefined,
-                unread: undefined,
-            }) as GetAllEmailsFilters;
-            const emails = await this.emailService.getAllEmails(userId, sizeValue, pageValue, filterValue);
-            res.send(emails);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public getAllEmails = async (req: Request<object, object, GetAllEmailsSchema>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const { size, page, filters } = req.body;
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const sizeValue = size ? Number(size) : 10;
+//             const pageValue = page ? Number(page) : 1;
+//             const filterValue = (filters || {
+//                 accountId: undefined,
+//                 dateRange: undefined,
+//                 folders: undefined,
+//                 unread: undefined,
+//             }) as GetAllEmailsFilters;
+//             const emails = await this.emailService.getAllEmails(userId, sizeValue, pageValue, filterValue);
+//             res.send(emails);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public getEmails = async (
-        req: Request<{ accountId: string }, object, object, { size: string; page: string }>,
-        res: Response,
-        next: NextFunction,
-    ): Promise<void> => {
-        try {
-            const { accountId } = req.params;
-            const { size, page } = req.query;
-            if (!accountId) {
-                throw new BadRequestError('Account ID is required');
-            }
-            const sizeValue = size ? Number(size) : 10;
-            const pageValue = page ? Number(page) : 1;
-            const emails = await this.emailService.getEmails(accountId, sizeValue, pageValue);
-            res.send(emails);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public getEmails = async (
+//         req: Request<GetAccountDetailsSchema, object, object, { size: string; page: string }>,
+//         res: Response,
+//         next: NextFunction,
+//     ): Promise<void> => {
+//         try {
+//             const { accountId } = req.params;
+//             const { size, page } = req.query;
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             if (!accountId) {
+//                 throw new BadRequestError('Account ID is required');
+//             }
+//             const sizeValue = size ? Number(size) : 10;
+//             const pageValue = page ? Number(page) : 1;
+//             const emails = await this.emailService.getEmails(userId, accountId, sizeValue, pageValue);
+//             res.send(emails);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public getFilters = async (req: Request<object, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const filters = await this.emailService.getFilters(userId);
-            res.send(filters);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public getFilters = async (req: Request<object, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const filters = await this.emailService.getFilters(userId);
+//             res.send(filters);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public getEmail = async (req: Request<{ emailId: string }, object, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const { emailId } = req.params;
-            if (!emailId) {
-                throw new BadRequestError('Email ID is required');
-            }
-            const email = await this.emailService.getEmail(emailId);
-            res.send(email);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public getEmail = async (req: Request<GetEmailSchema, object, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const { emailId } = req.params;
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             if (!emailId) {
+//                 throw new BadRequestError('Email ID is required');
+//             }
+//             const email = await this.emailService.getEmail(userId, emailId);
+//             res.send(email);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public searchEmails = async (req: Request<object, object, SearchEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const { searchText, size, page } = req.body;
-            const { id: userid } = req.user || {};
-            if (!userid) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const params = {
-                userId: String(userid),
-                searchText,
-                size: size ? Number(size) : 10,
-                page: page ? Number(page) : 1,
-            };
-            const response = await this.emailService.searchEmails(params);
-            res.status(200).send(response);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public searchEmails = async (req: Request<object, object, SearchEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const { searchText, size, page } = req.body;
+//             const { id: userid } = req.user || {};
+//             if (!userid) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const params = {
+//                 userId: String(userid),
+//                 searchText,
+//                 size: size ? Number(size) : 10,
+//                 page: page ? Number(page) : 1,
+//             };
+//             const response = await this.emailService.searchEmails(params);
+//             res.status(200).send(response);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public deleteEmail = async (req: Request<object, object, DeleteEmailSchema, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const { emailIds, trash } = req.body;
-            if (!emailIds) {
-                throw new BadRequestError('Email ID is required');
-            }
-            const email = await this.emailService.deleteEmail(userId, emailIds, Boolean(trash));
-            res.send(email);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public deleteEmail = async (req: Request<object, object, DeleteEmailSchema, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const { emailIds, trash } = req.body;
+//             if (!emailIds) {
+//                 throw new BadRequestError('Email ID is required');
+//             }
+//             const email = await this.emailService.deleteEmail(userId, emailIds, Boolean(trash));
+//             res.send(email);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public archiveEmails = async (req: Request<object, object, ArchiveEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const { emailIds, archive } = req.body;
-            if (!emailIds) {
-                throw new BadRequestError('Email ID is required');
-            }
-            const email = await this.emailService.archiveEmails(userId, emailIds, Boolean(archive));
-            res.send(email);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public archiveEmails = async (req: Request<object, object, ArchiveEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const { emailIds, archive } = req.body;
+//             if (!emailIds) {
+//                 throw new BadRequestError('Email ID is required');
+//             }
+//             const email = await this.emailService.archiveEmails(userId, emailIds, Boolean(archive));
+//             res.send(email);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public starEmails = async (req: Request<object, object, StarEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const { emailIds, star } = req.body;
-            if (!emailIds) {
-                throw new BadRequestError('Email ID is required');
-            }
-            const email = await this.emailService.starEmails(userId, emailIds, Boolean(star));
-            res.send(email);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public starEmails = async (req: Request<object, object, StarEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const { emailIds, star } = req.body;
+//             if (!emailIds) {
+//                 throw new BadRequestError('Email ID is required');
+//             }
+//             const email = await this.emailService.starEmails(userId, emailIds, Boolean(star));
+//             res.send(email);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public unreadEmails = async (req: Request<object, object, UnreadEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const { emailIds, unread } = req.body;
-            if (!emailIds) {
-                throw new BadRequestError('Email ID is required');
-            }
-            const email = await this.emailService.unreadEmails(userId, emailIds, Boolean(unread));
-            res.send(email);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public unreadEmails = async (req: Request<object, object, UnreadEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const { emailIds, unread } = req.body;
+//             if (!emailIds) {
+//                 throw new BadRequestError('Email ID is required');
+//             }
+//             const email = await this.emailService.unreadEmails(userId, emailIds, Boolean(unread));
+//             res.send(email);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public composeEmail = async (req: Request<object, object, ComposeEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const { accountId, to, subject, body } = req.body;
-            if (!accountId || !to || !subject || !body) {
-                throw new BadRequestError('Account ID, To, subject and body are required');
-            }
-            const email = await this.emailService.composeEmail(userId, req.body);
-            res.send(email);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public composeEmail = async (req: Request<object, object, ComposeEmailBody, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const { accountId, to, subject, body } = req.body;
+//             if (!accountId || !to || !subject || !body) {
+//                 throw new BadRequestError('Account ID, To, subject and body are required');
+//             }
+//             const email = await this.emailService.composeEmail(userId, req.body);
+//             res.send(email);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public searchOtherContacts = async (
-        req: Request<object, object, SearchOtherContactsBody, object>,
-        res: Response,
-        next: NextFunction,
-    ): Promise<void> => {
-        try {
-            const { searchText } = req.body;
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const email = await this.emailService.searchOtherContacts(userId, searchText);
-            res.send(email);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public searchOtherContacts = async (
+//         req: Request<object, object, SearchOtherContactsBody, object>,
+//         res: Response,
+//         next: NextFunction,
+//     ): Promise<void> => {
+//         try {
+//             const { searchText } = req.body;
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const email = await this.emailService.searchOtherContacts(userId, searchText);
+//             res.send(email);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public getThread = async (req: Request<{ emailId: string }>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const { emailId } = req.params;
-            if (!emailId) {
-                throw new BadRequestError('Email ID is required');
-            }
-            const threadData = await this.emailService.getThread(emailId);
-            res.send(threadData);
-        } catch (error) {
-            next(error);
-        }
-    };
+//     public getThread = async (req: Request<GetEmailSchema>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const { emailId } = req.params;
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             if (!emailId) {
+//                 throw new BadRequestError('Email ID is required');
+//             }
+//             const threadData = await this.emailService.getThread(userId, emailId);
+//             res.send(threadData);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public downloadAttachment = async (req: Request<{ emailId: string; attachmentId: string }>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const { emailId, attachmentId } = req.params;
-            if (!emailId || !attachmentId) {
-                throw new BadRequestError('Email ID and Attachment ID are required');
-            }
+//     public downloadAttachment = async (req: Request<DownloadAttachmentSchema>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const { emailId, attachmentId } = req.params;
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             if (!emailId || !attachmentId) {
+//                 throw new BadRequestError('Email ID and Attachment ID are required');
+//             }
 
-            const attachment = await this.emailService.downloadAttachmentStream(emailId, attachmentId);
+//             const attachment = await this.emailService.downloadAttachmentStream(userId, emailId, attachmentId);
 
-            res.setHeader('Content-Type', attachment.mimeType);
-            res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(attachment.filename)}"`);
-            if (attachment.contentLength) {
-                res.setHeader('Content-Length', attachment.contentLength);
-            }
+//             res.setHeader('Content-Type', attachment.mimeType);
+//             res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(attachment.filename)}"`);
+//             if (attachment.contentLength) {
+//                 res.setHeader('Content-Length', attachment.contentLength);
+//             }
 
-            attachment.stream.on('error', (streamErr) => {
-                logger.error('Error during attachment stream transfer', { emailId, attachmentId, error: streamErr });
-                if (!res.headersSent) {
-                    next(streamErr);
-                }
-            });
+//             attachment.stream.on('error', (streamErr) => {
+//                 logger.error('Error during attachment stream transfer', { emailId, attachmentId, error: streamErr });
+//                 if (!res.headersSent) {
+//                     next(streamErr);
+//                 }
+//             });
 
-            attachment.stream.pipe(res);
-        } catch (error) {
-            next(error);
-        }
-    };
+//             attachment.stream.pipe(res);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
 
-    public moveEmails = async (req: Request<object, object, MoveEmailsRequestBody, object>, res: Response, next: NextFunction): Promise<void> => {
-        try {
-            const userId = req.user?.id;
-            if (!userId) {
-                throw new UnauthorizedError('User ID is required');
-            }
-            const payload = req.body;
-            const result = await this.emailService.moveEmails(userId, payload.emailIds, payload.targetFolderIds, payload.removeFolderIds || []);
-            res.send(result);
-        } catch (error) {
-            next(error);
-        }
-    };
-}
+//     public moveEmails = async (req: Request<object, object, MoveEmailsRequestBody, object>, res: Response, next: NextFunction): Promise<void> => {
+//         try {
+//             const userId = req.user?.id;
+//             if (!userId) {
+//                 throw new UnauthorizedError('User ID is required');
+//             }
+//             const payload = req.body;
+//             const result = await this.emailService.moveEmails(userId, payload.emailIds, payload.targetFolderIds, payload.removeFolderIds || []);
+//             res.send(result);
+//         } catch (error) {
+//             next(error);
+//         }
+//     };
+// }
