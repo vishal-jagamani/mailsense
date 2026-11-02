@@ -8,7 +8,14 @@ import {
     TopSenderDataAttributes,
 } from '@mailsense/types';
 import { createLogger } from '@observability';
-import { RawAccountBreakdownResult, RawOverviewAggregateResult, RawTopSendersResult, RawVolumeDataPoint } from '../analytics.types.js';
+import {
+    AccountEmailMetricsBase,
+    EmailVolumeDataPointBase,
+    RawAccountBreakdownResult,
+    RawOverviewAggregateResult,
+    RawTopSendersResult,
+    RawVolumeDataPoint,
+} from '../analytics.types.js';
 
 const logger = createLogger(LOGGER_MODULE.ANALYTICS_UTILS);
 
@@ -83,7 +90,7 @@ export const formatEmailVolumeTimeSeries = (
     endDate: Date,
 ): EmailVolumeDataPointAttributes[] => {
     try {
-        const resultMap = new Map<string, { receivedCount: number; sentCount: number }>();
+        const resultMap = new Map<string, EmailVolumeDataPointBase>();
         for (const item of rawVolumePoints) {
             resultMap.set(item._id, {
                 receivedCount: item.receivedCount,
@@ -146,7 +153,7 @@ export const formatTopSenders = (raw: RawTopSendersResult): TopSenderDataAttribu
 
 export const formatAccountBreakdown = (raw: RawAccountBreakdownResult): AccountActivitySummaryAttributes[] => {
     try {
-        const statsMap = new Map<string, { totalEmails: number; unreadEmails: number; sentEmails: number }>();
+        const statsMap = new Map<string, AccountEmailMetricsBase>();
         for (const item of raw.emailStats) {
             statsMap.set(item._id.toString(), item);
         }

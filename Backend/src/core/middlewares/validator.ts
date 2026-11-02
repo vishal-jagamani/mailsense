@@ -1,12 +1,6 @@
+import { SchemaMap } from '@types';
 import { NextFunction, Request, Response } from 'express';
-import { ZodError, z } from 'zod';
-
-type SchemaMap = {
-    headers?: z.ZodSchema;
-    params?: z.ZodSchema;
-    query?: z.ZodSchema;
-    body?: z.ZodSchema;
-};
+import { ZodError } from 'zod';
 
 /**
  * Middleware to validate incoming requests using Zod schemas.

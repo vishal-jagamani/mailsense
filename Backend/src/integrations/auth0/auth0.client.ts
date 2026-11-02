@@ -7,7 +7,7 @@ import { UpdateUserSchema } from '@modules/user/user.schema.js';
 import { createLogger } from '@observability';
 import { apiRequest } from 'shared/utils/index.js';
 import { AUTH0_API_AUDIENCE, AUTH0_API_TOKEN_URI, AUTH0_APIs } from './auth0.constants.js';
-import { Auth0AccessTokenResponse, Auth0UserDetailsResponse } from './auth0.types.js';
+import { Auth0AccessTokenResponse, Auth0UserChangePassword, Auth0UserDetailsResponse } from './auth0.types.js';
 
 const logger = createLogger(LOGGER_MODULE.AUTH0_CLIENT);
 
@@ -94,7 +94,7 @@ export class Auth0Api {
         }
     }
 
-    public async changeUserPassword(auth0UserId: string, data: { password: string; connection: string }): Promise<UserDetailsObject> {
+    public async changeUserPassword(auth0UserId: string, data: Auth0UserChangePassword): Promise<UserDetailsObject> {
         try {
             const accessToken = await this.fetchAccessToken();
             const options: AxiosRequestConfig = {

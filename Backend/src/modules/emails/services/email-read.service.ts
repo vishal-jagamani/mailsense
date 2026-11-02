@@ -19,6 +19,7 @@ import {
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { createLogger } from '@observability';
+import { GetDataRangeResponse } from '@types';
 import { decompressString } from '@utils';
 import { FilterQuery } from 'mongoose';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from '../email.constants.js';
@@ -96,7 +97,7 @@ export class EmailReadService {
         }
     }
 
-    private getDateRange(dateRange: DATE_RANGE): { startDate: Date; endDate: Date } {
+    private getDateRange(dateRange: DATE_RANGE): GetDataRangeResponse {
         const now = new Date();
         const endDate = new Date(now);
 

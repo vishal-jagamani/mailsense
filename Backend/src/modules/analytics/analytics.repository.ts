@@ -225,11 +225,7 @@ export class AnalyticsRepository {
                 accountId,
                 folders: { $in: SENT_FOLDER_IDENTIFIERS },
             }),
-            Email.aggregate<{ count: number }>([
-                { $match: { accountId, threadId: { $exists: true, $ne: '' } } },
-                { $group: { _id: '$threadId' } },
-                { $count: 'count' },
-            ]),
+            Email.aggregate([{ $match: { accountId, threadId: { $exists: true, $ne: '' } } }, { $group: { _id: '$threadId' } }, { $count: 'count' }]),
         ]);
 
         const totalThreads = threadsResult?.[0]?.count ?? 0;

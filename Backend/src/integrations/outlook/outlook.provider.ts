@@ -12,12 +12,14 @@ import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { OutlookClient } from './clients/index.js';
-import { OutlookFolderService, OutlookMailService, OutlookSyncService } from './services/index.js';
+import { OutlookAttachmentBufferResult, OutlookMessageIdParam } from './outlook.types.js';
+import { OutlookFolderService, OutlookMailReadService, OutlookMailWriteService, OutlookSyncService } from './services/index.js';
 
 export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenResponse, OutlookUserProfile, OutlookMessageObjectFull> {
     constructor(
         private readonly outlookSyncService: OutlookSyncService = new OutlookSyncService(),
-        private readonly outlookMailService: OutlookMailService = new OutlookMailService(),
+        private readonly outlookMailReadService: OutlookMailReadService = new OutlookMailReadService(),
+        private readonly outlookMailWriteService: OutlookMailWriteService = new OutlookMailWriteService(),
         private readonly outlookFolderService: OutlookFolderService = new OutlookFolderService(),
     ) {}
 
@@ -39,7 +41,7 @@ export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenRe
                 newCursor: historyDetails.newDeltaLink,
             };
         } else {
-            const result = await this.outlookMailService.getMessages(accountId);
+            const result = await this.outlookMailReadService.getMessages(accountId);
             return {
                 addedEmails: result.emails,
                 deletedEmailIds: [],
@@ -49,40 +51,40 @@ export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenRe
     }
 
     async getMessageDetails(accountId: string, emailId: string, dbEmail?: EmailDocument): Promise<EmailAttributes | EmailInput> {
-        return this.outlookMailService.getMessageDetails(accountId, emailId, dbEmail);
+        return this.outlookMailReadService.getMessageDetails(accountId, emailId, dbEmail);
     }
 
-    async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }> {
-        return this.outlookMailService.getAttachment(accountId, messageId, attachmentId);
+    async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<OutlookAttachmentBufferResult> {
+        return this.outlookMailReadService.getAttachment(accountId, messageId, attachmentId);
     }
 
     async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
-        return await this.outlookMailService.getAttachmentStream(accountId, messageId, attachmentId);
+        return await this.outlookMailReadService.getAttachmentStream(accountId, messageId, attachmentId);
     }
 
     async deleteEmails(emailIds: string[], accountId: string, trash?: boolean): Promise<void> {
-        await this.outlookMailService.deleteEmails(emailIds, accountId, trash);
+        await this.outlookMailWriteService.deleteEmails(emailIds, accountId, trash);
     }
 
     async archiveEmails(emailIds: string[], accountId: string, archive: boolean): Promise<void> {
-        await this.outlookMailService.archiveEmails(emailIds, accountId, archive);
+        await this.outlookMailWriteService.archiveEmails(emailIds, accountId, archive);
     }
 
     async unreadEmails(emailIds: string[], accountId: string, unread: boolean): Promise<void> {
-        await this.outlookMailService.unreadEmails(emailIds, accountId, unread);
+        await this.outlookMailWriteService.unreadEmails(emailIds, accountId, unread);
     }
 
-    async starEmails(emails: { id: string; providerMessageId: string }[], accountId: string, star: boolean): Promise<void> {
+    async starEmails(emails: OutlookMessageIdParam[], accountId: string, star: boolean): Promise<void> {
         const providerMessageIds = emails.map((email) => email.providerMessageId);
-        await this.outlookMailService.flagEmails(providerMessageIds, accountId, star);
+        await this.outlookMailWriteService.flagEmails(providerMessageIds, accountId, star);
     }
 
     async sendMail(composeEmailData: ComposeEmailBody): Promise<OutlookMessageObjectFull> {
-        return this.outlookMailService.sendMail(composeEmailData);
+        return this.outlookMailWriteService.sendMail(composeEmailData);
     }
 
     async searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]> {
-        return this.outlookMailService.searchContacts(accountId, searchText);
+        return this.outlookMailReadService.searchContacts(accountId, searchText);
     }
 
     async getAllFolders(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {
@@ -106,6 +108,6 @@ export class OutlookProvider implements IEmailProvider<OutlookOAuthAccessTokenRe
     }
 
     async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], _removeFolderIds?: string[]): Promise<UpdateAPIResponse> {
-        return await this.outlookMailService.moveEmails(emailIds, accountId, targetFolderIds);
+        return await this.outlookMailWriteService.moveEmails(emailIds, accountId, targetFolderIds);
     }
 }

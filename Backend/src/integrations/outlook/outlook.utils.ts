@@ -1,8 +1,10 @@
 import { OUTLOOK_SECRETS } from '@config';
 import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
-import { EmailAttachment, FOLDER_KIND, FOLDER_ROLE, OutlookAttachmentObject } from '@mailsense/types';
+import { EmailAttachment, FOLDER_KIND, FOLDER_ROLE, OutlookAttachmentObject, OutlookMessageObjectFull } from '@mailsense/types';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { OutlookCreateMessagePayload, OutlookFileAttachmentPayload, OutlookFolderObject } from './outlook.types.js';
+import { EmailInput } from '@modules/emails/email.model.js';
+import { compressString } from '@utils';
 
 // Build outlook oauth access consent url
 export const buildOutlookOAuthConsentURL = async () => {
@@ -43,6 +45,27 @@ const isOutlookSystemFolder = (displayName: string): boolean => {
         displayNameLower === 'spam' ||
         displayNameLower === 'archive'
     );
+};
+
+export const parseEmailDetailsIntoPlainObject = (accountId: string, email: OutlookMessageObjectFull, attachments: EmailAttachment[]): EmailInput => {
+    const emailObject: EmailInput = {
+        accountId,
+        providerMessageId: email.id,
+        threadId: email.conversationId,
+        from: email.from.emailAddress.address,
+        to: email.toRecipients.map((val) => val.emailAddress.address),
+        cc: email.ccRecipients.map((val) => val.emailAddress.address),
+        bcc: email.bccRecipients?.map((val) => val.emailAddress.address) || [],
+        subject: email.subject,
+        body: email.bodyPreview || '',
+        bodyPlain: compressString(email.body.content),
+        bodyHtml: compressString(email.body.content),
+        receivedAt: new Date(email.receivedDateTime),
+        isRead: email.isRead,
+        folders: [email.parentFolderId],
+        attachments,
+    };
+    return emailObject;
 };
 
 export const parseOutlookFolderObject = (accountId: string, userId: string, folder: OutlookFolderObject): Partial<FolderInput> => {

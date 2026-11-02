@@ -1,10 +1,21 @@
-import { OutlookMessageObjectFull } from '@mailsense/types';
+import { OutlookAttachmentObject, OutlookMessageObjectFull } from '@mailsense/types';
 import { EmailInput } from '@modules/emails/email.model.js';
+import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 
 // API Responses
 export interface GetOutlookMessagesResponse {
     emails: Partial<EmailInput>[];
     deltaLink: string;
+}
+
+export interface OutlookDeltaMessagesResponse {
+    emails: OutlookMessageObjectFull[];
+    deltaLink: string;
+}
+
+export interface OutlookMessageIdParam {
+    id: string;
+    providerMessageId: string;
 }
 
 export interface GetOutlookDeltaMessagesResponse {
@@ -72,6 +83,9 @@ export interface OutlookPerson {
 /**
  * Standard Microsoft Graph Collection Response
  */
+export interface OutlookMessageAttachmentResponse {
+    value: OutlookAttachmentObject[];
+}
 export interface OutlookPeopleSearchResponse {
     value: OutlookPerson[];
     '@odata.context': string;
@@ -106,4 +120,15 @@ export interface OutlookUploadSessionResponse {
     uploadUrl: string;
     expirationDateTime?: string;
     nextExpectedRanges?: string[];
+}
+
+export interface SplitAttachmentsResponse {
+    smallAttachments: OutlookFileAttachmentPayload[];
+    largeAttachments: NonNullable<ComposeEmailBody['attachments']>;
+}
+
+export interface OutlookAttachmentBufferResult {
+    data: Buffer;
+    mimeType: string;
+    filename: string;
 }

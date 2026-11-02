@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 - **Conversation Thread Stability:** Enhanced thread and email loading resilience with smarter retry handling, preventing screen freezes or endless loading loops when encountering inaccessible or deleted conversations.
 - **Mailbox Performance & Reliability:** Optimized background database connectivity and lifecycle management, resulting in faster and more dependable message syncing and navigation across unified and account-specific views.
+- **Provider Synchronization Resilience:** Refactored background mailbox synchronization and message exchange adapters for Gmail and Outlook, ensuring higher reliability, smoother syncing, and faster inbox refresh cycles.
+- **Outbound Mail & Draft Processing:** Enhanced draft saving and attachment handling during email composition for faster, more dependable dispatch across connected provider accounts.
 
 ## [3.5.0] - 2026-10-15
 

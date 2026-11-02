@@ -18,7 +18,12 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Categorized Email Module Subdirectories:**
   - Decomposed `email.controller.ts` into `EmailQueryController` (`src/modules/emails/controllers/email-query.controller.ts`) and `EmailMutationController` (`src/modules/emails/controllers/email-mutation.controller.ts`) with barrel export `src/modules/emails/controllers/index.ts`.
   - Decomposed `email.service.ts` into `EmailReadService` and `EmailWriteService` under `src/modules/emails/services/` with composite facade `src/modules/emails/services/email.service.ts`.
-- **Outlook Integration Modularization:** Decomposed monolithic `outlook.service.ts` into `OutlookSyncService` and `OutlookMailService` under `src/integrations/outlook/services/` with unified composite facade in `services/index.ts`.
+- **Outlook Integration Modularization:** Decomposed monolithic `outlook.service.ts` into `OutlookSyncService`, `OutlookMailReadService`, and `OutlookMailWriteService` under `src/integrations/outlook/services/` with unified composite facade in `services/index.ts`.
+- **Gmail Integration Modularization:** Decomposed monolithic `gmail.service.ts` into dedicated domain services: `GmailAuthService`, `GmailMessageService`, `GmailAttachmentService`, and `GmailLabelService` under `src/integrations/gmail/services/` with barrel export `services/index.ts`.
+- **Zero-Inline Type System & Domain Isolation:**
+  - Added dedicated interface files: `src/core/types/event.types.ts` (`PublishEventPayload`), `src/core/types/middleware.types.ts` (`SchemaMap`), `src/core/types/common.types.ts` (`GetDataRangeResponse`), and `src/integrations/storage/storage.types.ts` (`ObjectStream`).
+  - Added domain-specific type definitions in `src/integrations/gmail/gmail.types.ts` (`GmailMessageIdParam`, `GmailAttachmentBufferResult`, `GmailMimeMessageAttachment`) and `src/integrations/outlook/outlook.types.ts` (`OutlookMessageIdParam`, `OutlookDeltaMessagesResponse`, `OutlookMessageAttachmentResponse`, `SplitAttachmentsResponse`, `OutlookAttachmentBufferResult`), preserving domain isolation between provider ecosystems.
+  - Added named interfaces in `src/modules/analytics/analytics.types.ts` (`EmailVolumeDataPointBase`, `AccountEmailMetricsBase`), `src/modules/emails/email.types.ts` (`PaginationParams`), and `src/integrations/auth0/auth0.types.ts` (`Auth0UserChangePassword`).
 - **Analytics Utility Modularization:** Decomposed `analytics.utils.ts` into pure formatting helpers (`analytics-formatters.ts`) and statistical calculation algorithms (`analytics-calculators.ts`) under `src/modules/analytics/utils/` with barrel export `index.ts`.
 
 ### Changed
@@ -26,6 +31,7 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Worker Processor Complexity Reduction:** Refactored `syncAccountProcessor` in `src/workers/processors/sync-account.processor.ts` into focused private helper methods, reducing cyclomatic complexity from 32 to $\le 8$ and nesting depth from 6 to $\le 3$.
 - **User Schema Index Deduplication:** Eliminated duplicate index warning on `userId` in `src/modules/user/user.model.ts`.
 - **Jest Path Mapping Alignment:** Updated `jest.config.js` `moduleNameMapper` with `@middlewares`, `@database`, `@security`, and `@queue` aliases to ensure clean test resolution.
+- **ESLint Zero-Error Remediation:** Resolved all 34 ESLint errors across the backend repository to achieve 0 errors, eliminating all inline object types and refactoring functions for complexity and length compliance.
 
 ## [3.5.0] - 2026-10-15
 

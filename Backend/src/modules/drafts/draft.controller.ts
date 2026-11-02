@@ -2,6 +2,7 @@ import { UnauthorizedError } from '@errors';
 import { SaveDraftRequestBody } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import { DraftService } from './draft.service.js';
+import { DraftParamSchema } from './draft.schema.js';
 
 export class DraftController {
     private draftService: DraftService;
@@ -36,7 +37,7 @@ export class DraftController {
         }
     };
 
-    public getDraftById = async (req: Request<{ draftId: string }>, res: Response, next: NextFunction): Promise<void> => {
+    public getDraftById = async (req: Request<DraftParamSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const userId = req.user?.id;
             if (!userId) {
@@ -50,7 +51,7 @@ export class DraftController {
         }
     };
 
-    public deleteDraft = async (req: Request<{ draftId: string }>, res: Response, next: NextFunction): Promise<void> => {
+    public deleteDraft = async (req: Request<DraftParamSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const userId = req.user?.id;
             if (!userId) {
@@ -64,7 +65,7 @@ export class DraftController {
         }
     };
 
-    public sendDraft = async (req: Request<{ draftId: string }>, res: Response, next: NextFunction): Promise<void> => {
+    public sendDraft = async (req: Request<DraftParamSchema>, res: Response, next: NextFunction): Promise<void> => {
         try {
             const userId = req.user?.id;
             if (!userId) {

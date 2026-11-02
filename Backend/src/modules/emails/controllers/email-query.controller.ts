@@ -6,6 +6,7 @@ import { createLogger } from '@observability';
 import { NextFunction, Request, Response } from 'express';
 import { UnauthorizedError } from 'express-oauth2-jwt-bearer';
 import { DownloadAttachmentSchema, GetAllEmailsSchema, GetEmailSchema, SearchEmailBody, SearchOtherContactsBody } from '../email.schema.js';
+import { PaginationParams } from '../email.types.js';
 import { EmailService } from '../services/email.service.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_CONTROLLER);
@@ -36,7 +37,7 @@ export class EmailQueryController {
     };
 
     public getEmails = async (
-        req: Request<GetAccountDetailsSchema, object, object, { size: string; page: string }>,
+        req: Request<GetAccountDetailsSchema, object, object, PaginationParams>,
         res: Response,
         next: NextFunction,
     ): Promise<void> => {

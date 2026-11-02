@@ -66,3 +66,14 @@ export interface RawAccountBreakdownResult {
     accounts: Array<FlattenMaps<AccountDocument>>;
     emailStats: RawAccountEmailStats[];
 }
+
+export interface EmailVolumeDataPointBase {
+    receivedCount: number;
+    sentCount: number;
+}
+
+export interface AccountEmailMetricsBase {
+    totalEmails: number;
+    unreadEmails: number;
+    sentEmails: number;
+}

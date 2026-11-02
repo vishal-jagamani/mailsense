@@ -10,6 +10,11 @@ export interface GmailMessage {
     threadId: string;
 }
 
+export interface GmailMessageIdParam {
+    id: string;
+    providerMessageId: string;
+}
+
 export interface MessageAdded {
     message: GmailMessage;
 }
@@ -51,3 +56,8 @@ export interface GmailAttachmentBufferResult {
     filename: string;
 }
 
+export interface GmailMimeMessageAttachment {
+    filename: string;
+    mimeType: string;
+    buffer: Buffer;
+}

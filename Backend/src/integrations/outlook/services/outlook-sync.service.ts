@@ -4,12 +4,12 @@ import { EmailInput } from '@modules/emails/email.model.js';
 import { createLogger } from '@observability';
 import { OutlookClient } from '../clients/index.js';
 import { ExtractDeltaMessageChangesResponse, GetOutlookDeltaMessagesResponse } from '../outlook.types.js';
-import { OutlookMailService } from './outlook-mail.service.js';
+import { OutlookMailReadService } from './outlook-mail-read.service.js';
 
 const logger = createLogger(LOGGER_MODULE.OUTLOOK_SERVICE);
 
 export class OutlookSyncService {
-    constructor(private readonly outlookMailService: OutlookMailService = new OutlookMailService()) {}
+    constructor(private readonly outlookMailReadService: OutlookMailReadService = new OutlookMailReadService()) {}
 
     async getAccessTokenFromCode(code: string): Promise<OutlookOAuthAccessTokenResponse> {
         try {
@@ -40,7 +40,7 @@ export class OutlookSyncService {
             const { addedEmails, deletedEmailIds } = await this.extractDeltaMessagesChanges(response.value);
             let newAddedEmails: Partial<EmailInput>[] = [];
             if (addedEmails.length) {
-                newAddedEmails = await this.outlookMailService.parseEmailsIntoPlainObjects(accountId, addedEmails);
+                newAddedEmails = await this.outlookMailReadService.parseEmailsIntoPlainObjects(accountId, addedEmails);
             }
             return { addedEmails: newAddedEmails, deletedEmailIds, newDeltaLink: response['@odata.deltaLink'] || '' };
         } catch (err) {

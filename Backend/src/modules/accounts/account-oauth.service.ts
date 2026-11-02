@@ -4,7 +4,7 @@ import { BadRequestError } from '@errors';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import * as GmailUtils from '@integrations/gmail/gmail.utils.js';
 import * as OutlookUtils from '@integrations/outlook/outlook.utils.js';
-import { ACCOUNT_PROVIDER } from '@mailsense/types';
+import { ACCOUNT_PROVIDER, User } from '@mailsense/types';
 import { createLogger } from '@observability';
 import { decrypt, encrypt } from '@utils';
 import { SchedulerService } from 'core/queue/scheduler.service.js';
@@ -40,7 +40,7 @@ export class AccountOAuthService {
     ): Promise<string> {
         try {
             const { code, state } = params;
-            let userDetails: { readonly id: string };
+            let userDetails: User;
             try {
                 const decryptedState = decrypt(state);
                 userDetails = JSON.parse(decryptedState);

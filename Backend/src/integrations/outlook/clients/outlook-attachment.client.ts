@@ -4,6 +4,7 @@ import { apiRequest, logger } from '@utils';
 import axios, { AxiosRequestConfig } from 'axios';
 import { Readable } from 'stream';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs } from '../outlook.constants.js';
+import { OutlookMessageAttachmentResponse } from '../outlook.types.js';
 import { OutlookAuthClient } from './outlook-auth.client.js';
 
 export class OutlookAttachmentClient {
@@ -17,7 +18,7 @@ export class OutlookAttachmentClient {
                     Authorization: `Bearer ${accessToken}`,
                 },
             };
-            const response = await apiRequest<{ value: OutlookAttachmentObject[] }>(options);
+            const response = await apiRequest<OutlookMessageAttachmentResponse>(options);
             return response?.value || [];
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);

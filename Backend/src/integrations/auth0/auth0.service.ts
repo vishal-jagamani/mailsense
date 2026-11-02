@@ -3,7 +3,7 @@ import { UserDetailsObject } from '@mailsense/types';
 import { UpdateUserSchema } from '@modules/user/user.schema.js';
 import { createLogger } from '@observability';
 import { Auth0Api } from './auth0.client.js';
-import { Auth0UserDetailsResponse } from './auth0.types.js';
+import { Auth0UserChangePassword, Auth0UserDetailsResponse } from './auth0.types.js';
 
 const logger = createLogger(LOGGER_MODULE.AUTH0_SERVICE);
 
@@ -47,7 +47,7 @@ export class Auth0Service {
         }
     }
 
-    async changeUserPassword(auth0UserId: string, user: { password: string; connection: string }): Promise<UserDetailsObject> {
+    async changeUserPassword(auth0UserId: string, user: Auth0UserChangePassword): Promise<UserDetailsObject> {
         try {
             const response = await this.auth0Api.changeUserPassword(auth0UserId, user);
             return response;

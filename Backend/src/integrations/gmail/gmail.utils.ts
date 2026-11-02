@@ -12,8 +12,11 @@ import {
     GmailMessageObjectFull,
     GmailMessagePartsFull,
 } from '@mailsense/types';
+import { EmailInput } from '@modules/emails/email.model.js';
 import { FolderDocument } from '@modules/folders/folder.model.js';
+import { compressString } from '@utils';
 import { htmlToText } from 'html-to-text';
+import { GmailMimeMessageAttachment } from './gmail.types.js';
 
 // Build gmail oauth access consent url
 export const buildGmailOAuthConsentURL = async () => {
@@ -202,6 +205,50 @@ export const parseGmailLabelObject = (accountId: string, userId: string, gmailLa
     };
 };
 
+export const transformGmailMessageToEmailInput = (emailDetails: GmailMessageObjectFull, accountId: string): EmailInput => {
+    const headers = (emailDetails.payload?.headers || []).reduce(
+        (acc, header) => {
+            acc[header.name.toLowerCase()] = header.value;
+            return acc;
+        },
+        {} as Record<string, string>,
+    );
+    const { plainTextBody, htmlBody } = parseEmailBody(emailDetails);
+    const receivedAt = new Date(headers.date || '');
+    return {
+        accountId,
+        providerMessageId: emailDetails.id,
+        threadId: emailDetails.threadId,
+        from: headers.from || '',
+        to: headers.to
+            ? headers.to
+                  .split(',')
+                  .map((e) => e.trim())
+                  .filter(Boolean)
+            : [],
+        cc: headers.cc
+            ? headers.cc
+                  .split(',')
+                  .map((e) => e.trim())
+                  .filter(Boolean)
+            : [],
+        bcc: headers.bcc
+            ? headers.bcc
+                  .split(',')
+                  .map((e) => e.trim())
+                  .filter(Boolean)
+            : [],
+        subject: headers.subject || '',
+        body: emailDetails.payload?.body?.data || '',
+        bodyHtml: compressString(htmlBody || ''),
+        bodyPlain: compressString(plainTextBody),
+        receivedAt,
+        isRead: !emailDetails.labelIds.includes(GMAIL_LABELS.UNREAD),
+        folders: emailDetails.labelIds,
+        attachments: extractGmailAttachments(emailDetails.payload),
+    };
+};
+
 export const buildGmailRawString = (to: string[], subject: string, body: string): string => {
     const recipientList = to.join(', ');
     // Standard RFC 2822 format: Headers, followed by a blank line, followed by the body
@@ -214,12 +261,7 @@ export const buildGmailRawString = (to: string[], subject: string, body: string)
     return raw;
 };
 
-export const constructGmailMimeMessage = (
-    to: string[],
-    subject: string,
-    body: string,
-    attachments: { filename: string; mimeType: string; buffer: Buffer }[],
-): string => {
+export const constructGmailMimeMessage = (to: string[], subject: string, body: string, attachments: GmailMimeMessageAttachment[]): string => {
     const boundary = `====_MailSense_Boundary_${Date.now()}====`;
     const messageParts: string[] = [];
 
@@ -245,9 +287,5 @@ export const constructGmailMimeMessage = (
 
     messageParts.push(`--${boundary}--`);
     const rawMime = messageParts.join('\r\n');
-    return Buffer.from(rawMime)
-        .toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=+$/, '');
+    return Buffer.from(rawMime).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 };

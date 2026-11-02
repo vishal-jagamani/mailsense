@@ -1,15 +1,10 @@
-import { AxiosApiError, NotFoundError } from '@errors';
-import axios from 'axios';
-
 import { LOGGER_MODULE } from '@constants';
+import { NotFoundError } from '@errors';
 import {
     GMAIL_LABELS,
     GmailHistoryResponse,
-    GmailLabel,
     GmailMessageObjectFull,
     GmailMessages,
-    GmailOAuthAccessTokenResponse,
-    GmailUserProfile,
     SearchOtherContactsResponse,
     UpdateAPIResponse,
 } from '@mailsense/types';
@@ -18,46 +13,23 @@ import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { EmailInput } from '@modules/emails/email.model.js';
 import { EmailRepository } from '@modules/emails/email.repository.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
-import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { createLogger } from '@observability';
-import { BatchProcessor, compressString } from 'shared/utils/index.js';
-import { GmailClient } from './clients/index.js';
+import { BatchProcessor, compressString } from '@utils';
+import axios from 'axios';
+import { GmailClient } from '../clients/index.js';
 import {
     ExtractMessageChangesResponse,
     GetGmailMessagesResponse,
     GmailMessage,
+    GmailMessageIdParam,
     GmailParsedEmailResult,
     MessagesAfterLastHistoryResponse,
-} from './gmail.types.js';
-import * as GmailUtils from './gmail.utils.js';
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+} from '../gmail.types.js';
+import * as GmailUtils from '../gmail.utils.js';
 
 const logger = createLogger(LOGGER_MODULE.GMAIL_SERVICE);
 
-export class GmailService {
-    async getAccessTokenFromCode(code: string): Promise<GmailOAuthAccessTokenResponse> {
-        try {
-            const response = await GmailClient.getAccessTokenFromCode(code);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.getAccessTokenFromCode: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async getUserProfileFromAccessToken(accessToken: string): Promise<GmailUserProfile> {
-        try {
-            const response = await GmailClient.getUserProfileFromAccessToken(accessToken);
-            return response;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.getUserProfileFromAccessToken: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
+export class GmailMessageService {
     async getMessages(accountId: string): Promise<GetGmailMessagesResponse> {
         try {
             const account = await AccountRepository.getAccountById(
@@ -82,7 +54,7 @@ export class GmailService {
             const emails: EmailInput[] = [];
             for (const messageId of messagesIds) {
                 const emailDetails = await GmailClient.fetchEmailById(messageId, accountId);
-                const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+                const emailObject = GmailUtils.transformGmailMessageToEmailInput(emailDetails, accountId);
                 emails.push(emailObject);
             }
             return emails;
@@ -103,7 +75,7 @@ export class GmailService {
             if (addedMessageIds.length) {
                 for (const messageId of addedMessageIds) {
                     const emailDetails = await GmailClient.fetchEmailById(messageId, accountId);
-                    const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+                    const emailObject = GmailUtils.transformGmailMessageToEmailInput(emailDetails, accountId);
                     addedMessages.push(emailObject);
                 }
             }
@@ -145,10 +117,10 @@ export class GmailService {
         try {
             const batchProcessor = new BatchProcessor<GmailMessage, GmailParsedEmailResult | null>(5, 100);
 
-            const parsedEmails = await batchProcessor.processBatches(emails.messages, async (email: { id: string; threadId: string }) => {
+            const parsedEmails = await batchProcessor.processBatches(emails.messages, async (email: GmailMessage) => {
                 try {
                     const emailDetails = await GmailClient.fetchEmailById(email.id, accountId);
-                    const emailObject = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+                    const emailObject = GmailUtils.transformGmailMessageToEmailInput(emailDetails, accountId);
                     return {
                         emailObject,
                         historyId: emailDetails.historyId,
@@ -173,50 +145,6 @@ export class GmailService {
             logger.error(`Error in GmailService.parseEmailsIntoPlainObjects: ${errorMessage}`, { error: err });
             throw err;
         }
-    }
-
-    private transformGmailMessageToEmailInput(emailDetails: GmailMessageObjectFull, accountId: string): EmailInput {
-        const headers = (emailDetails.payload?.headers || []).reduce(
-            (acc, header) => {
-                acc[header.name.toLowerCase()] = header.value;
-                return acc;
-            },
-            {} as Record<string, string>,
-        );
-        const { plainTextBody, htmlBody } = GmailUtils.parseEmailBody(emailDetails);
-        const receivedAt = new Date(headers.date || '');
-        return {
-            accountId,
-            providerMessageId: emailDetails.id,
-            threadId: emailDetails.threadId,
-            from: headers.from || '',
-            to: headers.to
-                ? headers.to
-                      .split(',')
-                      .map((e) => e.trim())
-                      .filter(Boolean)
-                : [],
-            cc: headers.cc
-                ? headers.cc
-                      .split(',')
-                      .map((e) => e.trim())
-                      .filter(Boolean)
-                : [],
-            bcc: headers.bcc
-                ? headers.bcc
-                      .split(',')
-                      .map((e) => e.trim())
-                      .filter(Boolean)
-                : [],
-            subject: headers.subject || '',
-            body: emailDetails.payload?.body?.data || '',
-            bodyHtml: compressString(htmlBody || ''),
-            bodyPlain: compressString(plainTextBody),
-            receivedAt,
-            isRead: !emailDetails.labelIds.includes(GMAIL_LABELS.UNREAD),
-            folders: emailDetails.labelIds,
-            attachments: GmailUtils.extractGmailAttachments(emailDetails.payload),
-        };
     }
 
     async deleteEmails(emailIds: string[], accountId: string, trash?: boolean) {
@@ -262,7 +190,7 @@ export class GmailService {
         }
     }
 
-    async starEmails(emails: { id: string; providerMessageId: string }[], accountId: string, star: boolean) {
+    async starEmails(emails: GmailMessageIdParam[], accountId: string, star: boolean) {
         try {
             for (const email of emails) {
                 const updatedEmail = await GmailClient.starEmail(email.providerMessageId, accountId, star);
@@ -300,77 +228,6 @@ export class GmailService {
         }
     }
 
-    async getAllLabels(accountId: string, userId: string): Promise<Partial<FolderInput>[]> {
-        try {
-            const labels = await GmailClient.getAllLabels(accountId);
-            const batchProcessor = new BatchProcessor<GmailLabel, Partial<FolderInput>>(3, 200); // Process 3 labels at a time with 200ms delay
-
-            const folderInputs = await batchProcessor.processBatches(labels, async (item) => {
-                const label = await GmailClient.getLabelDetails(accountId, item.id);
-                return GmailUtils.parseGmailLabelObject(accountId, userId, label);
-            });
-
-            return folderInputs;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.getAllLabels: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async getLabelDetails(accountId: string, labelId: string): Promise<GmailLabel> {
-        try {
-            const label = await GmailClient.getLabelDetails(accountId, labelId);
-            return label;
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.getLabelDetails: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async createLabel(userId: string, accountId: string, labelName: string): Promise<UpdateAPIResponse> {
-        try {
-            const label = await GmailClient.createLabel(accountId, labelName);
-            const createdLabel = await GmailClient.getLabelDetails(accountId, label.id);
-            const folderObject = GmailUtils.parseGmailLabelObject(accountId, userId, createdLabel);
-            await FolderRepository.createFolder(folderObject);
-            return { status: true, message: 'Label created successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.createLabel: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async updateLabel(accountId: string, labelId: string, labelName: string): Promise<UpdateAPIResponse> {
-        try {
-            await GmailClient.updateLabel(accountId, labelId, labelName);
-            const folderBody: Partial<FolderDocument> = {
-                name: labelName,
-                normalizedName: labelName.toLowerCase().trim(),
-            };
-            await FolderRepository.updateFolderByProviderFolderId(labelId, folderBody);
-            return { status: true, message: 'Label updated successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.updateLabel: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    async deleteLabel(accountId: string, labelId: string): Promise<UpdateAPIResponse> {
-        try {
-            await GmailClient.deleteLabel(accountId, labelId);
-            await FolderRepository.deleteFolderByProviderFolderId(labelId);
-            return { status: true, message: 'Label deleted successfully' };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.deleteLabel: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
     async sendMessage(composeEmailData: ComposeEmailBody): Promise<Partial<GmailMessageObjectFull>> {
         try {
             const { accountId, to, subject, body, attachments } = composeEmailData;
@@ -380,14 +237,13 @@ export class GmailService {
                     : GmailUtils.buildGmailRawString(to, subject, body);
             const response = await GmailClient.sendMessage(accountId, { raw });
             const emailDetails = await GmailClient.fetchEmailById(response.id, accountId);
-            const emilData = this.transformGmailMessageToEmailInput(emailDetails, accountId);
+            const emilData = GmailUtils.transformGmailMessageToEmailInput(emailDetails, accountId);
             await EmailRepository.upsertEmailsInBulk([emilData]);
             return response;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.sendMessage: ${errorMessage}`, { error: err });
-            // throw err;
-            throw new AxiosApiError(err);
+            throw err;
         }
     }
 
@@ -408,30 +264,6 @@ export class GmailService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in GmailService.searchContacts: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async getAttachment(
-        accountId: string,
-        messageId: string,
-        attachmentId: string,
-    ): Promise<{ data: Buffer; mimeType: string; filename: string }> {
-        try {
-            return await GmailClient.getAttachment(accountId, messageId, attachmentId);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.searchContacts: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult> {
-        try {
-            return await GmailClient.getAttachmentStream(accountId, messageId, attachmentId);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in GmailService.getAttachmentStream: ${errorMessage}`, { error: err });
             throw err;
         }
     }

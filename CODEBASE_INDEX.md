@@ -200,6 +200,11 @@
     - `GmailMessageClient`: history and message fetching, batch modification (`users.messages.batchModify`), send (RFC 2822 Base64URL)
     - `GmailLabelClient`: label CRUD and sync
     - `GmailContactClient`: search Google other contacts
+  - Modular service layer architecture (`Backend/src/integrations/gmail/services/*`) with unified facade (`services/index.ts`):
+    - `GmailAuthService`: OAuth authentication, access token retrieval, and user profile queries
+    - `GmailMessageService`: message retrieval, delta sync history tracking, batch modifications, archiving, trashing, and sending
+    - `GmailAttachmentService`: attachment buffers and binary stream downloads
+    - `GmailLabelService`: label synchronization, creation, renaming, and deletion
   - `gmail.provider.ts`: adapts Gmail service capabilities to the shared provider contract, including token refresh via stored refresh token
 - Outlook (`Backend/src/integrations/outlook/*`)
   - Modular domain client architecture (`Backend/src/integrations/outlook/clients/*`) with unified static facade (`clients/index.ts`):
@@ -209,7 +214,9 @@
     - `OutlookContactClient`: search Microsoft Graph people
   - Modular service layer architecture (`Backend/src/integrations/outlook/services/*`) with unified composite facade (`services/index.ts`):
     - `OutlookSyncService`: Delta synchronization, message change extraction, and sync cursor state management
-    - `OutlookMailService`: Message batch mutations, folder synchronization, attachment retrieval, and message composition
+    - `OutlookMailReadService`: Message details, message listing, attachment buffers, and attachment binary streaming
+    - `OutlookMailWriteService`: Message composition, large attachment chunked upload sessions, message deletion, archiving, flagging, and unreading
+    - `OutlookFolderService`: Folder listing, synchronization, creation, renaming, and deletion
   - `outlook.provider.ts`: adapts Outlook service capabilities to the shared provider contract, including access-token refresh
 - Auth0 (`Backend/src/integrations/auth0/*`)
   - Management API token + user/profile/password operations
@@ -238,8 +245,16 @@
 - `Backend/src/shared/utils/common.ts`: reusable date-range helpers
 - `Backend/src/core/errors/AppError.ts`: base structured application error
 - `Backend/src/core/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
+- `Backend/src/core/types/*`: core type definitions with barrel export (`index.ts`):
+  - `event.types.ts`: `PublishEventPayload` for event bus summary logging
+  - `middleware.types.ts`: `SchemaMap` for Zod request validation
+  - `common.types.ts`: `GetDataRangeResponse` for standardized date range filtering
+- `Backend/src/integrations/storage/storage.types.ts`: `ObjectStream` for S3/R2 binary stream downloads
+- `Backend/src/integrations/gmail/gmail.types.ts`: domain types including `GmailMessageIdParam`, `GmailAttachmentBufferResult`, and `GmailMimeMessageAttachment`
+- `Backend/src/integrations/outlook/outlook.types.ts`: domain types including `OutlookMessageIdParam`, `OutlookDeltaMessagesResponse`, `OutlookMessageAttachmentResponse`, `SplitAttachmentsResponse`, and `OutlookAttachmentBufferResult`
 - `Backend/src/modules/accounts/account.types.ts`: dedicated interfaces for `OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`, and Mongo projections
-- `Backend/src/modules/emails/email.types.ts`: dedicated interfaces for `ThreadSummaryItem`, `GroupedEmailThreadItem`, and mailbox action parameters
+- `Backend/src/modules/analytics/analytics.types.ts`: dedicated interfaces for `EmailVolumeDataPointBase`, `AccountEmailMetricsBase`, and aggregation payloads
+- `Backend/src/modules/emails/email.types.ts`: dedicated interfaces for `ThreadSummaryItem`, `GroupedEmailThreadItem`, `PaginationParams`, and mailbox action parameters
 - Tooling: ESLint 9 Flat Config (`eslint.config.js`) with TypeScript-ESLint enforcing zero inline object types (with targeted exemptions for type definition files `*.types.ts` and `*.interface.ts`), line length, and complexity limits
 
 ### API Surface (mounted at `/api`)

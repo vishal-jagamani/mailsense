@@ -3,6 +3,7 @@ import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { AttachmentStreamResult, IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
+import { GmailAttachmentBufferResult, GmailMessageIdParam } from '@integrations/gmail/gmail.types.js';
 
 export interface SyncResult {
     addedEmails: EmailInput[] | Partial<EmailInput>[];
@@ -24,12 +25,12 @@ export interface IEmailProvider<TAuthToken = IEmailTAuthToken, TUserProfile = IE
     deleteEmails(emailIds: string[], accountId: string, trash?: boolean): Promise<void>;
     archiveEmails(emailIds: string[], accountId: string, archive: boolean): Promise<void>;
     unreadEmails(emailIds: string[], accountId: string, unread: boolean): Promise<void>;
-    starEmails(emails: { id: string; providerMessageId: string }[], accountId: string, star: boolean): Promise<void>;
+    starEmails(emails: GmailMessageIdParam[], accountId: string, star: boolean): Promise<void>;
     sendMail(composeEmailData: ComposeEmailBody): Promise<TSendMailResult>;
     searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]>;
 
     // Attachment Operations
-    getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<{ data: Buffer; mimeType: string; filename: string }>;
+    getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<GmailAttachmentBufferResult>;
     getAttachmentStream(accountId: string, messageId: string, attachmentId: string): Promise<AttachmentStreamResult>;
 
     // Folder/Label Operations

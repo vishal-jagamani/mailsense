@@ -4,57 +4,37 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 const traceStorage = new AsyncLocalStorage<TraceStore>();
 
-/**
- * Retrieves the current request's trace store from AsyncLocalStorage.
- */
 export function getTraceStore(): TraceStore | undefined {
     return traceStorage.getStore();
 }
 
-/**
- * Retrieves the active traceId or returns an empty string if outside an active trace context.
- */
-export function getTraceId(): string {
+export const getTraceId = (): string => {
     return traceStorage.getStore()?.traceId ?? '';
-}
+};
 
-/**
- * Retrieves the active userId attached to the trace context.
- */
-export function getTraceUserId(): string | undefined {
+export const getTraceUserId = (): string | undefined => {
     return traceStorage.getStore()?.userId;
-}
+};
 
-/**
- * Updates the active trace store with user and/or account context.
- */
-export function setTraceContext(context: Partial<TraceStore>): void {
-    try {
-        const store = traceStorage.getStore();
-        if (store) {
-            if (context.userId) store.userId = context.userId;
-            if (context.userEmail) store.userEmail = context.userEmail;
-            if (context.userName) store.userName = context.userName;
-            if (context.accountId) store.accountId = context.accountId;
-        }
-    } catch {
-        // Non-blocking fallback
+export const setTraceContext = (context: Partial<TraceStore>): void => {
+    const store = traceStorage.getStore();
+    if (store) {
+        if (context.userId) store.userId = context.userId;
+        if (context.userEmail) store.userEmail = context.userEmail;
+        if (context.userName) store.userName = context.userName;
+        if (context.accountId) store.accountId = context.accountId;
     }
-}
+};
 
-/**
- * Executes a function within a specified TraceStore context.
- * Essential for BullMQ background workers and decoupled asynchronous execution.
- */
-export function runWithTrace<T>(store: TraceStore, fn: () => Promise<T>): Promise<T> {
+export const runWithTrace = <T>(store: TraceStore, fn: () => Promise<T>): Promise<T> => {
     return traceStorage.run(store, fn);
-}
+};
 
 /**
  * Express middleware that initializes or extracts the traceId,
  * sets the outbound X-Trace-Id response header, and wraps the request in AsyncLocalStorage.
  */
-export function traceMiddleware(req: Request, res: Response, next: NextFunction): void {
+export const traceMiddleware = (req: Request, res: Response, next: NextFunction): void => {
     try {
         const rawHeader = req.header('x-trace-id') || req.header('x-request-id');
         const incomingTraceId = typeof rawHeader === 'string' ? rawHeader.trim() : undefined;
@@ -97,4 +77,4 @@ export function traceMiddleware(req: Request, res: Response, next: NextFunction)
     } catch (error) {
         next();
     }
-}
+};

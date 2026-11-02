@@ -22,3 +22,8 @@ export interface ThreadSummaryItem {
 export interface GroupedEmailThreadItem {
     threadCount: number;
 }
+
+export interface PaginationParams {
+    size: string;
+    page: string;
+}
