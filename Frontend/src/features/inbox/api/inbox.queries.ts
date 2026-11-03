@@ -2,6 +2,7 @@ import { EmailAttributes, FetchEmailRequestOptions, GetFiltersResponse, Paginate
 import { EMAIL_QUERY_KEYS } from '@shared/api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { DeleteEmailPayload } from '../types';
 import { deleteEmail, fetchEmails, getEmailFilters } from './inbox.api';
 
 export const useFetchEmails = () => {
@@ -19,7 +20,7 @@ export const useFetchEmailFilters = () => {
 
 export const useDeleteEmail = () => {
     const queryClient = useQueryClient();
-    return useMutation<UpdateAPIResponse, Error, { emailIds: string[]; trash: boolean }>({
+    return useMutation<UpdateAPIResponse, Error, DeleteEmailPayload>({
         mutationFn: ({ emailIds, trash }) => deleteEmail(emailIds, trash),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: EMAIL_QUERY_KEYS.all });

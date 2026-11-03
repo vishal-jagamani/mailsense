@@ -3,8 +3,8 @@
 import { Keyboard } from 'lucide-react';
 import React, { Suspense } from 'react';
 
-import KeyboardShortcutsModal from '@features/emails/components/KeyboardShortcutsModal';
 import DeleteModal from '@features/emails/components/DeleteModal';
+import KeyboardShortcutsModal from '@features/emails/components/KeyboardShortcutsModal';
 import EmailListTable from '@features/inbox/components/EmailListTable';
 import EmailMenuBarOptions from '@features/inbox/components/EmailMenuBarOptions';
 import { useInboxPage } from '@features/inbox/hooks';
@@ -16,10 +16,11 @@ import PaginationComponent from '@shared/components/table/Pagination';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
+import { AccountsPageProps } from '@shared/types';
 import { Button } from '@shared/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 
-const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
+const AccountInboxPage: React.FC<AccountsPageProps> = ({ account }) => {
     const isMobile = useIsMobile();
 
     const {
@@ -100,7 +101,7 @@ const AccountInboxPage: React.FC<{ account: string }> = ({ account }) => {
     );
 };
 
-const AccountInboxPageWrapper: React.FC<{ account: string }> = ({ account }) => (
+const AccountInboxPageWrapper: React.FC<AccountsPageProps> = ({ account }) => (
     <Suspense fallback={<Loader />}>
         <AccountInboxPage account={account} />
     </Suspense>

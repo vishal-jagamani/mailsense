@@ -13,11 +13,21 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - **Dedicated Hook & Mutation Types (Zero Inline Types Standard):**
   - Created `UpdateFolderMutationVariables` in `Frontend/src/features/folders/types/folders.types.ts` for typed folder update mutations.
   - Created named state and return interfaces in `Frontend/src/features/emails/types/email-ui.types.ts`: `EmailsPageAccountState`, `EmailsPageEmailState`, `EmailsPageThreadState`, `EmailsPageUnreadOperationState`, `EmailsPageSetterState`, and `UseEmailsPageReturnParams`.
+  - Created feature types: `EnableAccountPayload`, `UpdateAccountSettingsPayload`, and `UpdateAccountSettingsVariables` in `Frontend/src/features/accounts/types/index.ts`.
+  - Created inbox query/mutation types: `SearchEmailPayload` and `DeleteEmailPayload` in `Frontend/src/features/inbox/types/index.ts`.
+  - Created settings mutation types: `ChangePasswordPayload` in `Frontend/src/features/settings/types/index.ts`.
+  - Created shared component and constant types: `PageHeaderProps` in `Frontend/src/shared/types/component.types.ts`, and `VolumeChartSeries`, `DateRangeOption`, and `SettingOption` in `Frontend/src/shared/types/constants.types.ts`.
+  - Created App Router page parameter interfaces in `Frontend/src/shared/types/pages.types.ts`: `RootLayoutProps`, `AccountsPageParams`, `EmailPageParams`, `FoldersPageParams`, `SettingsPageParams`, `AccountsPageProps`, `EmailPageProps`, `FoldersPageParam`, and `SettingsPageProps`.
+  - Created shared Zustand store types in `Frontend/src/shared/types/store.types.ts`: `AuthState`, `ThemeState`, `BreadcrumbItem`, `BreadcrumbStore`, and `ComposeEmailPopupStore`.
+  - Refactored sidebar types in `Frontend/src/shared/types/sidebar.types.ts`: `NavSubItem`, `NavMainItem`, `SidebarUser`, `SidebarProject`, `SidebarTeam`, `SidebarData`, `NavMainProps`, `NavProjectsProps`, `NavTeamsProps`, and `NavUserProps`.
 
 ### Changed
 - **Thread Query Resilience:** Enhanced `useGetThreadQuery` in `Frontend/src/features/emails/api/email.queries.ts` with a retry predicate that immediately stops retries on `403 Forbidden` or `404 Not Found` responses, preventing unnecessary network traffic on missing or unauthorized conversation threads.
 - **Folder Mutation Typing:** Refactored `useUpdateFolderMutation` in `Frontend/src/features/folders/api/folder.mutation.ts` to consume `UpdateFolderMutationVariables`, eliminating inline object types.
 - **Emails Page Hook Typing:** Refactored `useEmailsPage` in `Frontend/src/features/emails/hooks/useEmailsPage.ts` to use `UseEmailsPageReturnParams` imported from `email-ui.types.ts`, removing local inline interface definitions.
+- **ESLint Zero-Error Remediation:** Resolved all ESLint errors across the frontend codebase to achieve **0 errors**.
+- **Empty Catch Block Removal:** Cleaned up empty/silent catch blocks across `ErrorBoundary.tsx`, `api/client.ts`, `frontend.manager.ts`, `session.tracker.ts`, and monitoring providers, ensuring errors propagate or are handled explicitly.
+- **Strict Inline Types Elimination:** Eliminated inline object type declarations across Next.js app router pages, components, hooks, stores, and constants.
 
 ## [3.5.0] - 2026-10-15
 

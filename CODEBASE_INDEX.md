@@ -19,6 +19,7 @@
 ### Config
 
 - `Backend/src/core/config/env.config.ts`: validates env via Zod
+- `Backend/src/core/config/env.schema.ts`: centralized Zod schema definitions (`envSchemaObject`) for environment variables
 - `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis)
 - `Backend/src/core/config/logger.config.ts`: logger configuration
 - `Backend/src/core/config/app.config.ts`: exposes the backend Redis connection URL config used by BullMQ and `ioredis`
@@ -209,8 +210,10 @@
 - Outlook (`Backend/src/integrations/outlook/*`)
   - Modular domain client architecture (`Backend/src/integrations/outlook/clients/*`) with unified static facade (`clients/index.ts`):
     - `OutlookAuthClient`: OAuth token exchange and refresh
-    - `OutlookMessageClient`: message details, delta sync, send (direct inline <=3MB / chunked upload session >3MB)
+    - `OutlookMailReadClient`: message details, delta sync, and message listing
+    - `OutlookMailWriteClient`: send direct, draft creation/sending, chunked upload sessions, message deletion, archiving, flagging, and unreading
     - `OutlookFolderClient`: folder CRUD and sync
+    - `OutlookAttachmentClient`: attachment metadata and binary streaming
     - `OutlookContactClient`: search Microsoft Graph people
   - Modular service layer architecture (`Backend/src/integrations/outlook/services/*`) with unified composite facade (`services/index.ts`):
     - `OutlookSyncService`: Delta synchronization, message change extraction, and sync cursor state management
@@ -354,14 +357,14 @@
   - `entities/folder/*`: folder UI component state/interfaces that remain frontend-specific
   - Account, email, folder, user, filter, and settings data contracts now come from `@mailsense/types`
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
-  - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer
+  - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer, and dedicated type definitions (`types/index.ts`: `EnableAccountPayload`, `UpdateAccountSettingsPayload`, `UpdateAccountSettingsVariables`)
   - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), composite state orchestration hook (`useDashboardPage.ts`), UI components (`DashboardHeader`, `OverviewKpiCards`, `EmailVolumeChart`, `AccountDistributionPieChart`, `ResponseTimeCard`, `TopSendersCard`, `AccountActivityGrid`, `DashboardSkeleton`, `DashboardEmptyState`), and primary dashboard page view (`pages/index.tsx`)
   - `features/auth/*`: login page and profile fetch query
   - `features/compose-email/*`: compose popup modal and rich-text editing controls organized in standardized kebab-case directory (`Frontend/src/features/compose-email/`)
   - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), reusable email action hook (`useEmailActions`), keyboard navigation hook (`useEmailKeyboardShortcuts`), keyboard shortcuts modal (`KeyboardShortcutsModal`), input guard utilities (`isInputElement`), and email API mutations with React Query cache snapshotting and optimistic rollbacks (`email.mutations.ts`); query layer (`email.queries.ts`) features resilient retry suppression on 403/404 client errors for `useGetThreadQuery`; API client (`email.api.ts`) provides binary blob streaming via `downloadAttachment`; dedicated type definitions in `email-ui.types.ts` (`UseEmailsPageReturnParams`, `EmailsPageAccountState`, `EmailsPageEmailState`, `EmailsPageThreadState`, `EmailsPageUnreadOperationState`, `EmailsPageSetterState`) eliminate inline object types; strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
   - `features/folders/*`: folders overview, folder email list (`useFolderEmailListPage` delegating actions to `useEmailActions` with keyboard shortcuts and modal), modular folder card components (`FolderCardHeader`, `FolderCardActions`, `FolderCard`), folder API layer with `syncAccountFolders` and strongly-typed `getFolderDetails`, dedicated mutation typing via `UpdateFolderMutationVariables` in `folders.types.ts`, folder action hooks, and explicitly named `FolderEmailListHeader.tsx` (eliminating anonymous `index.tsx`); strictly references canonical MongoDB `_id` (`folder._id`) across all UI operations
-  - `features/inbox/*`: unified inbox, account inbox, shared inbox header (`EmailListHeader` with shortcuts button), inbox filters/actions/table (`EmailListTable` with `focusedIndex` active keyboard cursor styling `ring-2 ring-primary ring-inset` and auto-scroll), inbox API layer, inbox page hooks (`useInboxPage` delegating actions to `useEmailActions`) with sync-aware refresh behavior and keyboard shortcuts integration; strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
-  - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer
+  - `features/inbox/*`: unified inbox, account inbox, shared inbox header (`EmailListHeader` with shortcuts button), inbox filters/actions/table (`EmailListTable` with `focusedIndex` active keyboard cursor styling `ring-2 ring-primary ring-inset` and auto-scroll), inbox API layer, inbox page hooks (`useInboxPage` delegating actions to `useEmailActions`) with sync-aware refresh behavior and keyboard shortcuts integration, and dedicated query/mutation types (`types/index.ts`: `SearchEmailPayload`, `DeleteEmailPayload`); strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
+  - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer, and dedicated mutation types (`types/index.ts`: `ChangePasswordPayload`)
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`), and error parsing (`errors.ts` extracting domain errors and HTTP 429 rate limit retry guidance)
 - `Frontend/src/shared/monitoring/*`: client observability and action tracking
   - `frontend.manager.ts`: `FrontendMonitoringManager` singleton and `trackUserAction` helper
@@ -382,7 +385,12 @@
   - `Frontend/src/shared/store/index.ts` barrel export for shared Zustand stores
 - Shared hooks/types:
   - `Frontend/src/shared/hooks/index.ts` barrel export for shared hooks such as `useIsMobile`, `UseDebounceQuery`, and breadcrumb reset
-  - `Frontend/src/shared/types/index.ts` barrel export for shared API, settings, and filter types
+  - `Frontend/src/shared/types/index.ts` barrel export for shared types:
+    - `component.types.ts`: `PageHeaderProps` typed with `AccountProviders`
+    - `constants.types.ts`: `VolumeChartSeries`, `DateRangeOption`, `SettingOption`
+    - `pages.types.ts`: Next.js App Router async params and page props (`AccountsPageParams`, `EmailPageParams`, `FoldersPageParams`, `SettingsPageParams`, `RootLayoutProps`)
+    - `store.types.ts`: `AuthState`, `ThemeState`, `BreadcrumbItem`, `BreadcrumbStore`, `ComposeEmailPopupStore`
+    - `sidebar.types.ts`: `NavSubItem`, `NavMainItem`, `SidebarUser`, `SidebarProject`, `SidebarTeam`, `SidebarData`, `NavMainProps`, `NavProjectsProps`, `NavTeamsProps`, `NavUserProps`
   - `Frontend/src/shared/types/filter.types.ts` filter model types and option structures
   - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:

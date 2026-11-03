@@ -1,6 +1,6 @@
 import { APIResponse, ProfileSettingsDataObject, UpdateAPIResponse, UpdateUserProfileSettingsResponse, UserSettings } from '@mailsense/types';
-import { axiosClient } from '@shared/api';
-import { SETTINGS_API_ENDPOINTS } from '../../../shared/api/endpoints';
+import { axiosClient, SETTINGS_API_ENDPOINTS } from '@shared/api';
+import { ChangePasswordPayload } from '../types';
 
 export async function getUserProfileSettings() {
     const { data } = await axiosClient.get<APIResponse<ProfileSettingsDataObject>>(`/users/profile`);
@@ -12,7 +12,7 @@ export async function updateUserProfileSettings(data: ProfileSettingsDataObject)
     return response;
 }
 
-export async function changeUserPassword(data: { password: string }) {
+export async function changeUserPassword(data: ChangePasswordPayload) {
     const { data: response } = await axiosClient.patch<UpdateAPIResponse>(`/users/change-password`, data);
     return response;
 }

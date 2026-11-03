@@ -239,9 +239,7 @@ export class SentryMonitoringProvider implements IMonitoringProvider {
             const rawUserName = (breadcrumb.data?.userName as string | undefined) ?? (breadcrumb.data?.['user.username'] as string | undefined);
 
             const overrideUser: Partial<MonitoringUserContext> | undefined =
-                rawUserId || rawUserEmail || rawUserName
-                    ? { id: rawUserId, email: rawUserEmail, username: rawUserName }
-                    : undefined;
+                rawUserId || rawUserEmail || rawUserName ? { id: rawUserId, email: rawUserEmail, username: rawUserName } : undefined;
 
             const activeUser = this.resolveActiveUser(overrideUser);
 
@@ -265,24 +263,28 @@ export class SentryMonitoringProvider implements IMonitoringProvider {
             };
             const message = breadcrumb.message || 'Log message';
 
-            switch (breadcrumb.level) {
-                case LOG_LEVELS.WARN:
-                    Sentry.logger.warn(message, attributes);
-                    break;
-                case LOG_LEVELS.DEBUG:
-                    Sentry.logger.debug(message, attributes);
-                    break;
-                case LOG_LEVELS.ERROR:
-                    Sentry.logger.error(message, attributes);
-                    break;
-                case LOG_LEVELS.INFO:
-                default:
-                    Sentry.logger.info(message, attributes);
-                    break;
-            }
+            this.breadcrumbLevel(breadcrumb.level ?? LOG_LEVELS.INFO, message, attributes);
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             this.providerLogger.error(`Error in Sentry addBreadcrumb: ${msg}`, { error: err });
+        }
+    }
+
+    private breadcrumbLevel(level: string, message: string, attributes: Record<string, string | number | boolean>) {
+        switch (level) {
+            case LOG_LEVELS.WARN:
+                Sentry.logger.warn(message, attributes);
+                break;
+            case LOG_LEVELS.DEBUG:
+                Sentry.logger.debug(message, attributes);
+                break;
+            case LOG_LEVELS.ERROR:
+                Sentry.logger.error(message, attributes);
+                break;
+            case LOG_LEVELS.INFO:
+            default:
+                Sentry.logger.info(message, attributes);
+                break;
         }
     }
 

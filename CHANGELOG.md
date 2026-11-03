@@ -20,6 +20,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Mailbox Performance & Reliability:** Optimized background database connectivity and lifecycle management, resulting in faster and more dependable message syncing and navigation across unified and account-specific views.
 - **Provider Synchronization Resilience:** Refactored background mailbox synchronization and message exchange adapters for Gmail and Outlook, ensuring higher reliability, smoother syncing, and faster inbox refresh cycles.
 - **Outbound Mail & Draft Processing:** Enhanced draft saving and attachment handling during email composition for faster, more dependable dispatch across connected provider accounts.
+- **Navigation & Settings Stability:** Improved page transitions, account setting updates, and profile configuration flows for a smoother and more responsive settings experience.
+- **Client Error Recovery & Session Resilience:** Streamlined application monitoring and error handling across background network requests to prevent UI interruption and ensure prompt recovery during transient network drops.
 
 ## [3.5.0] - 2026-10-15
 

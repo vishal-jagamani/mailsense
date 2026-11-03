@@ -43,46 +43,38 @@ apiClient.interceptors.request.use(async (config) => {
 
 apiClient.interceptors.response.use(
     (response) => {
-        try {
-            trackUserAction(
-                'api.response',
-                `${response.config.method?.toUpperCase() || 'GET'} ${response.config.url || ''} [${response.status}]`,
-                'info',
-                {
-                    status: response.status,
-                    url: response.config.url || '',
-                },
-            );
-        } catch {
-            // Non-blocking
-        }
+        trackUserAction(
+            'api.response',
+            `${response.config.method?.toUpperCase() || 'GET'} ${response.config.url || ''} [${response.status}]`,
+            'info',
+            {
+                status: response.status,
+                url: response.config.url || '',
+            },
+        );
         return response;
     },
     (error) => {
-        try {
-            const formatted = extractApiError(error);
+        const formatted = extractApiError(error);
 
-            const responseHeaderTraceId = error.response?.headers?.['x-trace-id'];
-            if (responseHeaderTraceId && (!formatted.traceId || formatted.traceId.length === 0)) {
-                formatted.traceId = String(responseHeaderTraceId);
-            }
-
-            trackUserAction(
-                'api.error',
-                `${error.config?.method?.toUpperCase() || 'REQ'} ${error.config?.url || ''} [${error.response?.status || 'network_error'}]`,
-                'error',
-                {
-                    status: error.response?.status || 0,
-                    message: formatted.message,
-                    errorCode: formatted.errorCode,
-                    traceId: formatted.traceId,
-                },
-            );
-
-            Object.assign(error, { formattedError: formatted });
-        } catch (interceptorError) {
-            // Non-blocking fallback
+        const responseHeaderTraceId = error.response?.headers?.['x-trace-id'];
+        if (responseHeaderTraceId && (!formatted.traceId || formatted.traceId.length === 0)) {
+            formatted.traceId = String(responseHeaderTraceId);
         }
+
+        trackUserAction(
+            'api.error',
+            `${error.config?.method?.toUpperCase() || 'REQ'} ${error.config?.url || ''} [${error.response?.status || 'network_error'}]`,
+            'error',
+            {
+                status: error.response?.status || 0,
+                message: formatted.message,
+                errorCode: formatted.errorCode,
+                traceId: formatted.traceId,
+            },
+        );
+
+        Object.assign(error, { formattedError: formatted });
         return Promise.reject(error);
     },
 );

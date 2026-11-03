@@ -6,19 +6,9 @@ import { AccountProviderIcon } from '@entities/account';
 import { useSyncAllAccounts } from '@features/accounts/api/accounts.queries';
 import { useIsMobile } from '@shared/hooks';
 import { useAuthStore } from '@shared/store';
+import { PageHeaderProps } from '@shared/types';
 import { Button } from '@shared/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@shared/ui/dropdown-menu';
-
-interface PageHeaderProps {
-    title: string;
-    button?: boolean;
-    dropdownOptions?: {
-        id: number;
-        name: string;
-        displayName: string;
-    }[];
-    dropdownMenuItemClick?: (dropdownOption: { id: number; name: string; displayName: string }) => void;
-}
 
 const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions, dropdownMenuItemClick }) => {
     const isMobile = useIsMobile();
@@ -32,7 +22,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, button, dropdownOptions,
             try {
                 await syncAllAccounts(currentUser.id);
             } catch (error) {
-                // Error is handled in the hook
+                console.error(error);
             } finally {
                 setIsSyncing(false);
             }

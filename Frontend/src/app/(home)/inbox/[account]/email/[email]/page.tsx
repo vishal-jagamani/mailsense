@@ -1,6 +1,7 @@
 import EmailPageWrapper from '@features/emails/pages';
+import { EmailPageParams } from '@shared/types';
 
-const page = async ({ params }: { params: Promise<{ account: string; email: string }> }) => {
+const page = async ({ params }: EmailPageParams) => {
     const { account, email } = await params;
     return (
         <>

@@ -1,6 +1,7 @@
-import { Info, LucideIcon, User } from 'lucide-react';
+import { SettingOption } from '@shared/types';
+import { Info, User } from 'lucide-react';
 
-export const SETTINGS_OPTIONS: { id: number; name: string; title: string; link: string; icon: LucideIcon }[] = [
+export const SETTINGS_OPTIONS: SettingOption[] = [
     {
         id: 1,
         name: 'profile',

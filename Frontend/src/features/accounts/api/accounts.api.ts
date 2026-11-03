@@ -1,6 +1,7 @@
 import { AccountProviders } from '@entities/account';
 import { AccountAttributes } from '@mailsense/types';
 import { ACCOUNTS_API_ENDPOINTS, axiosClient } from '@shared/api';
+import { UpdateAccountSettingsPayload } from '../types';
 
 export async function getAccountProvider(): Promise<AccountProviders[]> {
     const { data } = await axiosClient.get<AccountProviders[]>(ACCOUNTS_API_ENDPOINTS.PROVIDERS_LIST);
@@ -46,7 +47,7 @@ export async function enableAccount(accountId: string, active: boolean) {
     return response;
 }
 
-export async function updateAccountSettings(accountId: string, settings: { syncEnabled?: boolean; syncInterval?: number; active?: boolean }) {
+export async function updateAccountSettings(accountId: string, settings: UpdateAccountSettingsPayload) {
     const { data: response } = await axiosClient.patch(ACCOUNTS_API_ENDPOINTS.UPDATE_SETTINGS(accountId), settings);
     return response;
 }

@@ -1,46 +1,62 @@
-import { ProviderErrorResponse } from '@types';
+import { ParsedErrorDetails, ProviderErrorResponse } from '@types';
 import axios, { AxiosError } from 'axios';
 import { ProviderApiError } from './DomainErrors.js';
+
+function extractAxiosMessage(error: AxiosError<ProviderErrorResponse>): string {
+    const data = error?.response?.data;
+    const dataMessage = data?.error?.message ?? data?.message;
+    return dataMessage || error.message || 'External HTTP request failed';
+}
+
+function extractAxiosMetadata(error: AxiosError<ProviderErrorResponse>, statusCode: number): Record<string, string | number | boolean> | undefined {
+    if (!error.response?.data) {
+        return undefined;
+    }
+    const config = error.config;
+    return {
+        status: statusCode,
+        url: config?.url ?? 'unknown',
+        method: config?.method ?? 'unknown',
+    };
+}
+
+function parseAxiosError(error: AxiosError<ProviderErrorResponse>): ParsedErrorDetails {
+    const statusCode = error.response?.status ?? 502;
+    const message = extractAxiosMessage(error);
+    const originalError = extractAxiosMetadata(error, statusCode);
+    return { message, statusCode, originalError };
+}
+
+function parseGenericError(error: unknown): ParsedErrorDetails {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+        message,
+        statusCode: 500,
+        originalError: { message },
+    };
+}
+
+function resolveErrorDetails(error: unknown): ParsedErrorDetails {
+    if (axios.isAxiosError(error)) {
+        return parseAxiosError(error as AxiosError<ProviderErrorResponse>);
+    }
+    return parseGenericError(error);
+}
 
 export class AxiosApiError extends ProviderApiError {
     public readonly originalError?: Record<string, string | number | boolean>;
 
     constructor(error: unknown, providerName = 'ExternalAPI', traceId?: string) {
-        if (axios.isAxiosError(error)) {
-            const typedAxiosError = error as AxiosError<ProviderErrorResponse>;
-            const statusCode = typedAxiosError.response?.status ?? 502;
-            const responseData = typedAxiosError.response?.data;
+        const details = resolveErrorDetails(error);
 
-            const extractedMessage =
-                responseData?.error?.message ?? responseData?.message ?? typedAxiosError.message ?? 'External HTTP request failed';
+        super({
+            provider: providerName,
+            message: details.message,
+            providerStatusCode: details.statusCode,
+            providerErrorMessage: details.message,
+            traceId,
+        });
 
-            super({
-                provider: providerName,
-                message: extractedMessage,
-                providerStatusCode: statusCode,
-                providerErrorMessage: extractedMessage,
-                traceId,
-            });
-
-            if (responseData && typeof responseData === 'object') {
-                this.originalError = {
-                    status: statusCode,
-                    url: typedAxiosError.config?.url ?? 'unknown',
-                    method: typedAxiosError.config?.method ?? 'unknown',
-                };
-            }
-        } else {
-            const standardError = error instanceof Error ? error : new Error(String(error));
-            super({
-                provider: providerName,
-                message: standardError.message,
-                providerStatusCode: 500,
-                providerErrorMessage: standardError.message,
-                traceId,
-            });
-            this.originalError = {
-                message: standardError.message,
-            };
-        }
+        this.originalError = details.originalError;
     }
 }

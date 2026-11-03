@@ -1,5 +1,6 @@
-import { ChartSeriesConfig, TimeframeOption } from '@features/analytics/types';
+import { TimeframeOption } from '@features/analytics/types';
 import { ANALYTICS_TIMEFRAME } from '@mailsense/types';
+import { VolumeChartSeries } from '@shared/types';
 
 export const TIMEFRAME_OPTIONS: TimeframeOption[] = [
     { label: 'Today', value: ANALYTICS_TIMEFRAME.TODAY },
@@ -17,7 +18,7 @@ export const ALL_ACCOUNTS_FILTER_ID: string = 'all';
 
 export const ANALYTICS_STALE_TIME_MS: number = 60000; // 1 minute stale time
 
-export const VOLUME_CHART_SERIES: { RECEIVED: ChartSeriesConfig; SENT: ChartSeriesConfig } = {
+export const VOLUME_CHART_SERIES: VolumeChartSeries = {
     RECEIVED: {
         key: 'receivedCount',
         label: 'Received',
@@ -42,4 +43,3 @@ export const ACCOUNT_PIE_CHART_COLORS: string[] = [
     '#06b6d4', // Cyan
     '#f97316', // Orange
 ];
-

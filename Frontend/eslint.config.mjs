@@ -50,10 +50,13 @@ const eslintConfig = [
             'src/**/*.types.ts',
             'src/**/*.interface.ts',
             'src/**/*.d.ts',
+            'src/**/types/**',
+            'src/**/interfaces/**',
             'src/**/__tests__/**',
             'src/**/__mocks__/**',
             'src/**/*.test.{ts,tsx}',
             'src/**/*.spec.{ts,tsx}',
+            'src/shared/ui/**',
         ],
         rules: {
             'no-restricted-syntax': [
