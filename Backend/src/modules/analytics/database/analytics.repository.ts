@@ -1,9 +1,9 @@
 import { AccountMetricsAttributes } from '@mailsense/types';
 import { Account, AccountMetrics, AccountMetricsDocument } from '@modules/accounts/account.model.js';
 import { DraftModel } from '@modules/drafts/draft.model.js';
-import { Email, EmailDocument } from '@modules/emails/email.model.js';
+import { Email, EmailDocument } from '@modules/emails/database/email.model.js';
 import { FilterQuery, PipelineStage } from 'mongoose';
-import { EXCLUDED_INCOMING_FOLDERS, SENT_FOLDER_IDENTIFIERS, STARRED_FOLDER_IDENTIFIERS } from './analytics.constants.js';
+import { EXCLUDED_INCOMING_FOLDERS, SENT_FOLDER_IDENTIFIERS } from '../analytics.constants.js';
 import {
     AccountEmailMetricsResult,
     RawAccountBreakdownResult,
@@ -12,7 +12,13 @@ import {
     RawThreadResponseTimeSummary,
     RawTopSendersResult,
     RawVolumeDataPoint,
-} from './analytics.types.js';
+} from '../analytics.types.js';
+import {
+    ACCOUNT_BREAKDOWN_RAW_QUERY,
+    EMAIL_VOLUME_TIME_SERIES_RAW_QUERY,
+    OVERVIEW_COUNT_RAW_QUERY,
+    RESPONSE_TIME_STATS_RAW_QUERY,
+} from './analytics.queries.js';
 
 export class AnalyticsRepository {
     public static async getOverviewCountsRaw(
@@ -35,43 +41,8 @@ export class AnalyticsRepository {
             }
         }
 
-        const aggregationPipeline: PipelineStage[] = [
-            { $match: matchFilter },
-            {
-                $facet: {
-                    totalEmails: [{ $count: 'count' }],
-                    unreadEmails: [
-                        {
-                            $match: {
-                                isRead: false,
-                                folders: { $nin: EXCLUDED_INCOMING_FOLDERS },
-                            },
-                        },
-                        { $count: 'count' },
-                    ],
-                    sentEmails: [
-                        {
-                            $match: {
-                                folders: { $in: SENT_FOLDER_IDENTIFIERS },
-                            },
-                        },
-                        { $count: 'count' },
-                    ],
-                    starredEmails: [
-                        {
-                            $match: {
-                                folders: { $in: STARRED_FOLDER_IDENTIFIERS },
-                            },
-                        },
-                        { $count: 'count' },
-                    ],
-                    threads: [{ $match: { threadId: { $exists: true, $ne: '' } } }, { $group: { _id: '$threadId' } }, { $count: 'count' }],
-                },
-            },
-        ];
-
         const [emailStats, draftsCount, allTimeTotalEmails] = await Promise.all([
-            Email.aggregate<RawOverviewFacetResult>(aggregationPipeline),
+            Email.aggregate<RawOverviewFacetResult>(OVERVIEW_COUNT_RAW_QUERY(matchFilter)),
             DraftModel.countDocuments({ userId, accountId: { $in: accountIds } }),
             Email.countDocuments({ accountId: { $in: accountIds } }),
         ]);
@@ -83,26 +54,7 @@ export class AnalyticsRepository {
     }
 
     public static async getEmailVolumeTimeSeriesRaw(accountIds: string[], startDate: Date, endDate: Date): Promise<RawVolumeDataPoint[]> {
-        const pipeline: PipelineStage[] = [
-            { $match: { accountId: { $in: accountIds }, receivedAt: { $gte: startDate, $lte: endDate } } },
-            {
-                $project: {
-                    dateStr: { $dateToString: { format: '%Y-%m-%d', date: '$receivedAt' } },
-                    isSent: { $gt: [{ $size: { $setIntersection: ['$folders', SENT_FOLDER_IDENTIFIERS] } }, 0] },
-                },
-            },
-            { $group: { _id: { date: '$dateStr', isSent: '$isSent' }, count: { $sum: 1 } } },
-            {
-                $group: {
-                    _id: '$_id.date',
-                    receivedCount: { $sum: { $cond: [{ $eq: ['$_id.isSent', false] }, '$count', 0] } },
-                    sentCount: { $sum: { $cond: [{ $eq: ['$_id.isSent', true] }, '$count', 0] } },
-                },
-            },
-            { $sort: { _id: 1 } },
-        ];
-
-        return Email.aggregate<RawVolumeDataPoint>(pipeline);
+        return Email.aggregate<RawVolumeDataPoint>(EMAIL_VOLUME_TIME_SERIES_RAW_QUERY(accountIds, startDate, endDate));
     }
 
     public static async getTopSendersRaw(accountIds: string[], startDate?: Date, endDate?: Date, limit: number = 5): Promise<RawTopSendersResult> {
@@ -152,62 +104,13 @@ export class AnalyticsRepository {
             }
         }
 
-        const pipeline: PipelineStage[] = [
-            { $match: matchFilter },
-            {
-                $project: {
-                    threadId: '$threadId',
-                    receivedAt: '$receivedAt',
-                    isSent: { $gt: [{ $size: { $setIntersection: ['$folders', SENT_FOLDER_IDENTIFIERS] } }, 0] },
-                },
-            },
-            { $sort: { receivedAt: 1 } },
-            {
-                $group: {
-                    _id: '$threadId',
-                    firstReceivedAt: { $min: { $cond: [{ $eq: ['$isSent', false] }, '$receivedAt', null] } },
-                    firstSentAt: { $min: { $cond: [{ $eq: ['$isSent', true] }, '$receivedAt', null] } },
-                    hasReceived: { $max: { $cond: [{ $eq: ['$isSent', false] }, true, false] } },
-                    hasSent: { $max: { $cond: [{ $eq: ['$isSent', true] }, true, false] } },
-                },
-            },
-            { $match: { hasReceived: true } },
-        ];
-
-        return Email.aggregate<RawThreadResponseTimeSummary>(pipeline);
+        return Email.aggregate<RawThreadResponseTimeSummary>(RESPONSE_TIME_STATS_RAW_QUERY(matchFilter));
     }
 
     public static async getAccountBreakdownRaw(accountIds: string[]): Promise<RawAccountBreakdownResult> {
         const [accounts, emailStats] = await Promise.all([
             Account.find({ _id: { $in: accountIds } }).lean(),
-            Email.aggregate<RawAccountBreakdownResult['emailStats'][number]>([
-                { $match: { accountId: { $in: accountIds } } },
-                {
-                    $group: {
-                        _id: '$accountId',
-                        totalEmails: { $sum: 1 },
-                        unreadEmails: {
-                            $sum: {
-                                $cond: [
-                                    {
-                                        $and: [
-                                            { $eq: ['$isRead', false] },
-                                            { $eq: [{ $size: { $setIntersection: ['$folders', EXCLUDED_INCOMING_FOLDERS] } }, 0] },
-                                        ],
-                                    },
-                                    1,
-                                    0,
-                                ],
-                            },
-                        },
-                        sentEmails: {
-                            $sum: {
-                                $cond: [{ $gt: [{ $size: { $setIntersection: ['$folders', SENT_FOLDER_IDENTIFIERS] } }, 0] }, 1, 0],
-                            },
-                        },
-                    },
-                },
-            ]),
+            Email.aggregate<RawAccountBreakdownResult['emailStats'][number]>(ACCOUNT_BREAKDOWN_RAW_QUERY(accountIds)),
         ]);
 
         return { accounts, emailStats };

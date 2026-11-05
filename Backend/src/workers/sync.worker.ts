@@ -49,30 +49,43 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
         }
     }
 
+    private async recordSyncJobSuccess(
+        jobId: string | undefined,
+        addedEmailsCount: number,
+        deletedEmailsCount: number,
+        completedAt: number,
+    ): Promise<void> {
+        if (!jobId) return;
+        await SyncJobRepository.updateSyncJob(jobId, {
+            status: ACCOUNT_SYNC_JOB_STATUS.COMPLETED,
+            completedAt,
+            addedEmailsCount,
+            deletedEmailsCount,
+        });
+    }
+
     protected async onCompleted(job: Job<SyncAccountPayload, SyncJobResult>, result: SyncJobResult): Promise<void> {
         try {
             const { accountId } = job.data;
-            if (job.id) {
-                await SyncJobRepository.updateSyncJob(job.id, {
-                    status: ACCOUNT_SYNC_JOB_STATUS.COMPLETED,
-                    completedAt: Date.now(),
-                    addedEmailsCount: result?.addedEmailsCount || 0,
-                    deletedEmailsCount: result?.deletedEmailsCount || 0,
-                });
-            }
+            const addedEmailsCount = result?.addedEmailsCount ?? 0;
+            const deletedEmailsCount = result?.deletedEmailsCount ?? 0;
+            const completedAt = Date.now();
+
+            await this.recordSyncJobSuccess(job.id, addedEmailsCount, deletedEmailsCount, completedAt);
+
             await AccountRepository.updateAccount(accountId, {
                 syncInProgress: false,
                 lastSyncStatus: ACCOUNT_LAST_SYNC_STATUS.SUCCESS,
-                lastSyncCompletedAt: Date.now(),
+                lastSyncCompletedAt: completedAt,
             });
 
             // Emit SYNC_COMPLETED event on background sync success
             eventBus.publish(SYSTEM_EVENT.SYNC_COMPLETED, {
                 accountId,
-                addedEmailsCount: result?.addedEmailsCount || 0,
-                deletedEmailsCount: result?.deletedEmailsCount || 0,
-                startedAt: job.processedOn || Date.now(),
-                completedAt: Date.now(),
+                addedEmailsCount,
+                deletedEmailsCount,
+                startedAt: job.processedOn ?? completedAt,
+                completedAt,
             });
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);

@@ -1,4 +1,5 @@
 export * from './common.types.js';
+export * from './database.types.js';
 export * from './error.types.js';
 export * from './event.types.js';
 export * from './health.types.js';

@@ -3,8 +3,18 @@ import { ForbiddenError } from '@errors';
 import { ANALYTICS_TIMEFRAME, AnalyticsQueryParams, DashboardAnalyticsResponse, OverviewMetricsAttributes } from '@mailsense/types';
 import { createLogger } from '@observability';
 import { AccountRepository } from '../accounts/account.repository.js';
-import { AnalyticsRepository } from './analytics.repository.js';
-import { buildNoAccountsAnalyticsDashboardData, calculateDateRange, calculatePercentageChange, calculateResponseTimeMetrics, formatAccountBreakdown, formatEmailVolumeTimeSeries, formatOverviewMetrics, formatTopSenders } from './utils/index.js';
+import { AnalyticsRepository } from './database/analytics.repository.js';
+import { DashboardAnalyticsRawDataResponse, DateRangeBoundary, RawOverviewAggregateResult } from './types/index.js';
+import {
+    buildNoAccountsAnalyticsDashboardData,
+    calculateDateRange,
+    calculatePercentageChange,
+    calculateResponseTimeMetrics,
+    formatAccountBreakdown,
+    formatEmailVolumeTimeSeries,
+    formatOverviewMetrics,
+    formatTopSenders,
+} from './utils/index.js';
 
 const logger = createLogger(LOGGER_MODULE.ANALYTICS_SERVICE);
 
@@ -20,36 +30,13 @@ export class AnalyticsService {
             const timeframe = params.timeframe || ANALYTICS_TIMEFRAME.THIRTY_DAYS;
             const dateRange = calculateDateRange(timeframe, params.startDate, params.endDate);
 
-            const [rawOverview, rawPrevOverview, rawVolume, rawSenders, rawResponseTime, rawAccountBreakdown] = await Promise.all([
-                AnalyticsRepository.getOverviewCountsRaw(userId, targetAccountIds, dateRange.startDate, dateRange.endDate),
-                dateRange.prevStartDate && dateRange.prevEndDate
-                    ? AnalyticsRepository.getOverviewCountsRaw(userId, targetAccountIds, dateRange.prevStartDate, dateRange.prevEndDate)
-                    : Promise.resolve(null),
-                AnalyticsRepository.getEmailVolumeTimeSeriesRaw(targetAccountIds, dateRange.startDate, dateRange.endDate),
-                AnalyticsRepository.getTopSendersRaw(targetAccountIds, dateRange.startDate, dateRange.endDate, 5),
-                AnalyticsRepository.getResponseTimeStatsRaw(targetAccountIds, dateRange.startDate, dateRange.endDate),
-                AnalyticsRepository.getAccountBreakdownRaw(targetAccountIds),
-            ]);
+            const rawData = await this.getDashboardAnalyticsRawData(userId, targetAccountIds, timeframe, dateRange);
 
-            const currentOverview = formatOverviewMetrics(rawOverview, targetAccountIds.length);
-            const prevOverview = rawPrevOverview ? formatOverviewMetrics(rawPrevOverview, targetAccountIds.length) : null;
-
-            const currentPeriodEmails = rawOverview.periodEmailsCount ?? rawOverview.facetResult.totalEmails?.[0]?.count ?? 0;
-            const prevPeriodEmails = rawPrevOverview
-                ? (rawPrevOverview.periodEmailsCount ?? rawPrevOverview.facetResult.totalEmails?.[0]?.count ?? 0)
-                : undefined;
-
-            const overview: OverviewMetricsAttributes = {
-                ...currentOverview,
-                emailsChangePercentage: calculatePercentageChange(currentPeriodEmails, prevPeriodEmails),
-                unreadChangePercentage: calculatePercentageChange(currentOverview.unreadEmails, prevOverview?.unreadEmails),
-                sentChangePercentage: calculatePercentageChange(currentOverview.sentEmails, prevOverview?.sentEmails),
-            };
-
-            const volumeTrend = formatEmailVolumeTimeSeries(rawVolume, dateRange.startDate, dateRange.endDate);
-            const topSenders = formatTopSenders(rawSenders);
-            const responseTime = calculateResponseTimeMetrics(rawResponseTime);
-            const accountSummaries = formatAccountBreakdown(rawAccountBreakdown);
+            const { overview, volumeTrend, topSenders, responseTime, accountSummaries } = this.getOverviewVolumeTrends(
+                targetAccountIds,
+                rawData,
+                dateRange,
+            );
 
             return {
                 overview,
@@ -65,6 +52,61 @@ export class AnalyticsService {
             logger.error('Failed to get dashboard analytics in AnalyticsService', { userId, params, error });
             throw error;
         }
+    }
+
+    private async getDashboardAnalyticsRawData(
+        userId: string,
+        targetAccountIds: string[],
+        timeframe: ANALYTICS_TIMEFRAME,
+        dateRange: DateRangeBoundary,
+    ): Promise<DashboardAnalyticsRawDataResponse> {
+        const [rawOverview, rawPrevOverview, rawVolume, rawSenders, rawResponseTime, rawAccountBreakdown] = await Promise.all([
+            AnalyticsRepository.getOverviewCountsRaw(userId, targetAccountIds, dateRange.startDate, dateRange.endDate),
+            dateRange.prevStartDate && dateRange.prevEndDate
+                ? AnalyticsRepository.getOverviewCountsRaw(userId, targetAccountIds, dateRange.prevStartDate, dateRange.prevEndDate)
+                : Promise.resolve(null),
+            AnalyticsRepository.getEmailVolumeTimeSeriesRaw(targetAccountIds, dateRange.startDate, dateRange.endDate),
+            AnalyticsRepository.getTopSendersRaw(targetAccountIds, dateRange.startDate, dateRange.endDate, 5),
+            AnalyticsRepository.getResponseTimeStatsRaw(targetAccountIds, dateRange.startDate, dateRange.endDate),
+            AnalyticsRepository.getAccountBreakdownRaw(targetAccountIds),
+        ]);
+
+        return { rawOverview, rawPrevOverview, rawVolume, rawSenders, rawResponseTime, rawAccountBreakdown, timeframe };
+    }
+
+    private extractPeriodEmailsCount(raw?: RawOverviewAggregateResult | null): number | undefined {
+        if (!raw) return undefined;
+        return raw.periodEmailsCount ?? raw.facetResult.totalEmails?.[0]?.count ?? 0;
+    }
+
+    private buildOverviewMetrics(
+        rawOverview: RawOverviewAggregateResult,
+        rawPrevOverview: RawOverviewAggregateResult | null,
+        accountCount: number,
+    ): OverviewMetricsAttributes {
+        const currentOverview = formatOverviewMetrics(rawOverview, accountCount);
+        const prevOverview = rawPrevOverview ? formatOverviewMetrics(rawPrevOverview, accountCount) : null;
+
+        const currentPeriodEmails = this.extractPeriodEmailsCount(rawOverview) ?? 0;
+        const prevPeriodEmails = this.extractPeriodEmailsCount(rawPrevOverview);
+
+        return {
+            ...currentOverview,
+            emailsChangePercentage: calculatePercentageChange(currentPeriodEmails, prevPeriodEmails),
+            unreadChangePercentage: calculatePercentageChange(currentOverview.unreadEmails, prevOverview?.unreadEmails),
+            sentChangePercentage: calculatePercentageChange(currentOverview.sentEmails, prevOverview?.sentEmails),
+        };
+    }
+
+    private getOverviewVolumeTrends(targetAccountIds: string[], rawData: DashboardAnalyticsRawDataResponse, dateRange: DateRangeBoundary) {
+        const { rawOverview, rawPrevOverview, rawVolume, rawSenders, rawResponseTime, rawAccountBreakdown } = rawData;
+        const overview = this.buildOverviewMetrics(rawOverview, rawPrevOverview, targetAccountIds.length);
+        const volumeTrend = formatEmailVolumeTimeSeries(rawVolume, dateRange.startDate, dateRange.endDate);
+        const topSenders = formatTopSenders(rawSenders);
+        const responseTime = calculateResponseTimeMetrics(rawResponseTime);
+        const accountSummaries = formatAccountBreakdown(rawAccountBreakdown);
+
+        return { overview, volumeTrend, topSenders, responseTime, accountSummaries };
     }
 
     public async refreshAccountMetrics(accountId: string): Promise<void> {

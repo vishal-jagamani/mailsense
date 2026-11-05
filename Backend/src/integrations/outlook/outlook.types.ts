@@ -1,5 +1,5 @@
 import { OutlookAttachmentObject, OutlookMessageObjectFull } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailInput } from '@modules/emails/database/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 
 // API Responses

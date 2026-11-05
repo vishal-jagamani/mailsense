@@ -1,5 +1,5 @@
 import { CreateEntityInput, DraftAttributes } from '@mailsense/types';
-import { EmailAttachmentSchema } from '@modules/emails/email.model.js';
+import { EmailAttachmentSchema } from '@modules/emails/database/email.model.js';
 import mongoose, { Document, Schema } from 'mongoose';
 
 export type DraftInput = CreateEntityInput<DraftAttributes>;

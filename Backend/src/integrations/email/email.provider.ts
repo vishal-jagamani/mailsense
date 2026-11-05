@@ -1,5 +1,5 @@
 import { SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
-import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
+import { EmailDocument, EmailInput } from '@modules/emails/database/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { AttachmentStreamResult, IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';

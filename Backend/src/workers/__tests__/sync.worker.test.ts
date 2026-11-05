@@ -1,7 +1,7 @@
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
 import { IEmailProvider } from '@integrations/email/email.provider.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { EmailRepository } from '@modules/emails/email.repository.js';
+import { EmailRepository } from '@modules/emails/database/email.repository.js';
 import { FolderService } from '@modules/folders/folder.service.js';
 import { Job } from 'bullmq';
 import { SyncAccountPayload } from 'core/queue/queue.service.js';
@@ -9,7 +9,7 @@ import { syncAccountProcessor } from '../processors/sync-account.processor.js';
 import { SyncJobResult } from '@mailsense/types';
 
 jest.mock('@modules/accounts/account.repository.js');
-jest.mock('@modules/emails/email.repository.js');
+jest.mock('@modules/emails/database/email.repository.js');
 jest.mock('@modules/folders/folder.service.js');
 jest.mock('@integrations/email/email.provider.factory.js');
 

@@ -3,7 +3,7 @@ import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
 import { EmailAttachment, FOLDER_KIND, FOLDER_ROLE, OutlookAttachmentObject, OutlookMessageObjectFull } from '@mailsense/types';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { OutlookCreateMessagePayload, OutlookFileAttachmentPayload, OutlookFolderObject } from './outlook.types.js';
-import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailInput } from '@modules/emails/database/email.model.js';
 import { compressString } from '@utils';
 
 // Build outlook oauth access consent url

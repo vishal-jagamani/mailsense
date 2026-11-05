@@ -8,6 +8,15 @@ import { createLogger, setTraceContext } from '@observability';
 
 const authLogger = createLogger(LOGGER_MODULE.AUTH_MIDDLEWARE);
 
+function getFirstString(...candidates: (string | string[] | undefined | null)[]): string | undefined {
+    for (const val of candidates) {
+        if (typeof val === 'string' && val.length > 0) {
+            return val;
+        }
+    }
+    return undefined;
+}
+
 class AuthMiddleware {
     private checkJwt = auth({
         issuerBaseURL: AUTH0_SECRETS.issuerBaseURL,
@@ -35,10 +44,35 @@ class AuthMiddleware {
         }
     }
 
+    private extractUserFromRequest(req: Request) {
+        const payload = req.auth?.payload;
+        const headers = req.headers;
+
+        const userId = getFirstString(payload?.sub, headers['x-user-id']) ?? '';
+        const email = getFirstString(
+            payload?.email as string | undefined,
+            payload?.['https://mailsense.app/email'] as string | undefined,
+            headers['x-user-email'],
+        );
+        const headerName = this.parseHeaderName(headers['x-user-name']);
+        const name = getFirstString(
+            payload?.name as string | undefined,
+            payload?.['https://mailsense.app/name'] as string | undefined,
+            headerName,
+        );
+
+        return {
+            id: userId,
+            email,
+            name,
+            raw: payload,
+        };
+    }
+
     private noAuth(req: Request, res: Response, next: NextFunction) {
-        const devUserId = (req.headers['x-user-id'] as string) || req.user?.id || 'dev-user-id';
-        const devEmail = (req.headers['x-user-email'] as string) || req.user?.email;
-        const devName = this.parseHeaderName(req.headers['x-user-name']) || req.user?.name;
+        const devUserId = getFirstString(req.headers['x-user-id'], req.user?.id) ?? 'dev-user-id';
+        const devEmail = getFirstString(req.headers['x-user-email'], req.user?.email);
+        const devName = this.parseHeaderName(req.headers['x-user-name']) ?? req.user?.name;
 
         if (!req.user) {
             req.user = { id: devUserId, email: devEmail, name: devName };
@@ -58,30 +92,10 @@ class AuthMiddleware {
                 });
             }
 
-            const userId = req.auth?.payload?.sub || (req.headers['x-user-id'] as string) || '';
-            const headerEmail = (req.headers['x-user-email'] as string) || undefined;
-            const headerName = this.parseHeaderName(req.headers['x-user-name']);
+            const user = this.extractUserFromRequest(req);
+            req.user = user;
 
-            const email =
-                (req.auth?.payload?.email as string) ||
-                (req.auth?.payload?.['https://mailsense.app/email'] as string) ||
-                headerEmail ||
-                undefined;
-
-            const name =
-                (req.auth?.payload?.name as string) ||
-                (req.auth?.payload?.['https://mailsense.app/name'] as string) ||
-                headerName ||
-                undefined;
-
-            req.user = {
-                id: userId,
-                email,
-                name,
-                raw: req.auth?.payload,
-            };
-
-            this.bindUserContext(userId, email, name);
+            this.bindUserContext(user.id, user.email, user.name);
             next();
         });
     }

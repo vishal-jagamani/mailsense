@@ -1,8 +1,6 @@
 import { LOGGER_MODULE } from '@constants';
 import { ForbiddenError, NotFoundError } from '@errors';
 import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
-import { GmailAttachmentBufferResult } from '@integrations/gmail/gmail.types.js';
 import {
     ACCOUNT_PROVIDER,
     APIResponse,
@@ -10,32 +8,102 @@ import {
     GetAllEmailsFilters,
     GetEmailsResponse,
     GetFiltersResponse,
-    GetThreadResponse,
     GMAIL_LABELS,
     PaginatedDataResponse,
     SearchEmailsParams,
     SearchOtherContactsResponse,
 } from '@mailsense/types';
+import { AccountDocument } from '@modules/accounts/account.model.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { FolderRepository } from '@modules/folders/folder.repository.js';
 import { createLogger } from '@observability';
 import { GetDataRangeResponse } from '@types';
 import { decompressString } from '@utils';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, FlattenMaps } from 'mongoose';
+import { EmailDocument } from '../database/email.model.js';
+import { EmailRepository } from '../database/email.repository.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from '../email.constants.js';
-import { EmailDocument, EmailInput } from '../email.model.js';
-import { EmailRepository } from '../email.repository.js';
+import { EmailListItem, GroupedEmailThreadItem } from '../email.types.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 
-export class EmailReadService {
+export class EmailQueryService {
+    private resolveTargetAccountIds(accounts: AccountDocument[], accountId?: string[]): string[] {
+        if (accountId && accountId.length > 0) {
+            return accountId.map(String);
+        }
+        return accounts.map((account) => String(account._id));
+    }
+
+    private buildEmailSearchQuery(
+        targetAccountIds: string[],
+        targetFolders: string[] | undefined,
+        folderIds: string[],
+        filters: GetAllEmailsFilters,
+        computedDateRange?: GetDataRangeResponse,
+    ): FilterQuery<EmailDocument> {
+        const { searchText, unread } = filters;
+        const query: FilterQuery<EmailDocument> = {
+            accountId: { $in: targetAccountIds },
+            folders: targetFolders ? { $in: targetFolders } : { $nin: [GMAIL_LABELS.TRASH, GMAIL_LABELS.SPAM, GMAIL_LABELS.SENT, ...folderIds] },
+        };
+
+        if (searchText) {
+            query.$or = [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }];
+        }
+        if (computedDateRange) {
+            query.receivedAt = { $gte: computedDateRange.startDate, $lte: computedDateRange.endDate };
+        }
+        if (unread) {
+            query.isRead = false;
+        }
+
+        return query;
+    }
+
+    private mapEmailToListItem(email: FlattenMaps<EmailDocument> & GroupedEmailThreadItem): EmailListItem {
+        return {
+            _id: email._id.toString(),
+            subject: email.subject,
+            from: email.from,
+            receivedAt: email.receivedAt,
+            isRead: email.isRead,
+            providerMessageId: email.providerMessageId,
+            accountId: email.accountId,
+            threadId: email.threadId,
+            threadCount: email.threadCount || 1,
+            attachments: email.attachments || [],
+            hasAttachments: Boolean(email.attachments && email.attachments.length > 0),
+            ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
+        };
+    }
+
     public async getAllEmails(userId: string, size: number, page: number, filters: GetAllEmailsFilters): Promise<GetEmailsResponse> {
         try {
-            const { searchText, accountId, dateRange, folders, unread } = filters;
             const accounts = await AccountRepository.getAccounts({ userId, active: true });
             if (!accounts.length) {
                 return { data: [], size: 0, page: 0, total: 0 };
             }
+
+            const { folderIds, targetFolders } = await this.getFoldersIdsForEmailsQuery(accounts, filters.folders);
+            const targetAccountIds = this.resolveTargetAccountIds(accounts, filters.accountId);
+            const computedDateRange = filters.dateRange ? this.getDateRange(filters.dateRange) : undefined;
+            const searchQuery = this.buildEmailSearchQuery(targetAccountIds, targetFolders, folderIds, filters, computedDateRange);
+
+            const emails = await EmailRepository.getGroupedEmails(searchQuery, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
+            const total = await EmailRepository.countGroupedThreads(searchQuery);
+            const data = emails.map((email) => this.mapEmailToListItem(email));
+
+            return { data, size, page, total };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in EmailService.getAllEmails: ${errorMessage}`, { error: err });
+            throw err;
+        }
+    }
+
+    private async getFoldersIdsForEmailsQuery(accounts: AccountDocument[], folders?: string[]) {
+        try {
             const outlookAccounts = accounts.filter((account) => account.provider === ACCOUNT_PROVIDER.OUTLOOK);
             let folderIds: string[] = [];
             if (outlookAccounts.length) {
@@ -60,39 +128,10 @@ export class EmailReadService {
                     targetFolders = folders.map((id) => folderMap.get(id) || id);
                 }
             }
-            const targetAccountIds = accountId?.length ? accountId.map(String) : accounts.map((account) => String(account._id));
-
-            const computedDateRange = dateRange ? this.getDateRange(dateRange) : undefined;
-
-            const searchQuery: FilterQuery<EmailDocument> = {
-                accountId: { $in: targetAccountIds },
-                folders: targetFolders ? { $in: targetFolders } : { $nin: [GMAIL_LABELS.TRASH, GMAIL_LABELS.SPAM, GMAIL_LABELS.SENT, ...folderIds] },
-                ...(searchText && { $or: [{ subject: { $regex: searchText, $options: 'i' } }, { from: { $regex: searchText, $options: 'i' } }] }),
-                ...(computedDateRange && {
-                    receivedAt: { $gte: computedDateRange.startDate, $lte: computedDateRange.endDate },
-                }),
-                ...(unread && { isRead: false }),
-            };
-            const emails = await EmailRepository.getGroupedEmails(searchQuery, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
-            const total = await EmailRepository.countGroupedThreads(searchQuery);
-
-            const data = emails.map((email) => ({
-                _id: email._id.toString(),
-                subject: email.subject,
-                from: email.from,
-                receivedAt: email.receivedAt,
-                isRead: email.isRead,
-                providerMessageId: email.providerMessageId,
-                accountId: email.accountId,
-                threadId: email.threadId,
-                threadCount: email.threadCount || 1,
-                attachments: email.attachments || [],
-                ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
-            }));
-            return { data, size, page, total };
+            return { folderIds, targetFolders };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.getAllEmails: ${errorMessage}`, { error: err });
+            logger.error(`Error in EmailService.getFoldersForEmails: ${errorMessage}`, { error: err });
             throw err;
         }
     }
@@ -142,19 +181,7 @@ export class EmailReadService {
             const emails = await EmailRepository.getGroupedEmails({ accountId }, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
             const total = await EmailRepository.countGroupedThreads({ accountId });
 
-            const data = emails.map((email) => ({
-                _id: email._id.toString(),
-                subject: email.subject,
-                from: email.from,
-                receivedAt: email.receivedAt,
-                providerMessageId: email.providerMessageId,
-                accountId: email.accountId,
-                threadId: email.threadId,
-                threadCount: email.threadCount || 1,
-                isRead: email.isRead,
-                attachments: email.attachments || [],
-                ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
-            }));
+            const data = emails.map((email) => this.mapEmailToListItem(email));
             return { data, size, page, total };
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
@@ -187,31 +214,6 @@ export class EmailReadService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getFilters: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async getEmail(userId: string, emailId: string): Promise<EmailDocument | EmailInput | null> {
-        try {
-            const email = await EmailRepository.getEmail(emailId);
-            if (!email) {
-                throw new NotFoundError('Email', emailId);
-            }
-
-            const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
-            if (!account) {
-                throw new NotFoundError('Account', email.accountId);
-            }
-
-            if (account.userId !== userId) {
-                throw new ForbiddenError('Unauthorized attempt to access email');
-            }
-
-            const provider = EmailProviderFactory.getProvider(account.provider as ACCOUNT_PROVIDER);
-            return provider.getMessageDetails(email.accountId, email.providerMessageId, email);
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.getEmail: ${errorMessage}`, { error: err });
             throw err;
         }
     }
@@ -256,109 +258,6 @@ export class EmailReadService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.searchOtherContacts: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async getThread(userId: string, emailId: string): Promise<GetThreadResponse> {
-        try {
-            const email = await EmailRepository.getEmail(emailId);
-            if (!email) {
-                throw new NotFoundError('Email', emailId);
-            }
-
-            const account = await AccountRepository.getAccountById(email.accountId, { userId: 1 });
-            if (!account) {
-                throw new NotFoundError('Account', email.accountId);
-            }
-
-            if (account.userId !== userId) {
-                throw new ForbiddenError('Unauthorized attempt to access email thread');
-            }
-
-            const threadEmails = await EmailRepository.getEmailsByThreadId(email.threadId, email.accountId);
-
-            const decompressedThread = threadEmails.map((item) => ({
-                ...item,
-                _id: item._id.toString(),
-                bodyHtml: item.bodyHtml ? decompressString(item.bodyHtml) : '',
-                bodyPlain: item.bodyPlain ? decompressString(item.bodyPlain) : '',
-            }));
-
-            return {
-                thread: decompressedThread,
-                threadId: email.threadId,
-            };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.getThread: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async downloadAttachment(userId: string, emailId: string, attachmentId: string): Promise<GmailAttachmentBufferResult> {
-        try {
-            const email = await EmailRepository.getEmail(emailId);
-            if (!email) {
-                throw new NotFoundError('Email', emailId);
-            }
-
-            const account = await AccountRepository.getAccountById(email.accountId);
-            if (!account) {
-                throw new NotFoundError('Account', email.accountId);
-            }
-
-            if (account.userId !== userId) {
-                throw new ForbiddenError('Unauthorized attempt to access attachment');
-            }
-
-            const attachment = (email.attachments || []).find((att) => att.attachmentId === attachmentId);
-
-            const provider = EmailProviderFactory.getProvider(account.provider);
-            const result = await provider.getAttachment(email.accountId, email.providerMessageId, attachmentId);
-
-            return {
-                data: result.data,
-                mimeType: attachment?.mimeType || result.mimeType || 'application/octet-stream',
-                filename: attachment?.filename || result.filename || 'attachment',
-            };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.downloadAttachment: ${errorMessage}`, { error: err });
-            throw err;
-        }
-    }
-
-    public async downloadAttachmentStream(userId: string, emailId: string, attachmentId: string): Promise<AttachmentStreamResult> {
-        try {
-            const email = await EmailRepository.getEmail(emailId);
-            if (!email) {
-                throw new NotFoundError('Email', emailId);
-            }
-
-            const account = await AccountRepository.getAccountById(email.accountId);
-            if (!account) {
-                throw new NotFoundError('Account', email.accountId);
-            }
-
-            if (account.userId !== userId) {
-                throw new ForbiddenError('Unauthorized attempt to download attachment');
-            }
-
-            const attachment = (email.attachments || []).find((att) => att.attachmentId === attachmentId);
-
-            const provider = EmailProviderFactory.getProvider(account.provider);
-            const result = await provider.getAttachmentStream(email.accountId, email.providerMessageId, attachmentId);
-
-            return {
-                stream: result.stream,
-                mimeType: attachment?.mimeType || result.mimeType || 'application/octet-stream',
-                filename: attachment?.filename || result.filename || 'attachment',
-                contentLength: attachment?.size || result.contentLength,
-            };
-        } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : String(err);
-            logger.error(`Error in EmailService.downloadAttachmentStream: ${errorMessage}`, { error: err, emailId, attachmentId });
             throw err;
         }
     }

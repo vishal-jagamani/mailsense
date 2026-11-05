@@ -9,7 +9,7 @@ import {
     UpdateAPIResponse,
 } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { EmailDocument, EmailInput } from '@modules/emails/email.model.js';
+import { EmailDocument, EmailInput } from '@modules/emails/database/email.model.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { FolderInput } from '@modules/folders/folder.model.js';
 import { decompressString, decrypt } from '@utils';

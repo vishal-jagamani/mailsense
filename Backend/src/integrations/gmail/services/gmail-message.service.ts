@@ -10,8 +10,8 @@ import {
 } from '@mailsense/types';
 import { ACCOUNT_FETCH_ACCESS_TOKEN_DB_FIELD_MAPPING } from '@modules/accounts/account.constants.js';
 import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { EmailInput } from '@modules/emails/email.model.js';
-import { EmailRepository } from '@modules/emails/email.repository.js';
+import { EmailInput } from '@modules/emails/database/email.model.js';
+import { EmailRepository } from '@modules/emails/database/email.repository.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { createLogger } from '@observability';
 import { BatchProcessor, compressString } from '@utils';
@@ -70,24 +70,18 @@ export class GmailMessageService {
             if (!historyId) return null;
             const historyDetails = await GmailClient.getHistory(accountId, historyId);
             if (!historyDetails) return null;
+
             const { addedMessageIds, deletedMessageIds } = this.extractMessageChanges(historyDetails);
-            const addedMessages: EmailInput[] = [];
-            if (addedMessageIds.length) {
-                for (const messageId of addedMessageIds) {
-                    const emailDetails = await GmailClient.fetchEmailById(messageId, accountId);
-                    const emailObject = GmailUtils.transformGmailMessageToEmailInput(emailDetails, accountId);
-                    addedMessages.push(emailObject);
-                }
-            }
+            const addedMessages = await this.getMessagesByMessagesId(accountId, addedMessageIds);
+
             return { addedMessages, deletedMessages: deletedMessageIds, newHistoryId: historyDetails.historyId };
         } catch (err) {
-            if (axios.isAxiosError(err) && err?.response?.status === 404) {
+            if (axios.isAxiosError(err) && err.response?.status === 404) {
                 return null;
-            } else {
-                const errorMessage = err instanceof Error ? err.message : String(err);
-                logger.error(`Error in GmailService.getMessagesAfterLastHistory: ${errorMessage}`, { error: err });
-                throw err;
             }
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in GmailService.getMessagesAfterLastHistory: ${errorMessage}`, { error: err });
+            throw err;
         }
     }
 

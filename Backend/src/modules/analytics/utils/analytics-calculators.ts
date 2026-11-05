@@ -1,9 +1,63 @@
 import { LOGGER_MODULE } from '@constants';
 import { ANALYTICS_TIMEFRAME, ResponseTimeDistributionAttributes, ResponseTimeMetricsAttributes } from '@mailsense/types';
 import { createLogger } from '@observability';
-import { DateRangeBoundary, RawThreadResponseTimeSummary } from '../analytics.types.js';
+import { DateRangeBoundary, RawThreadResponseTimeSummary } from '../types/index.js';
 
 const logger = createLogger(LOGGER_MODULE.ANALYTICS_UTILS);
+
+const ROLLING_DAYS: Record<string, number> = {
+    [ANALYTICS_TIMEFRAME.SEVEN_DAYS]: 7,
+    [ANALYTICS_TIMEFRAME.THIRTY_DAYS]: 30,
+    [ANALYTICS_TIMEFRAME.NINETY_DAYS]: 90,
+};
+
+function getRollingDaysRange(now: Date, endDate: Date, days: number): DateRangeBoundary {
+    const startDate = new Date(now);
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(now.getDate() - (days - 1));
+
+    const prevStartDate = new Date(startDate);
+    prevStartDate.setDate(prevStartDate.getDate() - days);
+
+    const prevEndDate = new Date(startDate.getTime() - 1);
+
+    return { startDate, endDate, prevStartDate, prevEndDate };
+}
+
+function getTodayDateRange(now: Date, endDate: Date): DateRangeBoundary {
+    const startDate = new Date(now);
+    startDate.setHours(0, 0, 0, 0);
+    const prevStartDate = new Date(startDate);
+    prevStartDate.setDate(prevStartDate.getDate() - 1);
+    const prevEndDate = new Date(endDate);
+    prevEndDate.setDate(prevEndDate.getDate() - 1);
+    return { startDate, endDate, prevStartDate, prevEndDate };
+}
+
+function getThisMonthDateRange(now: Date, endDate: Date): DateRangeBoundary {
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
+    const prevEndDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
+    return { startDate, endDate, prevStartDate, prevEndDate };
+}
+
+function getOneYearDateRange(now: Date, endDate: Date): DateRangeBoundary {
+    const startDate = new Date(now);
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setFullYear(now.getFullYear() - 1);
+    const prevStartDate = new Date(startDate);
+    prevStartDate.setFullYear(prevStartDate.getFullYear() - 1);
+    return { startDate, endDate, prevStartDate, prevEndDate: new Date(startDate.getTime() - 1) };
+}
+
+function getCustomDateRange(now: Date, endDate: Date, customStartDateStr?: string, customEndDateStr?: string): DateRangeBoundary {
+    let startDate = new Date(now);
+    startDate.setHours(0, 0, 0, 0);
+    if (customStartDateStr) startDate = new Date(customStartDateStr);
+    const resolvedEndDate = new Date(endDate);
+    if (customEndDateStr) resolvedEndDate.setTime(new Date(customEndDateStr).getTime());
+    return { startDate, endDate: resolvedEndDate };
+}
 
 export const calculateDateRange = (timeframe: ANALYTICS_TIMEFRAME, customStartDateStr?: string, customEndDateStr?: string): DateRangeBoundary => {
     try {
@@ -11,85 +65,25 @@ export const calculateDateRange = (timeframe: ANALYTICS_TIMEFRAME, customStartDa
         const endDate = new Date(now);
         endDate.setHours(23, 59, 59, 999);
 
-        let startDate = new Date(now);
-        startDate.setHours(0, 0, 0, 0);
-
-        let prevStartDate: Date | undefined;
-        let prevEndDate: Date | undefined;
-
-        switch (timeframe) {
-            case ANALYTICS_TIMEFRAME.TODAY: {
-                startDate = new Date(now);
-                startDate.setHours(0, 0, 0, 0);
-
-                prevStartDate = new Date(startDate);
-                prevStartDate.setDate(prevStartDate.getDate() - 1);
-                prevEndDate = new Date(endDate);
-                prevEndDate.setDate(prevEndDate.getDate() - 1);
-                break;
-            }
-            case ANALYTICS_TIMEFRAME.SEVEN_DAYS: {
-                startDate.setDate(now.getDate() - 6);
-
-                prevStartDate = new Date(startDate);
-                prevStartDate.setDate(prevStartDate.getDate() - 7);
-                prevEndDate = new Date(startDate);
-                prevEndDate.setMilliseconds(prevEndDate.getMilliseconds() - 1);
-                break;
-            }
-            case ANALYTICS_TIMEFRAME.THIRTY_DAYS: {
-                startDate.setDate(now.getDate() - 29);
-
-                prevStartDate = new Date(startDate);
-                prevStartDate.setDate(prevStartDate.getDate() - 30);
-                prevEndDate = new Date(startDate);
-                prevEndDate.setMilliseconds(prevEndDate.getMilliseconds() - 1);
-                break;
-            }
-            case ANALYTICS_TIMEFRAME.NINETY_DAYS: {
-                startDate.setDate(now.getDate() - 89);
-
-                prevStartDate = new Date(startDate);
-                prevStartDate.setDate(prevStartDate.getDate() - 90);
-                prevEndDate = new Date(startDate);
-                prevEndDate.setMilliseconds(prevEndDate.getMilliseconds() - 1);
-                break;
-            }
-            case ANALYTICS_TIMEFRAME.THIS_MONTH: {
-                startDate = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
-
-                prevStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0, 0);
-                prevEndDate = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59, 999);
-                break;
-            }
-            case ANALYTICS_TIMEFRAME.ONE_YEAR: {
-                startDate.setFullYear(now.getFullYear() - 1);
-
-                prevStartDate = new Date(startDate);
-                prevStartDate.setFullYear(prevStartDate.getFullYear() - 1);
-                prevEndDate = new Date(startDate);
-                prevEndDate.setMilliseconds(prevEndDate.getMilliseconds() - 1);
-                break;
-            }
-            case ANALYTICS_TIMEFRAME.ALL_TIME: {
-                startDate = new Date(2020, 0, 1, 0, 0, 0, 0);
-                break;
-            }
-            case ANALYTICS_TIMEFRAME.CUSTOM: {
-                if (customStartDateStr) {
-                    startDate = new Date(customStartDateStr);
-                }
-                if (customEndDateStr) {
-                    endDate.setTime(new Date(customEndDateStr).getTime());
-                }
-                break;
-            }
-            default: {
-                startDate.setDate(now.getDate() - 29);
-            }
+        const rollingDays = ROLLING_DAYS[timeframe];
+        if (rollingDays) {
+            return getRollingDaysRange(now, endDate, rollingDays);
         }
 
-        return { startDate, endDate, prevStartDate, prevEndDate };
+        switch (timeframe) {
+            case ANALYTICS_TIMEFRAME.TODAY:
+                return getTodayDateRange(now, endDate);
+            case ANALYTICS_TIMEFRAME.THIS_MONTH:
+                return getThisMonthDateRange(now, endDate);
+            case ANALYTICS_TIMEFRAME.ONE_YEAR:
+                return getOneYearDateRange(now, endDate);
+            case ANALYTICS_TIMEFRAME.ALL_TIME:
+                return { startDate: new Date(2020, 0, 1, 0, 0, 0, 0), endDate };
+            case ANALYTICS_TIMEFRAME.CUSTOM:
+                return getCustomDateRange(now, endDate, customStartDateStr, customEndDateStr);
+            default:
+                return getRollingDaysRange(now, endDate, 30);
+        }
     } catch (err) {
         logger.error('Failed to calculate date range in AnalyticsUtils', { timeframe, customStartDateStr, customEndDateStr, err });
         throw err;
@@ -108,6 +102,26 @@ export const calculatePercentageChange = (current: number, previous?: number): n
     }
 };
 
+function recordDistributionBucket(distribution: ResponseTimeDistributionAttributes, deltaMinutes: number): void {
+    if (deltaMinutes < 60) {
+        distribution.under1Hour++;
+    } else if (deltaMinutes <= 240) {
+        distribution.between1And4Hours++;
+    } else if (deltaMinutes <= 1440) {
+        distribution.between4And24Hours++;
+    } else {
+        distribution.over24Hours++;
+    }
+}
+
+function computeMedian(sortedNumbers: number[]): number {
+    const midIndex = Math.floor(sortedNumbers.length / 2);
+    if (sortedNumbers.length % 2 !== 0) {
+        return sortedNumbers[midIndex];
+    }
+    return Math.round((sortedNumbers[midIndex - 1] + sortedNumbers[midIndex]) / 2);
+}
+
 export const calculateResponseTimeMetrics = (threadSummaries: RawThreadResponseTimeSummary[]): ResponseTimeMetricsAttributes => {
     try {
         let totalIncomingThreads = 0;
@@ -123,29 +137,18 @@ export const calculateResponseTimeMetrics = (threadSummaries: RawThreadResponseT
 
         for (const item of threadSummaries) {
             totalIncomingThreads++;
-            if (item.firstReceivedAt && item.firstSentAt) {
-                const receivedTime = new Date(item.firstReceivedAt).getTime();
-                const sentTime = new Date(item.firstSentAt).getTime();
+            if (!item.firstReceivedAt || !item.firstSentAt) continue;
 
-                if (sentTime > receivedTime) {
-                    const deltaMinutes = Math.round((sentTime - receivedTime) / (1000 * 60));
-                    // Discard unrealistic deltas > 30 days (43200 minutes)
-                    if (deltaMinutes <= 43200) {
-                        repliedThreadsCount++;
-                        deltasInMinutes.push(deltaMinutes);
+            const receivedTime = new Date(item.firstReceivedAt).getTime();
+            const sentTime = new Date(item.firstSentAt).getTime();
+            if (sentTime <= receivedTime) continue;
 
-                        if (deltaMinutes < 60) {
-                            distribution.under1Hour++;
-                        } else if (deltaMinutes <= 240) {
-                            distribution.between1And4Hours++;
-                        } else if (deltaMinutes <= 1440) {
-                            distribution.between4And24Hours++;
-                        } else {
-                            distribution.over24Hours++;
-                        }
-                    }
-                }
-            }
+            const deltaMinutes = Math.round((sentTime - receivedTime) / (1000 * 60));
+            if (deltaMinutes > 43200) continue;
+
+            repliedThreadsCount++;
+            deltasInMinutes.push(deltaMinutes);
+            recordDistributionBucket(distribution, deltaMinutes);
         }
 
         let averageResponseMinutes = 0;
@@ -156,11 +159,7 @@ export const calculateResponseTimeMetrics = (threadSummaries: RawThreadResponseT
             averageResponseMinutes = Math.round(totalMinutes / deltasInMinutes.length);
 
             deltasInMinutes.sort((a, b) => a - b);
-            const midIndex = Math.floor(deltasInMinutes.length / 2);
-            medianResponseMinutes =
-                deltasInMinutes.length % 2 !== 0
-                    ? deltasInMinutes[midIndex]
-                    : Math.round((deltasInMinutes[midIndex - 1] + deltasInMinutes[midIndex]) / 2);
+            medianResponseMinutes = computeMedian(deltasInMinutes);
         }
 
         const responseRatePercentage = totalIncomingThreads > 0 ? Math.round((repliedThreadsCount / totalIncomingThreads) * 1000) / 10 : 0;

@@ -1,4 +1,4 @@
-import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailInput } from '@modules/emails/database/email.model.js';
 
 export interface GetGmailMessagesResponse {
     emails: EmailInput[];

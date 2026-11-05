@@ -1,5 +1,7 @@
+import { EmailAttachment, EmailListDTO } from '@mailsense/types';
+import { AccountDocument } from '@modules/accounts/account.model.js';
 import { ProjectionType, SortOrder } from 'mongoose';
-import { EmailDocument } from './email.model.js';
+import { EmailDocument } from './database/email.model.js';
 
 // DB Field Mapping
 export interface EmailListDBFieldMapping {
@@ -11,6 +13,20 @@ export interface ComposeEmailAttachment {
     filename: string;
     mimeType: string;
     buffer: Buffer;
+}
+
+export interface AuthorizedAttachmentContext {
+    email: EmailDocument;
+    account: AccountDocument;
+}
+
+export interface AttachmentMetadata {
+    mimeType: string;
+    filename: string;
+}
+
+export interface EmailListItem extends EmailListDTO {
+    attachments?: EmailAttachment[];
 }
 
 export interface ThreadSummaryItem {

@@ -1,6 +1,7 @@
-import { AnyBulkWriteOperation, FilterQuery, FlattenMaps, PipelineStage, ProjectionType, SortOrder } from 'mongoose';
+import { AnyBulkWriteOperation, FilterQuery, FlattenMaps, ProjectionType, SortOrder } from 'mongoose';
+import { GroupedEmailThreadItem, ThreadSummaryItem } from '../email.types.js';
 import { Email, EmailDocument, EmailInput } from './email.model.js';
-import { GroupedEmailThreadItem, ThreadSummaryItem } from './email.types.js';
+import { GROUPED_EMAILS_QUERY } from './email.queries.js';
 
 export class EmailRepository {
     public static async upsertEmailsInBulk(emails: Partial<EmailInput>[]) {
@@ -121,10 +122,7 @@ export class EmailRepository {
         return Email.find({ threadId, accountId }, fields).sort({ receivedAt: 1 }).lean();
     }
 
-    public static async getThreadSummaries(
-        accountIds: string[],
-        threadIds: string[],
-    ): Promise<ThreadSummaryItem[]> {
+    public static async getThreadSummaries(accountIds: string[], threadIds: string[]): Promise<ThreadSummaryItem[]> {
         return Email.aggregate([
             { $match: { accountId: { $in: accountIds }, threadId: { $in: threadIds } } },
             { $group: { _id: '$threadId', count: { $sum: 1 }, latestAt: { $max: '$receivedAt' } } },
@@ -138,68 +136,14 @@ export class EmailRepository {
         page: number,
         fields: ProjectionType<EmailDocument>,
     ): Promise<(FlattenMaps<EmailDocument> & GroupedEmailThreadItem)[]> {
-        const pipeline: PipelineStage[] = [
-            { $match: searchQuery },
-            { $sort: { receivedAt: -1 } },
-            {
-                $group: {
-                    _id: { $ifNull: ['$threadId', '$_id'] },
-                    doc: { $first: '$$ROOT' },
-                },
-            },
-            { $sort: { 'doc.receivedAt': -1 } },
-            { $skip: (page - 1) * size },
-            { $limit: size },
-            {
-                $lookup: {
-                    from: 'emails',
-                    let: { tId: '$_id', accId: '$doc.accountId' },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [{ $eq: ['$accountId', '$$accId'] }, { $eq: ['$threadId', '$$tId'] }],
-                                },
-                            },
-                        },
-                        { $count: 'count' },
-                    ],
-                    as: 'threadStats',
-                },
-            },
-            {
-                $replaceRoot: {
-                    newRoot: {
-                        $mergeObjects: [
-                            '$doc',
-                            {
-                                threadCount: {
-                                    $ifNull: [{ $arrayElemAt: ['$threadStats.count', 0] }, 1],
-                                },
-                            },
-                        ],
-                    },
-                },
-            },
-            {
-                $project: {
-                    ...(typeof fields === 'object' ? fields : {}),
-                    threadId: 1,
-                    threadCount: 1,
-                },
-            },
-        ];
-
-        return Email.aggregate(pipeline);
+        return Email.aggregate(GROUPED_EMAILS_QUERY(searchQuery, size, page, fields));
     }
 
     public static async countGroupedThreads(searchQuery: FilterQuery<EmailDocument>): Promise<number> {
         const result = await Email.aggregate([
             { $match: searchQuery },
             {
-                $group: {
-                    _id: { $ifNull: ['$threadId', '$_id'] },
-                },
+                $group: { _id: { $ifNull: ['$threadId', '$_id'] } },
             },
             { $count: 'total' },
         ]);

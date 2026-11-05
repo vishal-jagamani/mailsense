@@ -92,6 +92,7 @@
 
 - `monitoring.manager.ts`: singleton APM orchestrator supporting pluggable providers via `MONITORING_PROVIDER` environment variable
 - `providers/sentry.provider.ts`: Sentry provider supporting Sentry Native Structured Logging (`enableLogs: true`, `Sentry.logger.*`), breadcrumbs, worker error reporting, and canonical user modeling (`user.id`, `user.email`, `user.username`)
+- `providers/sentry.utils.ts`: user extraction and breadcrumb data sanitizer helpers (`extractUserId`, `extractUserEmail`, `extractUserUsername`, `extractUserIp`, `omitUserKeys`)
 - `providers/noop.provider.ts`: silent fallback provider for development and testing environments
 - `Backend/src/core/types/monitoring.types.ts`: `IMonitoringProvider` strategy contract and monitoring DTOs
 
@@ -126,13 +127,15 @@
   - Newly connected accounts are created as active but with `syncEnabled: false` by default
   - Dedicated types in `account.types.ts`: `OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`
 - Analytics (`Backend/src/modules/analytics/*`)
-  - Pure database query repository (`analytics.repository.ts`) with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, and account breakdown
+  - Database layer (`Backend/src/modules/analytics/database/*`):
+    - `analytics.repository.ts`: Pure database query repository with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, and account breakdown
+    - `analytics.queries.ts`: Specialized aggregation pipeline builders for time series and sender distributions
   - Modularized utility layer (`Backend/src/modules/analytics/utils/*`) with barrel export (`utils/index.ts`):
     - `analytics-formatters.ts`: Date bucketing, contiguous timeline backfilling, title formatting, and regex name/email extraction
     - `analytics-calculators.ts`: Statistical turnaround math, distribution aggregations, and SLA metric calculations
   - Service layer (`analytics.service.ts`) orchestrating account authorization, concurrent queries, period percentage changes, and metrics snapshot refresh; throws `ForbiddenError` when requested accounts are unauthorized or inactive
   - HTTP controller and route handlers (`analytics.controller.ts`, `analytics.routes.ts`, `analytics.schema.ts`) mounted under `/api/analytics`
-  - Internal type definitions and centralized constants (`analytics.types.ts`, `analytics.constants.ts`)
+  - Internal type definitions and centralized constants (`analytics.types.ts`, `types/index.ts`, `analytics.constants.ts`)
 - Attachments (`Backend/src/modules/attachments/*`)
   - Attachment staging file upload (`POST /api/attachments/upload`) to Cloudflare R2 object storage
   - Staged attachment deletion endpoint (`DELETE /api/attachments/:attachmentId`) with user ownership verification throwing `ForbiddenError` on unauthorized deletions
@@ -141,10 +144,16 @@
   - Decomposed controller layer (`Backend/src/modules/emails/controllers/*`) with barrel export (`controllers/index.ts`):
     - `email-query.controller.ts`: Pure read endpoints (`getEmails`, `getEmail`, `getFilters`, `searchOtherContacts`, `getThread`, `downloadAttachment`) with caller `userId` authorization enforcement
     - `email-mutation.controller.ts`: Pure mutation endpoints (`composeEmail`, `deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`, `moveEmails`)
+  - Categorized database layer (`Backend/src/modules/emails/database/*`):
+    - `email.model.ts`: Mongoose schema and document models with compound indexes
+    - `email.queries.ts`: Typed database query filter builders
+    - `email.repository.ts`: Pure database persistence and aggregation queries
   - Decomposed service layer (`Backend/src/modules/emails/services/*`):
-    - `email-read.service.ts`: Read operations, querying (`getAllEmails`, `getEmails`), filter aggregation (`getFilters`), thread retrieval (`getThread`), contact search (`searchOtherContacts`), regex search (`searchEmails`), and attachment binary streaming (`downloadAttachmentStream`) with user tenancy validation
-    - `email-write.service.ts`: Write operations, email composition (`composeEmail`, `composeEmailWithAttachments`), parallelized multi-account folder migration (`moveEmails`), DRY multi-account batch operations via `executePerAccountProviderAction` (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`), and staged attachment lifecycle cleanup
-    - `email.service.ts`: Lightweight backward-compatible facade delegating read and write calls to underlying services, preserving 100% of method signatures for `EmailController` and `DraftService`
+    - `email-query.service.ts`: Query operations, mailbox lists (`getAllEmails`, `getEmails`), filter aggregation (`getFilters`), contact search (`searchOtherContacts`), and regex search (`searchEmails`)
+    - `email-thread.service.ts`: Thread conversation loading (`getThread`) and individual message retrieval (`getEmail`) with multi-tenant tenancy validation
+    - `email-attachment.service.ts`: Binary attachment streaming (`downloadAttachmentStream`) and buffer retrieval (`downloadAttachment`)
+    - `email-write.service.ts`: Write operations, email composition (`composeEmail`, `composeEmailWithAttachments`), staged attachment tenancy validation, parallelized multi-account folder migration (`moveEmails`), DRY multi-account batch operations via `executePerAccountProviderAction` (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`), and staged attachment lifecycle cleanup
+    - `email.service.ts`: Lightweight backward-compatible facade delegating read and write calls to underlying services (`EmailQueryService`, `EmailThreadService`, `EmailAttachmentService`, `EmailWriteService`), preserving 100% of method signatures for `EmailController` and `DraftService`
   - Unified list, per-account list, email details
   - Thread details endpoint for conversation view by email ID
   - Attachment download endpoint (`GET /api/emails/attachment/:emailId/:attachmentId`) streams binary data directly from upstream providers (`getAttachmentStream`) into Express response with zero heap buffering
@@ -249,6 +258,7 @@
 - `Backend/src/core/errors/AppError.ts`: base structured application error
 - `Backend/src/core/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
 - `Backend/src/core/types/*`: core type definitions with barrel export (`index.ts`):
+  - `database.types.ts`: `DatabaseConnectionOptions` for MongoDB connection configuration
   - `event.types.ts`: `PublishEventPayload` for event bus summary logging
   - `middleware.types.ts`: `SchemaMap` for Zod request validation
   - `common.types.ts`: `GetDataRangeResponse` for standardized date range filtering

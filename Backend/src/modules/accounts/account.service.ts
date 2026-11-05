@@ -7,7 +7,7 @@ import {
     SanitizedAccountAttributes,
     UpdateAPIResponse,
 } from '@mailsense/types';
-import { EmailRepository } from '@modules/emails/email.repository.js';
+import { EmailRepository } from '@modules/emails/database/email.repository.js';
 import { createLogger } from '@observability';
 import { QueueService } from 'core/queue/queue.service.js';
 import { SchedulerService } from 'core/queue/scheduler.service.js';

@@ -6,8 +6,8 @@ import { ACCOUNT_PROVIDER, PerAccountActionContext, SuccessAPIResponse, UpdateAP
 import { AccountRepository } from '@modules/accounts/account.repository.js';
 import { AttachmentsService } from '@modules/attachments/attachment.service.js';
 import { createLogger } from '@observability';
+import { EmailRepository } from '../database/email.repository.js';
 import { EMAIL_LIST_DB_FIELD_MAPPING } from '../email.constants.js';
-import { EmailRepository } from '../email.repository.js';
 import { ComposeEmailBody } from '../email.schema.js';
 import { ComposeEmailAttachment } from '../email.types.js';
 
@@ -117,6 +117,33 @@ export class EmailWriteService {
         }
     }
 
+    private async resolveStagedAttachments(userId: string, accountId: string, attachmentIds?: string[]): Promise<ComposeEmailAttachment[]> {
+        if (!attachmentIds || attachmentIds.length === 0) {
+            return [];
+        }
+
+        const stagedFiles: ComposeEmailAttachment[] = [];
+        for (const attId of attachmentIds) {
+            const { stagedAttachment, stream } = await this.attachmentsService.getStagedAttachmentWithStream(attId);
+
+            // Verify attachment belongs to user and matches target account
+            // if (stagedAttachment.userId.toString() !== userId.toString() || stagedAttachment.accountId !== accountId) {
+            //     throw new ForbiddenError(`Unauthorized or invalid attachment ${attId}`);
+            // }
+
+            const chunks: Buffer[] = [];
+            for await (const chunk of stream) {
+                chunks.push(Buffer.from(chunk));
+            }
+            stagedFiles.push({
+                filename: stagedAttachment.filename,
+                mimeType: stagedAttachment.mimeType,
+                buffer: Buffer.concat(chunks),
+            });
+        }
+        return stagedFiles;
+    }
+
     private async composeEmailWithAttachments(userId: string, reqBody: ComposeEmailBody): Promise<SuccessAPIResponse> {
         try {
             const { accountId, to, subject, body, attachmentIds } = reqBody;
@@ -128,27 +155,8 @@ export class EmailWriteService {
             if (account.userId !== userId) {
                 throw new ForbiddenError('Unauthorized attempt to compose email from unowned account');
             }
-            const stagedFiles: ComposeEmailAttachment[] = [];
-            if (attachmentIds && attachmentIds.length > 0) {
-                for (const attId of attachmentIds) {
-                    const { stagedAttachment, stream } = await this.attachmentsService.getStagedAttachmentWithStream(attId);
 
-                    // Verify attachment belongs to user and matches target account
-                    // if (stagedAttachment.userId.toString() !== userId.toString() || stagedAttachment.accountId !== accountId) {
-                    //     throw new ForbiddenError(`Unauthorized or invalid attachment ${attId}`);
-                    // }
-
-                    const chunks: Buffer[] = [];
-                    for await (const chunk of stream) {
-                        chunks.push(Buffer.from(chunk));
-                    }
-                    stagedFiles.push({
-                        filename: stagedAttachment.filename,
-                        mimeType: stagedAttachment.mimeType,
-                        buffer: Buffer.concat(chunks),
-                    });
-                }
-            }
+            const stagedFiles = await this.resolveStagedAttachments(userId, accountId, attachmentIds);
 
             const provider = EmailProviderFactory.getProvider(account.provider);
             await provider.sendMail({ accountId, to, subject, body, attachments: stagedFiles });

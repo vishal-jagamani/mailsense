@@ -1,32 +1,26 @@
 import { MONGODB_URI } from '@config';
 import { LOGGER_MODULE } from '@constants';
 import { createLogger } from '@observability';
+import { DatabaseConnectionOptions } from '@types';
 import mongoose from 'mongoose';
 
 const logger = createLogger(LOGGER_MODULE.SERVER);
 
-export interface DatabaseConnectionOptions {
-    readonly maxPoolSize?: number;
-    readonly minPoolSize?: number;
-    readonly serverSelectionTimeoutMS?: number;
-    readonly socketTimeoutMS?: number;
-}
+const DEFAULT_CONNECTION_OPTIONS: mongoose.ConnectOptions = {
+    maxPoolSize: 50,
+    minPoolSize: 10,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+};
 
 export class DatabaseConnectionManager {
     private static isConnected = false;
+    private static areEventsRegistered = false;
 
-    public static async connect(options?: DatabaseConnectionOptions): Promise<void> {
-        if (this.isConnected) {
-            logger.info('Database connection already established');
+    private static registerConnectionEvents(): void {
+        if (this.areEventsRegistered) {
             return;
         }
-
-        const connectionOptions: mongoose.ConnectOptions = {
-            maxPoolSize: options?.maxPoolSize || 50,
-            minPoolSize: options?.minPoolSize || 10,
-            serverSelectionTimeoutMS: options?.serverSelectionTimeoutMS || 5000,
-            socketTimeoutMS: options?.socketTimeoutMS || 45000,
-        };
 
         mongoose.connection.on('connected', () => {
             logger.info('MongoDB connection established successfully');
@@ -40,6 +34,31 @@ export class DatabaseConnectionManager {
             logger.warn('MongoDB disconnected. Reconnecting...');
             this.isConnected = false;
         });
+
+        this.areEventsRegistered = true;
+    }
+
+    private static buildConnectionOptions(options?: DatabaseConnectionOptions): mongoose.ConnectOptions {
+        if (!options) {
+            return { ...DEFAULT_CONNECTION_OPTIONS };
+        }
+
+        return {
+            maxPoolSize: options.maxPoolSize ?? DEFAULT_CONNECTION_OPTIONS.maxPoolSize,
+            minPoolSize: options.minPoolSize ?? DEFAULT_CONNECTION_OPTIONS.minPoolSize,
+            serverSelectionTimeoutMS: options.serverSelectionTimeoutMS ?? DEFAULT_CONNECTION_OPTIONS.serverSelectionTimeoutMS,
+            socketTimeoutMS: options.socketTimeoutMS ?? DEFAULT_CONNECTION_OPTIONS.socketTimeoutMS,
+        };
+    }
+
+    public static async connect(options?: DatabaseConnectionOptions): Promise<void> {
+        if (this.isConnected) {
+            logger.info('Database connection already established');
+            return;
+        }
+
+        const connectionOptions = this.buildConnectionOptions(options);
+        this.registerConnectionEvents();
 
         try {
             await mongoose.connect(MONGODB_URI, connectionOptions);
@@ -68,3 +87,5 @@ export class DatabaseConnectionManager {
         return this.isConnected && mongoose.connection.readyState === 1;
     }
 }
+
+export type { DatabaseConnectionOptions };

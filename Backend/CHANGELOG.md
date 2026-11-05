@@ -25,6 +25,19 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
   - Added domain-specific type definitions in `src/integrations/gmail/gmail.types.ts` (`GmailMessageIdParam`, `GmailAttachmentBufferResult`, `GmailMimeMessageAttachment`) and `src/integrations/outlook/outlook.types.ts` (`OutlookMessageIdParam`, `OutlookDeltaMessagesResponse`, `OutlookMessageAttachmentResponse`, `SplitAttachmentsResponse`, `OutlookAttachmentBufferResult`), preserving domain isolation between provider ecosystems.
   - Added named interfaces in `src/modules/analytics/analytics.types.ts` (`EmailVolumeDataPointBase`, `AccountEmailMetricsBase`), `src/modules/emails/email.types.ts` (`PaginationParams`), and `src/integrations/auth0/auth0.types.ts` (`Auth0UserChangePassword`).
 - **Outlook Mail Client Modularization:** Decomposed `outlook-mail.client.ts` into single-responsibility client classes: `OutlookMailReadClient` (`src/integrations/outlook/clients/outlook-mail-read.client.ts`) and `OutlookMailWriteClient` (`src/integrations/outlook/clients/outlook-mail-write.client.ts`), each strictly within the 300-line limit, with backward-compatible `OutlookClient` static facade in `clients/index.ts`.
+- **Categorized Email Services Decomposition:** Decomposed `EmailReadService` (329 lines) into single-responsibility services under `src/modules/emails/services/`:
+  - `EmailQueryService`: Querying, search, contact suggestions, and filters.
+  - `EmailThreadService`: Thread conversation retrieval and individual message resolution.
+  - `EmailAttachmentService`: Attachment buffers and binary stream downloads.
+  - Updated `EmailService` composite facade delegating cleanly to query, thread, attachment, and write services.
+- **Categorized Database Subdirectories:** Moved Mongoose models, queries, and repositories into dedicated `database/` subdirectories:
+  - `src/modules/emails/database/`: `email.model.ts`, `email.queries.ts`, `email.repository.ts`.
+  - `src/modules/analytics/database/`: `analytics.queries.ts`, `analytics.repository.ts`.
+- **Database & Monitoring Utility Modularization:**
+  - Added `src/core/types/database.types.ts` (`DatabaseConnectionOptions`).
+  - Added `src/core/monitoring/providers/sentry.utils.ts` (`extractUserId`, `extractUserEmail`, `extractUserUsername`, `extractUserIp`, `extractOverrideUserFromData`, `omitUserKeys`).
+  - Added `DefaultMonitoringConfig` in `src/core/types/monitoring.types.ts`.
+  - Added `src/modules/analytics/types/index.ts` consolidating analytics contracts.
 - **Environment Schema Extraction:** Extracted Zod configuration map `envSchemaObject` to `src/core/config/env.schema.ts` to reduce `EnvConfig` constructor length below 50 lines.
 - **Error Types & Decomposition:** Extracted `ParsedErrorDetails` interface in `src/core/types/error.types.ts` and refactored `AxiosApiError` constructor into focused helper functions (`extractAxiosMessage`, `extractAxiosMetadata`, `parseAxiosError`, `resolveErrorDetails`) for cyclomatic complexity compliance.
 - **Analytics Utility Modularization:** Decomposed `analytics.utils.ts` into pure formatting helpers (`analytics-formatters.ts`) and statistical calculation algorithms (`analytics-calculators.ts`) under `src/modules/analytics/utils/` with barrel export `index.ts`.
@@ -32,10 +45,14 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 - **Core Middlewares Relocation:** Relocated cross-cutting middlewares from root `src/middlewares/` to `src/core/middlewares/` (`auth.ts`, `error.handler.ts`, `validator.ts`, `index.ts`), updating `@middlewares` path alias and route imports.
 - **Worker Processor Complexity Reduction:** Refactored `syncAccountProcessor` in `src/workers/processors/sync-account.processor.ts` into focused private helper methods, reducing cyclomatic complexity from 32 to $\le 8$ and nesting depth from 6 to $\le 3$.
+- **Auth & Queue Complexity Reduction:**
+  - Refactored `AuthMiddleware` in `src/core/middlewares/auth.ts` with `extractUserFromRequest` and `getFirstString` helpers.
+  - Refactored `SchedulerService.upsertAccountRepeatableJob` with `isEligibleForSync`, `resolveSyncIntervalMinutes`, and `cleanMismatchedSchedulers`.
+  - Refactored `BaseWorker` in `src/workers/base.worker.ts` with `extractTraceContext` and `runWithTraceContext`.
 - **Error Handler & Monitoring Complexity Reduction:** Refactored `errorHandler` in `src/core/middlewares/error.handler.ts` into `normalizeAppError` and `captureNonOperationalErrors` helpers. Extracted `breadcrumbLevel` method in `SentryMonitoringProvider` (`src/core/monitoring/providers/sentry.provider.ts`) to comply with function size and complexity guardrails.
 - **User Schema Index Deduplication:** Eliminated duplicate index warning on `userId` in `src/modules/user/user.model.ts`.
 - **Jest Path Mapping Alignment:** Updated `jest.config.js` `moduleNameMapper` with `@middlewares`, `@database`, `@security`, and `@queue` aliases to ensure clean test resolution.
-- **ESLint Zero-Error Remediation:** Resolved all 34 ESLint errors across the backend repository to achieve 0 errors, eliminating all inline object types and refactoring functions for complexity and length compliance.
+- **ESLint Zero-Error & Zero-Warning Remediation:** Resolved all ESLint errors and warnings across the backend repository to achieve **0 problems (0 errors, 0 warnings)** with `--max-warnings 0`.
 
 ## [3.5.0] - 2026-10-15
 

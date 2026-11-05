@@ -7,11 +7,11 @@ import {
     OutlookUserProfile,
 } from '@mailsense/types';
 import { AccountRepository } from '../../accounts/account.repository.js';
-import { AnalyticsRepository } from '../analytics.repository.js';
+import { AnalyticsRepository } from '../database/analytics.repository.js';
 import { AnalyticsService } from '../analytics.service.js';
 
 jest.mock('../../accounts/account.repository.js');
-jest.mock('../analytics.repository.js');
+jest.mock('../database/analytics.repository.js');
 
 describe('AnalyticsService — Unit & Scenario Tests', () => {
     let analyticsService: AnalyticsService;

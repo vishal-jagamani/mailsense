@@ -22,6 +22,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Outbound Mail & Draft Processing:** Enhanced draft saving and attachment handling during email composition for faster, more dependable dispatch across connected provider accounts.
 - **Navigation & Settings Stability:** Improved page transitions, account setting updates, and profile configuration flows for a smoother and more responsive settings experience.
 - **Client Error Recovery & Session Resilience:** Streamlined application monitoring and error handling across background network requests to prevent UI interruption and ensure prompt recovery during transient network drops.
+- **Mailbox Analytics & Dashboard Performance:** Optimized data aggregation pipelines and background query caching, resulting in faster dashboard loading and instant metric turnaround across connected accounts.
+- **Background Synchronization Reliability:** Hardened job scheduling and background sync execution for automated mailbox updates, ensuring uninterrupted message ingestion and accurate unread counts.
 
 ## [3.5.0] - 2026-10-15
 

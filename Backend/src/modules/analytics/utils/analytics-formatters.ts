@@ -10,14 +10,22 @@ import {
 import { createLogger } from '@observability';
 import {
     AccountEmailMetricsBase,
+    Count,
     EmailVolumeDataPointBase,
     RawAccountBreakdownResult,
     RawOverviewAggregateResult,
     RawTopSendersResult,
     RawVolumeDataPoint,
-} from '../analytics.types.js';
+} from '../types/index.js';
 
 const logger = createLogger(LOGGER_MODULE.ANALYTICS_UTILS);
+
+function extractFacetCount(buckets?: Count[]): number {
+    if (!buckets || buckets.length === 0) {
+        return 0;
+    }
+    return buckets[0].count;
+}
 
 export const buildNoAccountsAnalyticsDashboardData = (timeframe?: ANALYTICS_TIMEFRAME): DashboardAnalyticsResponse => {
     try {
@@ -62,12 +70,12 @@ export const buildNoAccountsAnalyticsDashboardData = (timeframe?: ANALYTICS_TIME
 
 export const formatOverviewMetrics = (raw: RawOverviewAggregateResult, activeAccountsCount: number): OverviewMetricsAttributes => {
     try {
-        const facet = raw.facetResult || {};
-        const totalEmails = raw.allTimeTotalEmails ?? facet.totalEmails?.[0]?.count ?? 0;
-        const unreadEmails = facet.unreadEmails?.[0]?.count ?? 0;
-        const sentEmails = facet.sentEmails?.[0]?.count ?? 0;
-        const starredEmails = facet.starredEmails?.[0]?.count ?? 0;
-        const totalThreadsCount = facet.threads?.[0]?.count ?? 0;
+        const facet = raw.facetResult;
+        const totalEmails = raw.allTimeTotalEmails ?? extractFacetCount(facet?.totalEmails);
+        const unreadEmails = extractFacetCount(facet?.unreadEmails);
+        const sentEmails = extractFacetCount(facet?.sentEmails);
+        const starredEmails = extractFacetCount(facet?.starredEmails);
+        const totalThreadsCount = extractFacetCount(facet?.threads);
 
         return {
             totalEmails,

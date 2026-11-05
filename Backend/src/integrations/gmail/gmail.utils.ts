@@ -12,7 +12,7 @@ import {
     GmailMessageObjectFull,
     GmailMessagePartsFull,
 } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/email.model.js';
+import { EmailInput } from '@modules/emails/database/email.model.js';
 import { FolderDocument } from '@modules/folders/folder.model.js';
 import { compressString } from '@utils';
 import { htmlToText } from 'html-to-text';
@@ -31,6 +31,21 @@ export const buildGmailOAuthConsentURL = async () => {
     return `${OAUTH_ACCESS_REDIRECT_URI?.GMAIL}?${params?.toString()}`;
 };
 
+const mapHeadersToLowerCase = (headers?: GmailMessageHeaderFull[]): Record<string, string> => {
+    if (!headers) return {};
+    const map: Record<string, string> = {};
+    for (const h of headers) {
+        map[h.name.toLowerCase()] = h.value;
+    }
+    return map;
+};
+
+const isBodyPartAttachment = (part: GmailMessagePartsFull, contentDisposition: string): boolean => {
+    if (contentDisposition.includes('attachment')) return true;
+    const hasFilename = Boolean(part.filename && part.filename.length > 0);
+    return Boolean(hasFilename && part.body?.attachmentId);
+};
+
 export const parseEmailBody = (data: GmailMessageObjectFull) => {
     let plain = '';
     let html = '';
@@ -38,23 +53,19 @@ export const parseEmailBody = (data: GmailMessageObjectFull) => {
     const traverse = (part?: GmailMessagePartsFull) => {
         if (!part) return;
 
-        const headers = (part.headers || []).reduce((acc: Record<string, string>, h: GmailMessageHeaderFull) => {
-            acc[h.name.toLowerCase()] = h.value;
-            return acc;
-        }, {});
+        const headers = mapHeadersToLowerCase(part.headers);
         const contentDisposition = (headers['content-disposition'] || '').toLowerCase();
-        const isAttachment =
-            contentDisposition.includes('attachment') || Boolean(part.filename && part.filename.length > 0 && part.body?.attachmentId);
+        const isAttachment = isBodyPartAttachment(part, contentDisposition);
 
-        if (!isAttachment) {
-            if (part.mimeType === 'text/plain' && part.body?.data) {
+        if (!isAttachment && part.body?.data) {
+            if (part.mimeType === 'text/plain') {
                 plain += decodeBase64Url(part.body.data);
-            } else if (part.mimeType === 'text/html' && part.body?.data) {
+            } else if (part.mimeType === 'text/html') {
                 html += decodeBase64Url(part.body.data);
             }
         }
 
-        if (part.parts && Array.isArray(part.parts)) {
+        if (Array.isArray(part.parts)) {
             for (const subPart of part.parts) {
                 traverse(subPart);
             }
@@ -102,47 +113,68 @@ const getPartFilename = (part: GmailMessagePartsFull, headers: Record<string, st
     return '';
 };
 
+const isAttachmentPart = (
+    part: GmailMessagePartsFull,
+    filename: string,
+    contentDisposition: string,
+    contentId: string,
+    hasAttachmentId: boolean,
+): boolean => {
+    if (part.mimeType?.startsWith('multipart/')) {
+        return false;
+    }
+    if (hasAttachmentId || contentDisposition.includes('attachment')) {
+        return true;
+    }
+    if (contentDisposition.includes('inline') && (contentId.length > 0 || filename.length > 0)) {
+        return true;
+    }
+    const isText = part.mimeType === 'text/plain' || part.mimeType === 'text/html';
+    return filename.length > 0 && !isText;
+};
+
+const extractHeaderValue = (headers: Record<string, string>, name: string): string => headers[name] ?? '';
+
+const resolveAttachmentId = (part: GmailMessagePartsFull): string => {
+    return part.body?.attachmentId ?? part.partId ?? '';
+};
+
+const partHasData = (part: GmailMessagePartsFull, hasAttachmentId: boolean): boolean => {
+    return hasAttachmentId || Boolean(part.body?.data);
+};
+
+const buildEmailAttachment = (part: GmailMessagePartsFull, filename: string, contentDisposition: string, contentId: string): EmailAttachment => {
+    const isInline = contentDisposition.includes('inline') || contentId.length > 0;
+    const attachmentId = resolveAttachmentId(part);
+    const fallbackName = isInline ? 'inline_image' : 'attachment';
+
+    return {
+        attachmentId,
+        filename: filename || fallbackName,
+        mimeType: part.mimeType || 'application/octet-stream',
+        size: part.body?.size || 0,
+        contentId: contentId || undefined,
+        isInline,
+    };
+};
+
 export const extractGmailAttachments = (payload?: GmailMessagePartsFull): EmailAttachment[] => {
     const attachments: EmailAttachment[] = [];
 
-    const processPart = (part?: GmailMessagePartsFull) => {
+    const processPart = (part?: GmailMessagePartsFull): void => {
         if (!part) return;
 
-        const headers = (part.headers || []).reduce((acc: Record<string, string>, h: GmailMessageHeaderFull) => {
-            acc[h.name.toLowerCase()] = h.value;
-            return acc;
-        }, {});
-
-        const contentDisposition = (headers['content-disposition'] || '').toLowerCase();
-        const contentIdHeader = headers['content-id'] || '';
-        const contentId = contentIdHeader.replace(/^<|>$/g, '');
+        const headers = mapHeadersToLowerCase(part.headers);
+        const contentDisposition = extractHeaderValue(headers, 'content-disposition').toLowerCase();
+        const contentId = extractHeaderValue(headers, 'content-id').replace(/^<|>$/g, '');
         const filename = getPartFilename(part, headers);
         const hasAttachmentId = Boolean(part.body?.attachmentId);
-        const isMultipart = part.mimeType?.startsWith('multipart/');
 
-        const isAttachment =
-            !isMultipart &&
-            (hasAttachmentId ||
-                (filename.length > 0 && part.mimeType !== 'text/plain' && part.mimeType !== 'text/html') ||
-                contentDisposition.includes('attachment') ||
-                (contentDisposition.includes('inline') && Boolean(contentId || filename)));
-
-        if (isAttachment && (hasAttachmentId || part.body?.data)) {
-            const isInline = contentDisposition.includes('inline') || Boolean(contentId);
-            const attachmentId = part.body?.attachmentId || part.partId || '';
-            const finalFilename = filename || (isInline ? 'inline_image' : 'attachment');
-
-            attachments.push({
-                attachmentId,
-                filename: finalFilename,
-                mimeType: part.mimeType || 'application/octet-stream',
-                size: part.body?.size || 0,
-                contentId: contentId || undefined,
-                isInline,
-            });
+        if (isAttachmentPart(part, filename, contentDisposition, contentId, hasAttachmentId) && partHasData(part, hasAttachmentId)) {
+            attachments.push(buildEmailAttachment(part, filename, contentDisposition, contentId));
         }
 
-        if (part.parts && Array.isArray(part.parts)) {
+        if (Array.isArray(part.parts)) {
             for (const subPart of part.parts) {
                 processPart(subPart);
             }
@@ -205,14 +237,16 @@ export const parseGmailLabelObject = (accountId: string, userId: string, gmailLa
     };
 };
 
+const parseRecipientList = (headerValue?: string): string[] => {
+    if (!headerValue) return [];
+    return headerValue
+        .split(',')
+        .map((e) => e.trim())
+        .filter(Boolean);
+};
+
 export const transformGmailMessageToEmailInput = (emailDetails: GmailMessageObjectFull, accountId: string): EmailInput => {
-    const headers = (emailDetails.payload?.headers || []).reduce(
-        (acc, header) => {
-            acc[header.name.toLowerCase()] = header.value;
-            return acc;
-        },
-        {} as Record<string, string>,
-    );
+    const headers = mapHeadersToLowerCase(emailDetails.payload?.headers);
     const { plainTextBody, htmlBody } = parseEmailBody(emailDetails);
     const receivedAt = new Date(headers.date || '');
     return {
@@ -220,24 +254,9 @@ export const transformGmailMessageToEmailInput = (emailDetails: GmailMessageObje
         providerMessageId: emailDetails.id,
         threadId: emailDetails.threadId,
         from: headers.from || '',
-        to: headers.to
-            ? headers.to
-                  .split(',')
-                  .map((e) => e.trim())
-                  .filter(Boolean)
-            : [],
-        cc: headers.cc
-            ? headers.cc
-                  .split(',')
-                  .map((e) => e.trim())
-                  .filter(Boolean)
-            : [],
-        bcc: headers.bcc
-            ? headers.bcc
-                  .split(',')
-                  .map((e) => e.trim())
-                  .filter(Boolean)
-            : [],
+        to: parseRecipientList(headers.to),
+        cc: parseRecipientList(headers.cc),
+        bcc: parseRecipientList(headers.bcc),
         subject: headers.subject || '',
         body: emailDetails.payload?.body?.data || '',
         bodyHtml: compressString(htmlBody || ''),

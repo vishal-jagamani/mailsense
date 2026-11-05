@@ -1,7 +1,7 @@
 import { LOGGER_MODULE } from '@constants';
 import { EmailAttachment, OutlookMessageObjectFull, UpdateAPIResponse } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/email.model.js';
-import { EmailRepository } from '@modules/emails/email.repository.js';
+import { EmailInput } from '@modules/emails/database/email.model.js';
+import { EmailRepository } from '@modules/emails/database/email.repository.js';
 import { ComposeEmailBody } from '@modules/emails/email.schema.js';
 import { createLogger } from '@observability';
 import { OutlookClient } from '../clients/index.js';
@@ -141,7 +141,7 @@ export class OutlookMailWriteService {
                 if (movedMessage?.id && movedMessage.id !== emailId) {
                     updateData.providerMessageId = movedMessage.id;
                 }
-                
+
                 await EmailRepository.updateEmailByProviderMessageId(emailId, updateData);
             }
         } catch (err) {
