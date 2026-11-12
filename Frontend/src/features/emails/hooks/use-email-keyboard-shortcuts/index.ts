@@ -1,4 +1,4 @@
-import { UseEmailKeyboardShortcutsParams } from '@entities/email';
+import { UseEmailKeyboardShortcutsParams } from '@features/emails/types';
 import { useEffect } from 'react';
 import { isInputElement } from '../../utils';
 import { evaluateKeyPress } from './useEvaluateKeyPress';

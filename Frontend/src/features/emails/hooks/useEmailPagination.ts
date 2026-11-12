@@ -5,7 +5,7 @@ import { EMAILS_PAGE_SIZE } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
-import { UseEmailPaginationOptions, UseEmailPaginationReturn } from '../types/email-ui.types';
+import { UseEmailPaginationOptions, UseEmailPaginationReturn } from '../types';
 
 export function useEmailPagination(options?: UseEmailPaginationOptions): UseEmailPaginationReturn {
     const searchParams = useSearchParams();

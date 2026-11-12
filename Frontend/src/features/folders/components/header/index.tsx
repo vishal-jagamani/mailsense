@@ -3,19 +3,13 @@
 import React from 'react';
 
 import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
-import { Filter, FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
+import { FolderHeaderProps } from '@features/folders/types/folders-components.types';
+import { FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { DATE_RANGE_DROPDOWN_OPTIONS, UI_CONSTANTS } from '@shared/constants';
 import { useAuthStore } from '@shared/store';
 import CreateFolderModal from './CreateFolderModal';
-
-interface FolderHeaderProps {
-    filter: Filter | null;
-    onFilterChange: (filter: Filter) => void;
-    searchText: string;
-    setSearchText: (searchText: string) => void;
-}
 
 const FolderHeader: React.FC<FolderHeaderProps> = ({ filter, onFilterChange, searchText, setSearchText }) => {
     const { user } = useAuthStore();

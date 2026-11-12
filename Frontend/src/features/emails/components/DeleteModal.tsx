@@ -13,14 +13,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@shared/ui/alert-dialog';
-
-interface DeleteModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onDelete: () => void;
-    title?: string;
-    description?: string;
-}
+import { DeleteModalProps } from '../types';
 
 const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange, onDelete, title, description }) => {
     useEffect(() => {

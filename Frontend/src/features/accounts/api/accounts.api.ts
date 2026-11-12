@@ -1,6 +1,6 @@
-import { AccountProviders } from '@entities/account';
 import { AccountAttributes } from '@mailsense/types';
 import { ACCOUNTS_API_ENDPOINTS, axiosClient } from '@shared/api';
+import { AccountProviders } from '@shared/types';
 import { UpdateAccountSettingsPayload } from '../types';
 
 export async function getAccountProvider(): Promise<AccountProviders[]> {

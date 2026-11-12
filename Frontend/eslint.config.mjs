@@ -133,7 +133,7 @@ const eslintConfig = [
         },
     },
 
-    // 7. Non-types source files: Strictly prohibit inline object types
+    // 7. Non-types source files: Strictly prohibit type declarations and inline object types
     {
         files: ['src/**/*.{ts,tsx}'],
         ignores: [
@@ -162,6 +162,21 @@ const eslintConfig = [
                 {
                     selector: 'CatchClause[body.body.length=0]',
                     message: 'Empty catch blocks are strictly forbidden. Log or rethrow errors.',
+                },
+                {
+                    selector: 'TSInterfaceDeclaration',
+                    message:
+                        'Interface declarations are forbidden in source files. Declare named interfaces exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
+                },
+                {
+                    selector: 'TSTypeAliasDeclaration',
+                    message:
+                        'Type alias declarations are forbidden in source files. Declare named types exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
+                },
+                {
+                    selector: 'TSEnumDeclaration',
+                    message:
+                        'Enum declarations are forbidden in source files. Declare enums exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
                 },
                 {
                     selector: 'TSTypeLiteral',

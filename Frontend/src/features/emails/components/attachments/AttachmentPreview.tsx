@@ -4,10 +4,7 @@ import { X } from 'lucide-react';
 import Image from 'next/image';
 import React from 'react';
 
-interface AttachmentPreviewProps {
-    previewUrl: string | null;
-    closePreview: () => void;
-}
+import { AttachmentPreviewProps } from '@features/emails/types';
 
 const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ previewUrl, closePreview }) => {
     if (!previewUrl) return null;

@@ -3,28 +3,14 @@
 import { Keyboard } from 'lucide-react';
 import React from 'react';
 
-import { EmailAttributes, Filter, FilterOption } from '@mailsense/types';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { UI_CONSTANTS } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
 import { Button } from '@shared/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
+import { EmailListHeaderProps } from '../types/inbox-components.types';
 import EmailMenuBarOptions from './EmailMenuBarOptions';
-
-interface EmailListHeaderProps {
-    searchValue: string;
-    setSearchValue: (value: string) => void;
-    filter: Filter | null;
-    setFilter: (value: Filter) => void;
-    selectedEmails: string[];
-    allEmails?: EmailAttributes[];
-    handleResetSelection: () => void;
-    handleResetPage: () => void;
-    emailFilterOptions: FilterOption[];
-    fetchEmailsData: () => void;
-    onOpenShortcutsModal?: () => void;
-}
 
 const EmailListHeader: React.FC<EmailListHeaderProps> = (props) => {
     const {

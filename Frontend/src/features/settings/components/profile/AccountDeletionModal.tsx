@@ -1,18 +1,15 @@
 'use client';
 
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import React from 'react';
 
-interface AccountDeletionModalProps {
-    show: boolean;
-    setShow: (show: boolean) => void;
-}
+import { AccountDeletionModalProps } from '@features/settings/types/settings-component.types';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 
 const AccountDeletionModal: React.FC<AccountDeletionModalProps> = ({ show, setShow }) => {
     return (
         <>
             <Dialog open={show} onOpenChange={setShow}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-106.25">
                     <DialogHeader>
                         <DialogTitle>Deletion of Account</DialogTitle>
                         <DialogDescription>Are you sure you want to delete your account?</DialogDescription>

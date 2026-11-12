@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 
 import { EMAILS_PAGE_SIZE } from '@shared/constants';
 import { useIsMobile } from '@shared/hooks';
+import { PaginationProps } from '@shared/types';
 import { Field, FieldLabel } from '@shared/ui/field';
 import {
     Pagination,
@@ -15,14 +16,6 @@ import {
     PaginationPrevious,
 } from '@shared/ui/pagination';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
-
-interface PaginationProps {
-    total: number;
-    currentPage: number;
-    onPageChange: (page: number) => void;
-    onPageSizeChange?: (size: number) => void;
-    pageSize?: number;
-}
 
 const PaginationComponent: React.FC<PaginationProps> = ({ total, currentPage, onPageChange, onPageSizeChange, pageSize = EMAILS_PAGE_SIZE }) => {
     const isMobile = useIsMobile();

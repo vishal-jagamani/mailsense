@@ -1,10 +1,8 @@
 import { EmailAttributes, GetThreadResponse } from '@mailsense/types';
 import { EMAIL_QUERY_KEYS, extractApiError } from '@shared/api';
-import { useQuery, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { UseGetEmailDetailsQueryOptions, UseGetThreadQueryOptions } from '../types/email-api.types';
 import { getEmailDetails, getThread } from './email.api';
-
-type UseGetEmailDetailsQueryOptions = Omit<UseQueryOptions<EmailAttributes, Error>, 'queryKey' | 'queryFn'>;
-type UseGetThreadQueryOptions = Omit<UseQueryOptions<GetThreadResponse, Error>, 'queryKey' | 'queryFn'>;
 
 export const useGetEmailDetailsQuery = (emailId: string, options?: UseGetEmailDetailsQueryOptions): UseQueryResult<EmailAttributes> => {
     return useQuery<EmailAttributes, Error>({

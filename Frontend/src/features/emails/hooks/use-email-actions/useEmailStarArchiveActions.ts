@@ -1,5 +1,5 @@
 import { useArchiveEmailMutation, useStarEmailMutation } from '@features/emails/api/email.mutations';
-import { UseEmailActionsOptions } from '@features/emails/types/email-ui.types';
+import { UseEmailActionsOptions } from '@features/emails/types';
 import { EmailAttributes } from '@mailsense/types';
 import { toast } from 'sonner';
 

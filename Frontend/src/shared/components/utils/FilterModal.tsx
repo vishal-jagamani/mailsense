@@ -2,19 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 
-import { AccountProviderIcon } from '@entities/account';
-import { Filter, FilterOption } from '@mailsense/types';
+import AccountProviderIcon from '@features/accounts/components/AccountProviderIcon';
+import { Filter } from '@mailsense/types';
+import { FilterModalProps } from '@shared/types';
 import { Button } from '@shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { Switch } from '@shared/ui/switch';
 import { ListFilter } from 'lucide-react';
-
-interface FilterModalProps {
-    filter: Filter | null;
-    onFilterChange: (filter: Filter) => void;
-    filterOptions: FilterOption[];
-}
 
 const FilterModal: React.FC<FilterModalProps> = ({ filter, onFilterChange, filterOptions }) => {
     const [localFilterObject, setLocalFilterObject] = useState<Filter | null>(filter || null);

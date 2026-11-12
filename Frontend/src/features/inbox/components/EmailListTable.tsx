@@ -5,23 +5,14 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 
+import AttachmentBadge from '@features/emails/components/AttachmentBadge';
 import { EmailAttributes } from '@mailsense/types';
 import { useIsMobile } from '@shared/hooks';
 import { Checkbox } from '@shared/ui/checkbox';
 import { Table, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table';
-import { formatDateToMonthDateString } from '@shared/utils/formatter';
-import AttachmentBadge from '@features/emails/components/AttachmentBadge';
+import { formatDateToMonthDateString } from '@shared/utils';
 import { useDeleteEmail } from '../api/inbox.queries';
-
-interface EmailListTableProps {
-    data: EmailAttributes[];
-    page: number;
-    selectedEmails?: string[];
-    focusedIndex?: number;
-    onEmailSelect?: (emailIds: string[]) => void;
-    onDeleteSuccess?: () => void;
-    onDeleteRequest?: (email: EmailAttributes) => void;
-}
+import { EmailListTableProps } from '../types/inbox-components.types';
 
 const EmailListTable: React.FC<EmailListTableProps> = ({
     data,

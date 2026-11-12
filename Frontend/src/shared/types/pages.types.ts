@@ -38,3 +38,7 @@ export interface FoldersPageParam {
 export interface SettingsPageProps {
     setting: string;
 }
+
+export interface FolderEmailListProps {
+    folderId: string;
+}

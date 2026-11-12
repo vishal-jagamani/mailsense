@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 
 import { useEmailActions } from '@features/emails/hooks/use-email-actions';
 import { useEmailKeyboardShortcuts } from '@features/emails/hooks/use-email-keyboard-shortcuts';
-import { UseInboxPageReturnParams } from '@features/emails/types/email-ui.types';
+import { UseInboxPageReturnParams } from '@features/emails/types';
 import { EmailAttributes } from '@mailsense/types';
 import { useComposeEmailPopupStore } from '@shared/store';
 import { useInboxPageData } from './useInboxPageData';

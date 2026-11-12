@@ -2,12 +2,9 @@
 
 import React from 'react';
 
-interface APILoaderProps {
-    show: boolean;
-    size?: 'xs' | 'small' | 'medium' | 'large';
-}
+import { APILoaderProps } from '@shared/types';
 
-const APILoader = ({ show, size = 'small' }: APILoaderProps) => {
+const APILoader: React.FC<APILoaderProps> = ({ show, size = 'small' }) => {
     if (!show) {
         return null;
     }

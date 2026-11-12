@@ -2,9 +2,7 @@
 
 import React from 'react';
 
-interface LoaderProps {
-    type?: 'api' | 'page';
-}
+import { LoaderProps } from '@shared/types';
 
 const Loader: React.FC<LoaderProps> = ({ type = 'page' }) => {
     return (

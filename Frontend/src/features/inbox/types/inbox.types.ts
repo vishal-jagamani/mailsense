@@ -79,7 +79,7 @@ export interface InboxEmailMenuBarOptionsReturn {
     };
 }
 
-export interface EmailMenuBarOptionsProps {
+export interface InboxEmailMenuBarOptionsProps {
     readonly emailIds: string[];
     readonly allEmails?: EmailAttributes[];
     readonly onRefetchEmails: () => void;

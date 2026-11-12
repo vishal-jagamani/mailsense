@@ -30,6 +30,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Composer & Attachment Workflow:** Streamlined email composer state management and attachment uploads for smoother, more responsive drafting and dispatch.
 - **Folder Organization & Dropdown Actions:** Improved destination folder searching and selection responsiveness when moving emails between folders and labels.
 - **Mailbox Interaction & Shortcut Responsiveness:** Refined keyboard shortcut handling and bulk email actions across mailbox views for smooth, lag-free navigation and message triaging.
+- **Account & Mailbox Visual Consistency:** Refined account provider badge display and sender identity formatting across connected accounts for clearer, more consistent mailbox navigation.
+- **Interface & Component Responsiveness:** Polished design system utility styling and element rendering across UI dialogs, dropdowns, and buttons for smoother interactions and consistent visual layouts.
 
 ## [3.5.0] - 2026-10-15
 

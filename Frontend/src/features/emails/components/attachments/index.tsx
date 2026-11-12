@@ -2,15 +2,10 @@
 
 import React, { useState } from 'react';
 
+import { AttachmentListProps } from '@features/emails/types';
 import { handleDownload, handlePreview } from '@features/emails/utils/attachments';
-import { EmailAttachment } from '@mailsense/types';
 import { Download, Eye, Loader2 } from 'lucide-react';
 import AttachmentPreview from './AttachmentPreview';
-
-interface AttachmentListProps {
-    emailId: string;
-    attachments: EmailAttachment[];
-}
 
 const AttachmentList: React.FC<AttachmentListProps> = ({ emailId, attachments }) => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);

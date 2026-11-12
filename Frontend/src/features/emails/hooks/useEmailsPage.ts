@@ -6,7 +6,7 @@ import { HOME_ROUTES } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
 import { useUnreadEmailMutation } from '../api/email.mutations';
 import { useGetEmailDetailsQuery, useGetThreadQuery } from '../api/email.queries';
-import { UseEmailsPageReturnParams } from '../types/email-ui.types';
+import { UseEmailsPageReturnParams } from '../types';
 
 export const useEmailsPage = (accountId: string, emailId: string): UseEmailsPageReturnParams => {
     const router = useRouter();

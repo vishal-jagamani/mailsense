@@ -596,6 +596,9 @@ Both Backend and Frontend have strict ESLint flat configurations (`eslint.config
 | `@typescript-eslint/no-explicit-any` | `error` | Rule 2.1 | Prohibits `any` under all circumstances. |
 | `no-restricted-syntax (unknown)` | `error` | Rule 2.1 | Prohibits `unknown` in place of explicit interfaces or generics. |
 | `no-restricted-syntax (never)` | `error` | Rule 2.1 | Prohibits `never` outside exhaustive switch checks. |
+| `no-restricted-syntax (TSInterfaceDeclaration)` | `error` | Rule 2.2 | Prohibits `interface` declarations in source files. Dedicated types files only. |
+| `no-restricted-syntax (TSTypeAliasDeclaration)` | `error` | Rule 2.2 | Prohibits `type` alias declarations in source files. Dedicated types files only. |
+| `no-restricted-syntax (TSEnumDeclaration)` | `error` | Rule 2.2 | Prohibits `enum` declarations in source files. Dedicated types files only. |
 | `no-restricted-syntax (TSTypeLiteral)` | `error` | Rule 2.3 | **Strictly zero inline object types.** All types must be named interfaces in dedicated types files. |
 | `no-restricted-syntax (CatchClause)` | `error` | Rule 6.3 | Prohibits empty catch blocks (`catch (e) {}`). All errors must be logged or rethrown. |
 | `no-console` | `error` | Rule 6.4 | Forbids raw `console.log` and `console.error`. |
@@ -1945,6 +1948,18 @@ const eslintConfig = [
                 {
                     selector: 'CatchClause[body.body.length=0]',
                     message: 'Empty catch blocks are strictly forbidden. Log or rethrow errors.',
+                },
+                {
+                    selector: 'TSInterfaceDeclaration',
+                    message: 'Interface declarations are forbidden in source files. Declare named interfaces exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
+                },
+                {
+                    selector: 'TSTypeAliasDeclaration',
+                    message: 'Type alias declarations are forbidden in source files. Declare named types exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
+                },
+                {
+                    selector: 'TSEnumDeclaration',
+                    message: 'Enum declarations are forbidden in source files. Declare enums exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
                 },
                 {
                     selector: 'TSTypeLiteral',

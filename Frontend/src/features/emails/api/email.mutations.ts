@@ -1,11 +1,4 @@
 import {
-    ArchiveEmailMutationContext,
-    ArchiveEmailMutationParams,
-    MoveEmailsMutationContext,
-    StarEmailMutationContext,
-    UnreadEmailMutationContext,
-} from '@entities/email';
-import {
     APIResponse,
     ComposeEmailRequestBody,
     EmailAttributes,
@@ -20,6 +13,13 @@ import {
 import { EMAIL_QUERY_KEYS, FOLDER_KEYS } from '@shared/api';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import {
+    ArchiveEmailMutationContext,
+    ArchiveEmailMutationParams,
+    MoveEmailsMutationContext,
+    StarEmailMutationContext,
+    UnreadEmailMutationContext,
+} from '../types';
 import { archiveEmail, composeEmail, moveEmails, searchOtherContacts, starEmail, unreadEmail } from './email.api';
 
 export function useStarEmailMutation() {

@@ -1,16 +1,13 @@
-import { AccountProviders } from '@entities/account';
 import { AccountAttributes, UpdateAPIResponse } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
 import { trackUserAction } from '@shared/monitoring';
-import { useQuery, useQueryClient, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
+import { AccountProviders } from '@shared/types';
+import { useQuery, useQueryClient, UseQueryResult } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { UseGetAccountDetailsQueryOptions } from '../types/accounts-api.types';
 import { connectAccount, getAccountDetails, getAccountProvider, getAccounts, syncAllAccounts } from './accounts.api';
 
-type ConnectAccountResult = Awaited<ReturnType<typeof connectAccount>>;
-
-type Options = Omit<UseQueryOptions<ConnectAccountResult, Error, ConnectAccountResult, [string, string]>, 'queryKey' | 'queryFn'>;
-
-export const useGetAccountsQuery = (userId: string, options?: Options): UseQueryResult<AccountAttributes[]> => {
+export const useGetAccountsQuery = (userId: string, options?: UseGetAccountDetailsQueryOptions): UseQueryResult<AccountAttributes[]> => {
     return useQuery({
         queryKey: [QUERY_KEYS.ACCOUNTS, userId],
         queryFn: () => getAccounts(),
@@ -25,7 +22,7 @@ export const useGetAccountsQuery = (userId: string, options?: Options): UseQuery
     });
 };
 
-export const useGetAccountDetailsQuery = (accountId: string, options?: Options): UseQueryResult<AccountAttributes> => {
+export const useGetAccountDetailsQuery = (accountId: string, options?: UseGetAccountDetailsQueryOptions): UseQueryResult<AccountAttributes> => {
     return useQuery({
         queryKey: [QUERY_KEYS.ACCOUNTS, accountId],
         queryFn: () => getAccountDetails(accountId),
@@ -40,7 +37,7 @@ export const useGetAccountDetailsQuery = (accountId: string, options?: Options):
     });
 };
 
-export const useAccountQuery = (provider: string, options?: Options) => {
+export const useAccountQuery = (provider: string, options?: UseGetAccountDetailsQueryOptions) => {
     return useQuery({
         queryKey: [QUERY_KEYS.ACCOUNTS, provider],
         queryFn: () => connectAccount(provider),

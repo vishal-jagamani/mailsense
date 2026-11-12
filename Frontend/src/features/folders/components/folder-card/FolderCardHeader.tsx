@@ -3,14 +3,8 @@
 import { Check, Dot, X } from 'lucide-react';
 import React from 'react';
 
-import { RenameFolderState } from '@entities/folder';
-import { FolderAttributes } from '@mailsense/types';
+import { FolderCardHeaderProps } from '@features/folders/types/folders-components.types';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
-
-interface FolderCardHeaderProps {
-    data: FolderAttributes;
-    renameState: RenameFolderState;
-}
 
 const FolderCardHeader: React.FC<FolderCardHeaderProps> = ({ data, renameState }) => {
     const { renameFolderFlag, renameFolderId, renameFolderValue, setRenameFolderFlag, setRenameFolderId, setRenameFolderValue, handleUpdateFolder } =

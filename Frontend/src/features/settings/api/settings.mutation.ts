@@ -1,6 +1,6 @@
 import { APIResponse, ProfileSettingsDataObject, UpdateAPIResponse, UpdateUserProfileSettingsResponse, UserSettings } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
-import { } from '@shared/types';
+import {} from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ChangePasswordPayload } from '../types';

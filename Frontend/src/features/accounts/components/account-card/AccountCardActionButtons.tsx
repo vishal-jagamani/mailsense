@@ -4,7 +4,8 @@ import { AlertTriangle, CircleMinus, RefreshCw, Settings } from 'lucide-react';
 import React from 'react';
 
 import { useAccountCardActions } from '@features/accounts/hooks/useAccountCardActions';
-import { ACCOUNT_LAST_SYNC_STATUS, AccountAttributes } from '@mailsense/types';
+import { AccountCardActionButtonsProps } from '@features/accounts/types/accounts-components.types';
+import { ACCOUNT_LAST_SYNC_STATUS } from '@mailsense/types';
 import APILoader from '@shared/components/apiLoader';
 import {
     AlertDialog,
@@ -19,12 +20,8 @@ import {
 } from '@shared/ui/alert-dialog';
 import { Switch } from '@shared/ui/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
-import { formatEpochTimeToString } from '@shared/utils/formatter';
+import { formatEpochTimeToString } from '@shared/utils';
 import AccountSettingsModal from './AccountSettingsModal';
-
-interface AccountCardActionButtonsProps {
-    account: AccountAttributes;
-}
 
 const AccountCardActionButtons: React.FC<AccountCardActionButtonsProps> = ({ account }) => {
     const {

@@ -1,9 +1,8 @@
 import { APIResponse, ProfileSettingsDataObject, UserSettings } from '@mailsense/types';
 import { QUERY_KEYS } from '@shared/api';
-import { useQuery, UseQueryOptions, UseQueryResult } from '@tanstack/react-query';
+import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { UseGetUseSettingsQueryOptions } from '../types/settings-api.types';
 import { getUserProfileSettings, getUserSettings } from './settings.api';
-
-type Options = Omit<UseQueryOptions<UserSettings, Error, UserSettings, [string]>, 'queryKey' | 'queryFn'>;
 
 export const useGetProfileQuery = (enabled: boolean) => {
     return useQuery<APIResponse<ProfileSettingsDataObject>>({
@@ -13,7 +12,7 @@ export const useGetProfileQuery = (enabled: boolean) => {
     });
 };
 
-export const useGetUserSettingsQuery = (userId?: string, options?: Options): UseQueryResult<UserSettings> => {
+export const useGetUserSettingsQuery = (userId?: string, options?: UseGetUseSettingsQueryOptions): UseQueryResult<UserSettings> => {
     return useQuery({
         queryKey: [QUERY_KEYS.USER_SYNC_SETTINGS],
         queryFn: () => getUserSettings(),

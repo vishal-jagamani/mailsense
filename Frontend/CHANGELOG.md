@@ -32,8 +32,24 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
     - Created `Frontend/src/features/emails/types/email-component.types.ts` (`MoveToFolderDropdownProps`).
     - Created `Frontend/src/features/emails/types/email-hooks.types.ts` (`UseComposeEmailDraftActions`, `UseComposeEmailActionsParams`, `UseComposeEmailAttachmentsParams`, `UseEvaluateKeyPressParams`, `EvaluateKeyPressParams`).
     - Created centralized barrel export in `Frontend/src/features/emails/types/index.ts` re-exporting component, hook, and UI contracts.
+- **Entities Directory Consolidation & Modularization:**
+    - Consolidated redundant `Frontend/src/entities/` directory directly into domain feature modules.
+    - Relocated `AccountProviderIcon.tsx` to `Frontend/src/features/accounts/components/AccountProviderIcon.tsx`.
+    - Relocated `FormatEmailFromString.tsx` to `Frontend/src/features/emails/components/FormatEmailFromString.tsx`.
+    - Relocated provider icon mappings to centralized `Frontend/src/shared/constants/accounts.ts`.
+- **Comprehensive Dedicated Feature Types:**
+    - Added `accounts-api.types.ts`, `accounts-components.types.ts`, and `accounts-hooks.types.ts` in `Frontend/src/features/accounts/types/`.
+    - Added `email-api.types.ts` in `Frontend/src/features/emails/types/`.
+    - Added `folders-components.types.ts` in `Frontend/src/features/folders/types/`.
+    - Added `inbox-components.types.ts` in `Frontend/src/features/inbox/types/`.
+    - Added `settings-api.types.ts` and `settings-component.types.ts` in `Frontend/src/features/settings/types/`.
+    - Added `hooks.types.ts` and `utils.types.ts` in `Frontend/src/shared/types/`.
 
 ### Changed
+
+- **Shared Utilities Modularization & Lib Cleanup:** Relocated Tailwind CSS merge helper from `Frontend/src/lib/utils.ts` to `Frontend/src/shared/utils/cn.ts` with centralized barrel export `Frontend/src/shared/utils/index.ts`. Updated all 25 UI primitives (`Frontend/src/shared/ui/*.tsx`), `app-sidebar.tsx`, `components.json`, and feature utilities (`useConnectAccount`, `EmailVolumeChart`, `DraftListTableBody`) to import `cn` and shared utility helpers from `@shared/utils`. Retained `Frontend/src/lib/auth0.ts` as the sole server client configuration for Next.js Auth0 integration.
+- **Zero Type Declarations in Source Files:** Eliminated all local `interface`, `type`, and `enum` declarations from components, custom hooks, and pages across the frontend, strictly enforcing dedicated `*.types.ts` files with ESLint AST `no-restricted-syntax` rules.
+- **Path Aliases Cleanup:** Removed deprecated `@entities/*` path alias from `Frontend/tsconfig.json`.
 
 - **Thread Query Resilience:** Enhanced `useGetThreadQuery` in `Frontend/src/features/emails/api/email.queries.ts` with a retry predicate that immediately stops retries on `403 Forbidden` or `404 Not Found` responses, preventing unnecessary network traffic on missing or unauthorized conversation threads.
 - **Folder Mutation Typing:** Refactored `useUpdateFolderMutation` in `Frontend/src/features/folders/api/folder.mutation.ts` to consume `UpdateFolderMutationVariables`, eliminating inline object types.

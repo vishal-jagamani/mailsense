@@ -53,4 +53,3 @@ export interface NavTeamsProps {
 export interface NavUserProps {
     user: SidebarUser;
 }
-

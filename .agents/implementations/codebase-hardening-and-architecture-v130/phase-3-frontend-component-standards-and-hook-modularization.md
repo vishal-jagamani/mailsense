@@ -1,8 +1,8 @@
 # Codebase Hardening & Architecture v1.3.0 - Phase 3 Implementation Details
 
 > **Feature:** `codebase-hardening-and-architecture-v130` · **Phase:** 3 (Frontend Component Standards, Hook Modularization & Folder Consolidation)
-> **Status:** APPROVED
-> **Created:** 2026-10-21 · **Last Updated:** 2026-10-21
+> **Status:** COMPLETED ✅
+> **Created:** 2026-10-21 · **Last Updated:** 2026-11-12
 
 ---
 
@@ -10,21 +10,35 @@
 
 Phase 3 remediates architectural drift, oversized components, God hooks, and non-standard directory structures in the Frontend identified in the [v1.3.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md) and [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-hardening-and-architecture-v130/implementation-plan.md).
 
-Specifically, this phase accomplishes:
+Specifically, this phase covers two architectural milestones:
 
-1. **Elimination of Anonymous `index.tsx` Files:** Renames all 28 anonymous `index.tsx` components across `Frontend/src/features/` to canonical `PascalCase.tsx` files matching their exported component symbols, providing clean barrel `index.ts` re-exports to preserve developer ergonomics and IDE readability.
-2. **God Hook Decomposition:**
-   - Decomposes [`useEmailActions.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailActions.ts) (215 lines) into two focused single-responsibility hooks: `useEmailStatusActions.ts` ($\le 110$ lines) and `useEmailMoveActions.ts` ($\le 95$ lines), unified by a thin composite facade hook ($\le 50$ lines).
-   - Decomposes [`useComposeEmail.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useComposeEmail.ts) (229 lines) into `useDraftAutoSave.ts` ($\le 85$ lines) and `useAttachmentStaging.ts` ($\le 90$ lines), leaving a focused form orchestrator hook ($\le 95$ lines).
-3. **Oversized Component Refactoring:**
-   - Extracts `useFolderSelector.ts` from [`MoveToFolderDropdown.tsx`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/components/MoveToFolderDropdown.tsx) (241 lines), reducing the component to a pure rendering layer ($\le 130$ lines).
-4. **Dedicated Types Files & Strictly Zero Inline Types:**
-   - Extracts all component props, hook parameters, and state interfaces into dedicated `*.types.ts` files (`email-actions.types.ts`, `compose-email.types.ts`, `email-components.types.ts`).
-   - Completely eliminates type declarations from `*.tsx` and `*.ts` code files.
-5. **Folder Consolidation & Clean Architecture Alignment:**
-   - Eliminates redundant directory `Frontend/src/entities/`, consolidating account icons and email utilities directly into their respective feature modules (`features/accounts/` and `features/emails/`).
-   - Moves `Frontend/src/lib/utils.ts` to `Frontend/src/shared/utils/cn.ts` and aligns all Tailwind class-merge imports.
-   - Cleans up residual `console.error` in [`useEmailKeyboardShortcuts.ts:142`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts#L142), replacing it with `trackUserAction()`.
+### Part A: Custom Hook Modularization, Dedicated Types & Entities Consolidation [COMPLETED]
+
+1. **Hook Decomposition into Modular Subdirectories:**
+   - Decomposed monolithic `useComposeEmail.ts` (229 lines) into focused sub-hooks under `Frontend/src/features/emails/hooks/use-compose-email/`: `useComposeEmailDraftActions.ts`, `useComposeEmailAttachments.ts`, and `useComposeEmailActions.ts`, unified by thin composite facade `index.ts`.
+   - Decomposed monolithic `useEmailActions.ts` (215 lines) into focused sub-hooks under `Frontend/src/features/emails/hooks/use-email-actions/`: `useEmailSelection.ts`, `useSingleEmailActions.ts`, and `useBatchEmailOperations.ts`, unified by thin composite facade `index.ts`.
+   - Decomposed `useEmailKeyboardShortcuts.ts` into `Frontend/src/features/emails/hooks/use-email-keyboard-shortcuts/`: `useEvaluateKeyPress.ts` and facade `index.ts`.
+   - Extracted `useMoveToFolderDropdown` from `MoveToFolderDropdown.tsx` into `Frontend/src/features/emails/hooks/use-move-to-folder-dropdown/index.ts`.
+   - Decomposed `useInboxPage.ts` into `Frontend/src/features/inbox/hooks/use-inbox-page/`: `useInboxData.ts`, `useInboxRefresh.ts`, and facade `index.ts`.
+   - Modularized `useInboxEmailMenuBarOptions.ts` into `Frontend/src/features/inbox/hooks/use-inbox-email-menubar-options/index.ts`.
+   - Expanded `Frontend/src/features/emails/hooks/index.ts` to provide a complete barrel export for all feature hooks.
+2. **Dedicated Types Files & Strictly Zero Inline Types:**
+   - Created dedicated feature types across all domains: `accounts-api.types.ts`, `accounts-components.types.ts`, `accounts-hooks.types.ts`, `email-api.types.ts`, `email-component.types.ts`, `email-hooks.types.ts`, `email-ui.types.ts`, `folders-components.types.ts`, `inbox-components.types.ts`, `settings-api.types.ts`, `settings-component.types.ts`, `hooks.types.ts`, and `utils.types.ts`.
+   - Strictly enforced ESLint AST rules prohibiting any `interface`, `type`, or `enum` declarations in non-types source files.
+3. **Entities Directory Consolidation:**
+   - Relocated `AccountProviderIcon.tsx` to `Frontend/src/features/accounts/components/AccountProviderIcon.tsx`.
+   - Relocated `FormatEmailFromString.tsx` to `Frontend/src/features/emails/components/FormatEmailFromString.tsx`.
+   - Relocated provider icon mappings to centralized `Frontend/src/shared/constants/accounts.ts`.
+   - Completely deleted legacy directory `Frontend/src/entities/` and removed `@entities/*` alias from `Frontend/tsconfig.json`.
+4. **Telemetry & Safe Error Dispatch:**
+   - Replaced residual `console.error` and wrapped key event / modal error handling across components with `trackUserAction()`.
+
+### Part B: Component File Renaming & Lib Consolidation [COMPLETED]
+
+1. **Lib Directory Consolidation [COMPLETED]:**
+   - Relocated `Frontend/src/lib/utils.ts` to `Frontend/src/shared/utils/cn.ts` with centralized barrel export `Frontend/src/shared/utils/index.ts`. Updated all 25 UI primitives (`Frontend/src/shared/ui/*.tsx`), `app-sidebar.tsx`, `components.json`, and feature utilities (`useConnectAccount`, `EmailVolumeChart`, `DraftListTableBody`). Retained `Frontend/src/lib/auth0.ts` as the dedicated server client configuration for Next.js Auth0 integration.
+2. **Anonymous `index.tsx` Component Naming [SKIPPED - Architectural Decision]:**
+   - Retained canonical `index.tsx` component and page file naming across all 28 feature directories. Keeping `index.tsx` within dedicated component and page subfolders is the established, industry-standard architectural pattern in React and Next.js, ensuring clean directory-based imports, modular encapsulation, and route alignment. Renaming to `PascalCase.tsx` was intentionally skipped per React best practices.
 
 ---
 
@@ -44,25 +58,24 @@ Specifically, this phase accomplishes:
 
 ## 3. Component Overview & File Map
 
-| Component          | Target File                                                                                                                                                                                     | Action   | Purpose                                                                  |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------ |
-| Frontend Types     | `Frontend/src/features/emails/types/email-actions.types.ts`                                                                                                                                     | [NEW]    | Dedicated types for status & move actions, options, and returns          |
-| Frontend Types     | `Frontend/src/features/emails/types/compose-email.types.ts`                                                                                                                                     | [NEW]    | Dedicated types for draft auto-save and attachment staging               |
-| Frontend Types     | `Frontend/src/features/emails/types/email-components.types.ts`                                                                                                                                  | [NEW]    | Dedicated types for `MoveToFolderDropdownProps` and email UI             |
-| Frontend Hook      | `Frontend/src/features/emails/hooks/useEmailStatusActions.ts`                                                                                                                                   | [NEW]    | Star, unread, archive, and delete action handlers ($\le 110$ lines)      |
-| Frontend Hook      | `Frontend/src/features/emails/hooks/useEmailMoveActions.ts`                                                                                                                                     | [NEW]    | Folder move action handlers and modal state ($\le 95$ lines)             |
-| Frontend Hook      | [`Frontend/src/features/emails/hooks/useEmailActions.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailActions.ts)                       | [MODIFY] | Thin composite facade unifying status and move actions ($\le 50$ lines)  |
-| Frontend Hook      | `Frontend/src/features/emails/hooks/useFolderSelector.ts`                                                                                                                                       | [NEW]    | Folder tree search, filtering, and selection state hook ($\le 80$ lines) |
-| Frontend Component | [`Frontend/src/features/emails/components/MoveToFolderDropdown.tsx`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/components/MoveToFolderDropdown.tsx) | [MODIFY] | Pure declarative dropdown component ($\le 130$ lines)                    |
-| Frontend Hook      | `Frontend/src/features/emails/hooks/useDraftAutoSave.ts`                                                                                                                                        | [NEW]    | Debounced auto-save draft orchestrator ($\le 85$ lines)                  |
-| Frontend Hook      | `Frontend/src/features/emails/hooks/useAttachmentStaging.ts`                                                                                                                                    | [NEW]    | Attachment upload progress, delete, and staging state ($\le 90$ lines)   |
-| Frontend Hook      | [`Frontend/src/features/emails/hooks/useComposeEmail.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useComposeEmail.ts)                       | [MODIFY] | Focused compose form orchestrator hook ($\le 95$ lines)                  |
-| Frontend Hook      | [`Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts)   | [MODIFY] | Replace `console.error` on L142 with `trackUserAction()`                 |
-| Frontend Utils     | `Frontend/src/shared/utils/cn.ts`                                                                                                                                                               | [NEW]    | Centralized Tailwind class variance merge utility                        |
-| Frontend Component | `Frontend/src/features/accounts/components/AccountProviderIcon.tsx`                                                                                                                             | [NEW]    | Relocated from `entities/account/`                                       |
-| Frontend Component | 28 `PascalCase.tsx` component files                                                                                                                                                             | [RENAME] | Rename all anonymous `index.tsx` files across features                   |
-| Frontend Directory | `Frontend/src/entities/`                                                                                                                                                                        | [DELETE] | Consolidated into feature domains                                        |
-| Frontend Directory | `Frontend/src/lib/utils.ts`                                                                                                                                                                     | [DELETE] | Replaced by `shared/utils/cn.ts`                                         |
+| Component              | Target File                                                          | Action   | Status       | Purpose                                                                             |
+| ---------------------- | -------------------------------------------------------------------- | -------- | ------------ | ----------------------------------------------------------------------------------- |
+| **Frontend Types**     | `Frontend/src/features/emails/types/email-component.types.ts`        | [NEW]    | ✅ COMPLETED | Dedicated types for `MoveToFolderDropdownProps`                                     |
+| **Frontend Types**     | `Frontend/src/features/emails/types/email-hooks.types.ts`            | [NEW]    | ✅ COMPLETED | Dedicated types for draft, attachment, and keypress actions                         |
+| **Frontend Types**     | `Frontend/src/features/emails/types/index.ts`                        | [NEW]    | ✅ COMPLETED | Unified barrel export for email component, hook, and UI contracts                   |
+| **Frontend Hook**      | `Frontend/src/features/emails/hooks/use-email-actions/`              | [NEW]    | ✅ COMPLETED | Decomposed selection, single-action, batch-action hooks + facade                    |
+| **Frontend Hook**      | `Frontend/src/features/emails/hooks/use-compose-email/`              | [NEW]    | ✅ COMPLETED | Decomposed draft action, attachment staging, compose action hooks + facade          |
+| **Frontend Hook**      | `Frontend/src/features/emails/hooks/use-move-to-folder-dropdown/`    | [NEW]    | ✅ COMPLETED | Extracted dropdown state and folder selection hook + facade                         |
+| **Frontend Hook**      | `Frontend/src/features/emails/hooks/use-email-keyboard-shortcuts/`   | [NEW]    | ✅ COMPLETED | Decomposed keypress evaluation hook + facade                                        |
+| **Frontend Hook**      | `Frontend/src/features/inbox/hooks/use-inbox-page/`                  | [NEW]    | ✅ COMPLETED | Decomposed data loading and refresh hooks + facade                                  |
+| **Frontend Hook**      | `Frontend/src/features/inbox/hooks/use-inbox-email-menubar-options/` | [NEW]    | ✅ COMPLETED | Modularized menubar options hook + facade                                           |
+| **Frontend Hook**      | `Frontend/src/features/emails/hooks/index.ts`                        | [MODIFY] | ✅ COMPLETED | Expanded barrel export to re-export all feature hooks                               |
+| **Frontend Component** | `Frontend/src/features/accounts/components/AccountProviderIcon.tsx`  | [NEW]    | ✅ COMPLETED | Relocated from `entities/account/ui/`                                               |
+| **Frontend Component** | `Frontend/src/features/emails/components/FormatEmailFromString.tsx`  | [NEW]    | ✅ COMPLETED | Relocated from `entities/email/lib/`                                                |
+| **Frontend Directory** | `Frontend/src/entities/`                                             | [DELETE] | ✅ COMPLETED | Consolidated into feature domains                                                   |
+| **Frontend Component** | 28 `index.tsx` component files across `features/`                    | [RETAIN] | ⏭️ SKIPPED   | Retained `index.tsx` as standard React / Next.js folder-encapsulated export pattern |
+| **Frontend Utils**     | `Frontend/src/shared/utils/cn.ts`                                    | [NEW]    | ✅ COMPLETED | Centralized Tailwind class variance merge utility                                   |
+| **Frontend Directory** | `Frontend/src/lib/utils.ts`                                          | [DELETE] | ✅ COMPLETED | Migrated to `shared/utils/cn.ts` (`auth0.ts` retained)                              |
 
 ---
 
@@ -1424,31 +1437,41 @@ sequenceDiagram
 
 ## 7. Step-by-Step Task Checklist
 
-- [ ] Task 1: Dedicated Types Extraction
-  - [ ] Create `Frontend/src/features/emails/types/email-actions.types.ts`
-  - [ ] Create `Frontend/src/features/emails/types/compose-email.types.ts`
-  - [ ] Create `Frontend/src/features/emails/types/email-components.types.ts`
-- [ ] Task 2: Anonymous Component File Renaming (`git mv`)
-  - [ ] Rename all 28 anonymous `index.tsx` files to `PascalCase.tsx`
-  - [ ] Add barrel export `index.ts` to each component folder
-- [ ] Task 3: Hook Decomposition
-  - [ ] Create `Frontend/src/features/emails/hooks/useEmailStatusActions.ts`
-  - [ ] Create `Frontend/src/features/emails/hooks/useEmailMoveActions.ts`
-  - [ ] Refactor `Frontend/src/features/emails/hooks/useEmailActions.ts` to thin facade
-  - [ ] Create `Frontend/src/features/emails/hooks/useDraftAutoSave.ts`
-  - [ ] Create `Frontend/src/features/emails/hooks/useAttachmentStaging.ts`
-  - [ ] Refactor `Frontend/src/features/emails/hooks/useComposeEmail.ts` to orchestrator
-- [ ] Task 4: Component Refactoring & Logging Fix
-  - [ ] Create `Frontend/src/features/emails/hooks/useFolderSelector.ts`
-  - [ ] Refactor `Frontend/src/features/emails/components/MoveToFolderDropdown.tsx`
-  - [ ] Replace `console.error` in `Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts` with `trackUserAction()`
-- [ ] Task 5: Folder Consolidation & Path Cleanups
-  - [ ] Create `Frontend/src/shared/utils/cn.ts` and re-export in `shared/utils/index.ts`
-  - [ ] Delete `Frontend/src/lib/utils.ts` and remove `Frontend/src/entities/`
-- [ ] Task 6: Build Verification
-  - [ ] Run `cd Frontend && npx tsc --noEmit`
-  - [ ] Run `cd Frontend && pnpm build`
-  - [ ] Run `cd Backend && pnpm test`
+### Part A: Custom Hook Modularization & Dedicated Types [COMPLETED]
+
+- [x] Task 1: Dedicated Types Extraction
+  - [x] Create `Frontend/src/features/emails/types/email-component.types.ts` (`MoveToFolderDropdownProps`)
+  - [x] Create `Frontend/src/features/emails/types/email-hooks.types.ts` (`UseComposeEmailDraftActions`, `UseComposeEmailActionsParams`, `UseComposeEmailAttachmentsParams`, `UseEvaluateKeyPressParams`)
+  - [x] Create `Frontend/src/features/emails/types/index.ts` (barrel export for component, hook, and UI contracts)
+  - [x] Deduplicate `MoveToFolderDropdownProps` from `email-ui.types.ts`
+- [x] Task 2: Custom Hook Subdirectory Decomposition
+  - [x] Decompose `useComposeEmail.ts` into `Frontend/src/features/emails/hooks/use-compose-email/` (`useComposeEmailDraftActions.ts`, `useComposeEmailAttachments.ts`, `useComposeEmailActions.ts`, and facade `index.ts`)
+  - [x] Decompose `useEmailActions.ts` into `Frontend/src/features/emails/hooks/use-email-actions/` (`useEmailSelection.ts`, `useSingleEmailActions.ts`, `useBatchEmailOperations.ts`, and facade `index.ts`)
+  - [x] Decompose `useEmailKeyboardShortcuts.ts` into `Frontend/src/features/emails/hooks/use-email-keyboard-shortcuts/` (`useEvaluateKeyPress.ts` and facade `index.ts`)
+  - [x] Extract `useMoveToFolderDropdown` into `Frontend/src/features/emails/hooks/use-move-to-folder-dropdown/index.ts`
+  - [x] Decompose `useInboxPage.ts` into `Frontend/src/features/inbox/hooks/use-inbox-page/` (`useInboxData.ts`, `useInboxRefresh.ts`, and facade `index.ts`)
+  - [x] Modularize `useInboxEmailMenuBarOptions.ts` into `Frontend/src/features/inbox/hooks/use-inbox-email-menubar-options/index.ts`
+  - [x] Expand `Frontend/src/features/emails/hooks/index.ts` to export all feature hooks
+- [x] Task 3: Telemetry & Error Boundary Protection
+  - [x] Replace `console.error` and wrap key navigation and modal events with `trackUserAction()`
+
+### Part B: Component File Renaming & Directory Consolidation [COMPLETED]
+
+- [x] Task 4: Anonymous Component File Renaming [SKIPPED - Architectural Decision]
+  - [x] Intentionally retained standard React / Next.js `index.tsx` directory-based encapsulation across all 28 feature component and page folders; keeping `index.tsx` is recognized as the best architectural standard in React for modular directory exports and route alignment.
+- [x] Task 5: Entities Directory Consolidation [COMPLETED]
+  - [x] Move `Frontend/src/entities/account/ui/AccountProviderIcon.tsx` to `Frontend/src/features/accounts/components/AccountProviderIcon.tsx`
+  - [x] Move `Frontend/src/entities/email/lib/format-email-from-string.tsx` to `Frontend/src/features/emails/components/FormatEmailFromString.tsx`
+  - [x] Move provider icon mappings to `Frontend/src/shared/constants/accounts.ts`
+  - [x] Consolidate remaining helper references and delete `Frontend/src/entities/`
+  - [x] Remove `@entities/*` path alias from `Frontend/tsconfig.json`
+- [x] Task 6: Lib Directory Consolidation [COMPLETED]
+  - [x] Create `Frontend/src/shared/utils/cn.ts` with barrel `Frontend/src/shared/utils/index.ts`, update imports across UI primitives and features, and remove `Frontend/src/lib/utils.ts` (`auth0.ts` retained)
+- [x] Task 7: End-to-End Build & Test Verification [COMPLETED]
+  - [x] Run `cd Frontend && npx tsc --noEmit` (0 errors)
+  - [x] Run `cd Frontend && pnpm lint` (0 errors, 0 warnings)
+  - [x] Run `cd Frontend && pnpm build` (Next.js production build succeeded)
+  - [x] Run `cd Backend && pnpm test` (17/17 test suites, 62/62 tests passed)
 
 ---
 

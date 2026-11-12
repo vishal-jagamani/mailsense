@@ -2,20 +2,20 @@
 /* eslint-disable max-lines */
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useGetAccountDetailsQuery, useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
+import { useEmailActions } from '@features/emails/hooks/use-email-actions';
 import { useEmailKeyboardShortcuts } from '@features/emails/hooks/use-email-keyboard-shortcuts';
 import { useEmailListState } from '@features/emails/hooks/useEmailListState';
 import { useEmailPagination } from '@features/emails/hooks/useEmailPagination';
-import { UseInboxPageReturnParams } from '@features/emails/types/email-ui.types';
+import { UseInboxPageReturnParams } from '@features/emails/types';
+import { useFetchEmailFilters, useFetchEmails } from '@features/inbox/api/inbox.queries';
 import { EmailAttributes, FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
 import { DATE_RANGE_DROPDOWN_OPTIONS, MESSAGES } from '@shared/constants';
 import { useAuthStore, useBreadcrumbStore, useComposeEmailPopupStore } from '@shared/store';
-import { useFetchEmailFilters, useFetchEmails } from '@features/inbox/api/inbox.queries';
-import { useEmailActions } from '@features/emails/hooks/use-email-actions';
 
 export const useInboxPage = (accountId?: string): UseInboxPageReturnParams => {
     const user = useAuthStore((state) => state.user);

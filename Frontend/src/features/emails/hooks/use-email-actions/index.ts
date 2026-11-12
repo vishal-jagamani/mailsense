@@ -1,6 +1,6 @@
 'use client';
 
-import { UseEmailActionsOptions } from '@features/emails/types/email-ui.types';
+import { UseEmailActionsOptions } from '@features/emails/types';
 import { useEmailStarArchiveActions } from './useEmailStarArchiveActions';
 import { useEmailUnreadDeleteActions } from './useEmailUnreadDeleteActions';
 

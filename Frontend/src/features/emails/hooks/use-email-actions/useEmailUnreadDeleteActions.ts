@@ -1,5 +1,5 @@
 import { useUnreadEmailMutation } from '@features/emails/api/email.mutations';
-import { UseEmailActionsOptions } from '@features/emails/types/email-ui.types';
+import { UseEmailActionsOptions } from '@features/emails/types';
 import { useDeleteEmail } from '@features/inbox/api/inbox.queries';
 import { EmailAttributes } from '@mailsense/types';
 import { useState } from 'react';

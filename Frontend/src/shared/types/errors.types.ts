@@ -55,4 +55,3 @@ export interface ErrorFallbackProps {
     readonly traceId: string;
     readonly resetErrorBoundary: () => void;
 }
-

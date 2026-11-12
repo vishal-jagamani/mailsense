@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 
 import { useAuthStore } from '@shared/store';
-import { encrypt } from '@shared/utils/crypto';
+import { encrypt } from '@shared/utils';
 import { useConnectAccountMutation } from '../api/accounts.mutations';
 
 export const useConnectAccount = () => {

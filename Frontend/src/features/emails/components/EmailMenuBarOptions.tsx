@@ -10,12 +10,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { useEmailMenuBarOptions } from '../hooks/useEmailMenuBarOptions';
 import DeleteModal from './DeleteModal';
 import MoveToFolderDropdown from './MoveToFolderDropdown';
-
-interface EmailMenuBarOptionsProps {
-    accountId: string;
-    emailId: string;
-    onManualUnreadOperation?: () => void;
-}
+import { EmailMenuBarOptionsProps } from '../types';
 
 const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ accountId, emailId, onManualUnreadOperation }) => {
     const isMobile = useIsMobile();

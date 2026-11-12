@@ -3,12 +3,8 @@
 import { RefreshCw } from 'lucide-react';
 import React from 'react';
 
-import { AccountAttributes } from '@mailsense/types';
+import { ConnectedAccountsStatusProps } from '@features/settings/types/settings-component.types';
 import { Label } from '@shared/ui/label';
-
-interface ConnectedAccountsStatusProps {
-    accounts: AccountAttributes[];
-}
 
 const ConnectedAccountsStatus: React.FC<ConnectedAccountsStatusProps> = (props) => {
     const { accounts } = props;

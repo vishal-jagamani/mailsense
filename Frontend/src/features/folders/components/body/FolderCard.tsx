@@ -4,18 +4,11 @@ import { Check, Dot, Ellipsis, FolderOpenDot, Pen, RefreshCw, Trash, X } from 'l
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
-import { RenameFolderState } from '@entities/folder';
-import { FolderAttributes } from '@mailsense/types';
+import { FolderCardProps } from '@features/folders/types/folders-components.types';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Separator } from '@shared/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
-import { formatEpochTimeToString } from '@shared/utils/formatter';
-
-interface FolderCardProps {
-    data: FolderAttributes;
-    renameState: RenameFolderState;
-    deleteFolder: (id: string) => void;
-}
+import { formatEpochTimeToString } from '@shared/utils';
 
 const FolderCard: React.FC<FolderCardProps> = ({ data, renameState, deleteFolder }) => {
     const { renameFolderFlag, renameFolderId, renameFolderValue, setRenameFolderFlag, setRenameFolderId, setRenameFolderValue, handleUpdateFolder } =

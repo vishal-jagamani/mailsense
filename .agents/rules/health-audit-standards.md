@@ -234,12 +234,24 @@ The audit MUST recommend ESLint rules to enforce standards programmatically. Rec
         "message": "The never type is forbidden unless used in exhaustive switch checks"
       },
       {
-        "selector": "TSTypeLiteral:not(TypeAliasDeclaration TSTypeLiteral):not(InterfaceDeclaration TSTypeLiteral)",
-        "message": "Inline object types are strictly forbidden. Define named interfaces in dedicated types files."
-      },
-      {
         "selector": "CatchClause[body.body.length=0]",
         "message": "Empty catch blocks are strictly forbidden. Log or rethrow errors."
+      },
+      {
+        "selector": "TSInterfaceDeclaration",
+        "message": "Interface declarations are forbidden in source files. Declare named interfaces exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory)."
+      },
+      {
+        "selector": "TSTypeAliasDeclaration",
+        "message": "Type alias declarations are forbidden in source files. Declare named types exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory)."
+      },
+      {
+        "selector": "TSEnumDeclaration",
+        "message": "Enum declarations are forbidden in source files. Declare enums exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory)."
+      },
+      {
+        "selector": "TSTypeLiteral",
+        "message": "Inline object types are strictly forbidden. Define named interfaces in dedicated types files."
       }
     ]
   }
@@ -428,6 +440,18 @@ const eslintConfig = [
                 {
                     selector: 'CatchClause[body.body.length=0]',
                     message: 'Empty catch blocks are strictly forbidden. Log or rethrow errors.',
+                },
+                {
+                    selector: 'TSInterfaceDeclaration',
+                    message: 'Interface declarations are forbidden in source files. Declare named interfaces exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
+                },
+                {
+                    selector: 'TSTypeAliasDeclaration',
+                    message: 'Type alias declarations are forbidden in source files. Declare named types exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
+                },
+                {
+                    selector: 'TSEnumDeclaration',
+                    message: 'Enum declarations are forbidden in source files. Declare enums exclusively in dedicated types files (*.types.ts, *.interface.ts, or types/ directory).',
                 },
                 {
                     selector: 'TSTypeLiteral',

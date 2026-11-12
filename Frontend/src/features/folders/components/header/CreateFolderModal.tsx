@@ -3,9 +3,10 @@
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
-import { AccountProviderIcon } from '@entities/account';
+import AccountProviderIcon from '@features/accounts/components/AccountProviderIcon';
 import { useCreateFolderMutation } from '@features/folders/api/folder.mutation';
-import { AccountAttributes, CreateFolderBodyParams } from '@mailsense/types';
+import { CreateFolderModalProps } from '@features/folders/types/folders-components.types';
+import { CreateFolderBodyParams } from '@mailsense/types';
 import APILoader from '@shared/components/apiLoader';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { AlertDialogFooter, AlertDialogHeader } from '@shared/ui/alert-dialog';
@@ -15,10 +16,6 @@ import { Field, FieldGroup } from '@shared/ui/field';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
-
-interface CreateFolderModalProps {
-    accounts: AccountAttributes[];
-}
 
 const CreateFolderModal: React.FC<CreateFolderModalProps> = ({ accounts }) => {
     const [modalOpen, setModalOpen] = useState<boolean>(false);
