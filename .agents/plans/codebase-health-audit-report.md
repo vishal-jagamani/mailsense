@@ -599,11 +599,26 @@ Both Backend and Frontend have strict ESLint flat configurations (`eslint.config
 | `no-restricted-syntax (TSTypeLiteral)` | `error` | Rule 2.3 | **Strictly zero inline object types.** All types must be named interfaces in dedicated types files. |
 | `no-restricted-syntax (CatchClause)` | `error` | Rule 6.3 | Prohibits empty catch blocks (`catch (e) {}`). All errors must be logged or rethrown. |
 | `no-console` | `error` | Rule 6.4 | Forbids raw `console.log` and `console.error`. |
+| `unused-imports/no-unused-imports` | `error` | Rule 1.11 | Prohibits dead/unused imports across all files. Auto-fixable via `eslint --fix`. |
+| `unused-imports/no-unused-vars` | `error` | Rule 1.11 | Prohibits unused variables and parameters (except prefixed with `_`). |
 | `complexity` | `warn` (max: 10) | Rule 4.1 | Flags cyclomatic complexity exceeding 10. |
-| `max-lines` | `warn` (max: 300) | Rule 3.1 | Flags source files exceeding 300 lines. |
-| `max-lines-per-function` | `warn` (max: 50) | Rule 3.1 | Flags functions/methods exceeding 50 lines. |
+| `max-lines` | `warn` (tiered) | Rule 3.1 | Enforces file length limits: General Source ≤300, Page Components ≤250, React Components ≤200, Custom Hooks ≤150, React Queries ≤180. |
+| `max-lines-per-function` | `warn` (tiered) | Rule 3.1 | Enforces code-unit function length limits: Functions/Methods ≤50 lines, Custom Hooks ≤120 lines, React Components ≤200 lines, Page Components ≤250 lines. |
 | `max-depth` | `warn` (max: 4) | Rule 4.2 | Flags nesting depth exceeding 4 levels. |
 | `max-params` | `warn` (max: 6) | Rule 3.2 | Flags functions with >6 parameters. |
+
+##### Tiered Code-Unit Guardrails Enforced in ESLint Flat Config
+
+In modern React and Next.js applications, React components, page views, and custom hooks are declared as function declarations or arrow functions. Enforcing a naive global 50-line limit across all `.tsx` files misclassifies React components as standard helper functions and raises false-positive warnings. ESLint Flat Config (`eslint.config.mjs`) is therefore configured with tiered, pattern-based overrides corresponding to [Coding Standards Rule 3.1](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md):
+
+| Code Unit | Target Files / Pattern | Preferred Size | Refactoring Trigger | Hard Limit | ESLint Enforcement Rule |
+|---|---|---:|---:|---:|---|
+| **General source file** | `src/**/*.{ts,tsx}` | ≤200 lines | >200 | 300 | `'max-lines': ['warn', { max: 300 }]` |
+| **React component** | `src/**/*.tsx`, `src/**/components/**/*.{ts,tsx}` | ≤150 lines | >150 | 200 | `'max-lines': ['warn', { max: 200 }]`<br/>`'max-lines-per-function': ['warn', { max: 200 }]` |
+| **Page component** | `src/app/**/*.{ts,tsx}`, `src/**/pages/**/*.{ts,tsx}` | ≤180 lines | >180 | 250 | `'max-lines': ['warn', { max: 250 }]`<br/>`'max-lines-per-function': ['warn', { max: 250 }]` |
+| **Function / Method** | `src/**/*.ts` (excluding hooks/queries) | ≤30 lines | >30 | 50 | `'max-lines-per-function': ['warn', { max: 50 }]` |
+| **Custom hook** | `src/**/hooks/**/*.{ts,tsx}`, `src/**/use*.{ts,tsx}` | ≤80 lines | >80 | 120 | `'max-lines': ['warn', { max: 150 }]`<br/>`'max-lines-per-function': ['warn', { max: 120 }]` |
+| **React Query file** | `src/**/*.queries.ts` | ≤120 lines | >120 | 180 | `'max-lines': ['warn', { max: 180 }]` |
 
 ---
 
@@ -1748,47 +1763,233 @@ To ensure code quality and prevent regressions against the newly defined [MailSe
 }
 ```
 
-#### 14.2 Frontend ESLint Recommendations (`Frontend/.eslintrc.json`)
+#### 14.2 Frontend ESLint Flat Configuration (`Frontend/eslint.config.mjs`)
 
-```json
-{
-  "rules": {
-    "@typescript-eslint/no-explicit-any": "error",
-    "max-lines": [
-      "warn",
-      { "max": 300, "skipBlankLines": true, "skipComments": true }
-    ],
-    "max-lines-per-function": [
-      "warn",
-      { "max": 50, "skipBlankLines": true, "skipComments": true }
-    ],
-    "max-params": ["warn", { "max": 6 }],
-    "max-depth": ["warn", { "max": 4 }],
-    "complexity": ["warn", { "max": 10 }],
-    "no-console": ["error", { "allow": ["warn"] }],
-    "react-hooks/rules-of-hooks": "error",
-    "react-hooks/exhaustive-deps": "warn",
-    "no-restricted-syntax": [
-      "error",
-      {
-        "selector": "TSTypeReference[typeName.name='unknown']",
-        "message": "Use explicit TypeScript types, interfaces, or generics instead of unknown"
-      },
-      {
-        "selector": "TSTypeReference[typeName.name='never']",
-        "message": "The never type is forbidden unless used in exhaustive switch checks"
-      },
-      {
-        "selector": "TSTypeLiteral:not(TypeAliasDeclaration TSTypeLiteral):not(InterfaceDeclaration TSTypeLiteral)",
-        "message": "Inline object types are strictly forbidden. Define named interfaces in dedicated types files."
-      },
-      {
-        "selector": "CatchClause[body.body.length=0]",
-        "message": "Empty catch blocks are strictly forbidden. Log or rethrow errors."
-      }
-    ]
-  }
-}
+Frontend ESLint configuration enforces tiered code-unit limits matching Rule 3.1 and Section 4.1 rather than a single flat 50-line rule, ensuring React components (≤200 hard limit), pages (≤250 hard limit), and custom hooks (≤120 hard limit) are evaluated against their respective architectural boundaries:
+
+```javascript
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { FlatCompat } from '@eslint/eslintrc';
+import unusedImports from 'eslint-plugin-unused-imports';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+    baseDirectory: __dirname,
+});
+
+const eslintConfig = [
+    {
+        ignores: ['node_modules/**', '.next/**', 'out/**', 'build/**', 'next-env.d.ts'],
+    },
+    ...compat.extends('next/core-web-vitals', 'next/typescript'),
+
+    // 1. Global Baseline Rules for all TypeScript / TSX files
+    {
+        files: ['src/**/*.{ts,tsx}'],
+        plugins: {
+            'unused-imports': unusedImports,
+        },
+        rules: {
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'off',
+            '@typescript-eslint/no-explicit-any': 'error',
+            'unused-imports/no-unused-imports': 'error',
+            'unused-imports/no-unused-vars': [
+                'error',
+                {
+                    vars: 'all',
+                    varsIgnorePattern: '^_',
+                    args: 'after-used',
+                    argsIgnorePattern: '^_',
+                },
+            ],
+            'max-lines': ['warn', { max: 300, skipBlankLines: true, skipComments: true }],
+            'max-params': ['warn', { max: 6 }],
+            'max-depth': ['warn', { max: 4 }],
+            complexity: ['warn', { max: 10 }],
+            'no-console': ['error', { allow: ['warn', 'error'] }],
+            'react-hooks/rules-of-hooks': 'error',
+            'react-hooks/exhaustive-deps': 'warn',
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector: "TSTypeReference[typeName.name='unknown']",
+                    message: 'Use explicit TypeScript types, interfaces, or generics instead of unknown.',
+                },
+                {
+                    selector: "TSTypeReference[typeName.name='never']",
+                    message: 'The never type is forbidden unless used in exhaustive switch checks.',
+                },
+                {
+                    selector: 'CatchClause[body.body.length=0]',
+                    message: 'Empty catch blocks are strictly forbidden. Log or rethrow errors.',
+                },
+            ],
+        },
+    },
+
+    // 2. General TypeScript Functions & Methods (Utilities, Services, API Clients, Libs)
+    // Coding Standards: Preferred ≤30 lines, Refactoring Trigger >30, Hard Limit 50 lines
+    {
+        files: ['src/**/*.ts'],
+        ignores: [
+            'src/**/hooks/**',
+            'src/**/use*.ts',
+            'src/**/*.queries.ts',
+            'src/**/*.types.ts',
+            'src/**/*.interface.ts',
+            'src/**/*.d.ts',
+            'src/shared/ui/**',
+            'src/**/__tests__/**',
+            'src/**/__mocks__/**',
+            'src/**/*.test.ts',
+            'src/**/*.spec.ts',
+        ],
+        rules: {
+            'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true, IIFEs: true }],
+        },
+    },
+
+    // 3. React UI Components (*.tsx files)
+    // Coding Standards: Preferred ≤150 lines, Refactoring Trigger >150, Hard Limit 200 lines
+    {
+        files: ['src/**/*.tsx', 'src/**/components/**/*.{ts,tsx}'],
+        ignores: [
+            'src/app/**',
+            'src/**/pages/**',
+            'src/**/hooks/**',
+            'src/shared/ui/**',
+            'src/**/__tests__/**',
+            'src/**/__mocks__/**',
+            'src/**/*.test.{ts,tsx}',
+            'src/**/*.spec.{ts,tsx}',
+        ],
+        rules: {
+            'max-lines': ['warn', { max: 200, skipBlankLines: true, skipComments: true }],
+            'max-lines-per-function': ['warn', { max: 200, skipBlankLines: true, skipComments: true, IIFEs: true }],
+        },
+    },
+
+    // 4. Page Components (Next.js App Router Pages & Feature Views)
+    // Coding Standards: Preferred ≤180 lines, Refactoring Trigger >180, Hard Limit 250 lines
+    {
+        files: ['src/app/**/*.{ts,tsx}', 'src/**/pages/**/*.{ts,tsx}'],
+        ignores: [
+            'src/shared/ui/**',
+            'src/**/__tests__/**',
+            'src/**/__mocks__/**',
+            'src/**/*.test.{ts,tsx}',
+            'src/**/*.spec.{ts,tsx}',
+        ],
+        rules: {
+            'max-lines': ['warn', { max: 250, skipBlankLines: true, skipComments: true }],
+            'max-lines-per-function': ['warn', { max: 250, skipBlankLines: true, skipComments: true, IIFEs: true }],
+        },
+    },
+
+    // 5. Custom Hooks
+    // Coding Standards: Preferred ≤80 lines, Refactoring Trigger >80, Hard Limit 120 lines
+    {
+        files: ['src/**/hooks/**/*.{ts,tsx}', 'src/**/use*.{ts,tsx}'],
+        ignores: [
+            'src/shared/ui/**',
+            'src/**/__tests__/**',
+            'src/**/__mocks__/**',
+            'src/**/*.test.{ts,tsx}',
+            'src/**/*.spec.{ts,tsx}',
+        ],
+        rules: {
+            'max-lines': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
+            'max-lines-per-function': ['warn', { max: 120, skipBlankLines: true, skipComments: true, IIFEs: true }],
+        },
+    },
+
+    // 6. React Query Files
+    // Coding Standards: Preferred ≤120 lines, Refactoring Trigger >120, Hard Limit 180 lines
+    {
+        files: ['src/**/*.queries.ts'],
+        rules: {
+            'max-lines': ['warn', { max: 180, skipBlankLines: true, skipComments: true }],
+        },
+    },
+
+    // 7. Non-types source files: Strictly prohibit inline object types
+    {
+        files: ['src/**/*.{ts,tsx}'],
+        ignores: [
+            'src/**/*.types.ts',
+            'src/**/*.interface.ts',
+            'src/**/*.d.ts',
+            'src/**/types/**',
+            'src/**/interfaces/**',
+            'src/**/__tests__/**',
+            'src/**/__mocks__/**',
+            'src/**/*.test.{ts,tsx}',
+            'src/**/*.spec.{ts,tsx}',
+            'src/shared/ui/**',
+        ],
+        rules: {
+            'no-restricted-syntax': [
+                'error',
+                {
+                    selector: "TSTypeReference[typeName.name='unknown']",
+                    message: 'Use explicit TypeScript types, interfaces, or generics instead of unknown.',
+                },
+                {
+                    selector: "TSTypeReference[typeName.name='never']",
+                    message: 'The never type is forbidden unless used in exhaustive switch checks.',
+                },
+                {
+                    selector: 'CatchClause[body.body.length=0]',
+                    message: 'Empty catch blocks are strictly forbidden. Log or rethrow errors.',
+                },
+                {
+                    selector: 'TSTypeLiteral',
+                    message: 'Inline object types are strictly forbidden. Define named interfaces in dedicated types files.',
+                },
+            ],
+        },
+    },
+
+    // 8. Vendored / Third-Party Design System Primitives (shadcn/ui, Radix UI)
+    {
+        files: ['src/shared/ui/**/*.{ts,tsx}'],
+        rules: {
+            'max-lines': 'off',
+            'max-lines-per-function': 'off',
+            complexity: 'off',
+            'max-depth': 'off',
+            'max-params': 'off',
+        },
+    },
+
+    // 9. Unit Tests & Mocks
+    {
+        files: [
+            'src/**/__tests__/**/*.{ts,tsx}',
+            'src/**/__mocks__/**/*.{ts,tsx}',
+            'src/**/*.test.{ts,tsx}',
+            'src/**/*.spec.{ts,tsx}',
+        ],
+        rules: {
+            'max-lines': 'off',
+            'max-lines-per-function': 'off',
+            'max-params': 'off',
+            'max-depth': 'off',
+            complexity: 'off',
+            'no-console': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+            'no-restricted-syntax': 'off',
+            'unused-imports/no-unused-imports': 'off',
+            'unused-imports/no-unused-vars': 'off',
+        },
+    },
+];
+
+export default eslintConfig;
 ```
 
 #### 14.3 Implementation Strategy

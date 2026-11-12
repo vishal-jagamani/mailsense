@@ -68,7 +68,7 @@ export const useDraftsPage = (): UseDraftsPageResult => {
                 toast.error('Failed to delete draft');
             }
         } catch (error) {
-            trackUserAction('ui.click', 'Error deleting draft', 'error');
+            trackUserAction('ui.click', `Error deleting draft: ${error}`, 'error');
             toast.error('Error deleting draft');
         }
     };
@@ -83,7 +83,7 @@ export const useDraftsPage = (): UseDraftsPageResult => {
             setSelectedDrafts([]);
             refetch();
         } catch (error) {
-            trackUserAction('ui.click', 'Error in bulk draft deletion', 'error');
+            trackUserAction('ui.click', `Error in bulk draft deletion: ${error}`, 'error');
             toast.error('Failed to delete selected drafts');
         }
     };

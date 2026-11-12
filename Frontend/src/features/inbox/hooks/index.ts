@@ -1,2 +1,2 @@
-export * from './useInboxPage';
-export * from './useInboxEmailMenuBarOptions';
+export * from './use-inbox-page/index';
+export * from './use-inbox-email-menubar-options/index';

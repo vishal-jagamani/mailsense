@@ -1,3 +1,5 @@
+/* eslint-disable max-lines-per-function */
+/* eslint-disable max-lines */
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -5,15 +7,15 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 
 import { useGetAccountDetailsQuery, useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
-import { useEmailActions } from '@features/emails/hooks/useEmailActions';
-import { useEmailKeyboardShortcuts } from '@features/emails/hooks/useEmailKeyboardShortcuts';
+import { useEmailKeyboardShortcuts } from '@features/emails/hooks/use-email-keyboard-shortcuts';
 import { useEmailListState } from '@features/emails/hooks/useEmailListState';
 import { useEmailPagination } from '@features/emails/hooks/useEmailPagination';
 import { UseInboxPageReturnParams } from '@features/emails/types/email-ui.types';
 import { EmailAttributes, FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
 import { DATE_RANGE_DROPDOWN_OPTIONS, MESSAGES } from '@shared/constants';
 import { useAuthStore, useBreadcrumbStore, useComposeEmailPopupStore } from '@shared/store';
-import { useFetchEmailFilters, useFetchEmails } from '../api/inbox.queries';
+import { useFetchEmailFilters, useFetchEmails } from '@features/inbox/api/inbox.queries';
+import { useEmailActions } from '@features/emails/hooks/use-email-actions';
 
 export const useInboxPage = (accountId?: string): UseInboxPageReturnParams => {
     const user = useAuthStore((state) => state.user);
@@ -121,13 +123,13 @@ export const useInboxPage = (accountId?: string): UseInboxPageReturnParams => {
         onOpenEmail: (email: EmailAttributes) => {
             router.push(`/inbox/${email.accountId}/email/${email._id}?page=${pagination.page}`);
         },
-        onStarEmail: actions.handleToggleStar,
-        onMarkUnread: actions.handleToggleUnread,
-        onArchiveEmail: actions.handleArchiveEmail,
-        onDeleteEmail: actions.handlePromptDelete,
+        onStarEmail: actions.starEmail,
+        onMarkUnread: actions.unreadEmail,
+        onArchiveEmail: actions.archiveEmail,
+        onDeleteEmail: actions.deleteEmail.handlePromptDelete,
         onOpenCompose: openCompose,
-        onOpenShortcutsModal: () => actions.setIsShortcutsModalOpen(true),
-        enabled: !isLoadingEmails && actions.emailsToDelete.length === 0 && !actions.isShortcutsModalOpen,
+        onOpenShortcutsModal: () => actions.setters.setIsShortcutsModalOpen(true),
+        enabled: !isLoadingEmails && actions.states.emailsToDelete.length === 0 && !actions.states.isShortcutsModalOpen,
     });
 
     const emailFilterOptions: FilterOption[] | undefined = useMemo(() => {
@@ -194,11 +196,11 @@ export const useInboxPage = (accountId?: string): UseInboxPageReturnParams => {
             handleEmailSelect: listState.handleEmailSelect,
             handlePageSizeChange: pagination.handlePageSizeChange,
             handleResetPage: pagination.handleResetPage,
-            handleConfirmDelete: actions.handleConfirmDelete,
-            handleToggleStar: actions.handleToggleStar,
-            handleToggleUnread: actions.handleToggleUnread,
-            handleArchiveEmail: actions.handleArchiveEmail,
-            handlePromptDelete: actions.handlePromptDelete,
+            handleConfirmDelete: actions.deleteEmail.handleConfirmDelete,
+            handleToggleStar: actions.starEmail,
+            handleToggleUnread: actions.unreadEmail,
+            handleArchiveEmail: actions.archiveEmail,
+            handlePromptDelete: actions.deleteEmail.handlePromptDelete,
         },
         states: {
             selectedEmails: listState.selectedEmails,
@@ -208,16 +210,16 @@ export const useInboxPage = (accountId?: string): UseInboxPageReturnParams => {
             page: pagination.page,
             isSyncingInProgress,
             focusedIndex: listState.focusedIndex,
-            isShortcutsModalOpen: actions.isShortcutsModalOpen,
-            emailsToDelete: actions.emailsToDelete,
+            isShortcutsModalOpen: actions.states.isShortcutsModalOpen,
+            emailsToDelete: actions.states.emailsToDelete,
         },
         setters: {
             setSearchValue: pagination.setSearchValue,
             setFilter: pagination.setFilter,
             setPage: pagination.setPage,
             setFocusedIndex: listState.setFocusedIndex,
-            setIsShortcutsModalOpen: actions.setIsShortcutsModalOpen,
-            setEmailsToDelete: actions.setEmailsToDelete,
+            setIsShortcutsModalOpen: actions.setters.setIsShortcutsModalOpen,
+            setEmailsToDelete: actions.setters.setEmailsToDelete,
         },
     };
 };

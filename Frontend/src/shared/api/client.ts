@@ -10,35 +10,31 @@ const apiClient = axios.create({
 });
 
 apiClient.interceptors.request.use(async (config) => {
-    try {
-        const accessToken = await getAccessToken();
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
-        }
-
-        if (!config.headers['X-Trace-Id'] && !config.headers['x-trace-id']) {
-            config.headers['X-Trace-Id'] = crypto.randomUUID();
-        }
-
-        // Attach user context headers so backend tracing and logs capture user details
-        const user = useAuthStore.getState().user;
-        if (user) {
-            if (user.id) config.headers['X-User-Id'] = user.id;
-            if (user.email) config.headers['X-User-Email'] = user.email;
-            if (user.name) config.headers['X-User-Name'] = encodeURIComponent(user.name);
-        }
-
-        trackUserAction('api.request', `${config.method?.toUpperCase() || 'GET'} ${config.url || ''}`, 'info', {
-            method: config.method?.toUpperCase() || 'GET',
-            url: config.url || '',
-            ...(user?.id ? { userId: user.id } : {}),
-            ...(user?.email ? { userEmail: user.email } : {}),
-        });
-
-        return config;
-    } catch (tokenError) {
-        return config;
+    const accessToken = await getAccessToken();
+    if (accessToken) {
+        config.headers.Authorization = `Bearer ${accessToken}`;
     }
+
+    if (!config.headers['X-Trace-Id'] && !config.headers['x-trace-id']) {
+        config.headers['X-Trace-Id'] = crypto.randomUUID();
+    }
+
+    // Attach user context headers so backend tracing and logs capture user details
+    const user = useAuthStore.getState().user;
+    if (user) {
+        if (user.id) config.headers['X-User-Id'] = user.id;
+        if (user.email) config.headers['X-User-Email'] = user.email;
+        if (user.name) config.headers['X-User-Name'] = encodeURIComponent(user.name);
+    }
+
+    trackUserAction('api.request', `${config.method?.toUpperCase() || 'GET'} ${config.url || ''}`, 'info', {
+        method: config.method?.toUpperCase() || 'GET',
+        url: config.url || '',
+        ...(user?.id ? { userId: user.id } : {}),
+        ...(user?.email ? { userEmail: user.email } : {}),
+    });
+
+    return config;
 });
 
 apiClient.interceptors.response.use(

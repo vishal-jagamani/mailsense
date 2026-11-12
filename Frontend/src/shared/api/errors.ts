@@ -1,10 +1,29 @@
-import axios, { AxiosError } from 'axios';
 import { ApiErrorResponse, FormattedClientError } from '@shared/types';
+import axios, { AxiosError } from 'axios';
+
+const DefaultError = (err: unknown): FormattedClientError => ({
+    message: String(err),
+    errorCode: 'UNKNOWN_ERROR',
+    traceId: '',
+    description: 'An unknown error occurred.',
+    suggestedAction: 'Please try again later.',
+    httpStatus: 500,
+});
+
+const ErrorInstance = (error: Error): FormattedClientError => ({
+    message: error.message,
+    errorCode: 'CLIENT_ERROR',
+    traceId: '',
+    description: 'An unexpected client error occurred.',
+    suggestedAction: 'Please refresh the page and try again.',
+    httpStatus: 500,
+});
 
 /**
  * Normalizes backend error responses conforming to `{ status: false, message, error }`.
  * Pure data transformation without try/catch overhead.
  */
+
 export function extractApiError(error: unknown): FormattedClientError {
     if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<ApiErrorResponse>;
@@ -43,22 +62,8 @@ export function extractApiError(error: unknown): FormattedClientError {
     }
 
     if (error instanceof Error) {
-        return {
-            message: error.message,
-            errorCode: 'CLIENT_ERROR',
-            traceId: '',
-            description: 'An unexpected client error occurred.',
-            suggestedAction: 'Please refresh the page and try again.',
-            httpStatus: 500,
-        };
+        return ErrorInstance(error);
     }
 
-    return {
-        message: String(error),
-        errorCode: 'UNKNOWN_ERROR',
-        traceId: '',
-        description: 'An unknown error occurred.',
-        suggestedAction: 'Please contact support if this continues.',
-        httpStatus: 500,
-    };
+    return DefaultError(error);
 }

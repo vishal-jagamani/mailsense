@@ -39,7 +39,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange, onDelete,
                     onOpenChange(false);
                 }
             } catch (error) {
-                trackUserAction('ui.click', 'DeleteModal keydown error', 'warn');
+                trackUserAction('ui.click', `DeleteModal keydown error: ${error}`, 'warn');
             }
         };
 

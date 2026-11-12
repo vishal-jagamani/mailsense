@@ -32,7 +32,7 @@ export const DraftListTable: React.FC<DraftListTableProps> = ({ data, selectedDr
                 onDraftSelect(selectedDrafts.filter((id) => id !== draftId));
             }
         } catch (error) {
-            trackUserAction('ui.click', 'Draft selection error', 'warn');
+            trackUserAction('ui.click', `Draft selection error: ${error}`, 'warn');
         }
     };
 

@@ -8,47 +8,50 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Security
+
 - **Multi-Tenant Authorization Hardening (`BUG-V13-01`, `BUG-V13-02`, `BUG-V13-03`):**
-  - Enforced caller `userId` validation in `EmailQueryController` and `EmailReadService` for `getEmail`, `getThread`, `downloadAttachment`, and `downloadAttachmentStream`, blocking cross-tenant access to messages, threads, and binary attachments.
-  - Enforced caller `userId` validation in `FolderController` and `FolderService` for `syncFolders`, `getFolder`, `getAccountFolders`, and `createFolder`, throwing `ForbiddenError` when an unowned `accountId` is targeted.
-  - Activated staged attachment ownership validation in `EmailWriteService.composeEmailWithAttachments`, ensuring all attachment IDs belong to both the caller `userId` and the target `accountId`. Verified with `src/modules/emails/__tests__/attachment-security.test.ts`.
+    - Enforced caller `userId` validation in `EmailQueryController` and `EmailReadService` for `getEmail`, `getThread`, `downloadAttachment`, and `downloadAttachmentStream`, blocking cross-tenant access to messages, threads, and binary attachments.
+    - Enforced caller `userId` validation in `FolderController` and `FolderService` for `syncFolders`, `getFolder`, `getAccountFolders`, and `createFolder`, throwing `ForbiddenError` when an unowned `accountId` is targeted.
+    - Activated staged attachment ownership validation in `EmailWriteService.composeEmailWithAttachments`, ensuring all attachment IDs belong to both the caller `userId` and the target `accountId`. Verified with `src/modules/emails/__tests__/attachment-security.test.ts`.
 
 ### Added
+
 - **Database Connection Manager (`ARCH-V13-01`):** Extracted raw MongoDB connection logic from `server.ts` into enterprise `DatabaseConnectionManager` (`src/core/database/connection.ts`) with typed options, reconnect monitoring, and graceful shutdown handling. Added `@database` path alias.
 - **Categorized Email Module Subdirectories:**
-  - Decomposed `email.controller.ts` into `EmailQueryController` (`src/modules/emails/controllers/email-query.controller.ts`) and `EmailMutationController` (`src/modules/emails/controllers/email-mutation.controller.ts`) with barrel export `src/modules/emails/controllers/index.ts`.
-  - Decomposed `email.service.ts` into `EmailReadService` and `EmailWriteService` under `src/modules/emails/services/` with composite facade `src/modules/emails/services/email.service.ts`.
+    - Decomposed `email.controller.ts` into `EmailQueryController` (`src/modules/emails/controllers/email-query.controller.ts`) and `EmailMutationController` (`src/modules/emails/controllers/email-mutation.controller.ts`) with barrel export `src/modules/emails/controllers/index.ts`.
+    - Decomposed `email.service.ts` into `EmailReadService` and `EmailWriteService` under `src/modules/emails/services/` with composite facade `src/modules/emails/services/email.service.ts`.
 - **Outlook Integration Modularization:** Decomposed monolithic `outlook.service.ts` into `OutlookSyncService`, `OutlookMailReadService`, and `OutlookMailWriteService` under `src/integrations/outlook/services/` with unified composite facade in `services/index.ts`.
 - **Gmail Integration Modularization:** Decomposed monolithic `gmail.service.ts` into dedicated domain services: `GmailAuthService`, `GmailMessageService`, `GmailAttachmentService`, and `GmailLabelService` under `src/integrations/gmail/services/` with barrel export `services/index.ts`.
 - **Zero-Inline Type System & Domain Isolation:**
-  - Added dedicated interface files: `src/core/types/event.types.ts` (`PublishEventPayload`), `src/core/types/middleware.types.ts` (`SchemaMap`), `src/core/types/common.types.ts` (`GetDataRangeResponse`), and `src/integrations/storage/storage.types.ts` (`ObjectStream`).
-  - Added domain-specific type definitions in `src/integrations/gmail/gmail.types.ts` (`GmailMessageIdParam`, `GmailAttachmentBufferResult`, `GmailMimeMessageAttachment`) and `src/integrations/outlook/outlook.types.ts` (`OutlookMessageIdParam`, `OutlookDeltaMessagesResponse`, `OutlookMessageAttachmentResponse`, `SplitAttachmentsResponse`, `OutlookAttachmentBufferResult`), preserving domain isolation between provider ecosystems.
-  - Added named interfaces in `src/modules/analytics/analytics.types.ts` (`EmailVolumeDataPointBase`, `AccountEmailMetricsBase`), `src/modules/emails/email.types.ts` (`PaginationParams`), and `src/integrations/auth0/auth0.types.ts` (`Auth0UserChangePassword`).
+    - Added dedicated interface files: `src/core/types/event.types.ts` (`PublishEventPayload`), `src/core/types/middleware.types.ts` (`SchemaMap`), `src/core/types/common.types.ts` (`GetDataRangeResponse`), and `src/integrations/storage/storage.types.ts` (`ObjectStream`).
+    - Added domain-specific type definitions in `src/integrations/gmail/gmail.types.ts` (`GmailMessageIdParam`, `GmailAttachmentBufferResult`, `GmailMimeMessageAttachment`) and `src/integrations/outlook/outlook.types.ts` (`OutlookMessageIdParam`, `OutlookDeltaMessagesResponse`, `OutlookMessageAttachmentResponse`, `SplitAttachmentsResponse`, `OutlookAttachmentBufferResult`), preserving domain isolation between provider ecosystems.
+    - Added named interfaces in `src/modules/analytics/analytics.types.ts` (`EmailVolumeDataPointBase`, `AccountEmailMetricsBase`), `src/modules/emails/email.types.ts` (`PaginationParams`), and `src/integrations/auth0/auth0.types.ts` (`Auth0UserChangePassword`).
 - **Outlook Mail Client Modularization:** Decomposed `outlook-mail.client.ts` into single-responsibility client classes: `OutlookMailReadClient` (`src/integrations/outlook/clients/outlook-mail-read.client.ts`) and `OutlookMailWriteClient` (`src/integrations/outlook/clients/outlook-mail-write.client.ts`), each strictly within the 300-line limit, with backward-compatible `OutlookClient` static facade in `clients/index.ts`.
 - **Categorized Email Services Decomposition:** Decomposed `EmailReadService` (329 lines) into single-responsibility services under `src/modules/emails/services/`:
-  - `EmailQueryService`: Querying, search, contact suggestions, and filters.
-  - `EmailThreadService`: Thread conversation retrieval and individual message resolution.
-  - `EmailAttachmentService`: Attachment buffers and binary stream downloads.
-  - Updated `EmailService` composite facade delegating cleanly to query, thread, attachment, and write services.
+    - `EmailQueryService`: Querying, search, contact suggestions, and filters.
+    - `EmailThreadService`: Thread conversation retrieval and individual message resolution.
+    - `EmailAttachmentService`: Attachment buffers and binary stream downloads.
+    - Updated `EmailService` composite facade delegating cleanly to query, thread, attachment, and write services.
 - **Categorized Database Subdirectories:** Moved Mongoose models, queries, and repositories into dedicated `database/` subdirectories:
-  - `src/modules/emails/database/`: `email.model.ts`, `email.queries.ts`, `email.repository.ts`.
-  - `src/modules/analytics/database/`: `analytics.queries.ts`, `analytics.repository.ts`.
+    - `src/modules/emails/database/`: `email.model.ts`, `email.queries.ts`, `email.repository.ts`.
+    - `src/modules/analytics/database/`: `analytics.queries.ts`, `analytics.repository.ts`.
 - **Database & Monitoring Utility Modularization:**
-  - Added `src/core/types/database.types.ts` (`DatabaseConnectionOptions`).
-  - Added `src/core/monitoring/providers/sentry.utils.ts` (`extractUserId`, `extractUserEmail`, `extractUserUsername`, `extractUserIp`, `extractOverrideUserFromData`, `omitUserKeys`).
-  - Added `DefaultMonitoringConfig` in `src/core/types/monitoring.types.ts`.
-  - Added `src/modules/analytics/types/index.ts` consolidating analytics contracts.
+    - Added `src/core/types/database.types.ts` (`DatabaseConnectionOptions`).
+    - Added `src/core/monitoring/providers/sentry.utils.ts` (`extractUserId`, `extractUserEmail`, `extractUserUsername`, `extractUserIp`, `extractOverrideUserFromData`, `omitUserKeys`).
+    - Added `DefaultMonitoringConfig` in `src/core/types/monitoring.types.ts`.
+    - Added `src/modules/analytics/types/index.ts` consolidating analytics contracts.
 - **Environment Schema Extraction:** Extracted Zod configuration map `envSchemaObject` to `src/core/config/env.schema.ts` to reduce `EnvConfig` constructor length below 50 lines.
 - **Error Types & Decomposition:** Extracted `ParsedErrorDetails` interface in `src/core/types/error.types.ts` and refactored `AxiosApiError` constructor into focused helper functions (`extractAxiosMessage`, `extractAxiosMetadata`, `parseAxiosError`, `resolveErrorDetails`) for cyclomatic complexity compliance.
 - **Analytics Utility Modularization:** Decomposed `analytics.utils.ts` into pure formatting helpers (`analytics-formatters.ts`) and statistical calculation algorithms (`analytics-calculators.ts`) under `src/modules/analytics/utils/` with barrel export `index.ts`.
 
 ### Changed
+
 - **Core Middlewares Relocation:** Relocated cross-cutting middlewares from root `src/middlewares/` to `src/core/middlewares/` (`auth.ts`, `error.handler.ts`, `validator.ts`, `index.ts`), updating `@middlewares` path alias and route imports.
 - **Worker Processor Complexity Reduction:** Refactored `syncAccountProcessor` in `src/workers/processors/sync-account.processor.ts` into focused private helper methods, reducing cyclomatic complexity from 32 to $\le 8$ and nesting depth from 6 to $\le 3$.
 - **Auth & Queue Complexity Reduction:**
-  - Refactored `AuthMiddleware` in `src/core/middlewares/auth.ts` with `extractUserFromRequest` and `getFirstString` helpers.
-  - Refactored `SchedulerService.upsertAccountRepeatableJob` with `isEligibleForSync`, `resolveSyncIntervalMinutes`, and `cleanMismatchedSchedulers`.
-  - Refactored `BaseWorker` in `src/workers/base.worker.ts` with `extractTraceContext` and `runWithTraceContext`.
+    - Refactored `AuthMiddleware` in `src/core/middlewares/auth.ts` with `extractUserFromRequest` and `getFirstString` helpers.
+    - Refactored `SchedulerService.upsertAccountRepeatableJob` with `isEligibleForSync`, `resolveSyncIntervalMinutes`, and `cleanMismatchedSchedulers`.
+    - Refactored `BaseWorker` in `src/workers/base.worker.ts` with `extractTraceContext` and `runWithTraceContext`.
 - **Error Handler & Monitoring Complexity Reduction:** Refactored `errorHandler` in `src/core/middlewares/error.handler.ts` into `normalizeAppError` and `captureNonOperationalErrors` helpers. Extracted `breadcrumbLevel` method in `SentryMonitoringProvider` (`src/core/monitoring/providers/sentry.provider.ts`) to comply with function size and complexity guardrails.
 - **User Schema Index Deduplication:** Eliminated duplicate index warning on `userId` in `src/modules/user/user.model.ts`.
 - **Jest Path Mapping Alignment:** Updated `jest.config.js` `moduleNameMapper` with `@middlewares`, `@database`, `@security`, and `@queue` aliases to ensure clean test resolution.
@@ -57,22 +60,25 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [3.5.0] - 2026-10-15
 
 ### Added
+
 - **Security & Multi-Tenant Isolation (`SEC-REFACTOR-01`):** Enforced IDOR validation in `EmailWriteService.composeEmailWithAttachments`, validating that staged attachments belong to both the authenticated `userId` and target `accountId` before message composition and throwing `ForbiddenError` on cross-tenant access. Added unit test suite `src/modules/emails/__tests__/attachment-security.test.ts`.
 - **Domain Client Modularization (`ARCH-REFACTOR-01`):** Decomposed monolithic `GmailClient` and `OutlookClient` into focused domain client classes:
-  - Gmail: `GmailAuthClient`, `GmailMessageClient`, `GmailLabelClient`, and `GmailContactClient` under `src/integrations/gmail/clients/` with static facade in `src/integrations/gmail/clients/index.ts`.
-  - Outlook: `OutlookAuthClient`, `OutlookMessageClient`, `OutlookFolderClient`, and `OutlookContactClient` under `src/integrations/outlook/clients/` with static facade in `src/integrations/outlook/clients/index.ts`.
+    - Gmail: `GmailAuthClient`, `GmailMessageClient`, `GmailLabelClient`, and `GmailContactClient` under `src/integrations/gmail/clients/` with static facade in `src/integrations/gmail/clients/index.ts`.
+    - Outlook: `OutlookAuthClient`, `OutlookMessageClient`, `OutlookFolderClient`, and `OutlookContactClient` under `src/integrations/outlook/clients/` with static facade in `src/integrations/outlook/clients/index.ts`.
 - **Account OAuth Service Extraction (`ARCH-REFACTOR-02`):** Extracted `AccountOAuthService` (`src/modules/accounts/account-oauth.service.ts`) from `AccountsService`, encapsulating OAuth connection URL generation, authorization code exchange, profile retrieval, and background sync triggering into a dedicated domain service.
 - **Consolidated Batch Provider Operations (`ARCH-REFACTOR-03`):** Implemented `executePerAccountProviderAction` in `EmailWriteService` (`src/modules/emails/email-write.service.ts`), consolidating multi-account batch mutations (`archiveEmails`, `starEmails`, `unreadEmails`, `deleteEmail`) using `Promise.allSettled` and atomic MongoDB updates exclusively for successful accounts.
 - **Named Interface Extractions:** Defined dedicated interfaces in `src/modules/accounts/account.types.ts` (`OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`) and `src/modules/emails/email.types.ts` (`ThreadSummaryItem`, `GroupedEmailThreadItem`) to eliminate inline object types.
 - **ESLint 9 Flat Config Migration (`DX-REFACTOR-01`):** Upgraded `eslint.config.js` to modern Flat Config format with TypeScript-ESLint, enforcing `no-restricted-syntax` for zero inline object types (with targeted exemptions for type definition files `*.types.ts` and `*.interface.ts`), line count, function length, and complexity limits.
 
 ### Changed
+
 - **Shared Type Contracts (@mailsense/types v1.6.0):** Integrated `@mailsense/types` `1.6.0`, normalizing `to`, `cc`, and `bcc` recipient fields strictly to `string[]` arrays across Gmail and Outlook providers, repositories, parsers, and search formatters.
 - **Account Privacy & Sanitization:** Guaranteed that sensitive encrypted OAuth credentials (`accessToken`, `refreshToken`) are never returned in public account responses, strictly delivering `SanitizedAccountAttributes[]`.
 
 ## [3.4.0] - 2026-09-27
 
 ### Added
+
 - **Email Service Decomposition (`ARCH-NEXT-01`):** Decomposed `email.service.ts` into single-responsibility service layers adhering to CQRS principles: `EmailReadService` (`src/modules/emails/email-read.service.ts`) for query/threading/attachment handling and `EmailWriteService` (`src/modules/emails/email-write.service.ts`) for composition/moves/batch mutations. Refactored `EmailService` (`src/modules/emails/email.service.ts`) into a lightweight Facade preserving 100% of method signatures for caller non-regression (`EmailController`, `DraftService`).
 - **Attachment Streaming (`PERF-NEXT-01`):** Added `getAttachmentStream` across `IEmailProvider`, `GmailClient`, `OutlookClient`, `GmailProvider`, `OutlookProvider`, and `EmailService`. Refactored `EmailController.downloadAttachment` to stream binary attachments directly to Express `Response` via `attachment.stream.pipe(res)` with `Content-Type`, `Content-Disposition`, and `Content-Length` headers and error listeners, eliminating memory heap buffering.
 - **Multi-Account Batch Parallelization (`PERF-NEXT-02`):** Parallelized `EmailService.moveEmails` using `Promise.allSettled` across account groups, returning aggregated update counts and updating MongoDB folder references exclusively for successful accounts while logging partial failures.
@@ -90,6 +96,7 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [3.3.0] - 2026-09-26
 
 ### Fixed
+
 - Fixed BUG-10 (Email ID Boundary): Decoupled Frontend from external `providerMessageId`; Frontend passes canonical MongoDB `_id` and Backend resolves `providerMessageId` via `EmailRepository.getEmailsByIds` before delegating to provider adapters (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`, `moveEmails`).
 - Fixed BUG-12 (Folder ID Boundary): Decoupled Frontend from external `providerFolderId`; Frontend passes canonical MongoDB `_id` and Backend resolves `providerFolderId` via `FolderRepository.getFolder` and `FolderRepository.getFoldersByIds` before delegating to provider adapters (`updateFolder`, `deleteFolder`, `moveEmails`, `getEmails`).
 - Fixed BUG-12 (Database Synchronization): Restored `EmailRepository.updateFolders` in `EmailService.moveEmails` and implemented `FolderRepository.updateFolder` and `FolderRepository.deleteFolder` in `FolderService` to keep MongoDB records in sync with external providers.
@@ -104,57 +111,58 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Fixed SEC-03 (Credential Redaction): Stripped sensitive `accessToken` and `refreshToken` credentials in `AccountsService.getAccountDetails` and `getAccounts`, returning `SanitizedAccountAttributes`.
 - Fixed SEC-07 (Email Move Authorization): Enforced caller ownership verification over target email IDs in `EmailService.moveEmails` before dispatching move commands to providers.
 - Fixed Exception Handling & Logging Audit (Phase 2):
-  - Replaced 50+ generic `throw new Error(...)` calls across services, controllers, provider clients, and background workers with compiler-enforced domain errors (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `SyncError`).
-  - Remediated unhandled exception gaps in `UserService`: wrapped all 6 service methods (`getUser`, `updateUser`, `getUserProfile`, `changePassword`, `getUserSettings`, `updateUserSettings`) in explicit `try / catch` blocks with module-scoped logging and `NotFoundError` throws.
-  - Enforced caller authorization checks in `AttachmentsService.deleteStagedAttachment`, `FolderService.updateFolder`, and `FolderService.deleteFolder` using `ForbiddenError` to prevent cross-tenant mutations.
-  - Enforced account ownership verification in `EmailService.composeEmailWithAttachments` with `ForbiddenError` before initiating provider dispatch.
-  - Replaced generic worker exception handling in `syncAccountProcessor` and `refreshTokenProcessor` with `SyncError`, preventing unhandled queue rejections.
-  - Fixed `account.model.ts` pre-save validation to throw `BadRequestError` on invalid email formats.
-  - Corrected accidental third-party imports of `UnauthorizedError` from `express-oauth2-jwt-bearer` in `folder.controller.ts` and `draft.controller.ts`, replacing them with `@errors`.
+    - Replaced 50+ generic `throw new Error(...)` calls across services, controllers, provider clients, and background workers with compiler-enforced domain errors (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `SyncError`).
+    - Remediated unhandled exception gaps in `UserService`: wrapped all 6 service methods (`getUser`, `updateUser`, `getUserProfile`, `changePassword`, `getUserSettings`, `updateUserSettings`) in explicit `try / catch` blocks with module-scoped logging and `NotFoundError` throws.
+    - Enforced caller authorization checks in `AttachmentsService.deleteStagedAttachment`, `FolderService.updateFolder`, and `FolderService.deleteFolder` using `ForbiddenError` to prevent cross-tenant mutations.
+    - Enforced account ownership verification in `EmailService.composeEmailWithAttachments` with `ForbiddenError` before initiating provider dispatch.
+    - Replaced generic worker exception handling in `syncAccountProcessor` and `refreshTokenProcessor` with `SyncError`, preventing unhandled queue rejections.
+    - Fixed `account.model.ts` pre-save validation to throw `BadRequestError` on invalid email formats.
+    - Corrected accidental third-party imports of `UnauthorizedError` from `express-oauth2-jwt-bearer` in `folder.controller.ts` and `draft.controller.ts`, replacing them with `@errors`.
 
 ### Changed
+
 - Refactored `composeEmailSchema` in `email.schema.ts` to support optional `cc`, `bcc`, `inReplyTo`, `threadId`, and `attachmentIds` using Zod 4 syntax.
 - Updated `FolderRepository` data access methods to delegate error handling and logging to `FolderService`.
 - Added `USER_SERVICE = 'UserService'` to `LOGGER_MODULE` enum in `observability.constants.ts`.
 - Standardized error mapping and taxonomy across `EmailService`, `AccountsService`, `FolderService`, `DraftService`, `AttachmentsService`, and `AnalyticsService` to ensure centralized error middleware maps operational errors directly to RFC-compliant HTTP status codes (400, 401, 403, 404).
 - Added Modifications & Enhancements (Phase 3):
-  - Created `Backend/src/modules/attachments/attachment.schema.ts` defining strict Zod validation schemas (`uploadStagedAttachmentSchema`, `deleteStagedAttachmentSchema`) for attachment staging endpoints.
-  - Bound validation middleware in `attachment.routes.ts` and strongly typed `AttachmentsController` handler parameters with `Request` generics.
-  - Enforced `ACCOUNT_PROVIDER` enum constraint in `AccountSchema.provider` (`account.model.ts`).
-  - Added compound index `{ accountId: 1, threadId: 1 }` on `EmailSchema` (`email.model.ts`) to accelerate conversation queries and thread grouping operations.
-  - Optimized `EmailService.getAllEmails` to calculate `getDateRange()` once per request instead of redundant triple executions.
-  - Optimized `EmailService.getAllEmails` and `getEmails` to omit heavy `body` and `bodyHtml` decompression during message list queries, reducing heap allocations and CPU latency.
+    - Created `Backend/src/modules/attachments/attachment.schema.ts` defining strict Zod validation schemas (`uploadStagedAttachmentSchema`, `deleteStagedAttachmentSchema`) for attachment staging endpoints.
+    - Bound validation middleware in `attachment.routes.ts` and strongly typed `AttachmentsController` handler parameters with `Request` generics.
+    - Enforced `ACCOUNT_PROVIDER` enum constraint in `AccountSchema.provider` (`account.model.ts`).
+    - Added compound index `{ accountId: 1, threadId: 1 }` on `EmailSchema` (`email.model.ts`) to accelerate conversation queries and thread grouping operations.
+    - Optimized `EmailService.getAllEmails` to calculate `getDateRange()` once per request instead of redundant triple executions.
+    - Optimized `EmailService.getAllEmails` and `getEmails` to omit heavy `body` and `bodyHtml` decompression during message list queries, reducing heap allocations and CPU latency.
 
 ## [3.2.0] - 2026-09-14
 
 ### Added
 
 - Added Custom Exception Hierarchy (`Backend/src/core/errors/*`):
-  - Standardized `ErrorCode` string enum (`ErrorCodes.ts`) replacing magic strings with compiler-enforced error codes.
-  - Added typed error payload contracts (`error.types.ts`) for consistent JSON responses.
-  - Implemented 11 domain-specific subclasses in `DomainErrors.ts` (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`).
-  - Added ergonomic error factory helpers (`ErrorFactories.ts`).
+    - Standardized `ErrorCode` string enum (`ErrorCodes.ts`) replacing magic strings with compiler-enforced error codes.
+    - Added typed error payload contracts (`error.types.ts`) for consistent JSON responses.
+    - Implemented 11 domain-specific subclasses in `DomainErrors.ts` (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`).
+    - Added ergonomic error factory helpers (`ErrorFactories.ts`).
 - Added Distributed Tracing & Request Logging (`Backend/src/core/observability/*`):
-  - Implemented `TraceStore` using Node.js `AsyncLocalStorage` (`trace.ts`) capturing `traceId`, `userId`, `userEmail`, `userName`, and `accountId` across async call chains.
-  - Added Express `traceMiddleware` parsing inbound `X-Trace-Id` or auto-generating UUID v4 and setting outbound `X-Trace-Id` response header.
-  - Added `requestLoggerMiddleware` logging HTTP inbound and outbound requests with latency measurement, skipping health probes.
-  - Added `setTraceContext` helper for dynamically binding authenticated user metadata to active trace contexts.
+    - Implemented `TraceStore` using Node.js `AsyncLocalStorage` (`trace.ts`) capturing `traceId`, `userId`, `userEmail`, `userName`, and `accountId` across async call chains.
+    - Added Express `traceMiddleware` parsing inbound `X-Trace-Id` or auto-generating UUID v4 and setting outbound `X-Trace-Id` response header.
+    - Added `requestLoggerMiddleware` logging HTTP inbound and outbound requests with latency measurement, skipping health probes.
+    - Added `setTraceContext` helper for dynamically binding authenticated user metadata to active trace contexts.
 - Added Pino Structured Logging & APM Log Bridge:
-  - Enhanced `logger.config.ts` with base metadata (`service`, `environment`), ISO timestamps, and dynamic mixin extracting `traceId`, `userId`, `userEmail`, `userName`, and `accountId`.
-  - Created `createLogger(moduleName, options)` factory (`logger.factory.ts`) returning module-scoped loggers with non-blocking forwarding to monitoring sinks.
-  - Added `LOGGER_MODULE` enum (`Backend/src/core/constants/observability.constants.ts`) standardizing module identifiers across all services, clients, and workers.
+    - Enhanced `logger.config.ts` with base metadata (`service`, `environment`), ISO timestamps, and dynamic mixin extracting `traceId`, `userId`, `userEmail`, `userName`, and `accountId`.
+    - Created `createLogger(moduleName, options)` factory (`logger.factory.ts`) returning module-scoped loggers with non-blocking forwarding to monitoring sinks.
+    - Added `LOGGER_MODULE` enum (`Backend/src/core/constants/observability.constants.ts`) standardizing module identifiers across all services, clients, and workers.
 - Added Pluggable Monitoring Provider Architecture (`Backend/src/core/monitoring/*`):
-  - Defined `IMonitoringProvider` strategy interface and DTO contracts (`monitoring.types.ts`).
-  - Implemented `SentryMonitoringProvider` (`providers/sentry.provider.ts`) supporting Sentry Native Structured Logging (`enableLogs: true`, `Sentry.logger.*` API) and canonical `user` context modeling (`user.id`, `user.email`, `user.username`).
-  - Implemented `NoopMonitoringProvider` for local/test environments.
-  - Created `MonitoringManager` singleton orchestrating provider lifecycle based on `MONITORING_PROVIDER` environment configuration.
+    - Defined `IMonitoringProvider` strategy interface and DTO contracts (`monitoring.types.ts`).
+    - Implemented `SentryMonitoringProvider` (`providers/sentry.provider.ts`) supporting Sentry Native Structured Logging (`enableLogs: true`, `Sentry.logger.*` API) and canonical `user` context modeling (`user.id`, `user.email`, `user.username`).
+    - Implemented `NoopMonitoringProvider` for local/test environments.
+    - Created `MonitoringManager` singleton orchestrating provider lifecycle based on `MONITORING_PROVIDER` environment configuration.
 - Added Koyeb Health Probes & Readiness Checks (`Backend/src/core/health/*`):
-  - Implemented `HealthService` verifying MongoDB and Redis connectivity.
-  - Implemented `HealthController` handling liveness (`GET /health`) and readiness (`GET /health/ready`) checks.
-  - Mounted unauthenticated health probe routes in `Backend/src/app.ts` prior to auth middleware.
+    - Implemented `HealthService` verifying MongoDB and Redis connectivity.
+    - Implemented `HealthController` handling liveness (`GET /health`) and readiness (`GET /health/ready`) checks.
+    - Mounted unauthenticated health probe routes in `Backend/src/app.ts` prior to auth middleware.
 - Added Worker & Background Queue Tracing:
-  - Updated `BaseWorker` and `SyncWorker` to execute all BullMQ jobs within `runWithTrace()`, capturing job `traceId`, `jobId`, `userId`, and `accountId`.
-  - Added `reportWorkerError()` hooks reporting worker exceptions to active monitoring providers.
+    - Updated `BaseWorker` and `SyncWorker` to execute all BullMQ jobs within `runWithTrace()`, capturing job `traceId`, `jobId`, `userId`, and `accountId`.
+    - Added `reportWorkerError()` hooks reporting worker exceptions to active monitoring providers.
 
 ### Changed
 

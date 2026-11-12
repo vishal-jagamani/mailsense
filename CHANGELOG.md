@@ -8,14 +8,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [Unreleased]
 
 ### Security
+
 - **Multi-Tenant Privacy & Account Isolation:** Hardened data access controls across all email, conversation thread, attachment, and folder operations to guarantee that accounts, messages, and files can only be accessed or downloaded by their verified owners.
 - **Attachment Staging Protection:** Enforced strict account and user ownership validation during email composition, preventing unverified or cross-account staged files from being attached to outbound messages.
 
 ### Added
+
 - **Manual Folder Synchronization:** Added on-demand folder and label synchronization controls, allowing users to instantly pull the latest folder structures and updates directly from connected Gmail and Outlook mailboxes.
 - **Direct Attachment Downloads:** Streamlined attachment downloading for seamless, reliable file retrieval across connected mail accounts.
 
 ### Changed
+
 - **Conversation Thread Stability:** Enhanced thread and email loading resilience with smarter retry handling, preventing screen freezes or endless loading loops when encountering inaccessible or deleted conversations.
 - **Mailbox Performance & Reliability:** Optimized background database connectivity and lifecycle management, resulting in faster and more dependable message syncing and navigation across unified and account-specific views.
 - **Provider Synchronization Resilience:** Refactored background mailbox synchronization and message exchange adapters for Gmail and Outlook, ensuring higher reliability, smoother syncing, and faster inbox refresh cycles.
@@ -24,14 +27,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Client Error Recovery & Session Resilience:** Streamlined application monitoring and error handling across background network requests to prevent UI interruption and ensure prompt recovery during transient network drops.
 - **Mailbox Analytics & Dashboard Performance:** Optimized data aggregation pipelines and background query caching, resulting in faster dashboard loading and instant metric turnaround across connected accounts.
 - **Background Synchronization Reliability:** Hardened job scheduling and background sync execution for automated mailbox updates, ensuring uninterrupted message ingestion and accurate unread counts.
+- **Composer & Attachment Workflow:** Streamlined email composer state management and attachment uploads for smoother, more responsive drafting and dispatch.
+- **Folder Organization & Dropdown Actions:** Improved destination folder searching and selection responsiveness when moving emails between folders and labels.
+- **Mailbox Interaction & Shortcut Responsiveness:** Refined keyboard shortcut handling and bulk email actions across mailbox views for smooth, lag-free navigation and message triaging.
 
 ## [3.5.0] - 2026-10-15
 
 ### Added
+
 - **Multi-Account Bulk Action Resilience:** Improved bulk email operations (starring, marking read/unread, archiving, and trashing messages) across multiple accounts so that actions process in parallel with isolated error recovery, ensuring mailbox views update smoothly and remain synchronized even if a single account encounters a temporary provider delay.
 - **Folder Management Experience:** Refined the folder and label management interface with modular card layouts, cleaner headers, and more responsive action controls when creating, inspecting, and organizing folders.
 
 ### Changed
+
 - **Attachment & Staging Security:** Strengthened file attachment security by strictly verifying account ownership and user permissions when attaching or managing staged files during email composition, protecting against unauthorized access.
 - **Account Privacy & Credential Protection:** Hardened account data handling to guarantee that sensitive authentication tokens and access credentials are strictly omitted from client responses.
 - **Consistent Recipient Delivery:** Standardized recipient address formatting (`To`, `Cc`, `Bcc`) across connected Gmail and Outlook accounts for reliable email dispatch, search suggestions, and chip display in the composer.
@@ -40,6 +48,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [3.4.0] - 2026-09-27
 
 ### Added
+
 - **Optimistic UI Rollbacks (`UI-NEXT-01`):** Enhanced email mutations (`starEmail`, `unreadEmail`, `moveEmails`) with React Query `onMutate` cache snapshots and contextual error recovery toasts (`sonner`), guaranteeing automatic state restoration to the pre-mutation snapshot upon network or server failures.
 - **Keyboard Navigation & Shortcuts Engine (`UI-NEXT-02`):** Implemented global mailbox keyboard navigation with focus guards (`isInputElement`), supporting `j`/`k` (cursor move with auto-scroll), `Enter`/`o` (open email), `s` (star), `u` (unread), `e` (archive), `Delete`/`Backspace` (trash with confirmation dialog), `c` (compose), `/` (search focus), and `?` (shortcuts cheat-sheet dialog). Ensured complete mouse click and keyboard shortcut parity across all bulk operations (Star, Mark Unread/Read, Archive, Delete, and Move to Folder): when checkboxes are selected, actions operate on all selected emails simultaneously, update local UI state optimistically, show contextual count toasts (e.g. `X emails starred / marked as unread / archived / deleted`), send all selected IDs in mutation payloads, and reset selections cleanly. Integrated accessible `DeleteModal` (`Enter` to confirm, `Escape` to cancel) with pluralized count descriptions, visual keyboard shortcut buttons in toolbars, and active-row cursor focus ring (`ring-2 ring-primary ring-inset`) in mailbox tables across Unified Inbox, Account Inbox, and Folder Email List pages.
 - **Accessible Shortcuts Modal:** Integrated `KeyboardShortcutsModal` presenting organized keybinding categories (Navigation, Actions, Composer & Search) styled with accessible Radix primitives.
@@ -55,11 +64,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added tenant-scoped `EmailRepository.getEmailIdsByProviderMessageIds` query helper.
 
 ### Fixed
-- **ErrorBoundary & Bulk API Resilience:** Resolved issue where an archive HTTP 500 or async rejection triggered the full-screen `ErrorBoundary` component. Isolated `window.onunhandledrejection` to observability monitoring in `ErrorBoundary.tsx` without setting visual error state, and standardized `useInboxPage`, `useFolderEmailListPage`, and `useInboxEmailMenuBarOptions` on React Query's `.mutate()` with `onError` handlers, displaying polite sonner toasts advising the user to *"Please retry in some time"* while rolling back optimistic UI state and refetching data to maintain synchronization.
+
+- **ErrorBoundary & Bulk API Resilience:** Resolved issue where an archive HTTP 500 or async rejection triggered the full-screen `ErrorBoundary` component. Isolated `window.onunhandledrejection` to observability monitoring in `ErrorBoundary.tsx` without setting visual error state, and standardized `useInboxPage`, `useFolderEmailListPage`, and `useInboxEmailMenuBarOptions` on React Query's `.mutate()` with `onError` handlers, displaying polite sonner toasts advising the user to _"Please retry in some time"_ while rolling back optimistic UI state and refetching data to maintain synchronization.
 
 ## [3.3.0] - 2026-09-26
 
 ### Fixed
+
 - Fixed email selection, starring, marking unread, archiving, and deletion across the inbox and email views so actions reliably target selected emails without ID mismatches.
 - Fixed moving emails between folders and labels so moved messages update their folder location immediately and reflect changes accurately across connected accounts.
 - Fixed folder management to ensure renaming and deleting folders reliably persists and synchronizes across connected Gmail and Outlook mailboxes.
@@ -70,6 +81,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Enhanced account privacy and security by strictly verifying user ownership on account sync, enable, and delete operations, and ensuring sensitive OAuth access and refresh credentials are never exposed to the client.
 
 ### Changed
+
 - Improved error handling and notifications with clear, descriptive explanations and actionable recovery guidance instead of generic failure popups when mailbox, folder, draft, or attachment operations encounter issues.
 - Strengthened tenant privacy and access control across folders, drafts, staged attachments, and account preferences to guarantee resources can only be modified by their verified owners.
 - Improved background resilience and synchronization stability for scheduled email synchronization and credential renewal, ensuring mailboxes stay continuously up-to-date.
@@ -80,17 +92,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [3.2.0] - 2026-09-14
 
 ### Added
+
 - Added an application error recovery screen with a single-click "Copy Trace ID" feature so users can easily share diagnostic reference IDs with support if an unexpected issue occurs.
 - Added automated server health and self-healing probes to keep mailbox operations, background sync, and notification delivery consistently available.
 - Added privacy-preserving error tracking with automatic masking of sensitive credentials, compose editor content, and email messages.
 
 ### Changed
+
 - Improved overall platform stability and error recovery with graceful failure fallbacks across all mailbox actions, background syncing, and folder operations.
 - Enhanced backend synchronization resilience so scheduled email sync jobs run more reliably without getting stuck or dropping connections.
 
 ## [3.1.0] - 2026-08-31
 
 ### Added
+
 - Added mailbox analytics overview with real-time tracking of total, unread, sent, and starred email counts alongside active account statistics.
 - Added email volume trends with interactive time-series charts and period-over-period comparison insights.
 - Added account email distribution chart displaying volume share across connected mailboxes with a central total emails count.
@@ -103,6 +118,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [3.0.0] - 2026-08-29
 
 ### Added
+
 - Added automatic draft saving while composing emails so progress is saved continuously without manual effort.
 - Added live draft status indicators in the email compose window showing when a draft is saving and when it was last saved.
 - Added a dedicated Drafts folder in the navigation sidebar to view, manage, and search all saved email drafts.
@@ -117,44 +133,53 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added attachment download and image preview support directly from email details and threaded conversations.
 
 ### Changed
+
 - Inbox and account email lists now group conversation emails together and show the number of messages in each thread.
 - Email lists now show when a conversation includes attached files.
 
 ## [2.1.1] - 2026-08-03
 
 ### Changed
+
 - Improved backend background-sync infrastructure compatibility by standardizing Redis connection configuration for deployed environments.
 
 ### Fixed
+
 - Improved Redis connection shutdown and reconnect handling for background sync services.
 
 ## [2.1.0] - 2026-07-31
 
 ### Added
+
 - Added account sync controls in Settings so users can enable or pause background sync and choose shared or per-account sync frequency.
 - Added per-account sync settings from Connected Accounts, including mailbox-level auto-sync and sync frequency controls.
 
 ### Changed
+
 - Unified inbox now shows when background sync is running and refreshes email results automatically while new mail is being fetched.
 - Connected account cards now show clearer sync status, including sync progress, failed sync warnings, and never-synced state.
 
 ### Fixed
+
 - Fixed inbox list refresh after single-email delete actions so changes appear immediately.
 - Fixed profile settings form handling when optional phone number data is missing.
 
 ## [2.0.1] - 2026-07-28
 
 ### Changed
+
 - Updated backend package metadata and shared-types dependency wiring for the `2.0.1` backend release line.
 
 ## [2.0.0] - 2026-07-27
 
 ### Added
+
 - Added background account sync job tracking to support queued sync execution more reliably.
 - Added scheduled background sync support so active accounts can keep syncing automatically.
 - Newly connected accounts now start with syncing disabled by default so sync can be enabled intentionally.
 
 ### Changed
+
 - Improved backend sync infrastructure to support future queued background processing.
 - Improved backend mail-provider handling so account sync, email actions, compose flows, contact search, and folder operations now run through a shared provider strategy layer.
 - Account sync requests now queue background jobs instead of running the full sync inline.
@@ -162,70 +187,86 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Improved frontend and backend data consistency by moving shared app contracts into a common types package used across accounts, inbox, folders, compose, and settings flows.
 
 ### Fixed
+
 - Improved compatibility for existing connected-account data during the shared-type and account-schema migration.
 
 ## [1.4.1] - 2026-06-29
 
 ### Added
+
 - Added inbox filter options for folders and unread messages.
 
 ### Changed
+
 - Updated inbox filtering to use dynamic filter data from connected accounts and folders.
 
 ### Fixed
+
 - Improved consistency between unified inbox and account inbox filtering by using the same shared filter flow.
 
 ## [1.4.0] - 2026-06-29
 
 ### Added
+
 - Added updated account-page guidance reflecting Outlook availability and connector onboarding steps.
 - Added a unified, responsive filter modal to filter emails and folders by connected account and date range.
 - Added a mobile-optimized view for the folders list.
 
 ### Changed
+
 - Connected account management now groups accounts by provider with a cleaner provider-based presentation.
 - Disabled accounts are now shown in Connected Accounts so they can be reviewed and re-enabled when needed.
 - Refactored the inbox, account inbox, and folders overview pages for a smoother interface and better layout sizing.
 
 ### Fixed
+
 - Fixed account enable/disable toggle behavior so the UI restores the previous state if an update fails.
 
 ## [1.3.2] - 2026-05-31
 
 ### Added
+
 - Added a compact Compose button with tooltip support for the collapsed sidebar.
 
 ### Changed
+
 - Updated sidebar navigation to build connected account inbox links from centralized navigation data.
 
 ### Fixed
+
 - Fixed sidebar navigation behavior so expandable sections can be toggled without blocking direct navigation to the parent page.
 
 ## [1.3.1] - 2026-05-21
 
 ### Added
+
 - Newly connected mail accounts are now enabled automatically as soon as the connection completes.
 
 ### Changed
+
 - Account connection flow now keeps newly linked accounts available immediately in connected account and mailbox-driven experiences.
 
 ### Fixed
+
 - Fixed a post-connect account state issue that could leave a newly linked account inactive until manually re-enabled.
 
 ## [1.3.0] - 2026-05-19
 
 ### Added
+
 - Added account enable and disable controls in the connected accounts experience.
 - Added compose email support with a new in-app compose popup for sending messages from connected accounts.
 - Added contact-based recipient suggestions while composing emails.
 
 ### Changed
+
 - Updated authenticated app requests so account, user, folder, and email data now resolve from the signed-in session instead of passing user IDs in request payloads.
 - Inactive accounts are now excluded from account lists, sync flows, inbox results, and folder views until re-enabled.
 - Updated inbox defaults to keep sent, spam, and trash messages out of the main email list across connected providers.
 - Updated compose email flow to support multi-recipient chips and faster contact selection from provider data.
 
 ### Fixed
+
 - Improved reliability of authenticated account and inbox data loading by aligning frontend requests with backend JWT-based authorization.
 - Improved account management flow by preventing disabled accounts from being synced or shown in active mailbox views.
 - Improved backend error responses for provider API failures during email actions.
@@ -233,24 +274,29 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ## [1.2.0] - 2026-04-13
 
 ### Added
+
 - Added a new folders area in the app with sidebar navigation and a dedicated folders overview page.
 - Added folder management actions for creating, renaming, and deleting folders from the folders workspace.
 - Added the ability to open a folder and browse the emails inside that folder.
 
 ### Changed
+
 - Folder browsing now supports search, account filtering, and paginated listing.
 - Folder data now refreshes automatically after folder create, rename, and delete actions.
 - Account sync now also refreshes folder data so folder lists stay aligned with connected mail providers.
 
 ### Fixed
+
 - Improved sticky header and breadcrumb spacing for smoother page layout on the new folders flow.
 
 ## [1.1.1] - 2026-03-09
 
 ### Added
+
 - Improved mobile responsiveness across key screens, including inbox, account inbox, email details, accounts, and settings.
 
 ### Changed
+
 - Inbox list, filter/action bar, and pagination behaviors were updated for better mobile usability.
 - Email list responses now include plain-text preview content to improve message snippet rendering in list views.
 
@@ -259,17 +305,21 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Outlook connector support for account syncing and email details retrieval.
 
 ### Added
+
 - Outlook support for bulk email actions: delete, archive, mark unread/read, and flag/unflag.
 
 ### Changed
+
 - Inbox action flows now consistently refresh email data and reset selection/page state after successful bulk actions.
 
 ## [1.0.0] - 2026-02-22
 
 ### Added
+
 - Initial v1.0 release with Gmail connector support.
 
 ### Notes
+
 - Outlook connector is in development and not included in this release.
 
 [Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.3.0...HEAD

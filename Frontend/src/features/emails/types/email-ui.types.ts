@@ -4,7 +4,6 @@ import {
     EmailAttributes,
     Filter,
     FilterOption,
-    FolderAttributes,
     GetThreadResponse,
     PaginatedDataResponse,
     UpdateAPIResponse,
@@ -52,13 +51,6 @@ export interface AttachmentPreviewProps {
     readonly accountId: string;
     readonly messageId: string;
     readonly onPreviewClick?: (attachment: EmailAttachment) => void;
-}
-
-export interface MoveToFolderDropdownProps {
-    readonly selectedEmailIds: readonly string[];
-    readonly availableFolders: readonly FolderAttributes[];
-    readonly onFolderSelect: (folderId: string) => void;
-    readonly disabled?: boolean;
 }
 
 export interface EmailHeaderProps {
@@ -115,19 +107,6 @@ export interface UseEmailActionsOptions {
     readonly setEmailsData: Dispatch<SetStateAction<PaginatedDataResponse<EmailAttributes> | null>>;
     readonly onRefresh: () => void;
     readonly onClearSelection?: () => void;
-}
-
-export interface UseEmailActionsReturn {
-    readonly emailsToDelete: string[];
-    readonly isShortcutsModalOpen: boolean;
-    readonly isDeleting: boolean;
-    readonly setEmailsToDelete: (emails: string[]) => void;
-    readonly setIsShortcutsModalOpen: (open: boolean) => void;
-    readonly handleToggleStar: (email?: EmailAttributes) => void;
-    readonly handleToggleUnread: (email?: EmailAttributes) => void;
-    readonly handleArchiveEmail: (email?: EmailAttributes) => void;
-    readonly handleConfirmDelete: () => void;
-    readonly handlePromptDelete: (email?: EmailAttributes) => void;
 }
 
 export interface UseEmailPaginationOptions {

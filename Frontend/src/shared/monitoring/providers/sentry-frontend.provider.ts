@@ -1,7 +1,6 @@
 import type { SeverityLevel } from '@sentry/nextjs';
 import * as Sentry from '@sentry/nextjs';
 import {
-    BreadcrumbLevel,
     FrontendErrorContext,
     FrontendMonitoringConfig,
     FrontendMonitoringProviderName,
