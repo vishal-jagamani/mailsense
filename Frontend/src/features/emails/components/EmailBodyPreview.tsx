@@ -3,11 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import DOMPurify from 'isomorphic-dompurify';
-
-interface EmailBodyPreviewProps {
-    html?: string | null;
-    plain?: string | null;
-}
+import { EmailBodyPreviewProps } from '../types';
 
 const EmailBodyPreview: React.FC<EmailBodyPreviewProps> = ({ html, plain }) => {
     const [showImages, setShowImages] = useState(false);

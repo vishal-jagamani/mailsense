@@ -4,19 +4,13 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 
 import { useUpdateAccountSettingsMutation } from '@features/accounts/api/accounts.mutations';
-import { AccountAttributes } from '@mailsense/types';
+import { AccountSettingsModalProps } from '@features/accounts/types/accounts-components.types';
 import { SYNC_INTERVAL_OPTIONS } from '@shared/constants';
 import { Button } from '@shared/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@shared/ui/dialog';
 import { Label } from '@shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { Switch } from '@shared/ui/switch';
-
-interface AccountSettingsModalProps {
-    account: AccountAttributes;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-}
 
 const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({ account, open, onOpenChange }) => {
     const [syncEnabled, setSyncEnabled] = useState(account.syncEnabled ?? true);

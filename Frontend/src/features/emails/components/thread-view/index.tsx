@@ -2,20 +2,13 @@
 
 import React, { useState } from 'react';
 
-import { AccountAttributes, EmailAttributes } from '@mailsense/types';
+import { ThreadViewProps } from '@features/emails/types';
 import { Separator } from '@shared/ui/separator';
 import AttachmentList from '../attachments';
 import EmailBodyPreview from '../EmailBodyPreview';
 import ThreadViewHeaderBar from './ThreadViewHeaderBar';
 
-interface ThreadViewProps {
-    account: AccountAttributes | undefined;
-    emails: EmailAttributes[];
-    onReply?: (email: EmailAttributes) => void;
-    onReplyAll?: (email: EmailAttributes) => void;
-}
-
-const ThreadView: React.FC<ThreadViewProps> = ({ emails, account, onReply, onReplyAll }) => {
+const ThreadView: React.FC<ThreadViewProps> = ({ emails, account }) => {
     const latestEmailId = emails.length > 0 ? String(emails[emails.length - 1]._id) : '';
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set([latestEmailId]));
 

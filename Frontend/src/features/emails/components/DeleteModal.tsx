@@ -13,14 +13,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '@shared/ui/alert-dialog';
-
-interface DeleteModalProps {
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
-    onDelete: () => void;
-    title?: string;
-    description?: string;
-}
+import { DeleteModalProps } from '../types';
 
 const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange, onDelete, title, description }) => {
     useEffect(() => {
@@ -39,7 +32,7 @@ const DeleteModal: React.FC<DeleteModalProps> = ({ open, onOpenChange, onDelete,
                     onOpenChange(false);
                 }
             } catch (error) {
-                trackUserAction('ui.click', 'DeleteModal keydown error', 'warn');
+                trackUserAction('ui.click', `DeleteModal keydown error: ${error}`, 'warn');
             }
         };
 

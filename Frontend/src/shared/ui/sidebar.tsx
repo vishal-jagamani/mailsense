@@ -5,7 +5,7 @@ import { cva, VariantProps } from 'class-variance-authority';
 import { PanelLeftIcon } from 'lucide-react';
 import * as React from 'react';
 
-import { cn } from '@lib/utils';
+import { cn } from '@shared/utils';
 import { useIsMobile } from '@shared/hooks';
 import { Button } from '@shared/ui/button';
 import { Input } from '@shared/ui/input';
@@ -599,7 +599,5 @@ export {
     SidebarRail,
     SidebarSeparator,
     SidebarTrigger,
-    useSidebar
+    useSidebar,
 };
-
-

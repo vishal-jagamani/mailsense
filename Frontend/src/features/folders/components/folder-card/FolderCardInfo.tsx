@@ -2,13 +2,9 @@
 
 import React from 'react';
 
-import { FolderAttributes } from '@mailsense/types';
+import { FolderCardInfoProps } from '@features/folders/types/folders-components.types';
 import { Separator } from '@shared/ui/separator';
-import { formatEpochTimeToString } from '@shared/utils/formatter';
-
-interface FolderCardInfoProps {
-    data: FolderAttributes;
-}
+import { formatEpochTimeToString } from '@shared/utils';
 
 const FolderCardInfo: React.FC<FolderCardInfoProps> = ({ data }) => {
     return (

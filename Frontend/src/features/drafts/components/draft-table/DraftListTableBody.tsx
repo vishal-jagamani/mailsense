@@ -7,7 +7,7 @@ import { DraftListTableBodyProps } from '@features/drafts/types';
 import { useIsMobile } from '@shared/hooks';
 import { Checkbox } from '@shared/ui/checkbox';
 import { Table, TableCell, TableRow } from '@shared/ui/table';
-import { formatDateToMonthDateString } from '@shared/utils/formatter';
+import { formatDateToMonthDateString } from '@shared/utils';
 
 const DraftListTableBody: React.FC<DraftListTableBodyProps> = ({ data, selectedDrafts, handleCheckboxChange, onOpenDraft, onDeleteDraft }) => {
     const isMobile = useIsMobile();

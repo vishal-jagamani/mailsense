@@ -1,17 +1,29 @@
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { IEmailProvider } from '@integrations/email/email.provider.js';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { EmailRepository } from '@modules/emails/email.repository.js';
-import { FolderService } from '@modules/folders/folder.service.js';
-import { Job } from 'bullmq';
-import { SyncAccountPayload } from 'core/queue/queue.service.js';
-import { syncAccountProcessor } from '../processors/sync-account.processor.js';
+import { EmailProviderFactory, IEmailProvider } from '@integrations/email/index.js';
 import { SyncJobResult } from '@mailsense/types';
+import { AccountRepository } from '@modules/accounts/database/index.js';
+import { EmailRepository } from '@modules/emails/database/index.js';
+import { FolderService } from '@modules/folders/services/index.js';
+import { SyncAccountPayload } from '@queue';
+import { Job } from 'bullmq';
+import { syncAccountProcessor } from '../processors/sync-account.processor.js';
 
-jest.mock('@modules/accounts/account.repository.js');
-jest.mock('@modules/emails/email.repository.js');
-jest.mock('@modules/folders/folder.service.js');
-jest.mock('@integrations/email/email.provider.factory.js');
+jest.mock('@modules/accounts/database/index.js');
+jest.mock('@modules/emails/database/index.js', () => {
+    const actual = jest.requireActual('@modules/emails/database/index.js') as object;
+    return {
+        __esModule: true,
+        ...actual,
+        EmailRepository: {
+            getEmailIdsByProviderMessageIds: jest.fn(),
+            deleteManyEmails: jest.fn().mockResolvedValue({ deletedCount: 1 }),
+            deleteEmailsByAccountId: jest.fn().mockResolvedValue({ deletedCount: 0 }),
+            upsertEmails: jest.fn().mockResolvedValue(undefined),
+            upsertEmailsInBulk: jest.fn().mockResolvedValue(undefined),
+        },
+    };
+});
+jest.mock('@modules/folders/services/index.js');
+jest.mock('@integrations/email/index.js');
 
 describe('syncAccountProcessor', () => {
     let mockJob: Partial<Job<SyncAccountPayload, SyncJobResult>>;

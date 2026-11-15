@@ -1,6 +1,7 @@
 import { LOGGER_MODULE } from '@constants';
 import { SYSTEM_EVENT, SystemEventPayloads } from '@mailsense/types';
 import { createLogger } from '@observability';
+import { PublishEventPayload } from '@types';
 import EventEmitter from 'events';
 
 const logger = createLogger(LOGGER_MODULE.EVENT_BUS);
@@ -49,7 +50,7 @@ class EventBus {
     private getPayloadSummary<K extends SYSTEM_EVENT>(
         event: K,
         payload: SystemEventPayloads[K],
-    ): SystemEventPayloads[SYSTEM_EVENT.SYNC_COMPLETED] | { accountId: string; providerMessageId?: string; subject?: string } {
+    ): SystemEventPayloads[SYSTEM_EVENT.SYNC_COMPLETED] | PublishEventPayload {
         if (event === SYSTEM_EVENT.EMAIL_CREATED) {
             const emailPayload = payload as SystemEventPayloads[SYSTEM_EVENT.EMAIL_CREATED];
             return {

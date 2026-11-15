@@ -3,16 +3,9 @@
 import { EditorContent, useEditor } from '@tiptap/react';
 import React, { useEffect } from 'react';
 
+import { RichTextEditorProps } from '@features/emails/types';
 import { useIsMobile } from '@shared/hooks';
 import { getEditorExtensions } from './editor.config';
-
-interface RichTextEditorProps {
-    content: string;
-    onContentChange: (value: string) => void;
-    placeholder?: string;
-    editable?: boolean;
-    className?: string;
-}
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({
     content,

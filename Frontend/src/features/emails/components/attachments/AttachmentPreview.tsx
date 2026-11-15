@@ -1,12 +1,10 @@
 'use client';
 
 import { X } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
-interface AttachmentPreviewProps {
-    previewUrl: string | null;
-    closePreview: () => void;
-}
+import { AttachmentPreviewProps } from '@features/emails/types';
 
 const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ previewUrl, closePreview }) => {
     if (!previewUrl) return null;
@@ -22,7 +20,7 @@ const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ previewUrl, close
                 >
                     <X className="size-5" />
                 </button>
-                <img src={previewUrl} alt="Preview" className="block h-auto max-h-[85vh] w-auto max-w-[90vw] rounded-xl object-contain" />
+                <Image src={previewUrl} alt="Preview" className="block h-auto max-h-[85vh] w-auto max-w-[90vw] rounded-xl object-contain" />
             </div>
         </div>
     );

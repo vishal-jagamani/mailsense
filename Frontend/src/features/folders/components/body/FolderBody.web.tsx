@@ -2,11 +2,20 @@
 
 import React from 'react';
 
-import { FolderBodyProps } from '@entities/folder';
+import { FolderBodyViewProps } from '@features/folders/types/folders-components.types';
 import PaginationComponent from '@shared/components/table/Pagination';
 import FolderCard from './FolderCard';
 
-const FolderBodyWeb: React.FC<FolderBodyProps> = ({ tableData, size, page, total, onPageChange, onPageSizeChange, renameState, deleteFolder }) => {
+const FolderBodyWeb: React.FC<FolderBodyViewProps> = ({
+    tableData,
+    size,
+    page,
+    total,
+    onPageChange,
+    onPageSizeChange,
+    renameState,
+    deleteFolder,
+}) => {
     return (
         <>
             <div className="mt-2 grid flex-1 grid-cols-2 content-start gap-4 overflow-y-auto md:grid-cols-3 lg:grid-cols-4">

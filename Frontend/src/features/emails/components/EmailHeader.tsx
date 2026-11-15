@@ -2,14 +2,9 @@
 
 import React from 'react';
 
-import { formatEmailFromString } from '@entities/email/lib';
-import { EmailAttributes } from '@mailsense/types';
-import { formatDateToDateTimeAgoString } from '@shared/utils/formatter';
-
-interface EmailHeaderProps {
-    accountId: string;
-    email?: EmailAttributes;
-}
+import { formatDateToDateTimeAgoString } from '@shared/utils';
+import { EmailHeaderProps } from '../types';
+import { formatEmailFromString } from './FormatEmailFromString';
 
 const EmailHeader: React.FC<EmailHeaderProps> = ({ email }) => {
     return (

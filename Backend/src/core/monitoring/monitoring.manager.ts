@@ -2,6 +2,7 @@ import { NODE_ENV } from '@config';
 import { LOGGER_MODULE, MONITORING_PROVIDERS } from '@constants';
 import { createLogger, registerTelemetrySink } from '@observability';
 import {
+    DefaultMonitoringConfig,
     IMonitoringProvider,
     LOG_LEVELS,
     MonitoringBreadcrumb,
@@ -66,6 +67,39 @@ export class MonitoringManager implements IMonitoringProvider {
         }
     }
 
+    private getDefaultConfig(): DefaultMonitoringConfig {
+        return {
+            dsn: process.env.SENTRY_DSN,
+            environment: NODE_ENV || 'development',
+            release: process.env.APP_VERSION || '3.2.0',
+            sampleRate: 1.0,
+            sendDefaultPii: true,
+            debug: false,
+            enableLogs: process.env.SENTRY_ENABLE_LOGS !== 'false',
+        };
+    }
+
+    private buildEffectiveConfig(config?: Partial<MonitoringConfig>): MonitoringConfig {
+        const defaults = this.getDefaultConfig();
+        if (!config) {
+            return {
+                provider: this.provider.name,
+                ...defaults,
+            };
+        }
+
+        return {
+            provider: this.provider.name,
+            dsn: config.dsn ?? defaults.dsn,
+            environment: config.environment ?? defaults.environment,
+            release: config.release ?? defaults.release,
+            sampleRate: config.sampleRate ?? defaults.sampleRate,
+            sendDefaultPii: config.sendDefaultPii ?? defaults.sendDefaultPii,
+            debug: config.debug ?? defaults.debug,
+            enableLogs: config.enableLogs ?? defaults.enableLogs,
+        };
+    }
+
     public init(config?: Partial<MonitoringConfig>): void {
         try {
             if (this.isInitialized) {
@@ -73,16 +107,7 @@ export class MonitoringManager implements IMonitoringProvider {
                 return;
             }
 
-            const effectiveConfig: MonitoringConfig = {
-                provider: this.provider.name,
-                dsn: config?.dsn ?? process.env.SENTRY_DSN,
-                environment: config?.environment ?? NODE_ENV ?? 'development',
-                release: config?.release ?? process.env.APP_VERSION ?? '3.2.0',
-                sampleRate: config?.sampleRate ?? 1.0,
-                sendDefaultPii: config?.sendDefaultPii ?? true,
-                debug: config?.debug ?? false,
-                enableLogs: config?.enableLogs ?? (process.env.SENTRY_ENABLE_LOGS !== 'false'),
-            };
+            const effectiveConfig = this.buildEffectiveConfig(config);
 
             this.provider.init(effectiveConfig);
             this.isInitialized = true;

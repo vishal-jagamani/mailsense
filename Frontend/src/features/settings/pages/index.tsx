@@ -4,14 +4,11 @@ import React, { Suspense, useEffect } from 'react';
 
 import { ROUTES, SETTINGS_OPTIONS } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
+import { SettingsPageProps } from '@shared/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
 import { Loader } from 'lucide-react';
-import ProfileSettings from './profile';
 import AccountSettings from './account';
-
-interface SettingsPageProps {
-    setting: string;
-}
+import ProfileSettings from './profile';
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ setting }) => {
     useEffect(() => {
@@ -43,7 +40,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ setting }) => {
     );
 };
 
-const SettingsPageWrapper = ({ setting }: { setting: string }) => (
+const SettingsPageWrapper = ({ setting }: SettingsPageProps) => (
     <Suspense fallback={<Loader />}>
         <SettingsPage setting={setting} />
     </Suspense>

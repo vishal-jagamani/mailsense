@@ -16,7 +16,7 @@ export const OverviewKpiCards: React.FC<OverviewKpiCardsProps> = ({ overview, is
             }
             return new Intl.NumberFormat('en-US').format(value);
         } catch (error) {
-            trackUserAction('ui.click', 'Failed to format metric number', 'warn');
+            trackUserAction('ui.click', `Failed to format metric number: ${error}`, 'warn');
             return String(value ?? 0);
         }
     };

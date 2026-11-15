@@ -1,7 +1,8 @@
 import { OutlookAttachmentClient } from './outlook-attachment.client.js';
 import { OutlookAuthClient } from './outlook-auth.client.js';
 import { OutlookFolderClient } from './outlook-folder.client.js';
-import { OutlookMailClient } from './outlook-mail.client.js';
+import { OutlookMailReadClient } from './outlook-mail-read.client.js';
+import { OutlookMailWriteClient } from './outlook-mail-write.client.js';
 
 export class OutlookClient {
     // Outlook auth client
@@ -10,23 +11,25 @@ export class OutlookClient {
     public static readonly refreshAccessToken = OutlookAuthClient.refreshAccessToken;
     public static readonly getUserProfileFromAccessToken = OutlookAuthClient.getUserProfileFromAccessToken;
 
-    // Outlook mail client
-    public static readonly getMessages = OutlookMailClient.getMessages;
-    public static readonly getMessagesFromDeltaLink = OutlookMailClient.getMessagesFromDeltaLink;
-    public static readonly getMessageDetails = OutlookMailClient.getMessageDetails;
-    public static readonly createDraftMessage = OutlookMailClient.createDraftMessage;
-    public static readonly sendDraftMessage = OutlookMailClient.sendDraftMessage;
-    public static readonly sendMailDirect = OutlookMailClient.sendMailDirect;
-    public static readonly flagEmail = OutlookMailClient.flagEmail;
-    public static readonly unreadEmail = OutlookMailClient.unreadEmail;
-    public static readonly deleteEmail = OutlookMailClient.deleteEmail;
-    public static readonly deleteEmailPermanently = OutlookMailClient.deleteEmailPermanently;
-    public static readonly archiveEmail = OutlookMailClient.archiveEmail;
-    public static readonly unarchiveEmail = OutlookMailClient.unarchiveEmail;
-    public static readonly moveMessage = OutlookMailClient.moveMessage;
-    public static readonly searchContacts = OutlookMailClient.searchContacts;
-    public static readonly createUploadSession = OutlookMailClient.createUploadSession;
-    public static readonly uploadChunk = OutlookMailClient.uploadChunk;
+    // Outlook mail read client
+    public static readonly getMessages = OutlookMailReadClient.getMessages;
+    public static readonly getMessagesFromDeltaLink = OutlookMailReadClient.getMessagesFromDeltaLink;
+    public static readonly getMessageDetails = OutlookMailReadClient.getMessageDetails;
+    public static readonly searchContacts = OutlookMailReadClient.searchContacts;
+
+    // Outlook mail write client
+    public static readonly createDraftMessage = OutlookMailWriteClient.createDraftMessage;
+    public static readonly sendDraftMessage = OutlookMailWriteClient.sendDraftMessage;
+    public static readonly sendMailDirect = OutlookMailWriteClient.sendMailDirect;
+    public static readonly flagEmail = OutlookMailWriteClient.flagEmail;
+    public static readonly unreadEmail = OutlookMailWriteClient.unreadEmail;
+    public static readonly deleteEmail = OutlookMailWriteClient.deleteEmail;
+    public static readonly deleteEmailPermanently = OutlookMailWriteClient.deleteEmailPermanently;
+    public static readonly archiveEmail = OutlookMailWriteClient.archiveEmail;
+    public static readonly unarchiveEmail = OutlookMailWriteClient.unarchiveEmail;
+    public static readonly moveMessage = OutlookMailWriteClient.moveMessage;
+    public static readonly createUploadSession = OutlookMailWriteClient.createUploadSession;
+    public static readonly uploadChunk = OutlookMailWriteClient.uploadChunk;
 
     // Outlook folder client
     public static readonly getAllFolders = OutlookFolderClient.getAllFolders;
@@ -41,4 +44,4 @@ export class OutlookClient {
     public static readonly getAttachmentStream = OutlookAttachmentClient.getAttachmentStream;
 }
 
-export { OutlookAttachmentClient, OutlookAuthClient, OutlookFolderClient, OutlookMailClient };
+export { OutlookAttachmentClient, OutlookAuthClient, OutlookFolderClient, OutlookMailReadClient, OutlookMailWriteClient };

@@ -2,7 +2,7 @@ import { GMAIL_SECRETS } from '@config';
 import { LOGGER_MODULE, OAUTH_ACCESS_TOKEN_URI } from '@constants';
 import { NotFoundError } from '@errors';
 import { GmailOAuthAccessTokenResponse, GmailUserProfile } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
 import { createLogger } from '@observability';
 import { AxiosRequestConfig } from 'axios';
 import { apiRequest, decrypt, encrypt } from 'shared/utils/index.js';

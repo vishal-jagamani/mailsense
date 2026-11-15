@@ -1,10 +1,10 @@
 import { toast } from 'sonner';
 
-import { RenameFolderState } from '@entities/folder';
 import { CreateFolderBodyParams } from '@mailsense/types';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { useEffect, useState } from 'react';
 import { useDeleteFolderMutation, useUpdateFolderMutation } from '../api/folder.mutation';
+import { RenameFolderState } from '../types/folders.types';
 
 export const useFolderBody = () => {
     const [renameFolderFlag, setRenameFolderFlag] = useState<boolean>(false);

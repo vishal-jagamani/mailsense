@@ -1,7 +1,6 @@
 import type { SeverityLevel } from '@sentry/nextjs';
 import * as Sentry from '@sentry/nextjs';
 import {
-    BreadcrumbLevel,
     FrontendErrorContext,
     FrontendMonitoringConfig,
     FrontendMonitoringProviderName,
@@ -80,36 +79,28 @@ export class SentryFrontendProvider implements IFrontendMonitoringProvider {
     }
 
     public captureBreadcrumb(breadcrumb: UserActionBreadcrumb): void {
-        try {
-            if (!this.initialized) return;
+        if (!this.initialized) return;
 
-            Sentry.addBreadcrumb({
-                category: breadcrumb.category,
-                message: breadcrumb.message,
-                level: breadcrumb.level as SeverityLevel,
-                data: breadcrumb.data,
-                timestamp: breadcrumb.timestamp ? breadcrumb.timestamp / 1000 : undefined,
-            });
-        } catch {
-            // Non-blocking
-        }
+        Sentry.addBreadcrumb({
+            category: breadcrumb.category,
+            message: breadcrumb.message,
+            level: breadcrumb.level as SeverityLevel,
+            data: breadcrumb.data,
+            timestamp: breadcrumb.timestamp ? breadcrumb.timestamp / 1000 : undefined,
+        });
     }
 
     public setUser(user: FrontendUserContext | null): void {
-        try {
-            if (!this.initialized) return;
+        if (!this.initialized) return;
 
-            if (user) {
-                Sentry.setUser({
-                    id: user.id,
-                    email: user.email,
-                    username: user.username,
-                });
-            } else {
-                Sentry.setUser(null);
-            }
-        } catch {
-            // Non-blocking
+        if (user) {
+            Sentry.setUser({
+                id: user.id,
+                email: user.email,
+                username: user.username,
+            });
+        } else {
+            Sentry.setUser(null);
         }
     }
 

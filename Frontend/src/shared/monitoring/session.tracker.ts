@@ -20,18 +20,14 @@ export class SessionTracker {
     }
 
     private resolveSessionId(): string {
-        try {
-            if (typeof window !== 'undefined' && window.sessionStorage) {
-                const existing = window.sessionStorage.getItem(MONITORING_DEFAULTS.SESSION_STORAGE_KEY);
-                if (existing) {
-                    return existing;
-                }
-                const newId = `sess_${crypto.randomUUID()}`;
-                window.sessionStorage.setItem(MONITORING_DEFAULTS.SESSION_STORAGE_KEY, newId);
-                return newId;
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+            const existing = window.sessionStorage.getItem(MONITORING_DEFAULTS.SESSION_STORAGE_KEY);
+            if (existing) {
+                return existing;
             }
-        } catch {
-            // Fallback if sessionStorage is restricted in iframe/private mode
+            const newId = `sess_${crypto.randomUUID()}`;
+            window.sessionStorage.setItem(MONITORING_DEFAULTS.SESSION_STORAGE_KEY, newId);
+            return newId;
         }
         return `sess_${crypto.randomUUID()}`;
     }
@@ -69,23 +65,19 @@ export class SessionTracker {
         level: BreadcrumbLevel = 'info',
         data?: Record<string, string | number | boolean>,
     ): void {
-        try {
-            const cleanData = this.sanitizeData(data);
-            const breadcrumb: UserActionBreadcrumb = {
-                category,
-                message,
-                level,
-                timestamp: Date.now(),
-                data: cleanData,
-            };
+        const cleanData = this.sanitizeData(data);
+        const breadcrumb: UserActionBreadcrumb = {
+            category,
+            message,
+            level,
+            timestamp: Date.now(),
+            data: cleanData,
+        };
 
-            this.breadcrumbs.push(breadcrumb);
+        this.breadcrumbs.push(breadcrumb);
 
-            if (this.breadcrumbs.length > this.maxBreadcrumbs) {
-                this.breadcrumbs.shift();
-            }
-        } catch {
-            // Non-blocking
+        if (this.breadcrumbs.length > this.maxBreadcrumbs) {
+            this.breadcrumbs.shift();
         }
     }
 

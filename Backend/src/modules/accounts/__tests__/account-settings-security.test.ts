@@ -1,9 +1,9 @@
-import { ForbiddenError, NotFoundError } from '../../../core/errors/index.js';
-import { AccountRepository } from '../account.repository.js';
-import { AccountsService } from '../account.service.js';
+import { ForbiddenError, NotFoundError } from '@errors';
+import { AccountRepository } from '../database/index.js';
+import { AccountsService } from '../services/index.js';
 
-jest.mock('../account.repository.js');
-jest.mock('../../../core/queue/scheduler.service.js', () => ({
+jest.mock('../database/index.js');
+jest.mock('@queue', () => ({
     SchedulerService: {
         upsertAccountRepeatableJob: jest.fn().mockResolvedValue(undefined),
     },

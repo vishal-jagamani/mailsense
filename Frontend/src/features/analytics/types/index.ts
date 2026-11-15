@@ -178,4 +178,3 @@ export interface CustomPieTooltipProps {
     active?: boolean;
     payload?: CustomPieTooltipPayloadItem[];
 }
-

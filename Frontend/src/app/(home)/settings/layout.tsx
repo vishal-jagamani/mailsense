@@ -1,4 +1,6 @@
-export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+import { RootLayoutProps } from '@shared/types';
+
+export default function SettingsLayout({ children }: RootLayoutProps) {
     return (
         <>
             <div className="m-4 mt-8 flex flex-col gap-2 rounded-2xl p-2">{children}</div>

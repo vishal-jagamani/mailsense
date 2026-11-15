@@ -8,10 +8,7 @@ export function registerTelemetrySink(sink: ITelemetrySink | null): void {
     activeTelemetrySink = sink;
 }
 
-/**
- * Resolves or constructs an Error object from context or message
- */
-function resolveError(msg: string, ctx?: LogContext): Error {
+const resolveError = (msg: string, ctx?: LogContext): Error => {
     try {
         if (ctx?.error instanceof Error) {
             return ctx.error;
@@ -23,12 +20,9 @@ function resolveError(msg: string, ctx?: LogContext): Error {
     } catch {
         return new Error(msg);
     }
-}
+};
 
-/**
- * Sanitizes LogContext into string/number/boolean map for APM data contracts
- */
-function sanitizeContext(ctx: LogContext): Record<string, string | number | boolean> {
+const sanitizeContext = (ctx: LogContext): Record<string, string | number | boolean> => {
     try {
         const sanitized: Record<string, string | number | boolean> = {};
         for (const [key, value] of Object.entries(ctx)) {
@@ -42,7 +36,26 @@ function sanitizeContext(ctx: LogContext): Record<string, string | number | bool
     } catch {
         return {};
     }
-}
+};
+
+const forwardBreadcrumb = (moduleName: string, level: LOG_LEVELS, msg: string, ctx?: LogContext): void => {
+    if (!activeTelemetrySink) return;
+    activeTelemetrySink.addBreadcrumb({
+        category: moduleName,
+        message: msg,
+        level,
+        data: ctx ? sanitizeContext(ctx) : undefined,
+    });
+};
+
+const forwardException = (moduleName: string, msg: string, ctx?: LogContext): void => {
+    if (!activeTelemetrySink) return;
+    const extractedError = resolveError(msg, ctx);
+    activeTelemetrySink.captureException(extractedError, {
+        tags: { module: moduleName },
+        extra: ctx ? sanitizeContext(ctx) : undefined,
+    });
+};
 
 /**
  * Creates a child Pino logger bound to a specific application module name,
@@ -52,76 +65,30 @@ export function createLogger(moduleName: LOGGER_MODULE | string, options?: Creat
     const child = log.child({ module: moduleName });
     const shouldForward = options?.forwardToMonitoring !== false;
 
+    const emitBreadcrumb = (level: LOG_LEVELS, msg: string, ctx?: LogContext): void => {
+        if (shouldForward) forwardBreadcrumb(moduleName, level, msg, ctx);
+    };
+
     return {
         info: (msg: string, ctx?: LogContext): void => {
-            try {
-                if (ctx) child.info(ctx, msg);
-                else child.info(msg);
-
-                if (shouldForward && activeTelemetrySink) {
-                    activeTelemetrySink.addBreadcrumb({
-                        category: moduleName,
-                        message: msg,
-                        level: LOG_LEVELS.INFO,
-                        data: ctx ? sanitizeContext(ctx) : undefined,
-                    });
-                }
-            } catch {
-                // Non-blocking fallback
-            }
+            if (ctx) child.info(ctx, msg);
+            else child.info(msg);
+            emitBreadcrumb(LOG_LEVELS.INFO, msg, ctx);
         },
-
-        error: (msg: string, ctx?: LogContext): void => {
-            try {
-                if (ctx) child.error(ctx, msg);
-                else child.error(msg);
-
-                if (shouldForward && activeTelemetrySink) {
-                    const extractedError = resolveError(msg, ctx);
-                    activeTelemetrySink.captureException(extractedError, {
-                        tags: { module: moduleName },
-                        extra: ctx ? sanitizeContext(ctx) : undefined,
-                    });
-                }
-            } catch {
-                // Non-blocking fallback
-            }
-        },
-
         warn: (msg: string, ctx?: LogContext): void => {
-            try {
-                if (ctx) child.warn(ctx, msg);
-                else child.warn(msg);
-
-                if (shouldForward && activeTelemetrySink) {
-                    activeTelemetrySink.addBreadcrumb({
-                        category: moduleName,
-                        message: msg,
-                        level: LOG_LEVELS.WARN,
-                        data: ctx ? sanitizeContext(ctx) : undefined,
-                    });
-                }
-            } catch {
-                // Non-blocking fallback
-            }
+            if (ctx) child.warn(ctx, msg);
+            else child.warn(msg);
+            emitBreadcrumb(LOG_LEVELS.WARN, msg, ctx);
         },
-
         debug: (msg: string, ctx?: LogContext): void => {
-            try {
-                if (ctx) child.debug(ctx, msg);
-                else child.debug(msg);
-
-                if (shouldForward && activeTelemetrySink) {
-                    activeTelemetrySink.addBreadcrumb({
-                        category: moduleName,
-                        message: msg,
-                        level: LOG_LEVELS.DEBUG,
-                        data: ctx ? sanitizeContext(ctx) : undefined,
-                    });
-                }
-            } catch {
-                // Non-blocking fallback
-            }
+            if (ctx) child.debug(ctx, msg);
+            else child.debug(msg);
+            emitBreadcrumb(LOG_LEVELS.DEBUG, msg, ctx);
+        },
+        error: (msg: string, ctx?: LogContext): void => {
+            if (ctx) child.error(ctx, msg);
+            else child.error(msg);
+            if (shouldForward) forwardException(moduleName, msg, ctx);
         },
     };
 }

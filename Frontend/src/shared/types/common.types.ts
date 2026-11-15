@@ -11,3 +11,8 @@ export interface HomeLayoutProps {
     readonly children: React.ReactNode;
 }
 
+export interface AccountProviders {
+    id: number;
+    name: string;
+    displayName: string;
+}

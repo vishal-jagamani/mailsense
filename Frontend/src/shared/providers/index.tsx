@@ -5,14 +5,15 @@ import { ErrorBoundary } from '@shared/components/ErrorBoundary';
 import { ThemeProvider } from '@shared/components/theme-provider';
 import { useResetBreadcrumb } from '@shared/hooks';
 import { frontendMonitoring } from '@shared/monitoring';
+import { RootLayoutProps } from '@shared/types';
 import { Toaster } from '@shared/ui/sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import AuthProvider from './auth.provider';
 
 const queryClient = new QueryClient();
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: RootLayoutProps) {
     useResetBreadcrumb();
 
     useEffect(() => {

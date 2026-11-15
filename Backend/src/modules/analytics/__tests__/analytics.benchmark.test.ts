@@ -1,7 +1,7 @@
 import { ANALYTICS_TIMEFRAME } from '@mailsense/types';
 import { logger } from '@utils';
-import { AnalyticsRepository } from '../analytics.repository.js';
-import { AnalyticsService } from '../analytics.service.js';
+import { AnalyticsRepository } from '../database/index.js';
+import { AnalyticsService } from '../services/index.js';
 
 export interface BenchmarkResult {
     documentCount: number;
@@ -86,8 +86,8 @@ export class AnalyticsPerformanceBenchmark {
     }
 }
 
-jest.mock('../analytics.repository.js');
-jest.mock('../analytics.service.js');
+jest.mock('../database/index.js');
+jest.mock('../services/index.js');
 
 describe('AnalyticsPerformanceBenchmark — Unit & Scale SLA Tests', () => {
     const mockAccountId = 'acc_bench_123';
@@ -103,12 +103,8 @@ describe('AnalyticsPerformanceBenchmark — Unit & Scale SLA Tests', () => {
                 starredEmails: 300,
                 draftsCount: 20,
             });
-            (AnalyticsRepository.getEmailVolumeTimeSeriesRaw as jest.Mock).mockResolvedValue([
-                { date: '2026-08-01', received: 100, sent: 50 },
-            ]);
-            (AnalyticsRepository.getTopSendersRaw as jest.Mock).mockResolvedValue([
-                { email: 'sender@example.com', name: 'Sender', count: 50 },
-            ]);
+            (AnalyticsRepository.getEmailVolumeTimeSeriesRaw as jest.Mock).mockResolvedValue([{ date: '2026-08-01', received: 100, sent: 50 }]);
+            (AnalyticsRepository.getTopSendersRaw as jest.Mock).mockResolvedValue([{ email: 'sender@example.com', name: 'Sender', count: 50 }]);
             (AnalyticsRepository.getResponseTimeStatsRaw as jest.Mock).mockResolvedValue({
                 averageMinutes: 15,
                 fastestMinutes: 2,

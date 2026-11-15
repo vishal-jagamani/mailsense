@@ -2,7 +2,7 @@ import { OUTLOOK_SECRETS } from '@config';
 import { OAUTH_ACCESS_TOKEN_URI } from '@constants';
 import { NotFoundError } from '@errors';
 import { OutlookOAuthAccessTokenResponse, OutlookUserProfile } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
 import { apiRequest, decrypt, encrypt, logger } from '@utils';
 import { AxiosRequestConfig } from 'axios';
 import { OUTLOOK_API_BASE_URL, OUTLOOK_APIs, OUTLOOK_TOKEN_URI } from '../outlook.constants.js';

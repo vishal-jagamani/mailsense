@@ -32,26 +32,21 @@ export function requestLoggerMiddleware(req: Request, res: Response, next: NextF
         });
 
         res.on('finish', () => {
-            try {
-                const durationMs = Math.round(performance.now() - start);
-                const statusCode = res.statusCode;
+            const durationMs = Math.round(performance.now() - start);
+            const statusCode = res.statusCode;
 
-                const logData = {
-                    traceId,
-                    method,
-                    path: url,
-                    statusCode,
-                    durationMs,
-                };
+            const logData = {
+                traceId,
+                method,
+                path: url,
+                statusCode,
+                durationMs,
+            };
 
-                if (statusCode >= 400) {
-                    requestLogger.warn(`<-- [${method}] ${url} ${statusCode} [${durationMs}ms]`, logData);
-                } else {
-                    requestLogger.info(`<-- [${method}] ${url} ${statusCode} [${durationMs}ms]`, logData);
-                }
-                // eslint-disable-next-line unused-imports/no-unused-vars
-            } catch (finishError) {
-                // Prevent finish listener errors from escaping
+            if (statusCode >= 400) {
+                requestLogger.warn(`<-- [${method}] ${url} ${statusCode} [${durationMs}ms]`, logData);
+            } else {
+                requestLogger.info(`<-- [${method}] ${url} ${statusCode} [${durationMs}ms]`, logData);
             }
         });
 

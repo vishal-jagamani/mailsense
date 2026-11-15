@@ -1,10 +1,10 @@
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { UserSettingsRepository } from '@modules/user/user-settings.repository.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
+import { UserSettingsRepository } from '@modules/user/database/index.js';
 import { getQueue } from '../queue.registry.js';
 import { SchedulerService } from '../scheduler.service.js';
 
-jest.mock('@modules/accounts/account.repository.js');
-jest.mock('@modules/user/user-settings.repository.js');
+jest.mock('@modules/accounts/database/index.js');
+jest.mock('@modules/user/database/index.js');
 jest.mock('../queue.registry.js');
 
 interface MockQueue {

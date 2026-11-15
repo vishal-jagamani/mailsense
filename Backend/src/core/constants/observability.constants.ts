@@ -11,6 +11,7 @@ export enum LOGGER_MODULE {
     HTTP = 'HTTP',
     HEALTH_SERVICE = 'HealthService',
     HEALTH_CONTROLLER = 'HealthController',
+    EMAIL_CONTROLLER = 'EmailController',
     REDIS_CONNECTION = 'RedisConnection',
     QUEUE_SERVICE = 'QueueService',
     SCHEDULER_SERVICE = 'SchedulerService',

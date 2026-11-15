@@ -1,6 +1,6 @@
-import { AccountDocument } from '../account.model.js';
-import { AccountRepository } from '../account.repository.js';
-import { AccountsService } from '../account.service.js';
+import { AccountDocument } from '../database/index.js';
+import { AccountRepository } from '../database/index.js';
+import { AccountsService } from '../services/index.js';
 
 describe('AccountsService — Token Sanitization (`BUG-V12-05`)', () => {
     let service: AccountsService;

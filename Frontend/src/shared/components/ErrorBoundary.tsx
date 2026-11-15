@@ -127,12 +127,8 @@ export function ErrorBoundary({ children, fallbackRender, onError }: ErrorBounda
         window.addEventListener('unhandledrejection', handleRejection);
 
         return (): void => {
-            try {
-                window.removeEventListener('error', handleError);
-                window.removeEventListener('unhandledrejection', handleRejection);
-            } catch {
-                // Non-blocking cleanup
-            }
+            window.removeEventListener('error', handleError);
+            window.removeEventListener('unhandledrejection', handleRejection);
         };
     }, [onError]);
 

@@ -21,7 +21,6 @@
         "paths": {
             "@assets/*": ["./src/assets/*"],
             "@config/*": ["./src/config/*"],
-            "@entities/*": ["./src/entities/*"],
             "@features/*": ["./src/features/*"],
             "@shared/api": ["./src/shared/api/index"],
             "@shared/components/*": ["./src/shared/components/*"],
@@ -30,7 +29,7 @@
             "@shared/hooks": ["./src/shared/hooks/index"],
             "@shared/monitoring": ["./src/shared/monitoring/index"],
             "@shared/ui/*": ["./src/shared/ui/*"],
-            "@shared/utils/*": ["./src/shared/utils/*"],
+            "@shared/utils": ["./src/shared/utils/index"],
             "@shared/types": ["./src/shared/types/index"],
             "@shared/store": ["./src/shared/store/index"],
             "@lib/*": ["./src/lib/*"]

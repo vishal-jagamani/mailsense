@@ -20,6 +20,8 @@ export interface MonitoringConfig {
     enableLogs?: boolean;
 }
 
+export type DefaultMonitoringConfig = Omit<MonitoringConfig, 'provider'>;
+
 export interface MonitoringUserContext {
     id: string;
     email?: string;

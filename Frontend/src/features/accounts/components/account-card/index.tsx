@@ -2,13 +2,9 @@
 
 import React from 'react';
 
-import { AccountProviderIcon } from '@entities/account';
-import { AccountAttributes } from '@mailsense/types';
+import { AccountCardProps } from '@features/accounts/types/accounts-components.types';
+import AccountProviderIcon from '../AccountProviderIcon';
 import AccountCardActionButtons from './AccountCardActionButtons';
-
-interface AccountCardProps {
-    account: AccountAttributes;
-}
 
 const AccountCard: React.FC<AccountCardProps> = ({ account }) => {
     return (

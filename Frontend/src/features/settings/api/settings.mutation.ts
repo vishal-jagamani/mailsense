@@ -2,8 +2,9 @@ import { APIResponse, ProfileSettingsDataObject, UpdateAPIResponse, UpdateUserPr
 import { QUERY_KEYS } from '@shared/api';
 import {} from '@shared/types';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { changeUserPassword, updateUserProfileSettings, updateUserSettings } from './settings.api';
 import { toast } from 'sonner';
+import { ChangePasswordPayload } from '../types';
+import { changeUserPassword, updateUserProfileSettings, updateUserSettings } from './settings.api';
 
 export const useUpdateProfileMutation = () => {
     const queryClient = useQueryClient();
@@ -17,7 +18,7 @@ export const useUpdateProfileMutation = () => {
 
 export const useChangePasswordMutation = () => {
     const queryClient = useQueryClient();
-    return useMutation<UpdateAPIResponse, Error, { password: string }>({
+    return useMutation<UpdateAPIResponse, Error, ChangePasswordPayload>({
         mutationFn: (data) => changeUserPassword(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.USER_PROFILE_SETTINGS] });

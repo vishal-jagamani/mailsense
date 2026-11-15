@@ -3,7 +3,7 @@
 import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 
-import { NavMainItem } from '@shared/types';
+import { NavMainProps } from '@shared/types';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shared/ui/collapsible';
 import {
     SidebarGroup,
@@ -17,7 +17,7 @@ import {
     SidebarMenuSubItem,
 } from '@shared/ui/sidebar';
 
-export function NavMain({ items }: { items: NavMainItem[] }) {
+export function NavMain({ items }: NavMainProps) {
     return (
         <SidebarGroup>
             <SidebarGroupLabel>Platform</SidebarGroupLabel>

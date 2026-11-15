@@ -7,9 +7,9 @@ import MoveToFolderDropdown from '@features/emails/components/MoveToFolderDropdo
 import APILoader from '@shared/components/apiLoader';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { useInboxEmailMenuBarOptions } from '../hooks';
-import { EmailMenuBarOptionsProps } from '../types/inbox.types';
+import { InboxEmailMenuBarOptionsProps } from '../types/inbox.types';
 
-const EmailMenuBarOptions: React.FC<EmailMenuBarOptionsProps> = ({ emailIds, allEmails, onRefetchEmails, onResetSelection, onResetPage }) => {
+const EmailMenuBarOptions: React.FC<InboxEmailMenuBarOptionsProps> = ({ emailIds, allEmails, onRefetchEmails, onResetSelection, onResetPage }) => {
     const {
         states: { showDeleteModal },
         setters: { setShowDeleteModal },

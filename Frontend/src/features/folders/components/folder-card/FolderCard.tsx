@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { FolderCardProps } from '../../types/folders.types';
+import { FolderCardProps } from '@features/folders/types/folders-components.types';
 import FolderCardActions from './FolderCardActions';
 import FolderCardHeader from './FolderCardHeader';
 import FolderCardInfo from './FolderCardInfo';

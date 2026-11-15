@@ -6,12 +6,12 @@ import {
     GmailUserProfile,
     OutlookUserProfile,
 } from '@mailsense/types';
-import { AccountRepository } from '../../accounts/account.repository.js';
-import { AnalyticsRepository } from '../analytics.repository.js';
-import { AnalyticsService } from '../analytics.service.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
+import { AnalyticsRepository } from '../database/index.js';
+import { AnalyticsService } from '../services/index.js';
 
-jest.mock('../../accounts/account.repository.js');
-jest.mock('../analytics.repository.js');
+jest.mock('@modules/accounts/database/index.js');
+jest.mock('../database/index.js');
 
 describe('AnalyticsService — Unit & Scenario Tests', () => {
     let analyticsService: AnalyticsService;

@@ -1,12 +1,8 @@
 import { useMemo } from 'react';
 
-import { AccountProviders } from '@entities/account';
 import { AccountAttributes } from '@mailsense/types';
-
-export interface ProviderAccountGroup {
-    provider: AccountProviders;
-    accounts: AccountAttributes[];
-}
+import { AccountProviders } from '@shared/types';
+import { ProviderAccountGroup } from '../types/accounts-hooks.types';
 
 export const useGroupedProviderAccounts = (providers?: AccountProviders[], accounts?: AccountAttributes[]) => {
     return useMemo<ProviderAccountGroup[]>(() => {

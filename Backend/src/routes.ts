@@ -1,13 +1,12 @@
 import { Router } from 'express';
 
-import accountsRoutes from '@modules/accounts/account.routes.js';
-import analyticsRoutes from '@modules/analytics/analytics.routes.js';
-import attachmentRoutes from '@modules/attachments/attachment.routes.js';
-import draftRoutes from '@modules/drafts/draft.routes.js';
-import emailsRoutes from '@modules/emails/email.routes.js';
-import foldersRoutes from '@modules/folders/folder.routes.js';
-import usersRoutes from '@modules/user/user.routes.js';
-import utilsRoutes from '@modules/utils/index.js';
+import accountsRoutes from '@modules/accounts/routes/index.js';
+import analyticsRoutes from '@modules/analytics/routes/index.js';
+import attachmentRoutes from '@modules/attachments/routes/index.js';
+import draftRoutes from '@modules/drafts/routes/index.js';
+import emailsRoutes from '@modules/emails/routes/index.js';
+import foldersRoutes from '@modules/folders/routes/index.js';
+import usersRoutes from '@modules/user/routes/index.js';
 
 const router = Router();
 
@@ -28,7 +27,5 @@ router.use('/attachments', attachmentRoutes);
 router.use('/drafts', draftRoutes);
 
 router.use('/analytics', analyticsRoutes);
-
-router.use('/utils', utilsRoutes);
 
 export default router;
