@@ -1,9 +1,11 @@
+packages:
+    - '.'
 allowBuilds:
-  '@newrelic/fn-inspect': true
-  '@newrelic/native-metrics': true
-  esbuild: true
-  msgpackr-extract: true
-  protobufjs: true
-  unrs-resolver: true
+    '@newrelic/fn-inspect': true
+    '@newrelic/native-metrics': true
+    esbuild: true
+    msgpackr-extract: true
+    protobufjs: true
+    unrs-resolver: true
 minimumReleaseAgeExclude:
-  - '@mailsense/types@1.4.1 || 1.5.0 || 1.6.1 || 1.7.0'
+    - '@mailsense/types@1.4.1 || 1.5.0 || 1.6.1 || 1.7.0'
