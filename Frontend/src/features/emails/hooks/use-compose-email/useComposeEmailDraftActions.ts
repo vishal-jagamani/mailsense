@@ -60,6 +60,7 @@ export const useComposeEmailDraftActions = (params: UseComposeEmailDraftActions)
             if (existingDraftData.attachments && existingDraftData.attachments.length > 0) {
                 setStagedAttachments(
                     existingDraftData.attachments.map((att) => ({
+                        _id: att.attachmentId,
                         attachmentId: att.attachmentId,
                         filename: att.filename,
                         mimeType: att.mimeType,
