@@ -1,7 +1,7 @@
 import { LOGGER_MODULE } from '@constants';
 import { ACCOUNT_SYNC_MODE, UserAccountSyncSettings } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { UserSettingsRepository } from '@modules/user/user-settings.repository.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
+import { UserSettingsRepository } from '@modules/user/database/index.js';
 import { createLogger } from '@observability';
 import { QUEUE_NAMES } from './queue.config.js';
 import { getQueue } from './queue.registry.js';

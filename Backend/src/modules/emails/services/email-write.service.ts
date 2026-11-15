@@ -1,15 +1,14 @@
 import { LOGGER_MODULE } from '@constants';
 import { ForbiddenError, NotFoundError } from '@errors';
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { IEmailProvider } from '@integrations/email/email.provider.js';
+import { EmailProviderFactory, IEmailProvider } from '@integrations/email/index.js';
 import { ACCOUNT_PROVIDER, PerAccountActionContext, SuccessAPIResponse, UpdateAPIResponse } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { AttachmentsService } from '@modules/attachments/attachment.service.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
+import { AttachmentsService } from '@modules/attachments/services/index.js';
 import { createLogger } from '@observability';
-import { EmailRepository } from '../database/email.repository.js';
-import { EMAIL_LIST_DB_FIELD_MAPPING } from '../email.constants.js';
-import { ComposeEmailBody } from '../email.schema.js';
-import { ComposeEmailAttachment } from '../email.types.js';
+import { EMAIL_LIST_DB_FIELD_MAPPING } from '../constants/index.js';
+import { EmailRepository } from '../database/index.js';
+import { ComposeEmailBody } from '../schema/index.js';
+import { ComposeEmailAttachment } from '../types/index.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 

@@ -1,11 +1,10 @@
 import { LOGGER_MODULE } from '@constants';
 import { GmailLabel, UpdateAPIResponse } from '@mailsense/types';
-import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
-import { FolderRepository } from '@modules/folders/folder.repository.js';
+import { FolderDocument, FolderInput, FolderRepository } from '@modules/folders/database/index.js';
 import { createLogger } from '@observability';
 import { BatchProcessor } from '@utils';
 import { GmailClient } from '../clients/index.js';
-import * as GmailUtils from '../gmail.utils.js';
+import * as GmailUtils from '../utils/gmail.utils.js';
 
 const logger = createLogger(LOGGER_MODULE.GMAIL_SERVICE);
 

@@ -6,7 +6,7 @@ import {
     OutlookOAuthAccessTokenResponse,
     OutlookUserProfile,
 } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/database/email.model.js';
+import { EmailInput } from '@modules/emails/database/index.js';
 import { Readable } from 'stream';
 
 export interface EmailSyncResult {

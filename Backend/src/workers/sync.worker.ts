@@ -1,7 +1,6 @@
 import { LOGGER_MODULE } from '@constants';
 import { ACCOUNT_LAST_SYNC_STATUS, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { SyncJobRepository } from '@modules/accounts/sync-job.repository.js';
+import { AccountRepository, SyncJobRepository } from '@modules/accounts/database/index.js';
 import { createLogger } from '@observability';
 import { Job } from 'bullmq';
 import { eventBus } from 'core/events/event-bus.js';

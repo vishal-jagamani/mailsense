@@ -1,5 +1,5 @@
 import { useSendDraftMutation } from '@features/drafts/api/draft.mutations';
-import { useComposeEmailMutation } from '@features/emails/api/email.mutations';
+import { useComposeEmailMutation } from '@features/emails/api/email-write.mutations';
 import { UseComposeEmailActionsParams } from '@features/emails/types/email-hooks.types';
 import { MESSAGES, UI_CONSTANTS } from '@shared/constants';
 import { trackUserAction } from '@shared/monitoring';

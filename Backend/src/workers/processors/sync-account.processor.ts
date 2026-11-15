@@ -2,19 +2,16 @@ import { Job } from 'bullmq';
 
 import { LOGGER_MODULE } from '@constants';
 import { NotFoundError, SyncError } from '@errors';
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
+import { EmailProviderFactory, IEmailProvider, SyncResult } from '@integrations/email/index.js';
 import { ACCOUNT_PROVIDER, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
-import { AccountDocument } from '@modules/accounts/account.model.js';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { EmailInput } from '@modules/emails/database/email.model.js';
-import { EmailRepository } from '@modules/emails/database/email.repository.js';
-import { FolderService } from '@modules/folders/folder.service.js';
+import { AccountDocument, AccountRepository } from '@modules/accounts/database/index.js';
+import { EmailInput, EmailRepository } from '@modules/emails/database/index.js';
+import { FolderService } from '@modules/folders/services/index.js';
 import { monitoring } from '@monitoring';
 import { createLogger, setTraceContext } from '@observability';
+import { RefreshTokenPayload, SyncAccountPayload } from '@queue';
 import { ErrorWithStatus, SuccessStatusResponse } from '@types';
-import { eventBus } from '../../core/events/event-bus.js';
-import { RefreshTokenPayload, SyncAccountPayload } from '../../core/queue/queue.service.js';
+import { eventBus } from '../../core/events/index.js';
 import { refreshTokenProcessor } from './refresh-token.processor.js';
 
 const logger = createLogger(LOGGER_MODULE.SYNC_ACCOUNT_PROCESSOR);

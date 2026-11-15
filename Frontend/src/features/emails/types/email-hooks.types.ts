@@ -4,6 +4,7 @@ import {
     EmailAttributes,
     Filter,
     FilterOption,
+    FolderAttributes,
     GetThreadResponse,
     PaginatedDataResponse,
     UpdateAPIResponse,
@@ -184,3 +185,19 @@ export interface UseEmailKeyboardShortcutsParams {
     onOpenShortcutsModal?: () => void;
     enabled?: boolean;
 }
+
+export interface UseFolderFilterStateParams {
+    emailIds: string[];
+    selectedEmails?: EmailAttributes[];
+    allEmails?: EmailAttributes[];
+    accountId?: string;
+    availableFolders: FolderAttributes[];
+    searchQuery: string;
+}
+
+export interface UseFolderFilterStateReturn {
+    isMultiAccountSelected: boolean;
+    filteredFolders: FolderAttributes[];
+}
+
+export type EvaluateKeyPressActionHandler = (params: UseEvaluateKeyPressParams) => void;

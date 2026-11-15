@@ -1,7 +1,6 @@
 import { LOGGER_MODULE } from '@constants';
 import { UpdateAPIResponse } from '@mailsense/types';
-import { FolderDocument, FolderInput } from '@modules/folders/folder.model.js';
-import { FolderRepository } from '@modules/folders/folder.repository.js';
+import { FolderDocument, FolderInput, FolderRepository } from '@modules/folders/database/index.js';
 import { createLogger } from '@observability';
 import { OutlookClient } from '../clients/index.js';
 import { OutlookFolderObject } from '../outlook.types.js';

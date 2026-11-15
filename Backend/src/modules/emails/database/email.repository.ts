@@ -1,5 +1,5 @@
 import { AnyBulkWriteOperation, FilterQuery, FlattenMaps, ProjectionType, SortOrder } from 'mongoose';
-import { GroupedEmailThreadItem, ThreadSummaryItem } from '../email.types.js';
+import { GroupedEmailThreadItem, ThreadSummaryItem } from '../types/index.js';
 import { Email, EmailDocument, EmailInput } from './email.model.js';
 import { GROUPED_EMAILS_QUERY } from './email.queries.js';
 

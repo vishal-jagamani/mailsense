@@ -1,6 +1,6 @@
 import { OutlookAttachmentObject, OutlookMessageObjectFull } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/database/email.model.js';
-import { ComposeEmailBody } from '@modules/emails/email.schema.js';
+import { EmailInput } from '@modules/emails/database/index.js';
+import { ComposeEmailBody } from '@modules/emails/schema/index.js';
 
 // API Responses
 export interface GetOutlookMessagesResponse {

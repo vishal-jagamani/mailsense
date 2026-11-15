@@ -1,9 +1,9 @@
 import { AccountMetricsAttributes } from '@mailsense/types';
-import { Account, AccountMetrics, AccountMetricsDocument } from '@modules/accounts/account.model.js';
-import { DraftModel } from '@modules/drafts/draft.model.js';
-import { Email, EmailDocument } from '@modules/emails/database/email.model.js';
+import { Account, AccountMetrics, AccountMetricsDocument } from '@modules/accounts/database/index.js';
+import { DraftModel } from '@modules/drafts/database/index.js';
+import { Email, EmailDocument } from '@modules/emails/database/index.js';
 import { FilterQuery, PipelineStage } from 'mongoose';
-import { EXCLUDED_INCOMING_FOLDERS, SENT_FOLDER_IDENTIFIERS } from '../analytics.constants.js';
+import { EXCLUDED_INCOMING_FOLDERS, SENT_FOLDER_IDENTIFIERS } from '../constants/index.js';
 import {
     AccountEmailMetricsResult,
     RawAccountBreakdownResult,
@@ -12,7 +12,7 @@ import {
     RawThreadResponseTimeSummary,
     RawTopSendersResult,
     RawVolumeDataPoint,
-} from '../analytics.types.js';
+} from '../types/index.js';
 import {
     ACCOUNT_BREAKDOWN_RAW_QUERY,
     EMAIL_VOLUME_TIME_SERIES_RAW_QUERY,

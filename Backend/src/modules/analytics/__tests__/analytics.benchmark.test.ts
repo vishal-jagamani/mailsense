@@ -1,7 +1,7 @@
 import { ANALYTICS_TIMEFRAME } from '@mailsense/types';
 import { logger } from '@utils';
-import { AnalyticsRepository } from '../database/analytics.repository.js';
-import { AnalyticsService } from '../analytics.service.js';
+import { AnalyticsRepository } from '../database/index.js';
+import { AnalyticsService } from '../services/index.js';
 
 export interface BenchmarkResult {
     documentCount: number;
@@ -86,8 +86,8 @@ export class AnalyticsPerformanceBenchmark {
     }
 }
 
-jest.mock('../database/analytics.repository.js');
-jest.mock('../analytics.service.js');
+jest.mock('../database/index.js');
+jest.mock('../services/index.js');
 
 describe('AnalyticsPerformanceBenchmark — Unit & Scale SLA Tests', () => {
     const mockAccountId = 'acc_bench_123';

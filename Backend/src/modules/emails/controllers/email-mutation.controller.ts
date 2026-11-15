@@ -1,8 +1,8 @@
 import { BadRequestError, UnauthorizedError } from '@errors';
 import { MoveEmailsRequestBody } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
-import { ArchiveEmailBody, ComposeEmailBody, DeleteEmailSchema, StarEmailBody, UnreadEmailBody } from '../email.schema.js';
-import { EmailService } from '../services/email.service.js';
+import { ArchiveEmailBody, ComposeEmailBody, DeleteEmailSchema, StarEmailBody, UnreadEmailBody } from '../schema/index.js';
+import { EmailService } from '../services/index.js';
 
 export class EmailMutationController {
     constructor(private readonly emailService: EmailService = new EmailService()) {}

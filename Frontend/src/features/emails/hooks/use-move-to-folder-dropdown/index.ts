@@ -5,6 +5,7 @@ import { trackUserAction } from '@shared/monitoring';
 import { useAuthStore } from '@shared/store';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useFolderFilterState } from './useFolderFilterState';
 
 export const useMoveToFolderDropdown = (params: MoveToFolderDropdownProps) => {
     const { emailIds, selectedEmails, allEmails, accountId, folders, currentFolderId, onSuccess, disabled = false } = params;
@@ -29,27 +30,14 @@ export const useMoveToFolderDropdown = (params: MoveToFolderDropdownProps) => {
         return [];
     }, [selectedEmails, allEmails, emailIds]);
 
-    // Determine unique account IDs among selected emails
-    const selectedAccountIds = useMemo(() => {
-        if (accountId) return [accountId];
-        const accounts = new Set<string>();
-        resolvedSelectedEmailObjects.forEach((email) => {
-            if (email.accountId) accounts.add(email.accountId);
-        });
-        return Array.from(accounts);
-    }, [accountId, resolvedSelectedEmailObjects]);
-
-    const isMultiAccountSelected = selectedAccountIds.length > 1;
-    const singleAccountId = selectedAccountIds.length === 1 ? selectedAccountIds[0] : null;
-
-    // Filter destination folders by target account
-    const filteredFolders = useMemo(() => {
-        if (!availableFolders.length) return [];
-        if (singleAccountId) {
-            return availableFolders.filter((folder) => folder.accountId === singleAccountId);
-        }
-        return availableFolders;
-    }, [availableFolders, singleAccountId]);
+    const { isMultiAccountSelected, filteredFolders } = useFolderFilterState({
+        emailIds,
+        selectedEmails,
+        allEmails,
+        accountId,
+        availableFolders,
+        searchQuery,
+    });
 
     // Filter destination folders by search query
     const searchedFolders = useMemo(() => {

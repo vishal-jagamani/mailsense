@@ -1,10 +1,9 @@
 import { LOGGER_MODULE } from '@constants';
 import { ForbiddenError, NotFoundError } from '@errors';
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { EmailProviderFactory } from '@integrations/email/index.js';
 import {
     ACCOUNT_PROVIDER,
     APIResponse,
-    DATE_RANGE,
     GetAllEmailsFilters,
     GetEmailsResponse,
     GetFiltersResponse,
@@ -13,17 +12,15 @@ import {
     SearchEmailsParams,
     SearchOtherContactsResponse,
 } from '@mailsense/types';
-import { AccountDocument } from '@modules/accounts/account.model.js';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { FolderRepository } from '@modules/folders/folder.repository.js';
+import { AccountDocument, AccountRepository } from '@modules/accounts/database/index.js';
+import { FolderRepository } from '@modules/folders/database/index.js';
 import { createLogger } from '@observability';
 import { GetDataRangeResponse } from '@types';
-import { decompressString } from '@utils';
+import { decompressString, getDateRange } from '@utils';
 import { FilterQuery, FlattenMaps } from 'mongoose';
-import { EmailDocument } from '../database/email.model.js';
-import { EmailRepository } from '../database/email.repository.js';
-import { EMAIL_LIST_DB_FIELD_MAPPING } from '../email.constants.js';
-import { EmailListItem, GroupedEmailThreadItem } from '../email.types.js';
+import { EMAIL_LIST_DB_FIELD_MAPPING } from '../constants/index.js';
+import { EmailDocument, EmailRepository } from '../database/index.js';
+import { EmailListItem, GroupedEmailThreadItem } from '../types/index.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 
@@ -87,7 +84,7 @@ export class EmailQueryService {
 
             const { folderIds, targetFolders } = await this.getFoldersIdsForEmailsQuery(accounts, filters.folders);
             const targetAccountIds = this.resolveTargetAccountIds(accounts, filters.accountId);
-            const computedDateRange = filters.dateRange ? this.getDateRange(filters.dateRange) : undefined;
+            const computedDateRange = filters.dateRange ? getDateRange(filters.dateRange) : undefined;
             const searchQuery = this.buildEmailSearchQuery(targetAccountIds, targetFolders, folderIds, filters, computedDateRange);
 
             const emails = await EmailRepository.getGroupedEmails(searchQuery, size, page, EMAIL_LIST_DB_FIELD_MAPPING.LIST.projection);
@@ -133,37 +130,6 @@ export class EmailQueryService {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in EmailService.getFoldersForEmails: ${errorMessage}`, { error: err });
             throw err;
-        }
-    }
-
-    private getDateRange(dateRange: DATE_RANGE): GetDataRangeResponse {
-        const now = new Date();
-        const endDate = new Date(now);
-
-        switch (dateRange) {
-            case DATE_RANGE.TODAY: {
-                const startDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
-                const endOfDay = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
-                return { startDate, endDate: endOfDay };
-            }
-            case DATE_RANGE.LAST_WEEK: {
-                const startDate = new Date(now);
-                startDate.setUTCDate(startDate.getUTCDate() - 7);
-                return { startDate, endDate };
-            }
-            case DATE_RANGE.LAST_MONTH: {
-                const startDate = new Date(now);
-                startDate.setUTCMonth(startDate.getUTCMonth() - 1);
-                return { startDate, endDate };
-            }
-            case DATE_RANGE.LAST_3_MONTHS: {
-                const startDate = new Date(now);
-                startDate.setUTCMonth(startDate.getUTCMonth() - 3);
-                return { startDate, endDate };
-            }
-            case DATE_RANGE.ALL_TIME:
-            default:
-                return { startDate: new Date(0), endDate };
         }
     }
 

@@ -1,8 +1,8 @@
 import { LOGGER_MODULE } from '@constants';
 import { EmailAttachment, OutlookMessageObjectFull, UpdateAPIResponse } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/database/email.model.js';
-import { EmailRepository } from '@modules/emails/database/email.repository.js';
-import { ComposeEmailBody } from '@modules/emails/email.schema.js';
+import { EmailInput } from '@modules/emails/database/index.js';
+import { EmailRepository } from '@modules/emails/database/index.js';
+import { ComposeEmailBody } from '@modules/emails/schema/index.js';
 import { createLogger } from '@observability';
 import { OutlookClient } from '../clients/index.js';
 import { OUTLOOK_ATTACHMENT_CHUNK_SIZE, OUTLOOK_ATTACHMENT_MAX_DIRECT_SIZE } from '../outlook.constants.js';

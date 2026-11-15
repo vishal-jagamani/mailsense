@@ -1,12 +1,12 @@
+import { ForbiddenError } from '@errors';
+import { EmailProviderFactory } from '@integrations/email/index.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
+import { AttachmentsService } from '@modules/attachments/services/index.js';
 import { Readable } from 'stream';
-import { ForbiddenError } from '../../../core/errors/index.js';
-import { EmailProviderFactory } from '../../../integrations/email/email.provider.factory.js';
-import { AccountRepository } from '../../accounts/account.repository.js';
-import { AttachmentsService } from '../../attachments/attachment.service.js';
-import { EmailWriteService } from '../services/email-write.service.js';
+import { EmailWriteService } from '../services/index.js';
 
-jest.mock('../../accounts/account.repository.js');
-jest.mock('../../../integrations/email/email.provider.factory.js');
+jest.mock('@modules/accounts/database/index.js');
+jest.mock('@integrations/email/index.js');
 
 describe('EmailWriteService - Attachment Security Tests', () => {
     let emailWriteService: EmailWriteService;

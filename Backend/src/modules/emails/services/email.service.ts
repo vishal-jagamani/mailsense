@@ -1,4 +1,4 @@
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { AttachmentStreamResult } from '@integrations/email/index.js';
 import { GmailAttachmentBufferResult } from '@integrations/gmail/gmail.types.js';
 import {
     APIResponse,
@@ -12,8 +12,8 @@ import {
     SuccessAPIResponse,
     UpdateAPIResponse,
 } from '@mailsense/types';
-import { EmailDocument, EmailInput } from '../database/email.model.js';
-import { ComposeEmailBody } from '../email.schema.js';
+import { EmailDocument, EmailInput } from '../database/index.js';
+import { ComposeEmailBody } from '../schema/index.js';
 import { EmailAttachmentService } from './email-attachment.service.js';
 import { EmailQueryService } from './email-query.service.js';
 import { EmailThreadService } from './email-thread.service.js';

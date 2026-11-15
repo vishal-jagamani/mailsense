@@ -3,7 +3,7 @@ import { AxiosRequestConfig } from 'axios';
 import { AUTH0_API_SECRETS } from '@config';
 import { LOGGER_MODULE } from '@constants';
 import { UserDetailsObject } from '@mailsense/types';
-import { UpdateUserSchema } from '@modules/user/user.schema.js';
+import { UpdateUserSchema } from '@modules/user/schema/index.js';
 import { createLogger } from '@observability';
 import { apiRequest } from 'shared/utils/index.js';
 import { AUTH0_API_AUDIENCE, AUTH0_API_TOKEN_URI, AUTH0_APIs } from './auth0.constants.js';

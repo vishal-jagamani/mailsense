@@ -1,0 +1,147 @@
+import { BadRequestError, UnauthorizedError } from '@errors';
+import { GetAllFoldersFilters } from '@mailsense/types';
+import { NextFunction, Request, Response } from 'express';
+import {
+    CreateFolderSchema,
+    GetAccountFoldersSchema,
+    GetAllFoldersSchema,
+    GetFolderSchema,
+    UpdateFolderBodySchema,
+} from '../schema/index.js';
+import { FolderService } from '../services/index.js';
+
+export class FolderController {
+    private folderService: FolderService;
+
+    constructor() {
+        this.folderService = new FolderService();
+    }
+
+    public syncFolders = async (req: Request<GetAccountFoldersSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { accountId } = req.params;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            if (!accountId) {
+                throw new BadRequestError('Account ID is required');
+            }
+            const folders = await this.folderService.syncFolders(userId, accountId);
+            res.send(folders);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public getAllFolders = async (req: Request<object, object, GetAllFoldersSchema, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { size, page, filters } = req.body;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            const sizeValue = size ? Number(size) : 10;
+            const pageValue = page ? Number(page) : 1;
+            const filterValue = (filters || { accountId: undefined, dateRange: undefined }) as GetAllFoldersFilters;
+            const folders = await this.folderService.getAllFolders(String(userId), sizeValue, pageValue, filterValue);
+            res.send(folders);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public getFolder = async (req: Request<GetFolderSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { folderId } = req.params;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            if (!folderId) {
+                throw new BadRequestError('Folder ID is required');
+            }
+            const folder = await this.folderService.getFolder(userId, folderId);
+            res.send(folder);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public getAccountFolders = async (
+        req: Request<GetAccountFoldersSchema, object, object, object>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const { accountId } = req.params;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            if (!accountId) {
+                throw new BadRequestError('Account ID is required');
+            }
+            const folders = await this.folderService.getAccountFolders(userId, accountId);
+            res.send(folders);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public createFolder = async (req: Request<object, object, CreateFolderSchema, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const { folderName, accountId } = req.body;
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            if (!folderName || !accountId) {
+                throw new BadRequestError('Folder name and account ID are required');
+            }
+            const folder = await this.folderService.createFolder(userId, accountId, folderName);
+            res.send(folder);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public updateFolder = async (
+        req: Request<GetFolderSchema, object, UpdateFolderBodySchema, object>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            const { folderId } = req.params;
+            const { accountId, folderName } = req.body;
+            if (!folderId || !accountId || !folderName) {
+                throw new BadRequestError('Folder ID, account ID and folder name are required');
+            }
+            const folder = await this.folderService.updateFolder(userId, accountId, folderId, folderName);
+            res.send(folder);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public deleteFolder = async (req: Request<GetFolderSchema, object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            const { folderId } = req.params;
+            if (!folderId) {
+                throw new BadRequestError('Folder ID is required');
+            }
+            const folder = await this.folderService.deleteFolder(userId, folderId);
+            res.send(folder);
+        } catch (error) {
+            next(error);
+        }
+    };
+}

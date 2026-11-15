@@ -13,6 +13,10 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
     - Enforced caller `userId` validation in `EmailQueryController` and `EmailReadService` for `getEmail`, `getThread`, `downloadAttachment`, and `downloadAttachmentStream`, blocking cross-tenant access to messages, threads, and binary attachments.
     - Enforced caller `userId` validation in `FolderController` and `FolderService` for `syncFolders`, `getFolder`, `getAccountFolders`, and `createFolder`, throwing `ForbiddenError` when an unowned `accountId` is targeted.
     - Activated staged attachment ownership validation in `EmailWriteService.composeEmailWithAttachments`, ensuring all attachment IDs belong to both the caller `userId` and the target `accountId`. Verified with `src/modules/emails/__tests__/attachment-security.test.ts`.
+- **Debug Router Decommissioning (`BUG-V14-01`):** Unmounted the `/api/utils` router and deleted `src/modules/utils/` to eliminate insecure access token retrieval and decryption oracle endpoints.
+- **Multi-Tenant Draft Scoping (`BUG-V14-04`):** Scoped `DraftRepository.updateDraft` to `{ _id: draftId, userId }` using `DraftModel.findOneAndUpdate`, preventing cross-tenant draft modification. Added multi-tenant test coverage in `src/modules/drafts/__tests__/draft-security.test.ts`.
+- **Authorized Single Email Access (`BUG-V14-03`):** Included `userId: 1` in `EmailThreadService.getEmail` account projection, eliminating false-positive 403 Forbidden errors for valid account owners. Added test coverage in `src/modules/emails/__tests__/email-thread-security.test.ts`.
+- **Staged Attachment Account Authorization (`BUG-V14-07`):** Enforced `account.userId === userId` in `AttachmentService.uploadStagedAttachment`. Added test coverage in `src/modules/attachments/__tests__/attachment-upload-security.test.ts`.
 
 ### Added
 
@@ -43,6 +47,16 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Environment Schema Extraction:** Extracted Zod configuration map `envSchemaObject` to `src/core/config/env.schema.ts` to reduce `EnvConfig` constructor length below 50 lines.
 - **Error Types & Decomposition:** Extracted `ParsedErrorDetails` interface in `src/core/types/error.types.ts` and refactored `AxiosApiError` constructor into focused helper functions (`extractAxiosMessage`, `extractAxiosMetadata`, `parseAxiosError`, `resolveErrorDetails`) for cyclomatic complexity compliance.
 - **Analytics Utility Modularization:** Decomposed `analytics.utils.ts` into pure formatting helpers (`analytics-formatters.ts`) and statistical calculation algorithms (`analytics-calculators.ts`) under `src/modules/analytics/utils/` with barrel export `index.ts`.
+- **Categorized Subdirectory Architecture Standardization (Rule 5.5 / `STRUCT-V14-03`):** Reorganized all 7 backend feature modules (`accounts/`, `analytics/`, `attachments/`, `drafts/`, `emails/`, `folders/`, `user/`) into standardized categorized subdirectories (`constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`) with barrel exports (`index.ts`).
+- **Specialized Gmail Message Services (`REFACTOR-V14-05`):** Decomposed `gmail-message.service.ts` into `GmailMessageReadService` and `GmailMessageWriteService` under `src/integrations/gmail/services/`.
+- **Specialized Gmail Utilities (`REFACTOR-V14-02`):** Decomposed monolithic `gmail.utils.ts` into `gmail-mime.utils.ts` and `gmail-header.utils.ts` under `src/integrations/gmail/utils/`.
+- **Account Sync Coordinator (`REFACTOR-V14-03`):** Extracted `AccountSyncCoordinatorService` (`src/modules/accounts/services/account-sync-coordinator.service.ts`) to manage BullMQ queue dispatching and priority scheduling.
+- **Shared Analytics Utilities (`REFACTOR-V14-09`):** Extracted common statistical calculation helpers to `src/modules/analytics/utils/analytics-common.utils.ts`.
+- **Integration Email Barrel (`@integrations/email/index.ts`):** Consolidated email provider factory and interfaces into unified barrel export.
+
+### Removed
+
+- **Orphan Legacy Code Deletion (`BUG-V14-05`, `STRUCT-V14-01`):** Deleted 289-line dead legacy `email.controller.ts` and 0-byte orphan `outlook.service.ts`.
 
 ### Changed
 
@@ -54,6 +68,9 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
     - Refactored `BaseWorker` in `src/workers/base.worker.ts` with `extractTraceContext` and `runWithTraceContext`.
 - **Error Handler & Monitoring Complexity Reduction:** Refactored `errorHandler` in `src/core/middlewares/error.handler.ts` into `normalizeAppError` and `captureNonOperationalErrors` helpers. Extracted `breadcrumbLevel` method in `SentryMonitoringProvider` (`src/core/monitoring/providers/sentry.provider.ts`) to comply with function size and complexity guardrails.
 - **User Schema Index Deduplication:** Eliminated duplicate index warning on `userId` in `src/modules/user/user.model.ts`.
+- **Compound Index Deduplication (`BUG-V14-08`):** Removed redundant compound index `{ accountId: 1, threadId: 1 }` from `email.model.ts`.
+- **Logic Deduplication (`REFACTOR-V14-01`):** Removed duplicate `getDateRange` in `email-query.service.ts`, importing canonical `@utils` helper.
+- **Strict Barrel Import Enforcement:** Standardized all internal backend imports to reference barrel `index.js` exports across all modules.
 - **Jest Path Mapping Alignment:** Updated `jest.config.js` `moduleNameMapper` with `@middlewares`, `@database`, `@security`, and `@queue` aliases to ensure clean test resolution.
 - **ESLint Zero-Error & Zero-Warning Remediation:** Resolved all ESLint errors and warnings across the backend repository to achieve **0 problems (0 errors, 0 warnings)** with `--max-warnings 0`.
 

@@ -1,10 +1,10 @@
 import { OUTLOOK_SECRETS } from '@config';
 import { OAUTH_ACCESS_REDIRECT_URI, OAUTH_SCOPES } from '@constants';
 import { EmailAttachment, FOLDER_KIND, FOLDER_ROLE, OutlookAttachmentObject, OutlookMessageObjectFull } from '@mailsense/types';
-import { FolderInput } from '@modules/folders/folder.model.js';
-import { OutlookCreateMessagePayload, OutlookFileAttachmentPayload, OutlookFolderObject } from './outlook.types.js';
-import { EmailInput } from '@modules/emails/database/email.model.js';
+import { EmailInput } from '@modules/emails/database/index.js';
+import { FolderInput } from '@modules/folders/database/index.js';
 import { compressString } from '@utils';
+import { OutlookCreateMessagePayload, OutlookFileAttachmentPayload, OutlookFolderObject } from './outlook.types.js';
 
 // Build outlook oauth access consent url
 export const buildOutlookOAuthConsentURL = async () => {

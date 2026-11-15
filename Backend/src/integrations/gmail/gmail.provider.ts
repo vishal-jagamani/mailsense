@@ -1,6 +1,5 @@
 import { NotFoundError } from '@errors';
-import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { AttachmentStreamResult, IEmailProvider, SyncResult } from '@integrations/email/index.js';
 import {
     GmailMessageObjectFull,
     GmailOAuthAccessTokenResponse,
@@ -8,22 +7,24 @@ import {
     SearchOtherContactsResponse,
     UpdateAPIResponse,
 } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { EmailDocument, EmailInput } from '@modules/emails/database/email.model.js';
-import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { FolderInput } from '@modules/folders/folder.model.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
+import { EmailDocument, EmailInput } from '@modules/emails/database/index.js';
+import { ComposeEmailBody } from '@modules/emails/schema/index.js';
+import { FolderInput } from '@modules/folders/database/index.js';
 import { decompressString, decrypt } from '@utils';
 import { GmailClient } from './clients/index.js';
 import { GmailAttachmentBufferResult, GmailMessageIdParam } from './gmail.types.js';
 import { GmailAttachmentService } from './services/gmail-attachment.service.js';
 import { GmailAuthService } from './services/gmail-auth.service.js';
 import { GmailLabelService } from './services/gmail-label.service.js';
-import { GmailMessageService } from './services/gmail-message.service.js';
+import { GmailMessageReadService } from './services/gmail-message-read.service.js';
+import { GmailMessageWriteService } from './services/gmail-message-write.service.js';
 
 export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenResponse, GmailUserProfile, Partial<GmailMessageObjectFull>> {
     constructor(
         private readonly gmailAuthService: GmailAuthService = new GmailAuthService(),
-        private readonly gmailMessageService: GmailMessageService = new GmailMessageService(),
+        private readonly gmailMessageReadService: GmailMessageReadService = new GmailMessageReadService(),
+        private readonly gmailMessageWriteService: GmailMessageWriteService = new GmailMessageWriteService(),
         private readonly gmailAttachmentService: GmailAttachmentService = new GmailAttachmentService(),
         private readonly gmailLabelService: GmailLabelService = new GmailLabelService(),
     ) {}
@@ -46,7 +47,7 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
 
     async fetchMessages(accountId: string, cursor?: string): Promise<SyncResult | null> {
         if (cursor) {
-            const historyDetails = await this.gmailMessageService.getMessagesAfterLastHistory(accountId, cursor);
+            const historyDetails = await this.gmailMessageReadService.getMessagesAfterLastHistory(accountId, cursor);
             if (!historyDetails) return null;
             return {
                 addedEmails: historyDetails.addedMessages,
@@ -54,7 +55,7 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
                 newCursor: historyDetails.newHistoryId,
             };
         } else {
-            const result = await this.gmailMessageService.getMessages(accountId);
+            const result = await this.gmailMessageReadService.getMessages(accountId);
             return {
                 addedEmails: result.emails,
                 deletedEmailIds: [],
@@ -71,7 +72,7 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
                 bodyPlain: decompressString(dbEmail.bodyPlain),
             };
         }
-        const emails = await this.gmailMessageService.getMessagesByMessagesId(accountId, [emailId]);
+        const emails = await this.gmailMessageReadService.getMessagesByMessagesId(accountId, [emailId]);
         if (!emails.length) {
             throw new NotFoundError('Email', emailId);
         }
@@ -79,31 +80,31 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
     }
 
     async deleteEmails(emailIds: string[], accountId: string, trash?: boolean): Promise<void> {
-        await this.gmailMessageService.deleteEmails(emailIds, accountId, trash);
+        await this.gmailMessageWriteService.deleteEmails(emailIds, accountId, trash);
     }
 
     async archiveEmails(emailIds: string[], accountId: string, archive: boolean): Promise<void> {
-        await this.gmailMessageService.archiveEmails(emailIds, accountId, archive);
+        await this.gmailMessageWriteService.archiveEmails(emailIds, accountId, archive);
     }
 
     async unreadEmails(emailIds: string[], accountId: string, unread: boolean): Promise<void> {
-        await this.gmailMessageService.unreadEmails(emailIds, accountId, unread);
+        await this.gmailMessageWriteService.unreadEmails(emailIds, accountId, unread);
     }
 
     async starEmails(emails: GmailMessageIdParam[], accountId: string, star: boolean): Promise<void> {
-        await this.gmailMessageService.starEmails(emails, accountId, star);
+        await this.gmailMessageWriteService.starEmails(emails, accountId, star);
     }
 
     async sendMail(composeEmailData: ComposeEmailBody): Promise<Partial<GmailMessageObjectFull>> {
-        return this.gmailMessageService.sendMessage(composeEmailData);
+        return this.gmailMessageWriteService.sendMessage(composeEmailData);
     }
 
     async moveEmails(emailIds: string[], accountId: string, targetFolderIds: string[], removeFolderIds?: string[]): Promise<UpdateAPIResponse> {
-        return await this.gmailMessageService.moveEmails(emailIds, accountId, targetFolderIds, removeFolderIds || []);
+        return await this.gmailMessageWriteService.moveEmails(emailIds, accountId, targetFolderIds, removeFolderIds || []);
     }
 
     async searchContacts(accountId: string, searchText: string): Promise<SearchOtherContactsResponse[]> {
-        return this.gmailMessageService.searchContacts(accountId, searchText);
+        return this.gmailMessageReadService.searchContacts(accountId, searchText);
     }
 
     async getAttachment(accountId: string, messageId: string, attachmentId: string): Promise<GmailAttachmentBufferResult> {

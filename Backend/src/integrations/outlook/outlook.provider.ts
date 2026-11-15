@@ -1,5 +1,4 @@
-import { IEmailProvider, SyncResult } from '@integrations/email/email.provider.js';
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { AttachmentStreamResult, IEmailProvider, SyncResult } from '@integrations/email/index.js';
 import {
     EmailAttributes,
     OutlookMessageObjectFull,
@@ -8,9 +7,9 @@ import {
     SearchOtherContactsResponse,
     UpdateAPIResponse,
 } from '@mailsense/types';
-import { EmailDocument, EmailInput } from '@modules/emails/database/email.model.js';
-import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { FolderInput } from '@modules/folders/folder.model.js';
+import { EmailDocument, EmailInput } from '@modules/emails/database/index.js';
+import { ComposeEmailBody } from '@modules/emails/schema/index.js';
+import { FolderInput } from '@modules/folders/database/index.js';
 import { OutlookClient } from './clients/index.js';
 import { OutlookAttachmentBufferResult, OutlookMessageIdParam } from './outlook.types.js';
 import { OutlookFolderService, OutlookMailReadService, OutlookMailWriteService, OutlookSyncService } from './services/index.js';

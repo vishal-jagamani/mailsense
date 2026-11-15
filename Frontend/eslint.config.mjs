@@ -41,7 +41,7 @@ const eslintConfig = [
             // complexity: ['warn', { max: 10 }],
             'no-console': ['error', { allow: ['warn', 'error'] }],
             'react-hooks/rules-of-hooks': 'error',
-            'react-hooks/exhaustive-deps': 'off', // temporarily disabled locally
+            'react-hooks/exhaustive-deps': 'off',
             'no-restricted-syntax': [
                 'error',
                 {

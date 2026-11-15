@@ -1,12 +1,11 @@
 import { LOGGER_MODULE } from '@constants';
 import { ForbiddenError, NotFoundError } from '@errors';
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { EmailProviderFactory } from '@integrations/email/index.js';
 import { ACCOUNT_PROVIDER, GetThreadResponse } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
 import { createLogger } from '@observability';
 import { decompressString } from '@utils';
-import { EmailDocument, EmailInput } from '../database/email.model.js';
-import { EmailRepository } from '../database/email.repository.js';
+import { EmailDocument, EmailInput, EmailRepository } from '../database/index.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 
@@ -18,7 +17,7 @@ export class EmailThreadService {
                 throw new NotFoundError('Email', emailId);
             }
 
-            const account = await AccountRepository.getAccountById(email.accountId, { provider: 1 });
+            const account = await AccountRepository.getAccountById(email.accountId, { provider: 1, userId: 1 });
             if (!account) {
                 throw new NotFoundError('Account', email.accountId);
             }

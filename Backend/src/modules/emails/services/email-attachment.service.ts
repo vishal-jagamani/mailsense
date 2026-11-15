@@ -1,13 +1,12 @@
 import { LOGGER_MODULE } from '@constants';
 import { ForbiddenError, NotFoundError } from '@errors';
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { AttachmentStreamResult, EmailProviderFactory } from '@integrations/email/index.js';
 import { GmailAttachmentBufferResult } from '@integrations/gmail/gmail.types.js';
 import { EmailAttachment } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
 import { createLogger } from '@observability';
-import { EmailRepository } from '../database/email.repository.js';
-import { AttachmentMetadata, AuthorizedAttachmentContext } from '../email.types.js';
+import { EmailRepository } from '../database/index.js';
+import { AttachmentMetadata, AuthorizedAttachmentContext } from '../types/index.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_SERVICE);
 

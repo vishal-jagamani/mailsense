@@ -1,10 +1,10 @@
-import { AccountMetrics } from '@modules/accounts/account.model.js';
-import { DraftModel } from '@modules/drafts/draft.model.js';
-import { Email } from '@modules/emails/database/email.model.js';
+import { AccountMetrics } from '@modules/accounts/database/index.js';
+import { DraftModel } from '@modules/drafts/database/index.js';
+import { Email } from '@modules/emails/database/index.js';
 import mongoose from 'mongoose';
-import { AnalyticsRepository } from '../database/analytics.repository.js';
+import { AnalyticsRepository } from '../database/index.js';
 
-jest.mock('@modules/emails/database/email.model.js', () => {
+jest.mock('@modules/emails/database/index.js', () => {
     const mongooseModule = jest.requireActual('mongoose') as typeof mongoose;
     return {
         Email: {
@@ -20,13 +20,13 @@ jest.mock('@modules/emails/database/email.model.js', () => {
     };
 });
 
-jest.mock('@modules/drafts/draft.model.js', () => ({
+jest.mock('@modules/drafts/database/index.js', () => ({
     DraftModel: {
         countDocuments: jest.fn(),
     },
 }));
 
-jest.mock('@modules/accounts/account.model.js', () => ({
+jest.mock('@modules/accounts/database/index.js', () => ({
     Account: {
         find: jest.fn(),
     },

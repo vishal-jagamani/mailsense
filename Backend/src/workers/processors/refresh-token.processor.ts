@@ -2,9 +2,9 @@ import { Job } from 'bullmq';
 
 import { LOGGER_MODULE } from '@constants';
 import { NotFoundError, SyncError } from '@errors';
-import { EmailProviderFactory } from '@integrations/email/email.provider.factory.js';
+import { EmailProviderFactory } from '@integrations/email/index.js';
 import { ACCOUNT_PROVIDER } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
+import { AccountRepository } from '@modules/accounts/database/index.js';
 import { monitoring } from '@monitoring';
 import { createLogger, setTraceContext } from '@observability';
 import { getRedisConnection, RefreshTokenPayload } from '@queue';

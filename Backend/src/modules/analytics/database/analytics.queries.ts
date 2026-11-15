@@ -1,6 +1,6 @@
-import { EmailDocument } from '@modules/emails/database/email.model.js';
+import { EmailDocument } from '@modules/emails/database/index.js';
 import { FilterQuery, PipelineStage } from 'mongoose';
-import { EXCLUDED_INCOMING_FOLDERS, SENT_FOLDER_IDENTIFIERS, STARRED_FOLDER_IDENTIFIERS } from '../analytics.constants.js';
+import { EXCLUDED_INCOMING_FOLDERS, SENT_FOLDER_IDENTIFIERS, STARRED_FOLDER_IDENTIFIERS } from '../constants/index.js';
 
 export const OVERVIEW_COUNT_RAW_QUERY = (matchFilter: FilterQuery<EmailDocument>): PipelineStage[] => [
     { $match: matchFilter },

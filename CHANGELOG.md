@@ -11,6 +11,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - **Multi-Tenant Privacy & Account Isolation:** Hardened data access controls across all email, conversation thread, attachment, and folder operations to guarantee that accounts, messages, and files can only be accessed or downloaded by their verified owners.
 - **Attachment Staging Protection:** Enforced strict account and user ownership validation during email composition, preventing unverified or cross-account staged files from being attached to outbound messages.
+- **Draft Isolation & Integrity:** Hardened draft autosaving and editing controls so drafts can only be accessed or modified by their verified owners.
+- **Diagnostic Endpoint Decommissioning:** Removed internal diagnostic utilities from the public API to ensure account access tokens and decryption routines are never exposed.
 
 ### Added
 
@@ -32,6 +34,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **Mailbox Interaction & Shortcut Responsiveness:** Refined keyboard shortcut handling and bulk email actions across mailbox views for smooth, lag-free navigation and message triaging.
 - **Account & Mailbox Visual Consistency:** Refined account provider badge display and sender identity formatting across connected accounts for clearer, more consistent mailbox navigation.
 - **Interface & Component Responsiveness:** Polished design system utility styling and element rendering across UI dialogs, dropdowns, and buttons for smoother interactions and consistent visual layouts.
+- **Email Operation Speed & Cache Consistency:** Optimized email mutation processing (starring, reading, archiving, and moving messages), delivering faster visual updates and more dependable background synchronization.
 
 ## [3.5.0] - 2026-10-15
 

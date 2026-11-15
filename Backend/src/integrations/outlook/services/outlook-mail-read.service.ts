@@ -1,7 +1,7 @@
 import { LOGGER_MODULE } from '@constants';
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { AttachmentStreamResult } from '@integrations/email/index.js';
 import { EmailAttachment, EmailAttributes, OutlookMessageObjectFull, SearchOtherContactsResponse } from '@mailsense/types';
-import { EmailDocument, EmailInput } from '@modules/emails/database/email.model.js';
+import { EmailDocument, EmailInput } from '@modules/emails/database/index.js';
 import { createLogger } from '@observability';
 import { decompressString } from '@utils';
 import { OutlookClient } from '../clients/index.js';

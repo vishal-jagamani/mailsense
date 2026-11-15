@@ -35,7 +35,7 @@ export const useComposeEmailAttachments = (params: UseComposeEmailAttachmentsPar
                 });
 
                 const attachmentData = res.data?.attachment || (res.data as unknown as Record<string, unknown>);
-                const attachmentId = attachmentData?.attachmentId || (attachmentData as Record<string, unknown>)?._id;
+                const attachmentId = attachmentData?.attachmentId || (attachmentData as unknown as Record<string, unknown>)?._id;
 
                 if (attachmentData && attachmentId) {
                     setStagedAttachments((prev) => [

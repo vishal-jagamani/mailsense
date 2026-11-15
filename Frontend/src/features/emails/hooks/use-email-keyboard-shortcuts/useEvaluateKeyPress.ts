@@ -1,120 +1,77 @@
-import { UseEvaluateKeyPressParams } from '@features/emails/types/email-hooks.types';
+'use client';
+
+import { EvaluateKeyPressActionHandler, UseEvaluateKeyPressParams } from '@features/emails/types/email-hooks.types';
+
+const KEY_ACTIONS: Record<string, EvaluateKeyPressActionHandler> = {
+    j: ({ event, emails, selectedIndex, onSelectIndex }) => {
+        event.preventDefault();
+        if (emails.length > 0) onSelectIndex(Math.min(emails.length - 1, selectedIndex + 1));
+    },
+    ArrowDown: ({ event, emails, selectedIndex, onSelectIndex }) => {
+        event.preventDefault();
+        if (emails.length > 0) onSelectIndex(Math.min(emails.length - 1, selectedIndex + 1));
+    },
+    k: ({ event, emails, selectedIndex, onSelectIndex }) => {
+        event.preventDefault();
+        if (emails.length > 0) onSelectIndex(Math.max(0, selectedIndex - 1));
+    },
+    ArrowUp: ({ event, emails, selectedIndex, onSelectIndex }) => {
+        event.preventDefault();
+        if (emails.length > 0) onSelectIndex(Math.max(0, selectedIndex - 1));
+    },
+    Enter: ({ event, currentEmail, onOpenEmail }) => {
+        if (currentEmail) {
+            event.preventDefault();
+            onOpenEmail(currentEmail);
+        }
+    },
+    o: ({ event, currentEmail, onOpenEmail }) => {
+        if (currentEmail) {
+            event.preventDefault();
+            onOpenEmail(currentEmail);
+        }
+    },
+    s: ({ event, selectedEmails, currentEmail, onStarEmail }) => {
+        if (onStarEmail && (selectedEmails.length > 0 || currentEmail)) {
+            event.preventDefault();
+            onStarEmail(currentEmail);
+        }
+    },
+    u: ({ event, selectedEmails, currentEmail, onMarkUnread }) => {
+        if (onMarkUnread && (selectedEmails.length > 0 || currentEmail)) {
+            event.preventDefault();
+            onMarkUnread(currentEmail);
+        }
+    },
+    e: ({ event, selectedEmails, currentEmail, onArchiveEmail }) => {
+        if (onArchiveEmail && (selectedEmails.length > 0 || currentEmail)) {
+            event.preventDefault();
+            onArchiveEmail(currentEmail);
+        }
+    },
+    '#': ({ event, selectedEmails, currentEmail, onDeleteEmail }) => {
+        if (onDeleteEmail && (selectedEmails.length > 0 || currentEmail)) {
+            event.preventDefault();
+            onDeleteEmail(currentEmail);
+        }
+    },
+    c: ({ event, onOpenCompose }) => {
+        if (onOpenCompose) {
+            event.preventDefault();
+            onOpenCompose();
+        }
+    },
+    '?': ({ event, onOpenShortcutsModal }) => {
+        if (onOpenShortcutsModal) {
+            event.preventDefault();
+            onOpenShortcutsModal();
+        }
+    },
+};
 
 export const evaluateKeyPress = (params: UseEvaluateKeyPressParams): void => {
-    const {
-        event,
-        emails,
-        selectedIndex,
-        selectedEmails,
-        currentEmail,
-        onSelectIndex,
-        onOpenEmail,
-        onStarEmail,
-        onMarkUnread,
-        onArchiveEmail,
-        onDeleteEmail,
-        onOpenCompose,
-        onOpenShortcutsModal,
-    } = params;
-
-    switch (event.key) {
-        case 'j':
-        case 'ArrowDown': {
-            event.preventDefault();
-            if (emails.length > 0) {
-                const nextIndex = Math.min(emails.length - 1, selectedIndex + 1);
-                onSelectIndex(nextIndex);
-            }
-            break;
-        }
-
-        case 'k':
-        case 'ArrowUp': {
-            event.preventDefault();
-            if (emails.length > 0) {
-                const prevIndex = Math.max(0, selectedIndex - 1);
-                onSelectIndex(prevIndex);
-            }
-            break;
-        }
-
-        case 'Enter':
-        case 'o': {
-            if (currentEmail) {
-                event.preventDefault();
-                onOpenEmail(currentEmail);
-            }
-            break;
-        }
-
-        case 's': {
-            if (onStarEmail) {
-                if (selectedEmails.length > 0 || currentEmail) {
-                    event.preventDefault();
-                    onStarEmail(currentEmail);
-                }
-            }
-            break;
-        }
-
-        case 'u': {
-            if (onMarkUnread) {
-                if (selectedEmails.length > 0 || currentEmail) {
-                    event.preventDefault();
-                    onMarkUnread(currentEmail);
-                }
-            }
-            break;
-        }
-
-        case 'e': {
-            if (onArchiveEmail) {
-                if (selectedEmails.length > 0 || currentEmail) {
-                    event.preventDefault();
-                    onArchiveEmail(currentEmail);
-                }
-            }
-            break;
-        }
-
-        case 'Delete':
-        case 'Backspace': {
-            if (onDeleteEmail) {
-                if (selectedEmails.length > 0 || currentEmail) {
-                    event.preventDefault();
-                    onDeleteEmail(currentEmail);
-                }
-            }
-            break;
-        }
-
-        case 'c': {
-            if (onOpenCompose) {
-                event.preventDefault();
-                onOpenCompose();
-            }
-            break;
-        }
-
-        case '/': {
-            event.preventDefault();
-            const searchInput = document.querySelector<HTMLInputElement>('input[type="search"], input[name="search"], #email-search-input');
-            if (searchInput) {
-                searchInput.focus();
-                searchInput.select();
-            }
-            break;
-        }
-
-        case '?': {
-            if (onOpenShortcutsModal) {
-                event.preventDefault();
-                onOpenShortcutsModal();
-            }
-            break;
-        }
-
-        default:
-            break;
+    const handler = KEY_ACTIONS[params.event.key];
+    if (handler) {
+        handler(params);
     }
 };

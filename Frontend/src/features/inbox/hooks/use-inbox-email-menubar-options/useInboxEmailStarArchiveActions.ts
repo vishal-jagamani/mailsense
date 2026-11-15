@@ -1,7 +1,7 @@
+import { useArchiveEmailMutation, useStarEmailMutation } from '@features/emails/api/email.mutations';
 import { EmailAttributes } from '@mailsense/types';
 import { toast } from 'sonner';
 import { UseEmailStarArchiveActionsReturn, UseInboxEmailStarArchiveActionsParams } from '../../types/inbox.types';
-import { useArchiveEmailMutation, useStarEmailMutation } from '@features/emails/api/email.mutations';
 
 export const useInboxEmailStarArchiveActions = (params: UseInboxEmailStarArchiveActionsParams): UseEmailStarArchiveActionsReturn => {
     const { emailIds, allEmails, handleActionSuccess, onRefetchEmails } = params;

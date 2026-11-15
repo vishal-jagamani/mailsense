@@ -10,22 +10,15 @@ import {
 import { createLogger } from '@observability';
 import {
     AccountEmailMetricsBase,
-    Count,
     EmailVolumeDataPointBase,
     RawAccountBreakdownResult,
     RawOverviewAggregateResult,
     RawTopSendersResult,
     RawVolumeDataPoint,
 } from '../types/index.js';
+import { extractFacetCount } from './analytics-common.utils.js';
 
 const logger = createLogger(LOGGER_MODULE.ANALYTICS_UTILS);
-
-function extractFacetCount(buckets?: Count[]): number {
-    if (!buckets || buckets.length === 0) {
-        return 0;
-    }
-    return buckets[0].count;
-}
 
 export const buildNoAccountsAnalyticsDashboardData = (timeframe?: ANALYTICS_TIMEFRAME): DashboardAnalyticsResponse => {
     try {

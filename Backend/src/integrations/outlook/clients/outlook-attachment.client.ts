@@ -1,4 +1,4 @@
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { AttachmentStreamResult } from '@integrations/email/index.js';
 import { OutlookAttachmentObject } from '@mailsense/types';
 import { apiRequest, logger } from '@utils';
 import axios, { AxiosRequestConfig } from 'axios';

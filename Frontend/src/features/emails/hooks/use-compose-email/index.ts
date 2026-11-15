@@ -4,7 +4,7 @@ import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
 import { ComposeEmailRequestBody, UploadAttachmentResponse } from '@mailsense/types';
 import { UseDebounceQuery } from '@shared/hooks';
 import { useAuthStore, useComposeEmailPopupStore } from '@shared/store';
-import { useSearchOtherContactsMutation } from '../../api/email.mutations';
+import { useSearchOtherContactsMutation } from '../../api/email-write.mutations';
 import { useComposeEmailActions } from './useComposeEmailActions';
 import { useComposeEmailAttachments } from './useComposeEmailAttachments';
 import { useComposeEmailDraftActions } from './useComposeEmailDraftActions';

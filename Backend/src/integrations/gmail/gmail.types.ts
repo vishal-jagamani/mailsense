@@ -1,4 +1,4 @@
-import { EmailInput } from '@modules/emails/database/email.model.js';
+import { EmailInput } from '@modules/emails/database/index.js';
 
 export interface GetGmailMessagesResponse {
     emails: EmailInput[];
@@ -60,4 +60,28 @@ export interface GmailMimeMessageAttachment {
     filename: string;
     mimeType: string;
     buffer: Buffer;
+}
+
+export interface ParsedMimeHeaders {
+    from: string;
+    to: string[];
+    cc: string[];
+    bcc: string[];
+    subject: string;
+    date: Date;
+    messageId: string;
+    inReplyTo?: string;
+    references?: string[];
+}
+
+export interface ExtractedBodyContent {
+    bodyHtml: string;
+    bodyPlain: string;
+    snippet: string;
+}
+
+export interface DecodedPartData {
+    data: Buffer | null;
+    mimeType: string;
+    filename?: string;
 }

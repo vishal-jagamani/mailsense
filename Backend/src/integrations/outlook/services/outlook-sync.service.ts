@@ -1,6 +1,6 @@
 import { LOGGER_MODULE } from '@constants';
 import { OutlookMessageObjectFull, OutlookOAuthAccessTokenResponse, OutlookUserProfile } from '@mailsense/types';
-import { EmailInput } from '@modules/emails/database/email.model.js';
+import { EmailInput } from '@modules/emails/database/index.js';
 import { createLogger } from '@observability';
 import { OutlookClient } from '../clients/index.js';
 import { ExtractDeltaMessageChangesResponse, GetOutlookDeltaMessagesResponse } from '../outlook.types.js';

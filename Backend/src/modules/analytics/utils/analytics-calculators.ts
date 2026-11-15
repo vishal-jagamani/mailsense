@@ -1,6 +1,7 @@
 import { LOGGER_MODULE } from '@constants';
 import { ANALYTICS_TIMEFRAME, ResponseTimeDistributionAttributes, ResponseTimeMetricsAttributes } from '@mailsense/types';
 import { createLogger } from '@observability';
+import { computeMedian, recordDistributionBucket } from './analytics-common.utils.js';
 import { DateRangeBoundary, RawThreadResponseTimeSummary } from '../types/index.js';
 
 const logger = createLogger(LOGGER_MODULE.ANALYTICS_UTILS);
@@ -101,26 +102,6 @@ export const calculatePercentageChange = (current: number, previous?: number): n
         throw err;
     }
 };
-
-function recordDistributionBucket(distribution: ResponseTimeDistributionAttributes, deltaMinutes: number): void {
-    if (deltaMinutes < 60) {
-        distribution.under1Hour++;
-    } else if (deltaMinutes <= 240) {
-        distribution.between1And4Hours++;
-    } else if (deltaMinutes <= 1440) {
-        distribution.between4And24Hours++;
-    } else {
-        distribution.over24Hours++;
-    }
-}
-
-function computeMedian(sortedNumbers: number[]): number {
-    const midIndex = Math.floor(sortedNumbers.length / 2);
-    if (sortedNumbers.length % 2 !== 0) {
-        return sortedNumbers[midIndex];
-    }
-    return Math.round((sortedNumbers[midIndex - 1] + sortedNumbers[midIndex]) / 2);
-}
 
 export const calculateResponseTimeMetrics = (threadSummaries: RawThreadResponseTimeSummary[]): ResponseTimeMetricsAttributes => {
     try {

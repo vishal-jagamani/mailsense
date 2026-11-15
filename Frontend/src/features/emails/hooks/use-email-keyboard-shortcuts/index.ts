@@ -1,6 +1,8 @@
+'use client';
+
 import { UseEmailKeyboardShortcutsParams } from '@features/emails/types';
+import { isInputElement } from '@features/emails/utils';
 import { useEffect } from 'react';
-import { isInputElement } from '../../utils';
 import { evaluateKeyPress } from './useEvaluateKeyPress';
 
 export const useEmailKeyboardShortcuts = (params: UseEmailKeyboardShortcutsParams): void => {

@@ -1,6 +1,6 @@
 import { useUnreadEmailMutation } from '@features/emails/api/email.mutations';
 import { useDeleteEmail } from '@features/inbox/api/inbox.queries';
-import { UseInboxEmailUnreadDeleteActionsReturn, UseInboxEmailUnreadDeleteActions } from '@features/inbox/types/inbox.types';
+import { UseInboxEmailUnreadDeleteActions, UseInboxEmailUnreadDeleteActionsReturn } from '@features/inbox/types/inbox.types';
 import { toast } from 'sonner';
 
 export const useInboxEmailUnreadDeleteActions = (params: UseInboxEmailUnreadDeleteActions): UseInboxEmailUnreadDeleteActionsReturn => {

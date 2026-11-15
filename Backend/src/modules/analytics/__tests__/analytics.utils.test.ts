@@ -1,21 +1,12 @@
-import {
-    ANALYTICS_TIMEFRAME,
-    EmailVolumeDataPointAttributes,
-    ResponseTimeMetricsAttributes,
-    TopSenderDataAttributes
-} from '@mailsense/types';
-import {
-    RawThreadResponseTimeSummary,
-    RawTopSendersResult,
-    RawVolumeDataPoint
-} from '../analytics.types.js';
+import { ANALYTICS_TIMEFRAME, EmailVolumeDataPointAttributes, ResponseTimeMetricsAttributes, TopSenderDataAttributes } from '@mailsense/types';
+import { RawThreadResponseTimeSummary, RawTopSendersResult, RawVolumeDataPoint } from '../types/index.js';
 import {
     buildNoAccountsAnalyticsDashboardData,
     calculateDateRange,
     calculatePercentageChange,
     calculateResponseTimeMetrics,
     formatEmailVolumeTimeSeries,
-    formatTopSenders
+    formatTopSenders,
 } from '../utils/index.js';
 
 describe('Analytics Utilities — Unit Test Suite', () => {

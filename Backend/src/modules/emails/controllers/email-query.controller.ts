@@ -1,13 +1,13 @@
 import { LOGGER_MODULE } from '@constants';
 import { BadRequestError } from '@errors';
 import { GetAllEmailsFilters } from '@mailsense/types';
-import { GetAccountDetailsSchema } from '@modules/accounts/account.schema.js';
+import { GetAccountDetailsSchema } from '@modules/accounts/schema/index.js';
 import { createLogger } from '@observability';
 import { NextFunction, Request, Response } from 'express';
 import { UnauthorizedError } from 'express-oauth2-jwt-bearer';
-import { DownloadAttachmentSchema, GetAllEmailsSchema, GetEmailSchema, SearchEmailBody, SearchOtherContactsBody } from '../email.schema.js';
-import { PaginationParams } from '../email.types.js';
-import { EmailService } from '../services/email.service.js';
+import { DownloadAttachmentSchema, GetAllEmailsSchema, GetEmailSchema, SearchEmailBody, SearchOtherContactsBody } from '../schema/index.js';
+import { EmailService } from '../services/index.js';
+import { PaginationParams } from '../types/index.js';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_CONTROLLER);
 

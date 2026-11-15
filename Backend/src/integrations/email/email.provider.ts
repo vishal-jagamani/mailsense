@@ -1,9 +1,9 @@
-import { SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
-import { EmailDocument, EmailInput } from '@modules/emails/database/email.model.js';
-import { ComposeEmailBody } from '@modules/emails/email.schema.js';
-import { FolderInput } from '@modules/folders/folder.model.js';
-import { AttachmentStreamResult, IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
 import { GmailAttachmentBufferResult, GmailMessageIdParam } from '@integrations/gmail/gmail.types.js';
+import { SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types';
+import { EmailDocument, EmailInput } from '@modules/emails/database/index.js';
+import { ComposeEmailBody } from '@modules/emails/schema/index.js';
+import { FolderInput } from '@modules/folders/database/index.js';
+import { AttachmentStreamResult, IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
 
 export interface SyncResult {
     addedEmails: EmailInput[] | Partial<EmailInput>[];

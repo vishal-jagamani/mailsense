@@ -1,5 +1,5 @@
 import { LOGGER_MODULE } from '@constants';
-import { AttachmentStreamResult } from '@integrations/email/email.provider.types.js';
+import { AttachmentStreamResult } from '@integrations/email/index.js';
 import { createLogger } from '@observability';
 import { AxiosRequestConfig } from 'axios';
 import { apiRequest } from 'shared/utils/index.js';

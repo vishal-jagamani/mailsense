@@ -44,8 +44,18 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
     - Added `inbox-components.types.ts` in `Frontend/src/features/inbox/types/`.
     - Added `settings-api.types.ts` and `settings-component.types.ts` in `Frontend/src/features/settings/types/`.
     - Added `hooks.types.ts` and `utils.types.ts` in `Frontend/src/shared/types/`.
+- **Specialized Mutation Architecture (`REFACTOR-V14-04`):** Decomposed `email.mutations.ts` into `email-status.mutations.ts`, `email-folder.mutations.ts`, and `email-write.mutations.ts` with composite barrel re-export in `email.mutations.ts`.
+- **Folder Filter State Hook (`REFACTOR-V14-06`):** Extracted `useFolderFilterState.ts` from `use-move-to-folder-dropdown/index.ts`, isolating selection resolution and account filtering.
+- **Dictionary-Driven Keyboard Evaluation (`REFACTOR-V14-08`):** Refactored switch ladder in `useEvaluateKeyPress.ts` to `KEY_ACTIONS` dictionary table, reducing lines to 77 and cyclomatic complexity to $\le 5$.
+- **Dedicated Hook Types:** Added `UseFolderFilterStateParams`, `UseFolderFilterStateReturn`, and `EvaluateKeyPressActionHandler` in `email-hooks.types.ts`.
+
+### Removed
+
+- **Dead Code Cleanup (`STRUCT-V14-02`):** Purged redundant `useInboxPage.ts` and empty stub `useInboxPageActions.ts`.
 
 ### Changed
+
+- **Inbox Hook Modernization (`BUG-V14-06`):** Refactored `use-inbox-page/index.ts` into a clean 104-line hook coordinating sub-hooks cleanly without any `/* eslint-disable */` file suppressions.
 
 - **Shared Utilities Modularization & Lib Cleanup:** Relocated Tailwind CSS merge helper from `Frontend/src/lib/utils.ts` to `Frontend/src/shared/utils/cn.ts` with centralized barrel export `Frontend/src/shared/utils/index.ts`. Updated all 25 UI primitives (`Frontend/src/shared/ui/*.tsx`), `app-sidebar.tsx`, `components.json`, and feature utilities (`useConnectAccount`, `EmailVolumeChart`, `DraftListTableBody`) to import `cn` and shared utility helpers from `@shared/utils`. Retained `Frontend/src/lib/auth0.ts` as the sole server client configuration for Next.js Auth0 integration.
 - **Zero Type Declarations in Source Files:** Eliminated all local `interface`, `type`, and `enum` declarations from components, custom hooks, and pages across the frontend, strictly enforcing dedicated `*.types.ts` files with ESLint AST `no-restricted-syntax` rules.
