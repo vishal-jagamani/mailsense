@@ -41,6 +41,7 @@ export const useComposeEmailAttachments = (params: UseComposeEmailAttachmentsPar
                     setStagedAttachments((prev) => [
                         ...prev,
                         {
+                            _id: String(attachmentId),
                             attachmentId: String(attachmentId),
                             filename: String(attachmentData.filename || 'attachment'),
                             mimeType: String(attachmentData.mimeType || 'application/octet-stream'),
