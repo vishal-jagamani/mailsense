@@ -7,6 +7,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-11-15
+
 ### Security
 
 - **Multi-Tenant Authorization Hardening (`BUG-V13-01`, `BUG-V13-02`, `BUG-V13-03`):**
@@ -560,7 +562,9 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Outlook connector remained in-progress in this release and was not intended for full user rollout.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.6.0...HEAD
+[3.6.0]: https://github.com/vishal-jagamani/mailsense/compare/v3.5.0...v3.6.0
+[3.5.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.5.0
 [3.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.3.0
 [3.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.2.0
 [3.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.1.0

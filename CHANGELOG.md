@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-11-15
+
 ### Security
 
 - **Multi-Tenant Privacy & Account Isolation:** Hardened data access controls across all email, conversation thread, attachment, and folder operations to guarantee that accounts, messages, and files can only be accessed or downloaded by their verified owners.
@@ -327,7 +329,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Outlook connector is in development and not included in this release.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.6.0...HEAD
+[3.6.0]: https://github.com/vishal-jagamani/mailsense/compare/v3.5.0...v3.6.0
+[3.5.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.5.0
 [3.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.3.0
 [3.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.2.0
 [3.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.1.0

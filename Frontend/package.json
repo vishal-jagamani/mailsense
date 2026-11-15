@@ -1,6 +1,6 @@
 {
     "name": "mailsense",
-    "version": "3.5.0",
+    "version": "3.6.0",
     "private": true,
     "scripts": {
         "dev": "next dev --webpack --hostname 0.0.0.0",

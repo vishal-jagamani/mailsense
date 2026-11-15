@@ -25,8 +25,8 @@
 - `Backend/src/core/config/app.config.ts`: exposes the backend Redis connection URL config used by BullMQ and `ioredis`
 - `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
 - `Backend/src/core/config/env.config.ts`: validates queue/runtime Redis configuration through `REDIS_URL`
-- `Backend/package.json`: backend package metadata currently uses version `3.5.0` with `pnpm@11.22.0`
-- `Frontend/package.json`: frontend package metadata currently uses version `3.5.0`
+- `Backend/package.json`: backend package metadata currently uses version `3.6.0` with `pnpm@12.14.0`
+- `Frontend/package.json`: frontend package metadata currently uses version `3.6.0`
 
 ### Security
 

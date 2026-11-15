@@ -7,6 +7,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-11-15
+
 ### Added
 
 - **Attachment Binary Download API:** Added `downloadAttachment` in `Frontend/src/features/emails/api/email.api.ts` wrapping `axiosClient` with `responseType: 'blob'` and strongly-typed `Promise<Blob>` return.
@@ -471,7 +473,9 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.6.0...HEAD
+[3.6.0]: https://github.com/vishal-jagamani/mailsense/compare/v3.5.0...v3.6.0
+[3.5.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.5.0
 [3.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.3.0
 [3.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.2.0
 [3.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.1.0
