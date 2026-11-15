@@ -2,24 +2,13 @@
 
 import React from 'react';
 
-import { APIResponse, ComposeEmailRequestBody, SearchOtherContactsResponse } from '@mailsense/types';
+import { ComposeEmailHeaderProps } from '@features/emails/types';
 import { useIsMobile } from '@shared/hooks';
 import { Badge } from '@shared/ui/badge';
 import { Input } from '@shared/ui/input';
 import { Separator } from '@shared/ui/separator';
 import { X } from 'lucide-react';
 import SearchToEmailPopup from './SearchToEmailPopup';
-
-interface ComposeEmailHeaderProps {
-    composeEmailBody: ComposeEmailRequestBody;
-    setComposeEmailBody: React.Dispatch<React.SetStateAction<ComposeEmailRequestBody>>;
-    isToFocused: boolean;
-    setIsToFocused: React.Dispatch<React.SetStateAction<boolean>>;
-    toEmailSearchText: string;
-    setToEmailSearchText: React.Dispatch<React.SetStateAction<string>>;
-    searchOtherContactsData: APIResponse<SearchOtherContactsResponse[]> | null;
-    debouncedToEmailSearchText: string;
-}
 
 const ComposeEmailHeader: React.FC<ComposeEmailHeaderProps> = ({
     composeEmailBody,

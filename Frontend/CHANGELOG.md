@@ -7,14 +7,83 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-11-15
+
+### Added
+
+- **Attachment Binary Download API:** Added `downloadAttachment` in `Frontend/src/features/emails/api/email.api.ts` wrapping `axiosClient` with `responseType: 'blob'` and strongly-typed `Promise<Blob>` return.
+- **Account Folder Synchronization API:** Added `syncAccountFolders` client method in `Frontend/src/features/folders/api/folder.api.ts` to trigger on-demand folder sync with connected providers.
+- **Dedicated Hook & Mutation Types (Zero Inline Types Standard):**
+    - Created `UpdateFolderMutationVariables` in `Frontend/src/features/folders/types/folders.types.ts` for typed folder update mutations.
+    - Created named state and return interfaces in `Frontend/src/features/emails/types/email-ui.types.ts`: `EmailsPageAccountState`, `EmailsPageEmailState`, `EmailsPageThreadState`, `EmailsPageUnreadOperationState`, `EmailsPageSetterState`, and `UseEmailsPageReturnParams`.
+    - Created feature types: `EnableAccountPayload`, `UpdateAccountSettingsPayload`, and `UpdateAccountSettingsVariables` in `Frontend/src/features/accounts/types/index.ts`.
+    - Created inbox query/mutation types: `SearchEmailPayload` and `DeleteEmailPayload` in `Frontend/src/features/inbox/types/index.ts`.
+    - Created settings mutation types: `ChangePasswordPayload` in `Frontend/src/features/settings/types/index.ts`.
+    - Created shared component and constant types: `PageHeaderProps` in `Frontend/src/shared/types/component.types.ts`, and `VolumeChartSeries`, `DateRangeOption`, and `SettingOption` in `Frontend/src/shared/types/constants.types.ts`.
+    - Created App Router page parameter interfaces in `Frontend/src/shared/types/pages.types.ts`: `RootLayoutProps`, `AccountsPageParams`, `EmailPageParams`, `FoldersPageParams`, `SettingsPageParams`, `AccountsPageProps`, `EmailPageProps`, `FoldersPageParam`, and `SettingsPageProps`.
+    - Created shared Zustand store types in `Frontend/src/shared/types/store.types.ts`: `AuthState`, `ThemeState`, `BreadcrumbItem`, `BreadcrumbStore`, and `ComposeEmailPopupStore`.
+    - Refactored sidebar types in `Frontend/src/shared/types/sidebar.types.ts`: `NavSubItem`, `NavMainItem`, `SidebarUser`, `SidebarProject`, `SidebarTeam`, `SidebarData`, `NavMainProps`, `NavProjectsProps`, `NavTeamsProps`, and `NavUserProps`.
+- **Modular Custom Hook Subdirectory Architecture:**
+    - Decomposed monolithic `useComposeEmail` into focused sub-hooks under `Frontend/src/features/emails/hooks/use-compose-email/`: `useComposeEmailDraftActions`, `useComposeEmailAttachments`, and `useComposeEmailActions` with composite facade `index.ts`.
+    - Decomposed monolithic `useEmailActions` into focused sub-hooks under `Frontend/src/features/emails/hooks/use-email-actions/`: `useEmailSelection`, `useSingleEmailActions`, `useBatchEmailOperations`, and `useEmailActionsState` with composite facade `index.ts`.
+    - Modularized `useEmailKeyboardShortcuts` into `useEvaluateKeyPress` helper hook under `Frontend/src/features/emails/hooks/use-email-keyboard-shortcuts/` with barrel export `index.ts`.
+    - Modularized `useMoveToFolderDropdown` into focused hook directory `Frontend/src/features/emails/hooks/use-move-to-folder-dropdown/` with barrel export `index.ts`.
+    - Decomposed monolithic `useInboxPage` into focused sub-hooks under `Frontend/src/features/inbox/hooks/use-inbox-page/`: `useInboxData` and `useInboxRefresh` with composite facade `index.ts`.
+    - Modularized `useInboxEmailMenuBarOptions` into dedicated sub-directory `Frontend/src/features/inbox/hooks/use-inbox-email-menubar-options/` with barrel export `index.ts`.
+- **Dedicated Hook & Component Type Contracts:**
+    - Created `Frontend/src/features/emails/types/email-component.types.ts` (`MoveToFolderDropdownProps`).
+    - Created `Frontend/src/features/emails/types/email-hooks.types.ts` (`UseComposeEmailDraftActions`, `UseComposeEmailActionsParams`, `UseComposeEmailAttachmentsParams`, `UseEvaluateKeyPressParams`, `EvaluateKeyPressParams`).
+    - Created centralized barrel export in `Frontend/src/features/emails/types/index.ts` re-exporting component, hook, and UI contracts.
+- **Entities Directory Consolidation & Modularization:**
+    - Consolidated redundant `Frontend/src/entities/` directory directly into domain feature modules.
+    - Relocated `AccountProviderIcon.tsx` to `Frontend/src/features/accounts/components/AccountProviderIcon.tsx`.
+    - Relocated `FormatEmailFromString.tsx` to `Frontend/src/features/emails/components/FormatEmailFromString.tsx`.
+    - Relocated provider icon mappings to centralized `Frontend/src/shared/constants/accounts.ts`.
+- **Comprehensive Dedicated Feature Types:**
+    - Added `accounts-api.types.ts`, `accounts-components.types.ts`, and `accounts-hooks.types.ts` in `Frontend/src/features/accounts/types/`.
+    - Added `email-api.types.ts` in `Frontend/src/features/emails/types/`.
+    - Added `folders-components.types.ts` in `Frontend/src/features/folders/types/`.
+    - Added `inbox-components.types.ts` in `Frontend/src/features/inbox/types/`.
+    - Added `settings-api.types.ts` and `settings-component.types.ts` in `Frontend/src/features/settings/types/`.
+    - Added `hooks.types.ts` and `utils.types.ts` in `Frontend/src/shared/types/`.
+- **Specialized Mutation Architecture (`REFACTOR-V14-04`):** Decomposed `email.mutations.ts` into `email-status.mutations.ts`, `email-folder.mutations.ts`, and `email-write.mutations.ts` with composite barrel re-export in `email.mutations.ts`.
+- **Folder Filter State Hook (`REFACTOR-V14-06`):** Extracted `useFolderFilterState.ts` from `use-move-to-folder-dropdown/index.ts`, isolating selection resolution and account filtering.
+- **Dictionary-Driven Keyboard Evaluation (`REFACTOR-V14-08`):** Refactored switch ladder in `useEvaluateKeyPress.ts` to `KEY_ACTIONS` dictionary table, reducing lines to 77 and cyclomatic complexity to $\le 5$.
+- **Dedicated Hook Types:** Added `UseFolderFilterStateParams`, `UseFolderFilterStateReturn`, and `EvaluateKeyPressActionHandler` in `email-hooks.types.ts`.
+
+### Removed
+
+- **Dead Code Cleanup (`STRUCT-V14-02`):** Purged redundant `useInboxPage.ts` and empty stub `useInboxPageActions.ts`.
+
+### Changed
+
+- **Inbox Hook Modernization (`BUG-V14-06`):** Refactored `use-inbox-page/index.ts` into a clean 104-line hook coordinating sub-hooks cleanly without any `/* eslint-disable */` file suppressions.
+
+- **Shared Utilities Modularization & Lib Cleanup:** Relocated Tailwind CSS merge helper from `Frontend/src/lib/utils.ts` to `Frontend/src/shared/utils/cn.ts` with centralized barrel export `Frontend/src/shared/utils/index.ts`. Updated all 25 UI primitives (`Frontend/src/shared/ui/*.tsx`), `app-sidebar.tsx`, `components.json`, and feature utilities (`useConnectAccount`, `EmailVolumeChart`, `DraftListTableBody`) to import `cn` and shared utility helpers from `@shared/utils`. Retained `Frontend/src/lib/auth0.ts` as the sole server client configuration for Next.js Auth0 integration.
+- **Zero Type Declarations in Source Files:** Eliminated all local `interface`, `type`, and `enum` declarations from components, custom hooks, and pages across the frontend, strictly enforcing dedicated `*.types.ts` files with ESLint AST `no-restricted-syntax` rules.
+- **Path Aliases Cleanup:** Removed deprecated `@entities/*` path alias from `Frontend/tsconfig.json`.
+
+- **Thread Query Resilience:** Enhanced `useGetThreadQuery` in `Frontend/src/features/emails/api/email.queries.ts` with a retry predicate that immediately stops retries on `403 Forbidden` or `404 Not Found` responses, preventing unnecessary network traffic on missing or unauthorized conversation threads.
+- **Folder Mutation Typing:** Refactored `useUpdateFolderMutation` in `Frontend/src/features/folders/api/folder.mutation.ts` to consume `UpdateFolderMutationVariables`, eliminating inline object types.
+- **Emails Page Hook Typing:** Refactored `useEmailsPage` in `Frontend/src/features/emails/hooks/useEmailsPage.ts` to use `UseEmailsPageReturnParams` imported from `email-ui.types.ts`, removing local inline interface definitions.
+- **ESLint Zero-Error Remediation:** Resolved all ESLint errors across the frontend codebase to achieve **0 errors**.
+- **ESLint Zero-Warning Remediation:** Resolved all ESLint warnings across components and custom hooks, achieving **0 errors, 0 warnings** with `--max-warnings 0` standards.
+- **Type Deduplication & Contract Cleanliness:** Consolidated `MoveToFolderDropdownProps` into `email-component.types.ts`, removing duplicate interface declaration from `email-ui.types.ts`.
+- **Strict Return Typing in Error Utilities:** Added explicit `: FormattedClientError` return type signatures to `DefaultError` and `ErrorInstance` in `Frontend/src/shared/api/errors.ts`.
+- **Full Hook Barrel Exports:** Expanded `Frontend/src/features/emails/hooks/index.ts` to export all feature hooks (`useEmailsPage`, `useComposeEmail`, `useEmailMenuBarOptions`, `useEmailKeyboardShortcuts`, `useEmailActions`, `useMoveToFolderDropdown`, `useEmailListState`, `useEmailPagination`).
+- **Empty Catch Block Removal:** Cleaned up empty/silent catch blocks across `ErrorBoundary.tsx`, `api/client.ts`, `frontend.manager.ts`, `session.tracker.ts`, and monitoring providers, ensuring errors propagate or are handled explicitly.
+- **Strict Inline Types Elimination:** Eliminated inline object type declarations across Next.js app router pages, components, hooks, stores, and constants.
+
 ## [3.5.0] - 2026-10-15
 
 ### Added
+
 - **Hook Extraction & Bulk Action Deduplication (`UI-REFACTOR-01`):** Added `useEmailActions` custom hook in `Frontend/src/features/emails/hooks/useEmailActions.ts`, extracting and unifying bulk email selection, starring, marking unread, archiving, and deletion orchestration across `useInboxPage` and `useFolderEmailListPage`.
 - **Folder Card Modularization (`UI-REFACTOR-02`):** Decomposed `FolderCard.tsx` into modular sub-components `FolderCardHeader` and `FolderCardActions` under `Frontend/src/features/folders/components/`.
 - **Explicit Component Naming:** Replaced nested anonymous component directory `Frontend/src/features/folders/components/folder-email-list-header/index.tsx` with explicit component file `Frontend/src/features/folders/components/FolderEmailListHeader.tsx`.
 
 ### Changed
+
 - **Shared Type Contracts (@mailsense/types v1.6.0):** Integrated `@mailsense/types` `1.6.0`, consuming strictly normalized `string[]` arrays for `to`, `cc`, and `bcc` recipient fields across email cards, thread conversation views, search result items, and compose recipient chips.
 - **Directory Standardization:** Renamed `Frontend/src/features/composeEmail` to strictly kebab-case `Frontend/src/features/compose-email`.
 - **Account Mutation Typing:** Updated account settings mutation hooks to use dedicated `UpdateAccountSettingsRequest` interface from `@mailsense/types`.
@@ -22,16 +91,17 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [3.4.0] - 2026-09-27
 
 ### Added
+
 - **Optimistic UI Rollbacks (`UI-NEXT-01`):** Enhanced email mutations (`starEmail`, `unreadEmail`, `moveEmails`) in `Frontend/src/features/emails/api/email.mutations.ts` with React Query `onMutate` cache snapshots and contextual error recovery toasts (`sonner`), guaranteeing automatic state restoration to the pre-mutation snapshot upon network or server failures.
 - **Keyboard Navigation & Shortcuts Engine (`UI-NEXT-02`):**
-  - Added `useEmailKeyboardShortcuts` hook in `Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts` with `isInputElement` focus guards in `Frontend/src/features/emails/utils/emails.ts`, supporting `j`/`k` (cursor move), `Enter`/`o` (open email), `s` (star), `u` (unread), `e` (archive), `Delete`/`Backspace` (trash), `c` (compose), `/` (search focus), and `?` (shortcuts cheat-sheet dialog).
-  - Fully wired `useEmailKeyboardShortcuts` into `useInboxPage` and `useFolderEmailListPage`, connecting keyboard actions directly to React Query mutations (`starEmail`, `unreadEmail`, `archiveEmail`, `deleteEmail`), composer modal (`openCompose`), and page navigation (`router.push`).
-  - Implemented complete bulk operations parity across keyboard shortcuts and mouse actions: when checkboxes are selected (`selectedEmails.length > 0`), shortcuts (`s`, `u`, `e`, `Delete`/`Backspace`) and toolbar options in `EmailMenuBarOptions` apply across all selected emails simultaneously, update local UI state optimistically, show contextual count toasts (e.g. `X emails starred / marked as unread / archived / deleted`), send all selected IDs in mutation payloads, and reset selections cleanly.
-  - Added delete confirmation parity via `DeleteModal` (`Frontend/src/features/emails/components/DeleteModal.tsx`): clicking the trash icon in `EmailListTable` or `EmailMenuBarOptions`, or pressing `Delete`/`Backspace` opens the confirmation dialog with pluralized count titles/descriptions, supporting full window capture key navigation (`Enter` to confirm deletion and `Escape` to cancel and close).
-  - Enhanced `useInboxEmailMenuBarOptions` and `MoveToFolderDropdown` with `allEmails` support, archive option, and count-based toast feedback for consistent parity.
-  - Added visible active-row cursor focus ring (`ring-2 ring-primary ring-inset`) and automatic smooth scrolling (`scrollIntoView`) in `Frontend/src/features/inbox/components/EmailListTable.tsx` via `focusedIndex`.
-  - Added `id="email-search-input"` to `Frontend/src/shared/components/inputs/SearchHeader.tsx` to ensure pressing `/` instantly focuses the search input.
-  - Added accessible `Keyboard` shortcut trigger buttons in `EmailListHeader`, `FolderEmailListHeader`, and `AccountInboxPage` toolbars, and integrated `<KeyboardShortcutsModal />` in all inbox and folder view pages.
+    - Added `useEmailKeyboardShortcuts` hook in `Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts` with `isInputElement` focus guards in `Frontend/src/features/emails/utils/emails.ts`, supporting `j`/`k` (cursor move), `Enter`/`o` (open email), `s` (star), `u` (unread), `e` (archive), `Delete`/`Backspace` (trash), `c` (compose), `/` (search focus), and `?` (shortcuts cheat-sheet dialog).
+    - Fully wired `useEmailKeyboardShortcuts` into `useInboxPage` and `useFolderEmailListPage`, connecting keyboard actions directly to React Query mutations (`starEmail`, `unreadEmail`, `archiveEmail`, `deleteEmail`), composer modal (`openCompose`), and page navigation (`router.push`).
+    - Implemented complete bulk operations parity across keyboard shortcuts and mouse actions: when checkboxes are selected (`selectedEmails.length > 0`), shortcuts (`s`, `u`, `e`, `Delete`/`Backspace`) and toolbar options in `EmailMenuBarOptions` apply across all selected emails simultaneously, update local UI state optimistically, show contextual count toasts (e.g. `X emails starred / marked as unread / archived / deleted`), send all selected IDs in mutation payloads, and reset selections cleanly.
+    - Added delete confirmation parity via `DeleteModal` (`Frontend/src/features/emails/components/DeleteModal.tsx`): clicking the trash icon in `EmailListTable` or `EmailMenuBarOptions`, or pressing `Delete`/`Backspace` opens the confirmation dialog with pluralized count titles/descriptions, supporting full window capture key navigation (`Enter` to confirm deletion and `Escape` to cancel and close).
+    - Enhanced `useInboxEmailMenuBarOptions` and `MoveToFolderDropdown` with `allEmails` support, archive option, and count-based toast feedback for consistent parity.
+    - Added visible active-row cursor focus ring (`ring-2 ring-primary ring-inset`) and automatic smooth scrolling (`scrollIntoView`) in `Frontend/src/features/inbox/components/EmailListTable.tsx` via `focusedIndex`.
+    - Added `id="email-search-input"` to `Frontend/src/shared/components/inputs/SearchHeader.tsx` to ensure pressing `/` instantly focuses the search input.
+    - Added accessible `Keyboard` shortcut trigger buttons in `EmailListHeader`, `FolderEmailListHeader`, and `AccountInboxPage` toolbars, and integrated `<KeyboardShortcutsModal />` in all inbox and folder view pages.
 - **Accessible Shortcuts Modal:** Integrated `KeyboardShortcutsModal` in `Frontend/src/features/emails/components/KeyboardShortcutsModal.tsx` presenting organized keybinding categories (Navigation, Actions, Composer & Search) styled with accessible Radix primitives and centralized constants (`DEFAULT_KEYBOARD_SHORTCUT_GROUPS`).
 - **Entity Type Definitions:** Created `@entities/email` (`model/email.types.ts`) consolidating mutation parameter, mutation context, keyboard shortcut hook parameters, and modal props interfaces.
 - **Email Service Compatibility (`ARCH-NEXT-01`):** Verified full backward compatibility of all email endpoints, query hooks, and mutation payloads with backend CQRS decomposition (`EmailReadService`, `EmailWriteService`, `EmailService` facade).
@@ -39,16 +109,19 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - **Rate Limit (HTTP 429) Handling:** Enhanced `extractApiError` in `Frontend/src/shared/api/errors.ts` to recognize HTTP 429 rate limit responses, extracting countdown advice (`retryAfter`) and surfacing user-friendly messages requesting the user to wait before retrying.
 
 ### Fixed
-- **ErrorBoundary & Bulk API Resilience:** Resolved issue where an archive HTTP 500 or async rejection triggered the full-screen `ErrorBoundary` component. Removed visual error state triggering from `window.onunhandledrejection` in `ErrorBoundary.tsx` (routing rejections to monitoring instead), and standardized `useInboxPage`, `useFolderEmailListPage`, and `useInboxEmailMenuBarOptions` on React Query's `.mutate()` with `onError` handlers, displaying polite sonner toasts advising the user to *"Please retry in some time"* while rolling back optimistic UI state and refetching data to maintain synchronization.
+
+- **ErrorBoundary & Bulk API Resilience:** Resolved issue where an archive HTTP 500 or async rejection triggered the full-screen `ErrorBoundary` component. Removed visual error state triggering from `window.onunhandledrejection` in `ErrorBoundary.tsx` (routing rejections to monitoring instead), and standardized `useInboxPage`, `useFolderEmailListPage`, and `useInboxEmailMenuBarOptions` on React Query's `.mutate()` with `onError` handlers, displaying polite sonner toasts advising the user to _"Please retry in some time"_ while rolling back optimistic UI state and refetching data to maintain synchronization.
 
 ## [3.3.0] - 2026-09-26
 
 ### Fixed
+
 - Fixed BUG-10 (Email ID Decoupling): Eliminated `email.providerMessageId` from UI state and selection tables; `EmailListTable`, `useEmailsPage`, `EmailMenuBarOptions`, and `MoveToFolderDropdown` now strictly use MongoDB `_id` (`email._id`) for selection, detail routing, checkboxes, trash actions, and DOM IDs.
 - Fixed BUG-12 (Folder ID Decoupling): Switched all folder UI actions from `providerFolderId` to canonical MongoDB `_id` (`folder._id` / `folder.id`) in `MoveToFolderDropdown`, `FolderCardHeader`, `FolderCardActions`, `FolderCard`, `useFolderEmailListPage`, and `useInboxPage`.
 - Fixed BUG-05 (Hardcoded Environment URL): Replaced hardcoded `http://localhost:3000/auth` URL in `Frontend/src/shared/api/client.ts` with configurable `AUTH_API_BASE_URL` from `Frontend/src/config/config.ts`.
 
 ### Changed
+
 - Standardized client-side API error unwrapping in `Frontend/src/shared/api/errors.ts` and Axios interceptor in `Frontend/src/shared/api/client.ts` to consistently parse structured backend domain error fields (`errorCode`, `description`, `suggestedAction`, `traceId`) for React Query mutations, UI toasts, and error recovery screens.
 - Consolidated fragmented email query keys (`EMAILS`, `EMAIL_FILTERS`, `QUERY_KEYS.EMAIL`) into a strongly-typed hierarchical key factory `EMAIL_QUERY_KEYS` in `Frontend/src/shared/api/query-keys.ts`, maintaining backwards-compatible exports.
 - Refactored `email.queries.ts`, `inbox.queries.ts`, `email.mutations.ts`, `inbox.mutations.ts`, and `draft.mutations.ts` to use `EMAIL_QUERY_KEYS` for deterministic cache invalidations across email, inbox, and draft operations.
@@ -58,20 +131,20 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Added
 
 - Added React Error Boundary functional component (`Frontend/src/shared/components/ErrorBoundary.tsx`):
-  - Wrapped root application tree in `Frontend/src/shared/providers/index.tsx` with `ErrorBoundary`.
-  - Added sleek fallback UI displaying user-friendly error guidance, detailed stack trace disclosure, "Try Again" recovery action, and single-click "Copy Trace ID" button.
-  - Added `useErrorBoundary` hook for triggering boundary catches from async callbacks.
+    - Wrapped root application tree in `Frontend/src/shared/providers/index.tsx` with `ErrorBoundary`.
+    - Added sleek fallback UI displaying user-friendly error guidance, detailed stack trace disclosure, "Try Again" recovery action, and single-click "Copy Trace ID" button.
+    - Added `useErrorBoundary` hook for triggering boundary catches from async callbacks.
 - Added Distributed Tracing & User Context Interceptors (`Frontend/src/shared/api/client.ts`):
-  - Request interceptor attaches `X-Trace-Id` (generating UUID v4 when missing) and forwards user context headers (`X-User-Id`, `X-User-Email`, `X-User-Name`) from `useAuthStore`.
-  - Response error interceptor extracts `X-Trace-Id` and parses backend `error.response?.data?.error?.traceId` into typed `AxiosApiError`.
+    - Request interceptor attaches `X-Trace-Id` (generating UUID v4 when missing) and forwards user context headers (`X-User-Id`, `X-User-Email`, `X-User-Name`) from `useAuthStore`.
+    - Response error interceptor extracts `X-Trace-Id` and parses backend `error.response?.data?.error?.traceId` into typed `AxiosApiError`.
 - Added Sentry Next.js Integration & Client Configuration:
-  - Installed `@sentry/nextjs` (`^10.74.0`) and wrapped Next.js build configuration with `withSentryConfig` in `Frontend/next.config.ts`.
-  - Added `Frontend/sentry.client.config.ts` initializing client telemetry with distributed trace sampling (`tracesSampleRate: 1.0`). Session Replay was intentionally excluded to avoid paid Sentry tier expenses.
+    - Installed `@sentry/nextjs` (`^10.74.0`) and wrapped Next.js build configuration with `withSentryConfig` in `Frontend/next.config.ts`.
+    - Added `Frontend/sentry.client.config.ts` initializing client telemetry with distributed trace sampling (`tracesSampleRate: 1.0`). Session Replay was intentionally excluded to avoid paid Sentry tier expenses.
 - Added Frontend Monitoring & Session Action Tracker (`Frontend/src/shared/monitoring/*`):
-  - Defined provider abstraction (`IFrontendMonitoringProvider`, `FrontendMonitoringManager`).
-  - Added `SentryFrontendProvider` integrating `@sentry/nextjs` for client error capture with active `traceId`, route and component stack tagging, user identity context (`id`, `email`, `username`), and typed breadcrumbs.
-  - Added `ConsoleFrontendProvider` for structured local console logging.
-  - Added `SessionTracker` maintaining an in-memory rolling action ring buffer (FIFO 50 items) with strict privacy masking for `.tiptap` rich-text editor, inputs, and email content.
+    - Defined provider abstraction (`IFrontendMonitoringProvider`, `FrontendMonitoringManager`).
+    - Added `SentryFrontendProvider` integrating `@sentry/nextjs` for client error capture with active `traceId`, route and component stack tagging, user identity context (`id`, `email`, `username`), and typed breadcrumbs.
+    - Added `ConsoleFrontendProvider` for structured local console logging.
+    - Added `SessionTracker` maintaining an in-memory rolling action ring buffer (FIFO 50 items) with strict privacy masking for `.tiptap` rich-text editor, inputs, and email content.
 - Connected authenticated Auth0 user state to `frontendMonitoring.setUser()` in `Frontend/src/shared/providers/auth.provider.tsx`.
 
 ### Changed
@@ -105,6 +178,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [3.0.0] - 2026-08-29
 
 ### Added
+
 - Added `DraftsPage` (`Frontend/src/features/drafts/pages/index.tsx`) and App Router route (`Frontend/src/app/(home)/drafts/page.tsx`).
 - Added `DraftListTable` component suite (`DraftListTableHeader.tsx`, `DraftListTableBody.tsx`, `DraftListHeader.tsx`).
 - Added `useAutoSaveDraft` custom hook with 3000ms debouncing for auto-saving drafts during compose typing.
@@ -128,6 +202,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Added attachment indicator badges in email list rows.
 
 ### Changed
+
 - Updated `useComposeEmail` hook to upload file selections to `POST /api/attachments/upload`, manage `stagedAttachments` state, and attach `attachmentIds` to compose email submissions.
 - Updated email detail data loading to fetch thread data alongside single-email details.
 - Updated email detail and thread rendering to show attachment lists for messages that include files.
@@ -137,47 +212,57 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [2.1.0] - 2026-07-31
 
 ### Added
+
 - Added an Account settings tab with global background sync controls and connected-account sync status overview.
 - Added account-level sync settings modal controls from connected account cards for mailbox-specific auto-sync and sync frequency updates.
 
 ### Changed
+
 - Unified inbox now shows active background sync state and refreshes email results automatically while syncing is in progress.
 - Connected account cards now surface failed sync warnings, never-synced state, and live sync progress more clearly.
 
 ### Fixed
+
 - Fixed email list refresh after delete actions from inbox and folder mail views.
 - Fixed profile settings form rendering when phone number metadata is missing.
 
 ## [2.0.0] - 2026-07-27
 
 ### Added
+
 - Added frontend workspace support for the shared `@mailsense/types` package.
 
 ### Changed
+
 - Migrated frontend account, email, folder, filter, and settings contracts to the shared `@mailsense/types` package and removed duplicated local type definitions.
 - Updated frontend build and package configuration to transpile and locally link the shared `@mailsense/types` package.
 - Updated account, inbox, folders, compose, and settings flows to consume shared backend-aligned contract types.
 
 ### Fixed
+
 - Improved frontend/backend contract consistency across connected accounts, inbox, folders, compose, and settings data flows.
 
 ## [1.4.1] - 2026-06-29
 
 ### Added
+
 - Added backend-driven inbox filter options for connected accounts, folders, date range, and unread status.
 - Added shared inbox header component for search, filter, and bulk-action controls.
 
 ### Changed
+
 - Updated unified inbox and account inbox pages to use shared filter option data from the backend instead of building filter lists locally.
 - Updated the filter modal to support folder selection and unread toggle filters.
 - Refactored inbox filtering flow to use dedicated email-filter query keys and endpoint wiring.
 
 ### Fixed
+
 - Improved filter behavior consistency between unified inbox and account inbox views by using the same header and filter model.
 
 ## [1.4.0] - 2026-06-29
 
 ### Added
+
 - Added frontend `entities` and `features` layers for accounts, auth, email, and user domain models.
 - Added shared API barrel exports for Axios clients, endpoint constants, and query keys under `Frontend/src/shared/api/*`.
 - Added reusable `AccountProviderIcon` support across connected accounts, compose account selection, inbox filters, folder filters, and page-header provider menus.
@@ -191,6 +276,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Added dedicated settings profile subcomponents and hooks for profile editing and password-change modal flows.
 
 ### Changed
+
 - Refactored accounts and auth screens to load from the new feature-based page structure.
 - Refactored inbox, account inbox, email details, compose email, folders, folder email list, and settings screens to load from the new feature-based page structure.
 - Moved accounts API calls, account mutations, and account queries into `Frontend/src/features/accounts/api/*`.
@@ -217,11 +303,13 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Consolidated shared formatter and crypto utility usage by removing feature-local formatter copies and stale constants exports.
 
 ### Fixed
+
 - Fixed account toggle state handling so failed enable/disable requests revert the local switch state instead of leaving the UI out of sync.
 - Fixed provider icon rendering consistency by replacing repeated inline icon-mapping logic with a shared account provider icon component.
 - Preserved existing compose, inbox action, folder action, and settings profile behavior while reducing duplicated component logic.
 
 ### Removed
+
 - Removed the deprecated `src/modules` directory entirely, completing the migration of frontend logic to `entities`, `features`, and `shared/api` layers.
 - Removed duplicate filter components (`FoldersFilter.tsx` and `EmailListFilter.tsx`).
 - Removed deprecated type definitions from `src/shared/types/folder.types.ts`.
@@ -229,35 +317,42 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [1.3.2] - 2026-05-31
 
 ### Added
+
 - Added centralized sidebar constants and shared sidebar types for navigation structure.
 - Added a compact Compose trigger with tooltip support for the collapsed sidebar state.
 
 ### Changed
+
 - Updated sidebar account navigation to build inbox sub-items from connected accounts using shared sidebar configuration.
 - Updated primary sidebar items so expandable sections keep a direct page link while using a separate toggle control for sub-navigation.
 - Added route constants for starred mailbox navigation in shared frontend routing helpers.
 - Moved settings API endpoint constants into a dedicated settings constants module.
 
 ### Fixed
+
 - Improved collapsed-sidebar usability by keeping the Compose action accessible in icon-only mode.
 - Fixed expandable sidebar navigation interactions so opening sub-items no longer replaces the parent item click target.
 
 ## [1.3.1] - 2026-05-21
 
 ### Added
+
 - Added shared barrel exports for frontend hooks, stores, and types to simplify module access across the app.
 
 ### Changed
+
 - Standardized frontend imports around centralized `@shared/*`, `@modules/*`, and `@lib/*` aliases across account, inbox, folders, compose, settings, and shared UI modules.
 - Moved auth and theme Zustand stores under `Frontend/src/shared/store/*` and consolidated settings types under shared type exports.
 - Updated component alias configuration so shared UI primitives resolve through `@shared/ui`.
 
 ### Fixed
+
 - Newly connected accounts now align correctly with the account activation UI because connected accounts are created as active by default.
 
 ## [1.3.0] - 2026-05-19
 
 ### Added
+
 - Added account enable and disable toggle controls in connected account cards.
 - Added a sidebar-triggered compose email popup with account selection, recipients, subject, and rich-text message editing.
 - Added frontend compose email API hook, request type, and success/error messaging.
@@ -265,6 +360,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Added recipient search popup and suggestion badges for compose email.
 
 ### Changed
+
 - Updated frontend account and inbox data requests to rely on authenticated backend session context instead of sending user IDs in API calls.
 - Updated frontend API token retrieval to match the client-side Auth0 integration used by protected backend routes.
 - Updated account management UI to support account activation state and refresh account data after toggle actions.
@@ -273,6 +369,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Updated compose popup to support multi-recipient chips, debounced contact search, and selection from provider-backed suggestions.
 
 ### Fixed
+
 - Improved authenticated account loading reliability by aligning frontend requests with backend JWT-protected endpoints.
 - Improved connected account visibility so disabled accounts no longer appear in active account-driven mailbox flows.
 - Improved rich-text editor rendering and popup layout behavior for the compose workflow.
@@ -280,6 +377,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [1.2.0] - 2026-04-13
 
 ### Added
+
 - Added a new folders section with sidebar navigation, overview page, folder cards, and initial folder detail route wiring.
 - Added frontend folder API hooks, request/response types, and route constants for folders flows.
 - Added create-folder modal and folder card actions for rename and delete flows.
@@ -287,6 +385,7 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Added folder email view so users can open a folder and browse emails within it.
 
 ### Changed
+
 - Updated the folders page to support search, account filtering, and paginated folder listing.
 - Updated shared UI copy and navigation constants to include folders-related labels and routes.
 - Adjusted shared breadcrumb and page header spacing to better fit the new folders experience.
@@ -296,15 +395,18 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Updated folder email view to reuse inbox search, filters, selection actions, and pagination patterns.
 
 ### Fixed
+
 - Improved sidebar navigation population so connected account links are shown for both inbox and folders sections.
 - Improved folder detail breadcrumb setup so folder routes show the correct navigation context.
 
 ## [1.1.1] - 2026-03-09
 
 ### Added
+
 - Added a shared `useIsMobile` hook for viewport-aware behavior across core UI modules.
 
 ### Changed
+
 - Improved mobile responsiveness across inbox, account inbox, email details, accounts, settings, page header, breadcrumbs, and pagination components.
 - Updated inbox mobile layout to better organize search, filters, and bulk actions.
 - Updated email list table rendering for mobile with consolidated details and optimized date/action column sizing.
@@ -312,23 +414,26 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 - Frontend dev server script now binds to `0.0.0.0` for easier device/LAN testing during development.
 
 ### Fixed
+
 - Reduced small-screen overflow/clipping issues in inbox and email details layouts by adjusting container heights, paddings, and control sizing.
 
 ## [1.1.0] - 2026-03-05
 
 ### Changed
+
 - Re-enabled provider/account rendering from live account data in provider list, removing temporary client-side filtering that hid Outlook accounts in `ProviderAccountList`.
 - Simplified provider grouping logic in account list by using per-provider filtered results directly, reducing duplicated state management.
 - Removed temporary UI guard in header dropdown that blocked Outlook option rendering in `PageHeader`.
 - Updated inbox action toolbar components to accept lifecycle callbacks:
-  - `onRefetchEmails`
-  - `onResetSelection`
-  - `onResetPage`
+    - `onRefetchEmails`
+    - `onResetSelection`
+    - `onResetPage`
 - Updated both global inbox and account inbox pages to pass selection/page reset and refetch callbacks to action toolbars.
 - Refactored action success handling to reset selected emails, reset pagination to page 1, and refresh email list after successful mutations.
 - Removed inline mutation toast handling from inbox action menu for a cleaner post-action state flow.
 
 ### Fixed
+
 - Removed hardcoded Outlook-hiding conditions in account selection UI components so connector visibility follows provider/account data.
 - Fixed stale selection and pagination state after bulk actions (star/unread/delete).
 - Fixed inconsistent refresh behavior between inbox and account-inbox action toolbars.
@@ -336,36 +441,41 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ## [1.0.0] - 2026-02-22
 
 ### Added
+
 - Initial frontend release with authenticated app shell and protected routes.
 - Inbox experience:
-  - Unified inbox page with list/table layout
-  - Account-specific inbox page
-  - Email details view
-  - Search, filters, and pagination flows
+    - Unified inbox page with list/table layout
+    - Account-specific inbox page
+    - Email details view
+    - Search, filters, and pagination flows
 - Email actions for connected accounts:
-  - Delete/trash
-  - Archive
-  - Star/unstar
-  - Mark unread/read
+    - Delete/trash
+    - Archive
+    - Star/unstar
+    - Mark unread/read
 - Accounts management screens:
-  - Provider list and connected accounts view
-  - Account connection entry points
-  - Account-level actions and status handling
+    - Provider list and connected accounts view
+    - Account connection entry points
+    - Account-level actions and status handling
 - Settings experience for profile and password management.
 - Shared frontend foundations:
-  - React Query data layer and query-key patterns
-  - Zustand auth state store
-  - Auth0-integrated session/auth flow
-  - Reusable UI components for loaders, headers, table/pagination, and toasts
+    - React Query data layer and query-key patterns
+    - Zustand auth state store
+    - Auth0-integrated session/auth flow
+    - Reusable UI components for loaders, headers, table/pagination, and toasts
 
 ### Changed
+
 - Navigation and page routing standardized around App Router pages for inbox, accounts, settings, and email details.
 - API integration patterns unified through shared Axios clients and module-level service hooks.
 
 ### Notes
+
 - v1.0 UI was released with Gmail-first connector availability.
 
-[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/vishal-jagamani/mailsense/compare/v3.6.0...HEAD
+[3.6.0]: https://github.com/vishal-jagamani/mailsense/compare/v3.5.0...v3.6.0
+[3.5.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.5.0
 [3.3.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.3.0
 [3.2.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.2.0
 [3.1.0]: https://github.com/vishal-jagamani/mailsense/releases/tag/v3.1.0

@@ -3,6 +3,7 @@
 import { ChevronsUpDown, Plus } from 'lucide-react';
 import * as React from 'react';
 
+import { NavTeamsProps } from '@shared/types';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -14,15 +15,7 @@ import {
 } from '@shared/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@shared/ui/sidebar';
 
-export function TeamSwitcher({
-    teams,
-}: {
-    teams: {
-        name: string;
-        logo: React.ElementType;
-        plan: string;
-    }[];
-}) {
+export function TeamSwitcher({ teams }: NavTeamsProps) {
     const { isMobile } = useSidebar();
     const [activeTeam, setActiveTeam] = React.useState(teams[0]);
 

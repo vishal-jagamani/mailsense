@@ -11,31 +11,10 @@ import {
     MonitoringErrorContext,
     MonitoringProviderName,
     MonitoringUserContext,
+    TraceStore,
     WorkerJobMetadata,
 } from '@types';
-
-const REDUNDANT_USER_KEYS = new Set([
-    'userId',
-    'user_id',
-    'user.id',
-    'userEmail',
-    'user_email',
-    'user.email',
-    'userName',
-    'user_name',
-    'user.username',
-]);
-
-function omitUserKeys(data?: Record<string, string | number | boolean>): Record<string, string | number | boolean> {
-    if (!data) return {};
-    const result: Record<string, string | number | boolean> = {};
-    for (const [key, value] of Object.entries(data)) {
-        if (!REDUNDANT_USER_KEYS.has(key)) {
-            result[key] = value;
-        }
-    }
-    return result;
-}
+import { extractOverrideUserFromData, extractUserEmail, extractUserId, extractUserIp, extractUserUsername, omitUserKeys } from './sentry.utils.js';
 
 export class SentryMonitoringProvider implements IMonitoringProvider {
     public readonly name: MonitoringProviderName = MONITORING_PROVIDERS.SENTRY;
@@ -74,18 +53,64 @@ export class SentryMonitoringProvider implements IMonitoringProvider {
         try {
             const trace = getTraceStore();
             const isolationUser = Sentry.getIsolationScope().getUser();
-            const rawId = override?.id ?? trace?.userId ?? isolationUser?.id;
-            if (!rawId) return null;
+            const id = extractUserId(override, trace, isolationUser);
+            if (!id) return null;
 
             return {
-                id: String(rawId),
-                email: override?.email ?? trace?.userEmail ?? (isolationUser?.email || undefined),
-                username: override?.username ?? trace?.userName ?? (isolationUser?.username || undefined),
-                ipAddress: override?.ipAddress ?? (isolationUser?.ip_address || undefined),
+                id,
+                email: extractUserEmail(override, trace, isolationUser),
+                username: extractUserUsername(override, trace, isolationUser),
+                ipAddress: extractUserIp(override, isolationUser),
             };
         } catch {
             return null;
         }
+    }
+
+    private populateScopeTags(scope: Sentry.Scope, traceId?: string, errorCode?: string, tags?: Record<string, string | number | boolean>): void {
+        if (traceId) scope.setTag('traceId', traceId);
+        if (errorCode) scope.setTag('errorCode', errorCode);
+        if (tags) {
+            for (const [key, value] of Object.entries(tags)) {
+                scope.setTag(key, String(value));
+            }
+        }
+    }
+
+    private populateScopeExtras(scope: Sentry.Scope, httpStatus?: number, extra?: Record<string, string | number | boolean>): void {
+        if (httpStatus) scope.setExtra('httpStatus', httpStatus);
+        if (extra) {
+            for (const [key, value] of Object.entries(extra)) {
+                scope.setExtra(key, value);
+            }
+        }
+    }
+
+    private setScopeUser(scope: Sentry.Scope, activeUser?: MonitoringUserContext | null): void {
+        if (!activeUser) return;
+        scope.setUser({
+            id: activeUser.id,
+            email: activeUser.email,
+            username: activeUser.username,
+            ip_address: activeUser.ipAddress,
+        });
+    }
+
+    private buildErrorLogAttributes(
+        context?: MonitoringErrorContext,
+        traceId?: string,
+        accountId?: string,
+    ): Record<string, string | number | boolean> {
+        const logAttributes: Record<string, string | number | boolean> = {
+            category: 'error',
+            ...omitUserKeys(context?.tags),
+            ...omitUserKeys(context?.extra),
+        };
+        if (context?.errorCode) logAttributes.errorCode = context.errorCode;
+        if (traceId) logAttributes.traceId = traceId;
+        if (accountId) logAttributes.accountId = accountId;
+        if (context?.httpStatus) logAttributes.httpStatus = context.httpStatus;
+        return logAttributes;
     }
 
     public captureException(error: Error, context?: MonitoringErrorContext): void {
@@ -97,46 +122,16 @@ export class SentryMonitoringProvider implements IMonitoringProvider {
 
             const trace = getTraceStore();
             const activeUser = this.resolveActiveUser(context?.user);
+            const traceId = context?.traceId ?? trace?.traceId;
 
             Sentry.withScope((scope) => {
-                const traceId = context?.traceId ?? trace?.traceId;
-                if (traceId) scope.setTag('traceId', traceId);
-
-                if (context?.errorCode) scope.setTag('errorCode', context.errorCode);
-
-                if (context?.httpStatus) scope.setExtra('httpStatus', context.httpStatus);
-
-                if (activeUser) {
-                    scope.setUser({
-                        id: activeUser.id,
-                        email: activeUser.email,
-                        username: activeUser.username,
-                        ip_address: activeUser.ipAddress,
-                    });
-                }
-                if (context?.tags) {
-                    for (const [key, value] of Object.entries(context.tags)) {
-                        scope.setTag(key, String(value));
-                    }
-                }
-                if (context?.extra) {
-                    for (const [key, value] of Object.entries(context.extra)) {
-                        scope.setExtra(key, value);
-                    }
-                }
+                this.populateScopeTags(scope, traceId, context?.errorCode, context?.tags);
+                this.populateScopeExtras(scope, context?.httpStatus, context?.extra);
+                this.setScopeUser(scope, activeUser);
 
                 Sentry.captureException(error);
 
-                // Also stream directly to Sentry Logs Explorer product
-                const logAttributes: Record<string, string | number | boolean> = {
-                    category: 'error',
-                    ...(context?.errorCode ? { errorCode: context.errorCode } : {}),
-                    ...(traceId ? { traceId } : {}),
-                    ...(trace?.accountId ? { accountId: trace.accountId } : {}),
-                    ...(context?.httpStatus ? { httpStatus: context.httpStatus } : {}),
-                    ...omitUserKeys(context?.tags),
-                    ...omitUserKeys(context?.extra),
-                };
+                const logAttributes = this.buildErrorLogAttributes(context, traceId, trace?.accountId);
                 Sentry.logger.error(error.message, logAttributes);
             });
         } catch (captureError) {
@@ -145,52 +140,55 @@ export class SentryMonitoringProvider implements IMonitoringProvider {
         }
     }
 
+    private buildMessageLogAttributes(
+        context?: Record<string, string | number | boolean>,
+        traceId?: string,
+        accountId?: string,
+    ): Record<string, string | number | boolean> {
+        const logAttributes: Record<string, string | number | boolean> = {
+            category: 'message',
+            ...omitUserKeys(context),
+        };
+        if (traceId) logAttributes.traceId = traceId;
+        if (accountId) logAttributes.accountId = accountId;
+        return logAttributes;
+    }
+
+    private logToSentry(level: string, message: string, attributes: Record<string, string | number | boolean>): void {
+        switch (level) {
+            case LOG_LEVELS.WARN:
+                Sentry.logger.warn(message, attributes);
+                break;
+            case LOG_LEVELS.DEBUG:
+                Sentry.logger.debug(message, attributes);
+                break;
+            case LOG_LEVELS.ERROR:
+                Sentry.logger.error(message, attributes);
+                break;
+            case LOG_LEVELS.INFO:
+            default:
+                Sentry.logger.info(message, attributes);
+                break;
+        }
+    }
+
     public captureMessage(message: string, level?: LOG_LEVELS, context?: Record<string, string | number | boolean>): void {
         try {
-            if (!this.initialized) {
-                return;
-            }
+            if (!this.initialized) return;
 
             const trace = getTraceStore();
-            const overrideUser: Partial<MonitoringUserContext> | undefined =
-                context?.userId || context?.userEmail || context?.userName
-                    ? {
-                          id: context.userId as string | undefined,
-                          email: context.userEmail as string | undefined,
-                          username: context.userName as string | undefined,
-                      }
-                    : undefined;
+            const overrideUser = extractOverrideUserFromData(context);
             const activeUser = this.resolveActiveUser(overrideUser);
 
             Sentry.withScope((scope) => {
-                if (context) {
-                    for (const [key, value] of Object.entries(context)) {
-                        scope.setExtra(key, value);
-                    }
-                }
-                if (activeUser) {
-                    scope.setUser({
-                        id: activeUser.id,
-                        email: activeUser.email,
-                        username: activeUser.username,
-                        ip_address: activeUser.ipAddress,
-                    });
-                }
+                this.populateScopeExtras(scope, undefined, context);
+                this.setScopeUser(scope, activeUser);
                 Sentry.captureMessage(message, level as SeverityLevel);
             });
 
-            const logAttributes: Record<string, string | number | boolean> = {
-                category: 'message',
-                ...(trace?.traceId ? { traceId: trace.traceId } : {}),
-                ...(trace?.accountId ? { accountId: trace.accountId } : {}),
-                ...omitUserKeys(context),
-            };
-
-            // Also stream to Sentry Logs Explorer
-            if (level === LOG_LEVELS.WARN) Sentry.logger.warn(message, logAttributes);
-            else if (level === LOG_LEVELS.ERROR) Sentry.logger.error(message, logAttributes);
-            else if (level === LOG_LEVELS.DEBUG) Sentry.logger.debug(message, logAttributes);
-            else Sentry.logger.info(message, logAttributes);
+            const traceId = trace?.traceId;
+            const logAttributes = this.buildMessageLogAttributes(context, traceId, trace?.accountId);
+            this.logToSentry(level ?? LOG_LEVELS.INFO, message, logAttributes);
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             this.providerLogger.error(`Error in Sentry captureMessage: ${msg}`, { error: err });
@@ -217,69 +215,55 @@ export class SentryMonitoringProvider implements IMonitoringProvider {
         }
     }
 
+    private recordSentryBreadcrumb(breadcrumb: MonitoringBreadcrumb): void {
+        const timestamp = breadcrumb.timestamp ? breadcrumb.timestamp / 1000 : undefined;
+        Sentry.addBreadcrumb({
+            category: breadcrumb.category,
+            message: breadcrumb.message,
+            level: (breadcrumb.level ?? LOG_LEVELS.INFO) as SeverityLevel,
+            timestamp,
+            data: breadcrumb.data,
+        });
+    }
+
+    private syncIsolationUser(activeUser: MonitoringUserContext | null): void {
+        if (!activeUser) return;
+        const isolationUser = Sentry.getIsolationScope().getUser();
+        if (!isolationUser?.id || isolationUser.id !== activeUser.id) {
+            Sentry.setUser({
+                id: activeUser.id,
+                email: activeUser.email,
+                username: activeUser.username,
+                ip_address: activeUser.ipAddress,
+            });
+        }
+    }
+
+    private buildBreadcrumbLogAttributes(breadcrumb: MonitoringBreadcrumb, trace?: TraceStore): Record<string, string | number | boolean> {
+        const attributes: Record<string, string | number | boolean> = {
+            category: breadcrumb.category,
+            ...omitUserKeys(breadcrumb.data),
+        };
+        if (trace?.traceId) attributes.traceId = trace.traceId;
+        if (trace?.accountId) attributes.accountId = trace.accountId;
+        return attributes;
+    }
+
     public addBreadcrumb(breadcrumb: MonitoringBreadcrumb): void {
         try {
             if (!this.initialized) return;
 
-            // 1. Record breadcrumb for Issue/Error context
-            Sentry.addBreadcrumb({
-                category: breadcrumb.category,
-                message: breadcrumb.message,
-                level: (breadcrumb.level ?? LOG_LEVELS.INFO) as SeverityLevel,
-                timestamp: breadcrumb.timestamp ? breadcrumb.timestamp / 1000 : undefined,
-                data: breadcrumb.data,
-            });
+            this.recordSentryBreadcrumb(breadcrumb);
 
-            // 2. Dispatch to Sentry Logs Explorer product (Sentry.logger)
-            const trace = getTraceStore();
-            const isolationUser = Sentry.getIsolationScope().getUser();
-
-            const rawUserId = (breadcrumb.data?.userId as string | undefined) ?? (breadcrumb.data?.['user.id'] as string | undefined);
-            const rawUserEmail = (breadcrumb.data?.userEmail as string | undefined) ?? (breadcrumb.data?.['user.email'] as string | undefined);
-            const rawUserName = (breadcrumb.data?.userName as string | undefined) ?? (breadcrumb.data?.['user.username'] as string | undefined);
-
-            const overrideUser: Partial<MonitoringUserContext> | undefined =
-                rawUserId || rawUserEmail || rawUserName
-                    ? { id: rawUserId, email: rawUserEmail, username: rawUserName }
-                    : undefined;
-
+            const overrideUser = extractOverrideUserFromData(breadcrumb.data);
             const activeUser = this.resolveActiveUser(overrideUser);
+            this.syncIsolationUser(activeUser);
 
-            // Synchronize Sentry user context if not yet populated on isolation scope
-            if (activeUser && (!isolationUser?.id || isolationUser.id !== activeUser.id)) {
-                Sentry.setUser({
-                    id: activeUser.id,
-                    email: activeUser.email,
-                    username: activeUser.username,
-                    ip_address: activeUser.ipAddress,
-                });
-            }
-
-            const cleanData = omitUserKeys(breadcrumb.data);
-
-            const attributes: Record<string, string | number | boolean> = {
-                category: breadcrumb.category,
-                ...(trace?.traceId ? { traceId: trace.traceId } : {}),
-                ...(trace?.accountId ? { accountId: trace.accountId } : {}),
-                ...cleanData,
-            };
+            const trace = getTraceStore();
+            const attributes = this.buildBreadcrumbLogAttributes(breadcrumb, trace);
             const message = breadcrumb.message || 'Log message';
 
-            switch (breadcrumb.level) {
-                case LOG_LEVELS.WARN:
-                    Sentry.logger.warn(message, attributes);
-                    break;
-                case LOG_LEVELS.DEBUG:
-                    Sentry.logger.debug(message, attributes);
-                    break;
-                case LOG_LEVELS.ERROR:
-                    Sentry.logger.error(message, attributes);
-                    break;
-                case LOG_LEVELS.INFO:
-                default:
-                    Sentry.logger.info(message, attributes);
-                    break;
-            }
+            this.logToSentry(breadcrumb.level ?? LOG_LEVELS.INFO, message, attributes);
         } catch (err) {
             const msg = err instanceof Error ? err.message : String(err);
             this.providerLogger.error(`Error in Sentry addBreadcrumb: ${msg}`, { error: err });

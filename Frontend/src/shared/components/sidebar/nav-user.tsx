@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 import { AUTH0_URLS } from '@shared/api';
 import { ROUTES } from '@shared/constants';
+import { NavUserProps } from '@shared/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@shared/ui/avatar';
 import {
     DropdownMenu,
@@ -18,7 +19,7 @@ import {
 } from '@shared/ui/dropdown-menu';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@shared/ui/sidebar';
 
-export function NavUser({ user }: { user: { name: string; email: string; avatar: string } }) {
+export function NavUser({ user }: NavUserProps) {
     const { isMobile } = useSidebar();
     const { theme, setTheme } = useTheme();
     const router = useRouter();

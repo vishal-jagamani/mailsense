@@ -1,8 +1,9 @@
 import { DATE_RANGE, KEYBOARD_SHORTCUT_ACTION, KeyboardShortcutGroup } from '@mailsense/types';
+import { DateRangeOption } from '@shared/types';
 
 export const EMAILS_PAGE_SIZE = 20;
 
-export const DATE_RANGE_DROPDOWN_OPTIONS: { id: number; name: string; label: string }[] = [
+export const DATE_RANGE_DROPDOWN_OPTIONS: DateRangeOption[] = [
     {
         id: 1,
         name: DATE_RANGE.TODAY,

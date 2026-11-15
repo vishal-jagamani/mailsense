@@ -37,7 +37,7 @@ export const TopSendersCard: React.FC<TopSendersCardProps> = ({ senders, isLoadi
     const hasSenders = Boolean(senders && senders.length > 0);
 
     return (
-        <Card className="border-border/60 bg-card/60 shadow-xs p-4 px-0 select-none">
+        <Card className="border-border/60 bg-card/60 p-4 px-0 shadow-xs select-none">
             <CardHeader className="gap-1">
                 <div className="flex items-center justify-between">
                     <CardTitle className="text-foreground text-base font-semibold">{DASHBOARD_LABELS.TOP_SENDERS_CARD.LABEL}</CardTitle>

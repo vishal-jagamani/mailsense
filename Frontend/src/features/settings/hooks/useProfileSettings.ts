@@ -31,7 +31,7 @@ export const useProfileSettings = () => {
                 sub: userProfileData?.data.sub ?? '',
                 user_metadata: {
                     ...userProfileData?.data?.user_metadata,
-                    phone_number: (userProfileData?.data?.user_metadata as { phone_number?: string })?.phone_number ?? '',
+                    phone_number: userProfileData?.data?.user_metadata?.phone_number ?? '',
                 },
             });
         }

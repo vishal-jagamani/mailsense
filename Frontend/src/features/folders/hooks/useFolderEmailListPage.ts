@@ -4,14 +4,14 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect } from 'react';
 
 import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
-import { useEmailActions } from '@features/emails/hooks/useEmailActions';
-import { useEmailKeyboardShortcuts } from '@features/emails/hooks/useEmailKeyboardShortcuts';
+import { useEmailKeyboardShortcuts } from '@features/emails/hooks/use-email-keyboard-shortcuts';
 import { useEmailListState } from '@features/emails/hooks/useEmailListState';
 import { useEmailPagination } from '@features/emails/hooks/useEmailPagination';
 import { useFetchEmails } from '@features/inbox/api/inbox.queries';
 import { EmailAttributes } from '@mailsense/types';
 import { useAuthStore, useBreadcrumbStore, useComposeEmailPopupStore } from '@shared/store';
 import { useGetFolderQuery } from '../api/folder.queries';
+import { useEmailActions } from '@features/emails/hooks/use-email-actions';
 
 export const useFolderEmailListPage = (folderId: string) => {
     const router = useRouter();
@@ -90,13 +90,13 @@ export const useFolderEmailListPage = (folderId: string) => {
         onOpenEmail: (email: EmailAttributes) => {
             router.push(`/inbox/${email.accountId}/email/${email._id}?page=${pagination.page}`);
         },
-        onStarEmail: actions.handleToggleStar,
-        onMarkUnread: actions.handleToggleUnread,
-        onArchiveEmail: actions.handleArchiveEmail,
-        onDeleteEmail: actions.handlePromptDelete,
+        onStarEmail: actions.starEmail,
+        onMarkUnread: actions.unreadEmail,
+        onArchiveEmail: actions.archiveEmail,
+        onDeleteEmail: actions.deleteEmail.handlePromptDelete,
         onOpenCompose: openCompose,
-        onOpenShortcutsModal: () => actions.setIsShortcutsModalOpen(true),
-        enabled: !isLoadingEmails && actions.emailsToDelete.length === 0 && !actions.isShortcutsModalOpen,
+        onOpenShortcutsModal: () => actions.setters.setIsShortcutsModalOpen(true),
+        enabled: !isLoadingEmails && actions.states.emailsToDelete.length === 0 && !actions.states.isShortcutsModalOpen,
     });
 
     return {
@@ -109,22 +109,22 @@ export const useFolderEmailListPage = (folderId: string) => {
             searchValue: pagination.searchValue,
             filter: pagination.filter,
             focusedIndex: listState.focusedIndex,
-            isShortcutsModalOpen: actions.isShortcutsModalOpen,
-            emailsToDelete: actions.emailsToDelete,
+            isShortcutsModalOpen: actions.states.isShortcutsModalOpen,
+            emailsToDelete: actions.states.emailsToDelete,
         },
         setters: {
             setPage: pagination.setPage,
             setSearchValue: pagination.setSearchValue,
             setFilter: pagination.setFilter,
-            setIsShortcutsModalOpen: actions.setIsShortcutsModalOpen,
-            setEmailsToDelete: actions.setEmailsToDelete,
+            setIsShortcutsModalOpen: actions.setters.setIsShortcutsModalOpen,
+            setEmailsToDelete: actions.setters.setEmailsToDelete,
         },
         actions: {
             handlePageSizeChange: pagination.handlePageSizeChange,
             handleEmailSelect: listState.handleEmailSelect,
             handleResetSelection: listState.handleResetSelection,
             handleResetPage: pagination.handleResetPage,
-            handleConfirmDelete: actions.handleConfirmDelete,
+            handleConfirmDelete: actions.deleteEmail.handleConfirmDelete,
         },
     };
 };

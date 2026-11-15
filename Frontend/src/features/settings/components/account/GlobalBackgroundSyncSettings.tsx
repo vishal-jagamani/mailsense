@@ -2,18 +2,12 @@
 
 import React from 'react';
 
-import { ACCOUNT_SYNC_MODE, UserAccountSyncSettings } from '@mailsense/types';
+import { GlobalBackgroundSyncSettingsProps } from '@features/settings/types/settings-component.types';
+import { ACCOUNT_SYNC_MODE } from '@mailsense/types';
 import { SYNC_INTERVAL_OPTIONS } from '@shared/constants';
 import { Label } from '@shared/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { Switch } from '@shared/ui/switch';
-
-interface GlobalBackgroundSyncSettingsProps {
-    syncSettings: UserAccountSyncSettings;
-    handleGlobalAutoSyncToggle: (value: boolean) => void;
-    handleSyncModeChange: (mode: ACCOUNT_SYNC_MODE) => void;
-    handleGlobalIntervalChange: (value: string) => void;
-}
 
 const GlobalBackgroundSyncSettings: React.FC<GlobalBackgroundSyncSettingsProps> = (props) => {
     const { syncSettings, handleGlobalAutoSyncToggle, handleSyncModeChange, handleGlobalIntervalChange } = props;

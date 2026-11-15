@@ -1,158 +1,21 @@
 'use client';
 
-import { EmailAttributes, FolderAttributes } from '@mailsense/types';
 import { Check, Folder, Loader2, Search, X } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import React from 'react';
 
-import { useGetAllFolders } from '@features/folders/api/folder.queries';
-import { useAuthStore } from '@shared/store';
 import { Button } from '@shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
-import { useMoveEmailsMutation } from '../api/email.mutations';
-import { trackUserAction } from '@shared/monitoring';
+import { useMoveToFolderDropdown } from '../hooks/use-move-to-folder-dropdown';
+import { MoveToFolderDropdownProps } from '../types';
 
-interface MoveToFolderDropdownProps {
-    emailIds: string[];
-    selectedEmails?: EmailAttributes[];
-    allEmails?: EmailAttributes[];
-    accountId?: string;
-    folders?: FolderAttributes[];
-    currentFolderId?: string;
-    onSuccess?: () => void;
-    disabled?: boolean;
-}
-
-export const MoveToFolderDropdown: React.FC<MoveToFolderDropdownProps> = ({
-    emailIds,
-    selectedEmails,
-    allEmails,
-    accountId,
-    folders,
-    currentFolderId,
-    onSuccess,
-    disabled = false,
-}) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const { user } = useAuthStore();
-
-    // Fetch user folders if not explicitly passed
-    const { data: fetchedFoldersData, isLoading: isLoadingFolders } = useGetAllFolders(
-        !folders && user?.id ? { userId: user.id, size: 100, page: 1, filters: {} } : null,
-    );
-
-    const availableFolders = folders || fetchedFoldersData?.data || [];
-    const moveEmailsMutation = useMoveEmailsMutation();
-
-    // Resolve selected email objects from selectedEmails or allEmails matching emailIds
-    const resolvedSelectedEmailObjects = useMemo(() => {
-        if (selectedEmails && selectedEmails.length > 0) return selectedEmails;
-        if (allEmails && emailIds.length > 0) {
-            return allEmails.filter((email) => emailIds.includes(email._id));
-        }
-        return [];
-    }, [selectedEmails, allEmails, emailIds]);
-
-    // Determine unique account IDs among selected emails
-    const selectedAccountIds = useMemo(() => {
-        if (accountId) return [accountId];
-        const accounts = new Set<string>();
-        resolvedSelectedEmailObjects.forEach((email) => {
-            if (email.accountId) accounts.add(email.accountId);
-        });
-        return Array.from(accounts);
-    }, [accountId, resolvedSelectedEmailObjects]);
-
-    const isMultiAccountSelected = selectedAccountIds.length > 1;
-    const singleAccountId = selectedAccountIds.length === 1 ? selectedAccountIds[0] : null;
-
-    // Filter destination folders by target account
-    const filteredFolders = useMemo(() => {
-        if (!availableFolders.length) return [];
-        if (singleAccountId) {
-            return availableFolders.filter((folder) => folder.accountId === singleAccountId);
-        }
-        return availableFolders;
-    }, [availableFolders, singleAccountId]);
-
-    // Filter destination folders by search query
-    const searchedFolders = useMemo(() => {
-        if (!filteredFolders.length) return [];
-        if (!searchQuery.trim()) return filteredFolders;
-        const query = searchQuery.toLowerCase().trim();
-        return filteredFolders.filter((folder) => folder.name.toLowerCase().includes(query));
-    }, [filteredFolders, searchQuery]);
-
-    const isDisabled = disabled || emailIds.length === 0 || isMultiAccountSelected || moveEmailsMutation.isPending;
-
-    const tooltipMessage = isMultiAccountSelected
-        ? 'Cannot move emails from multiple accounts at once. Select emails from a single account.'
-        : emailIds.length === 0
-          ? 'Select emails to move'
-          : 'Move selected emails to a folder';
-
-    const handleOpenChange = (open: boolean) => {
-        setIsOpen(open);
-        if (!open) {
-            setSearchQuery('');
-        }
-    };
-
-    const handleSelectFolder = async (targetFolderId: string) => {
-        if (targetFolderId === currentFolderId || emailIds.length === 0) {
-            setIsOpen(false);
-            setSearchQuery('');
-            return;
-        }
-
-        let removeFolderIds: string[] = [];
-        if (currentFolderId && currentFolderId !== targetFolderId) {
-            removeFolderIds = [currentFolderId];
-        } else if (resolvedSelectedEmailObjects.length > 0) {
-            const existingFolders = new Set<string>();
-            resolvedSelectedEmailObjects.forEach((email) => {
-                if (Array.isArray(email.folders)) {
-                    email.folders.forEach((fId) => {
-                        if (fId !== targetFolderId) existingFolders.add(fId);
-                    });
-                }
-            });
-            removeFolderIds = Array.from(existingFolders);
-        }
-
-        // Guarantee removeFolderIds never contains targetFolderId
-        removeFolderIds = removeFolderIds.filter((fId) => fId !== targetFolderId);
-
-        moveEmailsMutation.mutate(
-            {
-                emailIds,
-                targetFolderIds: [targetFolderId],
-                removeFolderIds,
-            },
-            {
-                onSuccess: (res) => {
-                    if (res?.success) {
-                        const count = res.updatedCount || emailIds.length;
-                        toast.success(count > 1 ? `${count} emails moved successfully` : 'Email moved successfully', { duration: 3000 });
-                    } else {
-                        toast.success('Emails moved successfully', { duration: 3000 });
-                    }
-                    setIsOpen(false);
-                    setSearchQuery('');
-                    if (onSuccess) {
-                        onSuccess();
-                    }
-                },
-                onError: (error: Error) => {
-                    trackUserAction('ui.click', 'MoveToFolderDropdown failure', 'error');
-                    setIsOpen(false);
-                    setSearchQuery('');
-                },
-            },
-        );
-    };
+export const MoveToFolderDropdown: React.FC<MoveToFolderDropdownProps> = (props) => {
+    const {
+        states: { isOpen, searchQuery, isDisabled, searchedFolders, tooltipMessage },
+        setters: { setSearchQuery },
+        folders: { loading: isLoadingFolders },
+        actions: { handleOpenChange, handleSelectFolder, moveEmailsMutation },
+    } = useMoveToFolderDropdown(props);
 
     return (
         <Popover open={isOpen} onOpenChange={handleOpenChange}>
@@ -215,7 +78,7 @@ export const MoveToFolderDropdown: React.FC<MoveToFolderDropdownProps> = ({
                         </div>
                     ) : (
                         searchedFolders.map((folder) => {
-                            const isCurrent = folder._id === currentFolderId;
+                            const isCurrent = folder._id === props.currentFolderId;
                             return (
                                 <button
                                     key={folder._id}

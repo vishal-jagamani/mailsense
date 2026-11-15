@@ -4,6 +4,7 @@ import React, { Suspense } from 'react';
 
 import APILoader from '@shared/components/apiLoader';
 import Loader from '@shared/components/loader';
+import { EmailPageProps } from '@shared/types';
 import { Separator } from '@shared/ui/separator';
 import AttachmentList from '../components/attachments';
 import EmailBodyPreview from '../components/EmailBodyPreview';
@@ -11,11 +12,6 @@ import EmailHeader from '../components/EmailHeader';
 import EmailMenuBarOptions from '../components/EmailMenuBarOptions';
 import ThreadView from '../components/thread-view';
 import { useEmailsPage } from '../hooks';
-
-interface EmailPageProps {
-    account: string;
-    email: string;
-}
 
 const EmailPage: React.FC<EmailPageProps> = ({ account, email }) => {
     const {

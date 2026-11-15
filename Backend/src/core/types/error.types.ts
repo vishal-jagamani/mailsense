@@ -78,3 +78,9 @@ export interface ErrorWithStatus {
         statusCode?: number;
     };
 }
+
+export interface ParsedErrorDetails {
+    message: string;
+    statusCode: number;
+    originalError?: Record<string, string | number | boolean>;
+}

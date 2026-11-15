@@ -4,13 +4,13 @@ import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import React from 'react';
 
+import AccountProviderIcon from '@features/accounts/components/AccountProviderIcon';
 import { AccountActivityGridProps } from '@features/analytics/types';
-import { AccountProviderIcon } from '@entities/account';
 import { DASHBOARD_LABELS, HOME_ROUTES } from '@shared/constants';
 import { Button } from '@shared/ui/button';
 import { Card } from '@shared/ui/card';
 import { Skeleton } from '@shared/ui/skeleton';
-import { formatEpochToTimeAgo } from '@shared/utils/formatter';
+import { formatEpochToTimeAgo } from '@shared/utils';
 
 export const AccountActivityGrid: React.FC<AccountActivityGridProps> = ({ accounts, isLoading }) => {
     if (isLoading) {

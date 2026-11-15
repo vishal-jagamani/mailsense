@@ -2,8 +2,8 @@
 
 import React, { Suspense } from 'react';
 
-import KeyboardShortcutsModal from '@features/emails/components/KeyboardShortcutsModal';
 import DeleteModal from '@features/emails/components/DeleteModal';
+import KeyboardShortcutsModal from '@features/emails/components/KeyboardShortcutsModal';
 import FolderEmailListHeader from '@features/folders/components/folder-email-list-header';
 import { useFolderEmailListPage } from '@features/folders/hooks';
 import EmailListTable from '@features/inbox/components/EmailListTable';
@@ -11,10 +11,7 @@ import APILoader from '@shared/components/apiLoader';
 import Loader from '@shared/components/loader';
 import PaginationComponent from '@shared/components/table/Pagination';
 import { useIsMobile } from '@shared/hooks';
-
-interface FolderEmailListProps {
-    folderId: string;
-}
+import { FolderEmailListProps } from '@shared/types';
 
 const FolderEmailList: React.FC<FolderEmailListProps> = ({ folderId }) => {
     const isMobile = useIsMobile();

@@ -3,19 +3,10 @@
 import React from 'react';
 
 import { useFolderBody } from '@features/folders/hooks';
-import { FolderAttributes } from '@mailsense/types';
+import { FolderBodyProps } from '@features/folders/types/folders-components.types';
 import APILoader from '@shared/components/apiLoader';
 import { useIsMobile } from '@shared/hooks';
 import dynamic from 'next/dynamic';
-
-interface FolderBodyProps {
-    tableData: FolderAttributes[];
-    size: number;
-    page: number;
-    total: number;
-    onPageChange: (page: number) => void;
-    onPageSizeChange: (size: number) => void;
-}
 
 const FolderBodyDesktop = dynamic(() => import('./FolderBody.web'));
 const FolderBodyMobile = dynamic(() => import('./FolderBody.mobile'));

@@ -2,8 +2,9 @@
 import { monitoring } from '@monitoring';
 monitoring.init();
 
-import { connectDB, PORT } from '@config';
+import { PORT } from '@config';
 import { LOGGER_MODULE } from '@constants';
+import { DatabaseConnectionManager } from '@database';
 import { createLogger } from '@observability';
 import { App } from './app.js';
 import { initBackgroundJobs, shutdownBackgroundJobs } from './core/queue/index.js';
@@ -17,7 +18,7 @@ const app = appInstance.expressApp;
 const startServer = async () => {
     try {
         // Connect MongoDB (with pooling)
-        await connectDB();
+        await DatabaseConnectionManager.connect();
 
         // Initialize Background Queues
         initBackgroundJobs();
@@ -30,6 +31,8 @@ const startServer = async () => {
         // Graceful shutdown helper
         const gracefulShutdown = async (signal: string) => {
             logger.info(`Received ${signal}. Starting graceful shutdown...`);
+
+            await DatabaseConnectionManager.disconnect();
 
             // Close background jobs & Redis connections
             await shutdownBackgroundJobs();

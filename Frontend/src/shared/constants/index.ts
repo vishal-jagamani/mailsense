@@ -1,3 +1,4 @@
+export * from './accounts';
 export * from './dashboard';
 export * from './email';
 export * from './messages';

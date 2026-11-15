@@ -3,17 +3,8 @@
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import React from 'react';
 
-import { EmailAttributes } from '@mailsense/types';
-import { getFormattedEmailTo } from '@shared/utils/emails';
-import { formatDateToDateTimeAgoString } from '@shared/utils/formatter';
-
-interface ThreadViewHeaderBarProps {
-    emailId: string;
-    email: EmailAttributes;
-    toggleExpand: (emailId: string) => void;
-    isExpanded: boolean;
-    accountEmailAddress: string;
-}
+import { ThreadViewHeaderBarProps } from '@features/emails/types';
+import { formatDateToDateTimeAgoString, getFormattedEmailTo } from '@shared/utils';
 
 const ThreadViewHeaderBar: React.FC<ThreadViewHeaderBarProps> = ({ emailId, toggleExpand, email, isExpanded, accountEmailAddress }) => {
     return (

@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useGetAccountsQuery } from '@features/accounts/api/accounts.queries';
 import { AccountAttributes, ANALYTICS_TIMEFRAME, AnalyticsQueryParams } from '@mailsense/types';
-import { ALL_ACCOUNTS_FILTER_ID, DEFAULT_ANALYTICS_TIMEFRAME, HOME_ROUTES, TIMEFRAME_OPTIONS } from '@shared/constants';
-import { useAuthStore, useBreadcrumbStore } from '@shared/store';
+import { ALL_ACCOUNTS_FILTER_ID, DEFAULT_ANALYTICS_TIMEFRAME, TIMEFRAME_OPTIONS } from '@shared/constants';
+import { useAuthStore } from '@shared/store';
 import { useGetDashboardAnalyticsQuery } from '../api/analytics.queries';
 import { CustomDateRangeState, UseDashboardPageResult, UseDashboardParams } from '../types';
 import { trackUserAction } from '@shared/monitoring';
@@ -80,7 +80,7 @@ export const useDashboardPage = (params?: UseDashboardParams): UseDashboardPageR
             await refetchAnalytics();
             toast.success('Dashboard analytics refreshed');
         } catch (refreshError) {
-            trackUserAction('api.error', 'Failed to refresh dashboard analytics');
+            trackUserAction('api.error', `Failed to refresh dashboard analytics: ${refreshError}`);
             toast.error('Failed to refresh analytics');
         }
     };

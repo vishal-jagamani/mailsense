@@ -2,10 +2,7 @@
 
 import { Paperclip } from 'lucide-react';
 import React from 'react';
-
-interface AttachmentBadgeProps {
-    count?: number;
-}
+import { AttachmentBadgeProps } from '../types';
 
 const AttachmentBadge: React.FC<AttachmentBadgeProps> = ({ count }) => {
     if (!count || count <= 0) return null;

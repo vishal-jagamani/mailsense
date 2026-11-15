@@ -1,13 +1,5 @@
+import { ComposeEmailPopupStore } from '@shared/types';
 import { create } from 'zustand';
-
-export interface ComposeEmailPopupStore {
-    isOpen: boolean;
-    activeDraftId?: string;
-    openCompose: () => void;
-    openWithDraft: (draftId: string) => void;
-    closeCompose: () => void;
-    toggleCompose: (isOpen: boolean) => void;
-}
 
 export const useComposeEmailPopupStore = create<ComposeEmailPopupStore>((set) => ({
     isOpen: false,

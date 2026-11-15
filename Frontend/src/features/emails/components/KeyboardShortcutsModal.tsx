@@ -2,10 +2,10 @@
 
 import React from 'react';
 
-import { KeyboardShortcutsModalProps } from '@entities/email';
 import { KeyboardShortcutDefinition, KeyboardShortcutGroup } from '@mailsense/types';
 import { DEFAULT_KEYBOARD_SHORTCUT_GROUPS, EMAIL_LABELS } from '@shared/constants';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@shared/ui/dialog';
+import { KeyboardShortcutsModalProps } from '../types';
 
 export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ isOpen, onClose }) => {
     return (

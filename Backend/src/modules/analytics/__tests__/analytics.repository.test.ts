@@ -1,10 +1,10 @@
-import { AccountMetrics } from '@modules/accounts/account.model.js';
-import { DraftModel } from '@modules/drafts/draft.model.js';
-import { Email } from '@modules/emails/email.model.js';
+import { AccountMetrics } from '@modules/accounts/database/index.js';
+import { DraftModel } from '@modules/drafts/database/index.js';
+import { Email } from '@modules/emails/database/index.js';
 import mongoose from 'mongoose';
-import { AnalyticsRepository } from '../analytics.repository.js';
+import { AnalyticsRepository } from '../database/index.js';
 
-jest.mock('@modules/emails/email.model.js', () => {
+jest.mock('@modules/emails/database/index.js', () => {
     const mongooseModule = jest.requireActual('mongoose') as typeof mongoose;
     return {
         Email: {
@@ -20,13 +20,13 @@ jest.mock('@modules/emails/email.model.js', () => {
     };
 });
 
-jest.mock('@modules/drafts/draft.model.js', () => ({
+jest.mock('@modules/drafts/database/index.js', () => ({
     DraftModel: {
         countDocuments: jest.fn(),
     },
 }));
 
-jest.mock('@modules/accounts/account.model.js', () => ({
+jest.mock('@modules/accounts/database/index.js', () => ({
     Account: {
         find: jest.fn(),
     },
@@ -110,9 +110,7 @@ describe('AnalyticsRepository — Unit Tests', () => {
     describe('getTopSendersRaw', () => {
         it('should return aggregated sender list and total count', async () => {
             try {
-                const mockSenders = [
-                    { _id: 'boss@company.com', count: 30, lastReceivedAt: new Date('2026-08-28T10:00:00Z') },
-                ];
+                const mockSenders = [{ _id: 'boss@company.com', count: 30, lastReceivedAt: new Date('2026-08-28T10:00:00Z') }];
 
                 (Email.aggregate as jest.Mock).mockResolvedValue(mockSenders);
                 (Email.countDocuments as jest.Mock).mockResolvedValue(50);
@@ -159,7 +157,7 @@ describe('AnalyticsRepository — Unit Tests', () => {
             try {
                 (Email.countDocuments as jest.Mock)
                     .mockResolvedValueOnce(300) // total
-                    .mockResolvedValueOnce(25)  // unread
+                    .mockResolvedValueOnce(25) // unread
                     .mockResolvedValueOnce(75); // sent
 
                 (Email.aggregate as jest.Mock).mockResolvedValue([{ count: 120 }]);

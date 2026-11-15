@@ -1,6 +1,6 @@
 import { LOGGER_MODULE } from '@constants';
 import { SyncCompletedPayload, SYSTEM_EVENT } from '@mailsense/types';
-import { AnalyticsService } from '@modules/analytics/analytics.service.js';
+import { AnalyticsService } from '@modules/analytics/services/index.js';
 import { createLogger } from '@observability';
 import { eventBus } from '../event-bus.js';
 

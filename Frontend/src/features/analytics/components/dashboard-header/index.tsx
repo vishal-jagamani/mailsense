@@ -29,7 +29,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = (props) => {
             {isMobile ? (
                 <>
                     {/* Header Title and Description */}
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                         <h1 className="text-foreground text-xl font-bold tracking-tight">{DASHBOARD_LABELS.LABEL}</h1>
                         {/* <p className="text-muted-foreground text-xs">{DASHBOARD_LABELS.DESCRIPTION}</p> */}
                         {/* Mailbox Selector Dropdown */}

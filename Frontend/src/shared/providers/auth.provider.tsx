@@ -2,10 +2,11 @@
 
 import { useUser } from '@auth0/nextjs-auth0';
 import { frontendMonitoring } from '@shared/monitoring';
+import { RootLayoutProps } from '@shared/types';
 import { useEffect } from 'react';
 import { useAuthStore } from '../store';
 
-const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+const AuthProvider = ({ children }: RootLayoutProps) => {
     const { user, isLoading } = useUser();
     const { setUser, setIsAuthenticated, setIsLoading } = useAuthStore();
 

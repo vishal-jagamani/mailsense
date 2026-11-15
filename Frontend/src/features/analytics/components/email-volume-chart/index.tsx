@@ -7,8 +7,8 @@ import { EmailVolumeChartProps } from '@features/analytics/types';
 import { DASHBOARD_LABELS, VOLUME_CHART_SERIES } from '@shared/constants';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@shared/ui/card';
 import { Skeleton } from '@shared/ui/skeleton';
+import { formatEmailVolumeChartXAxisDate } from '@shared/utils';
 import EmailVolumeChartCustomTooltip from './EmailVolumeChartCustomTooltip';
-import { formatEmailVolumeChartXAxisDate } from '@shared/utils/formatter';
 
 export const EmailVolumeChart: React.FC<EmailVolumeChartProps> = ({ volumeData, timeframe, isLoading }) => {
     if (isLoading) {

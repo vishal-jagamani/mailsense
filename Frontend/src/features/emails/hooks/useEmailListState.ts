@@ -2,7 +2,7 @@
 
 import { EmailAttributes, PaginatedDataResponse } from '@mailsense/types';
 import { useState } from 'react';
-import { UseEmailListStateReturn } from '../types/email-ui.types';
+import { UseEmailListStateReturn } from '../types';
 
 export function useEmailListState(): UseEmailListStateReturn {
     const [selectedEmails, setSelectedEmails] = useState<string[]>([]);

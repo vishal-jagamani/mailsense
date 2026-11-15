@@ -2,16 +2,10 @@
 
 import React from 'react';
 
-import { ProfileSettingsDataObject } from '@mailsense/types';
+import { UserProfileFormProps } from '@features/settings/types/settings-component.types';
 import TextInput from '@shared/components/inputs/TextInput';
 import { useIsMobile } from '@shared/hooks';
 import { Button } from '@shared/ui/button';
-
-interface UserProfileFormProps {
-    formData: ProfileSettingsDataObject | null;
-    setFormData: (formData: ProfileSettingsDataObject) => void;
-    handleSaveButtonClick: () => void;
-}
 
 const UserProfileForm: React.FC<UserProfileFormProps> = ({ formData, setFormData, handleSaveButtonClick }) => {
     const isMobile = useIsMobile();

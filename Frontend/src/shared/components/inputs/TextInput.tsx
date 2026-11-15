@@ -2,18 +2,10 @@
 
 import React from 'react';
 
-import { cn } from '@lib/utils';
+import { cn } from '@shared/utils';
+import { TextInputProps } from '@shared/types';
 import { Input } from '@shared/ui/input';
 import { Label } from '@shared/ui/label';
-
-interface TextInputProps {
-    label: string;
-    value: string;
-    type?: string;
-    onChange: (value: string) => void;
-    disabled?: boolean;
-    className?: string;
-}
 
 const TextInput: React.FC<TextInputProps> = ({ label, value, type, onChange, disabled, className }) => {
     return (

@@ -4,97 +4,87 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 const traceStorage = new AsyncLocalStorage<TraceStore>();
 
-/**
- * Retrieves the current request's trace store from AsyncLocalStorage.
- */
 export function getTraceStore(): TraceStore | undefined {
     return traceStorage.getStore();
 }
 
-/**
- * Retrieves the active traceId or returns an empty string if outside an active trace context.
- */
-export function getTraceId(): string {
+export const getTraceId = (): string => {
     return traceStorage.getStore()?.traceId ?? '';
-}
+};
 
-/**
- * Retrieves the active userId attached to the trace context.
- */
-export function getTraceUserId(): string | undefined {
+export const getTraceUserId = (): string | undefined => {
     return traceStorage.getStore()?.userId;
+};
+
+export const setTraceContext = (context: Partial<TraceStore>): void => {
+    const store = traceStorage.getStore();
+    if (store) {
+        if (context.userId) store.userId = context.userId;
+        if (context.userEmail) store.userEmail = context.userEmail;
+        if (context.userName) store.userName = context.userName;
+        if (context.accountId) store.accountId = context.accountId;
+    }
+};
+
+export const runWithTrace = <T>(store: TraceStore, fn: () => Promise<T>): Promise<T> => {
+    return traceStorage.run(store, fn);
+};
+
+function extractTrimmedHeader(req: Request, headerName: string): string | undefined {
+    const raw = req.header(headerName);
+    if (typeof raw === 'string') {
+        const trimmed = raw.trim();
+        if (trimmed.length > 0) {
+            return trimmed;
+        }
+    }
+    return undefined;
 }
 
-/**
- * Updates the active trace store with user and/or account context.
- */
-export function setTraceContext(context: Partial<TraceStore>): void {
+function extractUserNameHeader(req: Request): string | undefined {
+    const raw = extractTrimmedHeader(req, 'x-user-name');
+    if (!raw) return undefined;
     try {
-        const store = traceStorage.getStore();
-        if (store) {
-            if (context.userId) store.userId = context.userId;
-            if (context.userEmail) store.userEmail = context.userEmail;
-            if (context.userName) store.userName = context.userName;
-            if (context.accountId) store.accountId = context.accountId;
-        }
+        return decodeURIComponent(raw);
     } catch {
-        // Non-blocking fallback
+        return raw;
     }
 }
 
-/**
- * Executes a function within a specified TraceStore context.
- * Essential for BullMQ background workers and decoupled asynchronous execution.
- */
-export function runWithTrace<T>(store: TraceStore, fn: () => Promise<T>): Promise<T> {
-    return traceStorage.run(store, fn);
+function extractTraceId(req: Request): string {
+    const raw = extractTrimmedHeader(req, 'x-trace-id') ?? extractTrimmedHeader(req, 'x-request-id');
+    return raw || crypto.randomUUID();
+}
+
+function buildTraceStore(req: Request, traceId: string): TraceStore {
+    const store: TraceStore = { traceId };
+    const userId = extractTrimmedHeader(req, 'x-user-id');
+    const userEmail = extractTrimmedHeader(req, 'x-user-email');
+    const userName = extractUserNameHeader(req);
+    const accountId = extractTrimmedHeader(req, 'x-account-id');
+
+    if (userId) store.userId = userId;
+    if (userEmail) store.userEmail = userEmail;
+    if (userName) store.userName = userName;
+    if (accountId) store.accountId = accountId;
+
+    return store;
 }
 
 /**
  * Express middleware that initializes or extracts the traceId,
  * sets the outbound X-Trace-Id response header, and wraps the request in AsyncLocalStorage.
  */
-export function traceMiddleware(req: Request, res: Response, next: NextFunction): void {
+export const traceMiddleware = (req: Request, res: Response, next: NextFunction): void => {
     try {
-        const rawHeader = req.header('x-trace-id') || req.header('x-request-id');
-        const incomingTraceId = typeof rawHeader === 'string' ? rawHeader.trim() : undefined;
-        const traceId = incomingTraceId && incomingTraceId.length > 0 ? incomingTraceId : crypto.randomUUID();
-
-        const rawUserId = req.header('x-user-id');
-        const incomingUserId = typeof rawUserId === 'string' && rawUserId.trim().length > 0 ? rawUserId.trim() : undefined;
-
-        const rawUserEmail = req.header('x-user-email');
-        const incomingUserEmail = typeof rawUserEmail === 'string' && rawUserEmail.trim().length > 0 ? rawUserEmail.trim() : undefined;
-
-        const rawUserName = req.header('x-user-name');
-        let incomingUserName: string | undefined;
-        if (typeof rawUserName === 'string' && rawUserName.trim().length > 0) {
-            try {
-                incomingUserName = decodeURIComponent(rawUserName.trim());
-            } catch {
-                incomingUserName = rawUserName.trim();
-            }
-        }
-
-        const rawAccountId = req.header('x-account-id');
-        const incomingAccountId = typeof rawAccountId === 'string' && rawAccountId.trim().length > 0 ? rawAccountId.trim() : undefined;
-
-        // Propagate traceId back to client
+        const traceId = extractTraceId(req);
         res.setHeader('X-Trace-Id', traceId);
 
-        const store: TraceStore = {
-            traceId,
-            ...(incomingUserId ? { userId: incomingUserId } : {}),
-            ...(incomingUserEmail ? { userEmail: incomingUserEmail } : {}),
-            ...(incomingUserName ? { userName: incomingUserName } : {}),
-            ...(incomingAccountId ? { accountId: incomingAccountId } : {}),
-        };
-
+        const store = buildTraceStore(req, traceId);
         traceStorage.run(store, () => {
             next();
         });
-        // eslint-disable-next-line unused-imports/no-unused-vars
-    } catch (error) {
+    } catch {
         next();
     }
-}
+};

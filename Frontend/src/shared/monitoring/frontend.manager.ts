@@ -71,15 +71,11 @@ export class FrontendMonitoringManager implements IFrontendMonitoringProvider {
     }
 
     public captureException(error: Error, context?: FrontendErrorContext): void {
-        try {
-            const enrichedContext: FrontendErrorContext = {
-                ...context,
-                breadcrumbs: sessionTracker.getRecentBreadcrumbs(),
-            };
-            this.provider.captureException(error, enrichedContext);
-        } catch {
-            // Non-blocking
-        }
+        const enrichedContext: FrontendErrorContext = {
+            ...context,
+            breadcrumbs: sessionTracker.getRecentBreadcrumbs(),
+        };
+        this.provider.captureException(error, enrichedContext);
     }
 
     public captureBreadcrumb(breadcrumb: UserActionBreadcrumb): void {
@@ -107,15 +103,11 @@ export function trackUserAction(
     level: BreadcrumbLevel = 'info',
     data?: Record<string, string | number | boolean>,
 ): void {
-    try {
-        frontendMonitoring.captureBreadcrumb({
-            category,
-            message,
-            level,
-            timestamp: Date.now(),
-            data,
-        });
-    } catch {
-        // Non-blocking
-    }
+    frontendMonitoring.captureBreadcrumb({
+        category,
+        message,
+        level,
+        timestamp: Date.now(),
+        data,
+    });
 }

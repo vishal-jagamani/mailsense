@@ -23,7 +23,7 @@ export const handleDownload = async (
         link.remove();
         window.URL.revokeObjectURL(url);
     } catch (err) {
-        trackUserAction('api.error', 'Attachment download failed', 'error');
+        trackUserAction('api.error', `Attachment download failed: ${err}`, 'error');
     } finally {
         setLoadingAttId(null);
     }
@@ -45,7 +45,7 @@ export const handlePreview = async (
         const url = window.URL.createObjectURL(new Blob([response.data], { type: contentType }));
         setPreviewUrl(url);
     } catch (err) {
-        trackUserAction('api.error', 'Attachment preview failed', 'error');
+        trackUserAction('api.error', `Attachment preview failed: ${err}`, 'error');
     } finally {
         setLoadingAttId(null);
     }

@@ -27,7 +27,7 @@ const DashboardPage: React.FC = () => {
             setIsRefreshing(true);
             await actions.handleRefresh();
         } catch (error) {
-            trackUserAction('ui.click', 'Failed to manually refresh dashboard page');
+            trackUserAction('ui.click', `Failed to manually refresh dashboard page: ${error}`);
         } finally {
             setIsRefreshing(false);
         }

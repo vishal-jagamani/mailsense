@@ -1,6 +1,6 @@
+import { ANALYTICS_TIMEFRAME, DashboardAnalyticsResponse } from '@mailsense/types';
 import express, { Express, NextFunction, Request, Response } from 'express';
 import request from 'supertest';
-import { ANALYTICS_TIMEFRAME, DashboardAnalyticsResponse } from '@mailsense/types';
 
 // Mock auth middleware before importing routes
 jest.mock('@middlewares', () => {
@@ -18,8 +18,8 @@ jest.mock('@middlewares', () => {
     };
 });
 
-import analyticsRoutes from '../analytics.routes.js';
-import { AnalyticsService } from '../analytics.service.js';
+import analyticsRoutes from '../routes/analytics.routes.js';
+import { AnalyticsService } from '../services/index.js';
 
 describe('Analytics API — REST Integration Tests', () => {
     let app: Express;
@@ -90,9 +90,7 @@ describe('Analytics API — REST Integration Tests', () => {
 
             jest.spyOn(AnalyticsService.prototype, 'getDashboardAnalytics').mockResolvedValue(mockResponse);
 
-            const res = await request(app)
-                .get('/api/analytics/dashboard')
-                .query({ timeframe: ANALYTICS_TIMEFRAME.THIRTY_DAYS });
+            const res = await request(app).get('/api/analytics/dashboard').query({ timeframe: ANALYTICS_TIMEFRAME.THIRTY_DAYS });
 
             expect(res.status).toBe(200);
             expect(res.body.success).toBe(true);
@@ -131,13 +129,11 @@ describe('Analytics API — REST Integration Tests', () => {
                 endDate: '2026-06-15T23:59:59.999Z',
             });
 
-            const res = await request(app)
-                .get('/api/analytics/dashboard')
-                .query({
-                    timeframe: ANALYTICS_TIMEFRAME.CUSTOM,
-                    startDate: '2026-06-01T00:00:00.000Z',
-                    endDate: '2026-06-15T23:59:59.999Z',
-                });
+            const res = await request(app).get('/api/analytics/dashboard').query({
+                timeframe: ANALYTICS_TIMEFRAME.CUSTOM,
+                startDate: '2026-06-01T00:00:00.000Z',
+                endDate: '2026-06-15T23:59:59.999Z',
+            });
 
             expect(res.status).toBe(200);
             expect(res.body.data.timeframe).toBe(ANALYTICS_TIMEFRAME.CUSTOM);

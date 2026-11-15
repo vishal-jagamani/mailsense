@@ -3,6 +3,7 @@ import { R2_CONFIG } from '@config';
 import { LOGGER_MODULE } from '@constants';
 import { createLogger } from '@observability';
 import { Readable } from 'stream';
+import { ObjectStream } from './storage.types.js';
 
 const logger = createLogger(LOGGER_MODULE.OBJECT_STORAGE_SERVICE);
 
@@ -38,7 +39,7 @@ export class ObjectStorageService {
         }
     }
 
-    async getObjectStream(r2Key: string): Promise<{ stream: Readable; contentLength?: number }> {
+    async getObjectStream(r2Key: string): Promise<ObjectStream> {
         try {
             const command = new GetObjectCommand({
                 Bucket: this.bucketName,

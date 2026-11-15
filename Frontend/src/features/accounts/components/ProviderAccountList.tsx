@@ -2,15 +2,10 @@
 
 import { Plus } from 'lucide-react';
 
-import { AccountProviderIcon } from '@entities/account';
 import { Card, CardContent } from '@shared/ui/card';
-import type { ProviderAccountGroup } from '../hooks/useGroupedProviderAccounts';
+import { ProviderAccountListProps } from '../types/accounts-components.types';
 import AccountCard from './account-card';
-
-interface ProviderAccountListProps {
-    groups: ProviderAccountGroup[];
-    onConnectProvider: (provider: string) => void;
-}
+import AccountProviderIcon from './AccountProviderIcon';
 
 const ProviderAccountList: React.FC<ProviderAccountListProps> = ({ groups, onConnectProvider }) => {
     if (!groups.length) {

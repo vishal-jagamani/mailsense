@@ -2,23 +2,12 @@
 
 import React, { useRef } from 'react';
 
-import { AccountProviderIcon } from '@entities/account';
-import { AccountAttributes, ComposeEmailRequestBody } from '@mailsense/types';
+import AccountProviderIcon from '@features/accounts/components/AccountProviderIcon';
+import { ComposeEmailFooterProps } from '@features/emails/types';
 import { useIsMobile } from '@shared/hooks';
 import { Button } from '@shared/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select';
 import { Loader2, Paperclip, Trash2 } from 'lucide-react';
-
-export interface ComposeEmailFooterProps {
-    accountsData: AccountAttributes[];
-    composeEmailBody: ComposeEmailRequestBody;
-    setComposeEmailBody: (body: ComposeEmailRequestBody) => void;
-    sendEmail: () => Promise<void>;
-    handleClose: () => void;
-    handleDiscardDraft: () => void;
-    isUploadingAttachment: boolean;
-    handleFileUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
-}
 
 const ComposeEmailFooter: React.FC<ComposeEmailFooterProps> = ({
     accountsData,

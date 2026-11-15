@@ -1,11 +1,11 @@
 'use client';
 
-import { type LucideIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { NavProjectsProps } from '@shared/types';
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@shared/ui/sidebar';
 
-export function NavProjects({ projects }: { projects: { name: string; url: string; icon: LucideIcon }[] }) {
+export function NavProjects({ projects }: NavProjectsProps) {
     const router = useRouter();
 
     return (

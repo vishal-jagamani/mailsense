@@ -3,17 +3,10 @@
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
-import { RenameFolderState } from '@entities/folder';
-import { FolderAttributes } from '@mailsense/types';
+import { FolderCardActionsProps } from '@features/folders/types/folders-components.types';
 import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip';
 import { Ellipsis, FolderOpenDot, Pen, RefreshCw, Trash } from 'lucide-react';
-
-interface FolderCardActionsProps {
-    data: FolderAttributes;
-    renameState: RenameFolderState;
-    deleteFolder: (id: string) => void;
-}
 
 const FolderCardActions: React.FC<FolderCardActionsProps> = ({ data, renameState, deleteFolder }) => {
     const router = useRouter();

@@ -2,13 +2,7 @@
 
 import React from 'react';
 
-import { ComposeEmailRequestBody, SearchOtherContactsResponse } from '@mailsense/types';
-
-interface SearchToEmailPopupProps {
-    data: SearchOtherContactsResponse[];
-    setComposeEmailBody: React.Dispatch<React.SetStateAction<ComposeEmailRequestBody>>;
-    onSelect?: () => void;
-}
+import { SearchToEmailPopupProps } from '@features/emails/types';
 
 const SearchToEmailPopup: React.FC<SearchToEmailPopupProps> = ({ data, setComposeEmailBody, onSelect }) => {
     if (!data.length) return null;

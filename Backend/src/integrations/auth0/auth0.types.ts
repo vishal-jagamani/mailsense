@@ -42,3 +42,8 @@ export interface Auth0UserDetailsResponse {
     last_login: string;
     logins_count: number;
 }
+
+export interface Auth0UserChangePassword {
+    password: string;
+    connection: string;
+}

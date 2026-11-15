@@ -2,14 +2,8 @@
 
 import React from 'react';
 
+import { SearchHeaderProps } from '@shared/types';
 import { Input } from '@shared/ui/input';
-
-interface SearchHeaderProps {
-    value: string;
-    onChange: (value: string) => void;
-    className?: string;
-    placeholder?: string;
-}
 
 const SearchHeader: React.FC<SearchHeaderProps> = ({ value, onChange, className, placeholder }) => {
     return (

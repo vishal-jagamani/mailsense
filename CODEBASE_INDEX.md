@@ -10,22 +10,23 @@
 
 ### Runtime Entry
 
-- `Backend/src/server.ts`: starts app, connects MongoDB, listens on `PORT`
+- `Backend/src/server.ts`: starts app, connects MongoDB via enterprise `DatabaseConnectionManager`, listens on `PORT`, and manages graceful server shutdown
+- `Backend/src/core/database/connection.ts`: `DatabaseConnectionManager` encapsulating MongoDB connection initialization, connection pooling, reconnect monitoring, and graceful disconnection
+- `Backend/src/core/database/index.ts`: barrel export accessible via `@database` alias
 - `Backend/src/app.ts`: Express app wiring (CORS, body parsers, static, routes, Sentry, centralized error handler)
 - `Backend/src/routes.ts`: mounts module routes under `/api`
 
 ### Config
 
 - `Backend/src/core/config/env.config.ts`: validates env via Zod
+- `Backend/src/core/config/env.schema.ts`: centralized Zod schema definitions (`envSchemaObject`) for environment variables
 - `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis)
-- `Backend/src/core/config/db.config.ts`: Mongo connect/disconnect with pooling
-- `Backend/src/core/config/db.config.ts`: drops the stale `accounts.id_1` unique index during startup when migrating older databases
 - `Backend/src/core/config/logger.config.ts`: logger configuration
 - `Backend/src/core/config/app.config.ts`: exposes the backend Redis connection URL config used by BullMQ and `ioredis`
 - `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
 - `Backend/src/core/config/env.config.ts`: validates queue/runtime Redis configuration through `REDIS_URL`
-- `Backend/package.json`: backend package metadata currently uses version `3.5.0` with `pnpm@11.22.0`
-- `Frontend/package.json`: frontend package metadata currently uses version `3.5.0`
+- `Backend/package.json`: backend package metadata currently uses version `3.6.0` with `pnpm@12.14.0`
+- `Frontend/package.json`: frontend package metadata currently uses version `3.6.0`
 
 ### Security
 
@@ -36,6 +37,9 @@
 - `Backend/src/core/security/__tests__/rate-limit.test.ts`: test coverage for rate limit enforcement and 429 status payload format
 - `Backend/src/core/security/__tests__/helmet.test.ts`: test coverage for Helmet HTTP security headers and CSP presence
 - `Backend/src/modules/emails/__tests__/attachment-security.test.ts`: test coverage for staged attachment IDOR prevention, ensuring cross-tenant attachment composition is rejected with `ForbiddenError`
+- `Backend/src/modules/emails/__tests__/email-thread-security.test.ts`: test coverage for email thread access authorization, ensuring owner access succeeds and cross-tenant access is rejected with `ForbiddenError`
+- `Backend/src/modules/attachments/__tests__/attachment-upload-security.test.ts`: test coverage ensuring attachment staging rejects accounts not owned by caller
+- `Backend/src/modules/drafts/__tests__/draft-security.test.ts`: test coverage ensuring draft updating is strictly scoped to owner's `userId`
 - `Backend/src/modules/accounts/__tests__/account-settings-security.test.ts`: test coverage for account settings access control and cross-tenant update rejection
 - `Backend/src/modules/accounts/__tests__/account-sanitization.test.ts`: test coverage ensuring sensitive OAuth access/refresh tokens are omitted from public account payloads
 
@@ -66,7 +70,7 @@
 
 - `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, and lifecycle event hooks
 - `Backend/src/workers/sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
-- `Backend/src/workers/processors/sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs
+- `Backend/src/workers/processors/sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs, refactored into focused private helper methods (`syncAccountFoldersStep`, `fetchEmailChangesStep`, `applyIncrementalSyncStep`, `applyFullSyncStep`) with cyclomatic complexity $\le 8$
 - `Backend/src/workers/token-refresh.worker.ts`: worker for refresh-token queue processing
 - `Backend/src/workers/processors/refresh-token.processor.ts`: refreshes provider access tokens with per-account Redis locking
 - `Backend/src/workers/worker.types.ts`: shared worker result types
@@ -74,11 +78,11 @@
 
 ### Middleware and Request Flow
 
-- `Backend/src/middlewares/index.ts`: barrel export for backend middleware
-- `Backend/src/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`, binds user context to `TraceStore`, and registers `monitoring.setUser()`
-- `Backend/src/middlewares/validator.ts`: Zod request validation (`headers`, `params`, `query`, `body`)
+- `Backend/src/core/middlewares/index.ts`: barrel export for core backend middleware accessible via `@middlewares` alias
+- `Backend/src/core/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`, binds user context to `TraceStore`, and registers `monitoring.setUser()`
+- `Backend/src/core/middlewares/validator.ts`: Zod request validation (`headers`, `params`, `query`, `body`)
+- `Backend/src/core/middlewares/error.handler.ts`: centralized structured error responses with `traceId` correlation and APM exception dispatch
 - `Backend/src/shared/utils/request.handler.ts`: async wrapper for controllers
-- `Backend/src/middlewares/error.handler.ts`: centralized structured error responses with `traceId` correlation and APM exception dispatch
 
 ### Observability & Tracing (`Backend/src/core/observability/*`)
 
@@ -91,6 +95,7 @@
 
 - `monitoring.manager.ts`: singleton APM orchestrator supporting pluggable providers via `MONITORING_PROVIDER` environment variable
 - `providers/sentry.provider.ts`: Sentry provider supporting Sentry Native Structured Logging (`enableLogs: true`, `Sentry.logger.*`), breadcrumbs, worker error reporting, and canonical user modeling (`user.id`, `user.email`, `user.username`)
+- `providers/sentry.utils.ts`: user extraction and breadcrumb data sanitizer helpers (`extractUserId`, `extractUserEmail`, `extractUserUsername`, `extractUserIp`, `omitUserKeys`)
 - `providers/noop.provider.ts`: silent fallback provider for development and testing environments
 - `Backend/src/core/types/monitoring.types.ts`: `IMonitoringProvider` strategy contract and monitoring DTOs
 
@@ -109,10 +114,15 @@
 
 ### Modules
 
+All 7 backend feature modules adhere to the standardized categorized subdirectory architecture (`constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`) with clean barrel exports (`index.ts`) per Rule 5.5.
+
 - Accounts (`Backend/src/modules/accounts/*`)
+  - Categorized architecture with barrel exports: `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`, `constants/`
   - Decomposed service layer architecture:
-    - `account-oauth.service.ts`: Specialized domain service handling OAuth connection URL generation (`getOAuthUrl`), authorization code exchange (`handleOAuthCallback`), provider profile retrieval, and background sync triggering.
-    - `account.service.ts`: Account management, listing, deletion, settings updates, and background sync triggering.
+    - `AccountOAuthService` (`services/account-oauth.service.ts`): Specialized domain service handling OAuth connection URL generation (`getOAuthUrl`), authorization code exchange (`handleOAuthCallback`), provider profile retrieval, and initial sync.
+    - `AccountSyncCoordinatorService` (`services/account-sync-coordinator.service.ts`): Specialized domain service managing BullMQ queue sync job submission, queue status checks, and sync job records.
+    - `AccountService` (`services/account.service.ts`): Account management, listing, deletion, settings updates, and sync triggers ($\le 250$ lines).
+  - Database layer (`database/`): `AccountModel` (`account.model.ts`), `SyncJobModel` (`sync-job.model.ts`), `AccountRepository` (`account.repository.ts`), `SyncJobRepository` (`sync-job.repository.ts`)
   - Connect/callback OAuth for Gmail/Outlook
   - Sync one/all accounts
   - Account list/details/delete
@@ -122,23 +132,39 @@
   - Provider callback token exchange, profile fetch, and sync execution route through `EmailProviderFactory`
   - Sync requests enqueue background jobs and persist sync-job tracking records
   - Account activation, deactivation, creation, and deletion synchronize repeatable background sync schedules
-  - Newly connected accounts are created as active but with `syncEnabled: false` by default
-  - Dedicated types in `account.types.ts`: `OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`
+  - Dedicated types in `types/account.types.ts`: `OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`
 - Analytics (`Backend/src/modules/analytics/*`)
-  - Pure database query repository (`analytics.repository.ts`) with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, and account breakdown
-  - Utility and transformation layer (`analytics.utils.ts`) for metric math, contiguous date backfilling, regex name/email extraction, and response formatting
-  - Service layer (`analytics.service.ts`) orchestrating account authorization, concurrent queries, period percentage changes, and metrics snapshot refresh; throws `ForbiddenError` when requested accounts are unauthorized or inactive
-  - HTTP controller and route handlers (`analytics.controller.ts`, `analytics.routes.ts`, `analytics.schema.ts`) mounted under `/api/analytics`
-  - Internal type definitions and centralized constants (`analytics.types.ts`, `analytics.constants.ts`)
+  - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`, `utils/`
+  - Database layer (`Backend/src/modules/analytics/database/*`):
+    - `analytics.repository.ts`: Pure database query repository with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, and account breakdown
+    - `analytics.queries.ts`: Specialized aggregation pipeline builders for time series and sender distributions
+  - Modularized utility layer (`Backend/src/modules/analytics/utils/*`) with barrel export (`utils/index.ts`):
+    - `analytics-formatters.ts`: Date bucketing, contiguous timeline backfilling, title formatting, and regex name/email extraction
+    - `analytics-calculators.ts`: Statistical turnaround math, distribution aggregations, and SLA metric calculations
+    - `analytics-common.utils.ts`: Common statistical and percentile calculation helpers
+  - Service layer (`services/analytics.service.ts`) orchestrating account authorization, concurrent queries, period percentage changes, and metrics snapshot refresh; throws `ForbiddenError` when requested accounts are unauthorized or inactive
+  - HTTP controller and route handlers (`controllers/analytics.controller.ts`, `routes/analytics.routes.ts`, `schema/analytics.schema.ts`) mounted under `/api/analytics`
+  - Internal type definitions and centralized constants (`types/analytics.types.ts`, `types/index.ts`, `constants/analytics.constants.ts`)
 - Attachments (`Backend/src/modules/attachments/*`)
-  - Attachment staging file upload (`POST /api/attachments/upload`) to Cloudflare R2 object storage
+  - Categorized architecture with barrel exports: `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`
+  - Attachment staging file upload (`POST /api/attachments/upload`) to Cloudflare R2 object storage with caller account ownership verification
   - Staged attachment deletion endpoint (`DELETE /api/attachments/:attachmentId`) with user ownership verification throwing `ForbiddenError` on unauthorized deletions
-  - Staged metadata tracking with 24-hour TTL expiration index
+  - Staged metadata tracking with 24-hour TTL expiration index in `database/attachment.model.ts` and `database/attachment.repository.ts`
 - Emails (`Backend/src/modules/emails/*`)
-  - Decomposed service layer architecture:
-    - `email-read.service.ts`: Read operations, querying (`getAllEmails`, `getEmails`), filter aggregation (`getFilters`), thread retrieval (`getThread`), contact search (`searchOtherContacts`), regex search (`searchEmails`), and attachment binary streaming (`downloadAttachmentStream`).
-    - `email-write.service.ts`: Write operations, email composition (`composeEmail`, `composeEmailWithAttachments`), parallelized multi-account folder migration (`moveEmails`), DRY multi-account batch operations via `executePerAccountProviderAction` (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`), and staged attachment lifecycle cleanup.
-    - `email.service.ts`: Lightweight backward-compatible facade delegating read and write calls to underlying services, preserving 100% of method signatures for `EmailController` and `DraftService`.
+  - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`
+  - Decomposed controller layer (`Backend/src/modules/emails/controllers/*`) with barrel export (`controllers/index.ts`):
+    - `email-query.controller.ts`: Pure read endpoints (`getEmails`, `getEmail`, `getFilters`, `searchOtherContacts`, `getThread`, `downloadAttachment`) with caller `userId` authorization enforcement
+    - `email-mutation.controller.ts`: Pure mutation endpoints (`composeEmail`, `deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`, `moveEmails`)
+  - Categorized database layer (`Backend/src/modules/emails/database/*`):
+    - `email.model.ts`: Mongoose schema and document models with deduplicated compound indexes
+    - `email.queries.ts`: Typed database query filter builders
+    - `email.repository.ts`: Pure database persistence and aggregation queries
+  - Decomposed service layer (`Backend/src/modules/emails/services/*`):
+    - `email-query.service.ts`: Query operations, mailbox lists (`getAllEmails`, `getEmails`), filter aggregation (`getFilters`), contact search (`searchOtherContacts`), and regex search (`searchEmails`)
+    - `email-thread.service.ts`: Thread conversation loading (`getThread`) and individual message retrieval (`getEmail`) with projected `userId` multi-tenant validation
+    - `email-attachment.service.ts`: Binary attachment streaming (`downloadAttachmentStream`) and buffer retrieval (`downloadAttachment`)
+    - `email-write.service.ts`: Write operations, email composition (`composeEmail`, `composeEmailWithAttachments`), staged attachment tenancy validation (`stagedAttachment.userId === userId && stagedAttachment.accountId === accountId`), parallelized multi-account folder migration (`moveEmails`), DRY multi-account batch operations via `executePerAccountProviderAction` (`deleteEmail`, `archiveEmails`, `starEmails`, `unreadEmails`), and staged attachment lifecycle cleanup
+    - `email.service.ts`: Lightweight backward-compatible facade delegating read and write calls to underlying services (`EmailQueryService`, `EmailThreadService`, `EmailAttachmentService`, `EmailWriteService`), preserving 100% of method signatures for `DraftService`
   - Unified list, per-account list, email details
   - Thread details endpoint for conversation view by email ID
   - Attachment download endpoint (`GET /api/emails/attachment/:emailId/:attachmentId`) streams binary data directly from upstream providers (`getAttachmentStream`) into Express response with zero heap buffering
@@ -156,28 +182,29 @@
   - Email persistence includes attachment metadata for detail, thread, and list rendering
   - Uses provider APIs + DB projection/sorting
   - Provider-specific email details and mail actions dispatch through shared provider strategy instances
-  - Dedicated types in `email.types.ts`: `ThreadSummaryItem`, `GroupedEmailThreadItem`
+  - Dedicated types in `types/email.types.ts`: `ThreadSummaryItem`, `GroupedEmailThreadItem`
 - Drafts (`Backend/src/modules/drafts/*`)
-  - Local draft persistence schema (`draft.model.ts`) with compound indexes on `{ userId: 1, lastSavedAt: -1 }` and `{ userId: 1, accountId: 1 }`
-  - Data repository (`draft.repository.ts`) for draft CRUD operations
-  - Service layer (`draft.service.ts`) for draft saving (`saveDraft`), retrieval (`getUserDrafts`), deletion (`deleteDraft`), HTML plain-text normalization (`htmlToText`), and provider email dispatch (`sendDraft` forwarding `cc`, `bcc`, `inReplyTo`, and `attachmentIds`) with caller authorization enforcement throwing `ForbiddenError`
-  - HTTP controller and route handlers (`draft.controller.ts`, `draft.routes.ts`, `draft.schema.ts`) mounted under `/api/drafts`
+  - Categorized architecture with barrel exports: `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`
+  - Local draft persistence schema (`database/draft.model.ts`) with compound indexes on `{ userId: 1, lastSavedAt: -1 }` and `{ userId: 1, accountId: 1 }`
+  - Data repository (`database/draft.repository.ts`) with strictly scoped mutations (`_id: draftId, userId`) preventing cross-tenant draft modification
+  - Service layer (`services/draft.service.ts`) for draft saving (`saveDraft`), retrieval (`getUserDrafts`), deletion (`deleteDraft`), HTML plain-text normalization (`htmlToText`), and provider email dispatch (`sendDraft` forwarding `cc`, `bcc`, `inReplyTo`, and `attachmentIds`) with caller authorization enforcement throwing `ForbiddenError`
+  - HTTP controller and route handlers (`controllers/draft.controller.ts`, `routes/draft.routes.ts`, `schema/draft.schema.ts`) mounted under `/api/drafts`
 - Folders (`Backend/src/modules/folders/*`)
+  - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`
   - Folder sync from providers
   - Folder list/details
   - Folder create/update/delete
+  - Enforces caller `userId` verification on `syncFolders`, `getFolder`, `getAccountFolders`, and `createFolder`, throwing `ForbiddenError` on cross-tenant attempts
   - Resolves canonical MongoDB `_id` to `providerFolderId` before delegating to provider adapters in `updateFolder` and `deleteFolder`
   - Synchronizes MongoDB folder documents via `FolderRepository.updateFolder` and `FolderRepository.deleteFolder`
   - Enforces caller ownership verification over folders in `updateFolder` and `deleteFolder` throwing `ForbiddenError` on cross-tenant attempts
-  - Corrected folder search to query `name` with regex matching and dynamic page numbering
   - Folder sync and CRUD dispatch through shared provider strategy instances
 - Users (`Backend/src/modules/user/*`)
+  - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`
   - Session-scoped user/profile fetch/update
   - Change password via Auth0 Management API
   - User sync settings fetch/update endpoints for global account background-sync preferences
   - All 6 service methods wrapped in explicit `try / catch` blocks with structured module logging via `LOGGER_MODULE.USER_SERVICE` and typed `NotFoundError` throws
-- Utils route (`Backend/src/modules/utils/index.ts`)
-  - Decrypt helper and account-token debug endpoint (auth protected)
 
 ### Integrations
 
@@ -187,6 +214,7 @@
   - `email.provider.ts`: shared provider contract for OAuth, token refresh, sync, email actions, compose, contact search, folder CRUD, and move/relabel operations
   - `email.provider.factory.ts`: provider selector and singleton cache for Gmail and Outlook adapters
   - `email.provider.types.ts`: shared auth/profile/send-result types used by provider implementations
+  - `index.ts`: unified barrel export accessible via `@integrations/email`
   - `__tests__/provider.factory.test.ts`: factory coverage for provider selection and singleton behavior
 - Gmail (`Backend/src/integrations/gmail/*`)
   - Modular domain client architecture (`Backend/src/integrations/gmail/clients/*`) with unified static facade (`clients/index.ts`):
@@ -194,30 +222,48 @@
     - `GmailMessageClient`: history and message fetching, batch modification (`users.messages.batchModify`), send (RFC 2822 Base64URL)
     - `GmailLabelClient`: label CRUD and sync
     - `GmailContactClient`: search Google other contacts
+  - Modular service layer architecture (`Backend/src/integrations/gmail/services/*`) with unified facade (`services/index.ts`):
+    - `GmailAuthService`: OAuth authentication, access token retrieval, and user profile queries
+    - `GmailMessageReadService`: message retrieval and delta sync history tracking
+    - `GmailMessageWriteService`: message sending, batch modifications, archiving, trashing, and starring
+    - `GmailAttachmentService`: attachment buffers and binary stream downloads
+    - `GmailLabelService`: label synchronization, creation, renaming, and deletion
+  - Modularized utility layer (`Backend/src/integrations/gmail/utils/*`) with unified barrel export (`utils/index.ts`):
+    - `gmail-mime.utils.ts`: RFC 2822 MIME message construction and Base64URL encoding
+    - `gmail-header.utils.ts`: header parsing, recipient extraction, and message metadata normalization
   - `gmail.provider.ts`: adapts Gmail service capabilities to the shared provider contract, including token refresh via stored refresh token
 - Outlook (`Backend/src/integrations/outlook/*`)
   - Modular domain client architecture (`Backend/src/integrations/outlook/clients/*`) with unified static facade (`clients/index.ts`):
     - `OutlookAuthClient`: OAuth token exchange and refresh
-    - `OutlookMessageClient`: message details, delta sync, send (direct inline <=3MB / chunked upload session >3MB)
+    - `OutlookMailReadClient`: message details, delta sync, and message listing
+    - `OutlookMailWriteClient`: send direct, draft creation/sending, chunked upload sessions, message deletion, archiving, flagging, and unreading
     - `OutlookFolderClient`: folder CRUD and sync
+    - `OutlookAttachmentClient`: attachment metadata and binary streaming
     - `OutlookContactClient`: search Microsoft Graph people
+  - Modular service layer architecture (`Backend/src/integrations/outlook/services/*`) with unified composite facade (`services/index.ts`):
+    - `OutlookSyncService`: Delta synchronization, message change extraction, and sync cursor state management
+    - `OutlookMailReadService`: Message details, message listing, attachment buffers, and attachment binary streaming
+    - `OutlookMailWriteService`: Message composition, large attachment chunked upload sessions, message deletion, archiving, flagging, and unreading
+    - `OutlookFolderService`: Folder listing, synchronization, creation, renaming, and deletion
   - `outlook.provider.ts`: adapts Outlook service capabilities to the shared provider contract, including access-token refresh
 - Auth0 (`Backend/src/integrations/auth0/*`)
   - Management API token + user/profile/password operations
 
 ### Data Models
 
-- `Backend/src/modules/accounts/account.model.ts`
+- `Backend/src/modules/accounts/database/account.model.ts`
   - `Account`, `AccountMetrics` (with `unreadCount`, `sentCount`, `totalEmails`, `totalThreads`)
-- `Backend/src/modules/accounts/sync-job.model.ts`
+- `Backend/src/modules/accounts/database/sync-job.model.ts`
   - `SyncJob` for queued account-sync lifecycle tracking
-- `Backend/src/modules/attachments/attachment.model.ts`
+- `Backend/src/modules/attachments/database/attachment.model.ts`
   - `StagedAttachment` with 24-hour TTL expiration index for Cloudflare R2 staging metadata
-- `Backend/src/modules/emails/email.model.ts`
-  - `Email` with compound indexes on `(accountId, providerMessageId)`, `(accountId, receivedAt)`, `(accountId, folders, receivedAt)`, `(accountId, isRead)`, `(accountId, from)`, and `(accountId, threadId, receivedAt)`
-- `Backend/src/modules/folders/folder.model.ts`
+- `Backend/src/modules/emails/database/email.model.ts`
+  - `Email` with deduplicated compound indexes on `(accountId, providerMessageId)`, `(accountId, receivedAt)`, `(accountId, folders, receivedAt)`, `(accountId, isRead)`, `(accountId, from)`, and `(accountId, threadId, receivedAt)`
+- `Backend/src/modules/drafts/database/draft.model.ts`
+  - `Draft` with compound indexes on `(userId, lastSavedAt)` and `(userId, accountId)`
+- `Backend/src/modules/folders/database/folder.model.ts`
   - `Folder` with provider folder identity + counts/role metadata
-- `Backend/src/modules/user/user.model.ts`
+- `Backend/src/modules/user/database/user.model.ts`
   - `User` indexed by `auth0UserId`
   - `UserSettingsModel` for persisted account sync preferences per user
 
@@ -229,8 +275,17 @@
 - `Backend/src/shared/utils/common.ts`: reusable date-range helpers
 - `Backend/src/core/errors/AppError.ts`: base structured application error
 - `Backend/src/core/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
+- `Backend/src/core/types/*`: core type definitions with barrel export (`index.ts`):
+  - `database.types.ts`: `DatabaseConnectionOptions` for MongoDB connection configuration
+  - `event.types.ts`: `PublishEventPayload` for event bus summary logging
+  - `middleware.types.ts`: `SchemaMap` for Zod request validation
+  - `common.types.ts`: `GetDataRangeResponse` for standardized date range filtering
+- `Backend/src/integrations/storage/storage.types.ts`: `ObjectStream` for S3/R2 binary stream downloads
+- `Backend/src/integrations/gmail/gmail.types.ts`: domain types including `GmailMessageIdParam`, `GmailAttachmentBufferResult`, and `GmailMimeMessageAttachment`
+- `Backend/src/integrations/outlook/outlook.types.ts`: domain types including `OutlookMessageIdParam`, `OutlookDeltaMessagesResponse`, `OutlookMessageAttachmentResponse`, `SplitAttachmentsResponse`, and `OutlookAttachmentBufferResult`
 - `Backend/src/modules/accounts/account.types.ts`: dedicated interfaces for `OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`, and Mongo projections
-- `Backend/src/modules/emails/email.types.ts`: dedicated interfaces for `ThreadSummaryItem`, `GroupedEmailThreadItem`, and mailbox action parameters
+- `Backend/src/modules/analytics/analytics.types.ts`: dedicated interfaces for `EmailVolumeDataPointBase`, `AccountEmailMetricsBase`, and aggregation payloads
+- `Backend/src/modules/emails/email.types.ts`: dedicated interfaces for `ThreadSummaryItem`, `GroupedEmailThreadItem`, `PaginationParams`, and mailbox action parameters
 - Tooling: ESLint 9 Flat Config (`eslint.config.js`) with TypeScript-ESLint enforcing zero inline object types (with targeted exemptions for type definition files `*.types.ts` and `*.interface.ts`), line length, and complexity limits
 
 ### API Surface (mounted at `/api`)
@@ -288,9 +343,6 @@
   - `GET /folders/list/:accountId`
 - Analytics:
   - `GET /analytics/dashboard`
-- Utils:
-  - `POST /utils/decrypt`
-  - `GET /utils/getAccountAccessToken`
 
 ## Frontend Index (`/Frontend`)
 
@@ -324,20 +376,15 @@
 
 ### Frontend Architecture
 
-- `Frontend/src/entities/*`: domain entities and shared domain UI/types
-  - `entities/account/*`: provider display metadata, provider icon helpers, `AccountProviderIcon`
-  - `entities/email/*`: email formatting helpers, email UI utilities, and `model/email.types.ts` holding mutation parameter and optimistic context interfaces (`StarEmailMutationParams`, `UnreadEmailMutationParams`, `MoveEmailsMutationContext`), keyboard shortcut hook parameters (`UseEmailKeyboardShortcutsParams`), and modal props (`KeyboardShortcutsModalProps`)
-  - `entities/folder/*`: folder UI component state/interfaces that remain frontend-specific
-  - Account, email, folder, user, filter, and settings data contracts now come from `@mailsense/types`
 - `Frontend/src/features/*`: feature-owned UI, hooks, and data access
-  - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer
+  - `features/accounts/*`: accounts page, provider grouping, account actions, account sync settings modal, account API layer, `AccountProviderIcon` component, and dedicated type definitions (`types/`: `accounts-api.types.ts`, `accounts-components.types.ts`, `accounts-hooks.types.ts`)
   - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), composite state orchestration hook (`useDashboardPage.ts`), UI components (`DashboardHeader`, `OverviewKpiCards`, `EmailVolumeChart`, `AccountDistributionPieChart`, `ResponseTimeCard`, `TopSendersCard`, `AccountActivityGrid`, `DashboardSkeleton`, `DashboardEmptyState`), and primary dashboard page view (`pages/index.tsx`)
   - `features/auth/*`: login page and profile fetch query
   - `features/compose-email/*`: compose popup modal and rich-text editing controls organized in standardized kebab-case directory (`Frontend/src/features/compose-email/`)
-  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), reusable email action hook (`useEmailActions`), keyboard navigation hook (`useEmailKeyboardShortcuts`), keyboard shortcuts modal (`KeyboardShortcutsModal`), input guard utilities (`isInputElement`), and email API mutations with React Query cache snapshotting and optimistic rollbacks (`email.mutations.ts`); strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
-  - `features/folders/*`: folders overview, folder email list (`useFolderEmailListPage` delegating actions to `useEmailActions` with keyboard shortcuts and modal), modular folder card components (`FolderCardHeader`, `FolderCardActions`, `FolderCard`), folder API layer, folder action hooks, and explicitly named `FolderEmailListHeader.tsx` (eliminating anonymous `index.tsx`); strictly references canonical MongoDB `_id` (`folder._id`) across all UI operations
-  - `features/inbox/*`: unified inbox, account inbox, shared inbox header (`EmailListHeader` with shortcuts button), inbox filters/actions/table (`EmailListTable` with `focusedIndex` active keyboard cursor styling `ring-2 ring-primary ring-inset` and auto-scroll), inbox API layer, inbox page hooks (`useInboxPage` delegating actions to `useEmailActions`) with sync-aware refresh behavior and keyboard shortcuts integration; strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
-  - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer
+  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), `FormatEmailFromString` component, decomposed action hooks (`use-email-actions/`), compose hooks (`use-compose-email/`), keyboard navigation engine (`use-email-keyboard-shortcuts/` with `KEY_ACTIONS` dictionary lookup in `useEvaluateKeyPress`), move-to-folder dropdown (`use-move-to-folder-dropdown/` with extracted `useFolderFilterState`), keyboard shortcuts modal (`KeyboardShortcutsModal`), input guard utilities (`isInputElement`), and email API mutations decomposed into specialized mutation files (`email-status.mutations.ts`, `email-folder.mutations.ts`, `email-write.mutations.ts`) with composite barrel re-export (`email.mutations.ts`) featuring React Query cache snapshotting and optimistic rollbacks; query layer (`email.queries.ts`) features resilient retry suppression on 403/404 client errors for `useGetThreadQuery`; API client (`email.api.ts`) provides binary blob streaming via `downloadAttachment`; dedicated type definitions in `email-api.types.ts`, `email-component.types.ts`, `email-hooks.types.ts`, and `email-ui.types.ts` eliminate inline object types with unified barrel export in `types/index.ts`; strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
+  - `features/folders/*`: folders overview, folder email list (`useFolderEmailListPage` delegating actions to `useEmailActions` with keyboard shortcuts and modal), modular folder card components (`FolderCardHeader`, `FolderCardActions`, `FolderCard`), folder API layer with `syncAccountFolders` and strongly-typed `getFolderDetails`, dedicated mutation typing via `UpdateFolderMutationVariables` in `folders.types.ts` and `folders-components.types.ts`, folder action hooks, and explicitly named `FolderEmailListHeader.tsx` (eliminating anonymous `index.tsx`); strictly references canonical MongoDB `_id` (`folder._id`) across all UI operations
+  - `features/inbox/*`: unified inbox, account inbox, shared inbox header (`EmailListHeader` with shortcuts button), inbox filters/actions/table (`EmailListTable` with `focusedIndex` active keyboard cursor styling `ring-2 ring-primary ring-inset` and auto-scroll), inbox API layer, clean 104-line modern inbox page hook (`use-inbox-page/index.ts`) coordinating decomposed sub-hooks (`useInboxData`, `useInboxRefresh`) with zero ESLint suppression comments, menubar options under `use-inbox-email-menubar-options/` with sync-aware refresh behavior and keyboard shortcuts integration, and dedicated query/mutation and component types (`types/`: `inbox-components.types.ts`, `SearchEmailPayload`, `DeleteEmailPayload`); strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
+  - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer, and dedicated mutation and component types (`types/`: `settings-api.types.ts`, `settings-component.types.ts`, `ChangePasswordPayload`)
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`), and error parsing (`errors.ts` extracting domain errors and HTTP 429 rate limit retry guidance)
 - `Frontend/src/shared/monitoring/*`: client observability and action tracking
   - `frontend.manager.ts`: `FrontendMonitoringManager` singleton and `trackUserAction` helper
@@ -358,7 +405,12 @@
   - `Frontend/src/shared/store/index.ts` barrel export for shared Zustand stores
 - Shared hooks/types:
   - `Frontend/src/shared/hooks/index.ts` barrel export for shared hooks such as `useIsMobile`, `UseDebounceQuery`, and breadcrumb reset
-  - `Frontend/src/shared/types/index.ts` barrel export for shared API, settings, and filter types
+  - `Frontend/src/shared/types/index.ts` barrel export for shared types:
+    - `component.types.ts`: `PageHeaderProps` typed with `AccountProviders`
+    - `constants.types.ts`: `VolumeChartSeries`, `DateRangeOption`, `SettingOption`
+    - `pages.types.ts`: Next.js App Router async params and page props (`AccountsPageParams`, `EmailPageParams`, `FoldersPageParams`, `SettingsPageParams`, `RootLayoutProps`)
+    - `store.types.ts`: `AuthState`, `ThemeState`, `BreadcrumbItem`, `BreadcrumbStore`, `ComposeEmailPopupStore`
+    - `sidebar.types.ts`: `NavSubItem`, `NavMainItem`, `SidebarUser`, `SidebarProject`, `SidebarTeam`, `SidebarData`, `NavMainProps`, `NavProjectsProps`, `NavTeamsProps`, `NavUserProps`
   - `Frontend/src/shared/types/filter.types.ts` filter model types and option structures
   - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:
@@ -389,11 +441,13 @@
 - `Frontend/src/shared/constants/dashboard.ts`: timeframe options, stale cache configuration, and volume chart color series
 - `Frontend/src/shared/constants/email.ts`: email list pagination and date-range dropdown options backed by email entity enums
 - `Frontend/src/shared/api/endpoints.ts`: centralized Auth0 route helpers and backend endpoint constants, including analytics, account sync-settings, user settings, and attachment download endpoints (`EMAILS_API_ENDPOINTS.ATTACHMENT`)
+- `Frontend/src/shared/utils/cn.ts`: centralized Tailwind CSS class merging helper combining `clsx` and `tailwind-merge`
+- `Frontend/src/shared/utils/index.ts`: centralized barrel export for shared utilities (`cn`, `crypto`, `emails`, `formatter`)
 - `Frontend/src/shared/utils/emails.ts`: shared email display-formatting helpers such as recipient label formatting for thread headers
 - `Frontend/src/features/emails/utils/attachments.ts`: frontend attachment download and preview helpers using centralized `EMAILS_API_ENDPOINTS.ATTACHMENT`
 - `Frontend/src/features/emails/components/KeyboardShortcutsModal.tsx`: accessible dialog displaying grouped keyboard shortcuts categories using Radix primitives
 - `Frontend/src/features/emails/components/DeleteModal.tsx`: accessible delete confirmation modal with window capture-phase `Enter` (confirm deletion) and `Escape` (cancel and close) bindings
-- `Frontend/src/features/emails/hooks/useEmailKeyboardShortcuts.ts`: keyboard navigation engine (`j`/`k`, `Enter`, `s`, `u`, `e`, `Delete`, `c`, `/`, `?`) with input element typing guards (`isInputElement`)
+- `Frontend/src/features/emails/hooks/use-email-keyboard-shortcuts/`: keyboard navigation engine (`j`/`k`, `Enter`, `s`, `u`, `e`, `Delete`, `c`, `/`, `?`) with input element typing guards (`isInputElement`) and decomposed keypress evaluator (`useEvaluateKeyPress`)
 
 ## End-to-End Flow Summary
 
@@ -428,7 +482,7 @@
 - Newly connected accounts are persisted as active, so they appear immediately in active-account-driven flows after OAuth completion.
 - Connected Accounts now intentionally includes disabled accounts for management/re-enable workflows, while sync and inbox flows remain active-account-only.
 - Shared sidebar/navigation structure is now defined in centralized constants and types instead of inline component-local data.
-- Frontend account/auth/email/inbox/folders/settings code is fully migrated from the deprecated `modules/*` directory into `entities/*`, `features/*`, and `shared/api/*` (with the `src/modules` directory removed entirely).
+- Frontend account/auth/email/inbox/folders/settings code is fully consolidated into `features/*` and `shared/*` (with deprecated `modules/*` and `entities/*` directories removed entirely).
 - Release changelog is maintained in `CHANGELOG.md` and should stay user-facing (avoid internal refactor/tooling-only notes).
 - Centralized `FilterModal` component is introduced under `@shared/components/utils` to unify the filter logic/UI for both inbox lists and folders overview.
 - Full-stack observability and error reliability infrastructure is established (Phase 3 of development roadmap), featuring custom domain error hierarchy, distributed tracing (`X-Trace-Id`) via AsyncLocalStorage and Axios interceptors, module-scoped Pino loggers (`createLogger`) with non-blocking APM bridging, pluggable monitoring manager with Sentry Native Structured Logging, Koyeb health probes (`/health`, `/health/ready`), and frontend Error Boundary with user-friendly recovery UI.
@@ -438,8 +492,9 @@
 - Multi-Tenant Staging Isolation & Security Guardrails: Enforces caller `userId` and account matching verification across staged attachment composition (`composeEmailWithAttachments`) and staged attachment deletions, preventing cross-tenant IDOR access.
 - Modular Integration Domain Clients: Gmail and Outlook integration clients are decomposed into specialized sub-clients (`AuthClient`, `MessageClient`, `LabelClient`/`FolderClient`, `ContactClient`) behind static facades, reducing file bloat while maintaining seamless caller contracts.
 - DRY Multi-Account Batch Processing: `EmailWriteService.executePerAccountProviderAction` consolidates multi-account batch mutations (`star`, `unread`, `archive`, `delete`) with `Promise.allSettled` resilience and isolated database updates.
-- Frontend Hook Deduplication: `useEmailActions` centralizes bulk action logic, optimistic updates, and selection resets, eliminating duplicated orchestration code across `useInboxPage` and `useFolderEmailListPage`.
+- Frontend Hook Architecture & Subdirectory Modularization: Decomposed monolithic custom hooks into modular subdirectories (`use-compose-email`, `use-email-actions`, `use-email-keyboard-shortcuts`, `use-move-to-folder-dropdown`, `use-inbox-page`, `use-inbox-email-menubar-options`) adhering strictly to function size ($\le 50$ lines) and custom hook size ($\le 120$ lines) standards, with composite facades preserving existing caller contracts.
+- Frontend Mutation Modularization: Split monolithic `email.mutations.ts` into single-responsibility mutation modules (`email-status.mutations.ts`, `email-folder.mutations.ts`, `email-write.mutations.ts`) with unified re-export facade.
+- Backend Categorized Subdirectory Architecture: All 7 backend feature modules (`accounts/`, `analytics/`, `attachments/`, `drafts/`, `emails/`, `folders/`, `user/`) are standardized into categorized subdirectories (`constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`) with clean barrel exports (`index.ts`).
+- Debug Endpoint Decommissioning: Unmounted `/api/utils` router and deleted `Backend/src/modules/utils/` to ensure zero exposure of OAuth tokens and decryption routines.
 - Universal Kebab-Case Directory Architecture: Frontend features strictly use kebab-case directories (`features/compose-email/`), and component folders avoid anonymous `index.tsx` files.
-- Zero Inline Types & ESLint 9 Flat Config: Source code enforces typed, named interfaces from dedicated types files (`@mailsense/types` and local `*.types.ts`), governed by ESLint 9 Flat Config rules.
-
-
+- Zero Inline Types & Zero-Warning ESLint Compliance: Source code enforces typed, named interfaces from dedicated types files (`@mailsense/types` and local `*.types.ts`), achieving 0 errors and 0 warnings with strict ESLint 9 Flat Config rules.

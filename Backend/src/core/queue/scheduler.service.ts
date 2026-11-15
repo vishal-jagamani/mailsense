@@ -1,7 +1,7 @@
 import { LOGGER_MODULE } from '@constants';
-import { ACCOUNT_SYNC_MODE } from '@mailsense/types';
-import { AccountRepository } from '@modules/accounts/account.repository.js';
-import { UserSettingsRepository } from '@modules/user/user-settings.repository.js';
+import { ACCOUNT_SYNC_MODE, UserAccountSyncSettings } from '@mailsense/types';
+import { AccountRepository } from '@modules/accounts/database/index.js';
+import { UserSettingsRepository } from '@modules/user/database/index.js';
 import { createLogger } from '@observability';
 import { QUEUE_NAMES } from './queue.config.js';
 import { getQueue } from './queue.registry.js';
@@ -37,46 +37,58 @@ export class SchedulerService {
         }
     }
 
+    private static isEligibleForSync(active?: boolean, syncEnabled?: boolean, globalAutoSync?: boolean): boolean {
+        if (!active || !syncEnabled) return false;
+        return globalAutoSync ?? true;
+    }
+
+    private static resolveSyncIntervalMinutes(accountInterval: number, syncMode?: ACCOUNT_SYNC_MODE, globalInterval?: number): number {
+        if (syncMode === ACCOUNT_SYNC_MODE.SAME_FOR_ALL && globalInterval) {
+            return globalInterval;
+        }
+        return accountInterval;
+    }
+
+    private static async cleanMismatchedSchedulers(accountId: string, intervalMs: number): Promise<void> {
+        const queue = getQueue(QUEUE_NAMES.SYNC_ACCOUNT);
+        const schedulers = await queue.getJobSchedulers();
+        const syncPrefix = 'sync:';
+
+        for (const scheduler of schedulers) {
+            if (!scheduler.name.startsWith(syncPrefix)) continue;
+            const rAccountId = scheduler.name.replace(syncPrefix, '');
+            if (rAccountId === accountId && scheduler.every !== intervalMs) {
+                await queue.removeJobScheduler(scheduler.key);
+            }
+        }
+    }
+
+    private static async getSyncSettings(userId?: string): Promise<UserAccountSyncSettings | undefined> {
+        if (!userId) return undefined;
+        const userSettingsDoc = await UserSettingsRepository.getUserSettings(userId);
+        return userSettingsDoc?.account?.syncSettings;
+    }
+
     /**
      * Dynamic upsert when an account triggers activation or updates intervals
      */
     public static async upsertAccountRepeatableJob(accountId: string): Promise<void> {
         try {
             const account = await AccountRepository.getAccountById(accountId);
-            if (!account || !account.active || !account.syncEnabled) {
+            const syncSettings = await this.getSyncSettings(account?.userId);
+
+            if (!account || !this.isEligibleForSync(account.active, account.syncEnabled, syncSettings?.globalAutoSync)) {
                 await this.removeAccountRepeatableJob(accountId);
                 return;
             }
 
-            const userSettingsDoc = await UserSettingsRepository.getUserSettings(account.userId);
-            const syncSettings = userSettingsDoc?.account?.syncSettings;
-            const globalAutoSync = syncSettings?.globalAutoSync ?? true;
-            if (!globalAutoSync) {
-                await this.removeAccountRepeatableJob(accountId);
-                return;
-            }
-
-            const queue = getQueue(QUEUE_NAMES.SYNC_ACCOUNT);
-            const jobSchedulers = await queue.getJobSchedulers();
-
-            let intervalMinutes = account.syncInterval;
-            if (syncSettings?.syncMode === ACCOUNT_SYNC_MODE.SAME_FOR_ALL && syncSettings.globalSyncInterval) {
-                intervalMinutes = syncSettings.globalSyncInterval;
-            }
-
+            const intervalMinutes = this.resolveSyncIntervalMinutes(account.syncInterval, syncSettings?.syncMode, syncSettings?.globalSyncInterval);
             const intervalMs = intervalMinutes * 60 * 1000;
 
-            for (const scheduler of jobSchedulers) {
-                if (!scheduler.name.startsWith('sync:')) {
-                    continue;
-                }
-                const rAccountId = scheduler.name.replace('sync:', '');
-                if (rAccountId === accountId && scheduler.every !== intervalMs) {
-                    await queue.removeJobScheduler(scheduler.key);
-                }
-            }
+            await this.cleanMismatchedSchedulers(accountId, intervalMs);
 
             logger.info(`⏰ Registering/Updating repeatable sync: ${accountId} (Every ${intervalMinutes} mins)`);
+            const queue = getQueue(QUEUE_NAMES.SYNC_ACCOUNT);
             await queue.add(
                 `sync:${accountId}`,
                 { accountId, userId: account.userId, force: false },
