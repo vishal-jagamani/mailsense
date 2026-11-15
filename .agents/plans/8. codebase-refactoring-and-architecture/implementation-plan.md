@@ -310,7 +310,7 @@ stateDiagram-v2
 
 ### 3.3 Data Models / Schema Changes
 
-All schema changes consume normalized types directly from `@mailsense/types` (defined in [`types-implementation-plan.md`](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-refactoring-and-architecture/types-implementation-plan.md)).
+All schema changes consume normalized types directly from `@mailsense/types` (defined in [`types-implementation-plan.md`](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/8. codebase-refactoring-and-architecture/types-implementation-plan.md)).
 
 #### `EmailSchema` Update (`Backend/src/modules/emails/models/email.model.ts`)
 
@@ -418,7 +418,7 @@ export const useInboxPage = () => {
 ### Shared Contracts (`@mailsense/types`)
 
 > [!NOTE]
-> All `@mailsense/types` contract additions and modifications are documented in detail in [`types-implementation-plan.md`](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-refactoring-and-architecture/types-implementation-plan.md).
+> All `@mailsense/types` contract additions and modifications are documented in detail in [`types-implementation-plan.md`](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/8. codebase-refactoring-and-architecture/types-implementation-plan.md).
 > **Status:** ✅ COMPLETED & PUBLISHED (`v1.6.0`). Built and synced locally into both `Backend/node_modules/@mailsense/types` and `Frontend/node_modules/@mailsense/types`.
 
 ---
@@ -527,7 +527,7 @@ export const useInboxPage = () => {
 **Estimated Effort:** Medium (3–4 hours)
 
 #### Tasks
-- [x] Task 2.1: Execute `@mailsense/types` updates per [`types-implementation-plan.md`](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-refactoring-and-architecture/types-implementation-plan.md) and build package (`v1.6.0`).
+- [x] Task 2.1: Execute `@mailsense/types` updates per [`types-implementation-plan.md`](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/8. codebase-refactoring-and-architecture/types-implementation-plan.md) and build package (`v1.6.0`).
 - [x] Task 2.2: Map `getAccounts()` through `this.sanitizeAccount()` in `account.service.ts` to redact OAuth tokens (`BUG-V12-05`).
 - [x] Task 2.3: Add `await` and error handling to `cleanupStagedAttachments` call in `email-write.service.ts` (`BUG-V12-06`).
 - [x] Task 2.4: Replace all 15+ frontend `console.error` calls with `trackUserAction()` (`BUG-V12-07`).

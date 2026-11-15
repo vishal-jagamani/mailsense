@@ -2592,7 +2592,7 @@ The **v1.1.0 Codebase Health Audit** represents a critical quality and architect
 
 With core stability achieved, this re-audit conducts a rigorous, end-to-end evaluation of the entire codebase to identify all remaining **Platform Resilience, Security Ingress, High-Throughput Performance, and Architectural Modularization** requirements that must be executed prior to rolling out the **Phase 4 Core AI Module** (Smart Categorization, Priority Scoring, Summarization, Suggested Replies, Weekly AI Digest).
 
-All findings and remediation tasks detailed below are directly operationalized in the [Platform Resilience & Codebase Enhancements Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-enhancements-and-performance/implementation-plan.md).
+All findings and remediation tasks detailed below are directly operationalized in the [Platform Resilience & Codebase Enhancements Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/7. codebase-enhancements-and-performance/implementation-plan.md).
 
 ---
 

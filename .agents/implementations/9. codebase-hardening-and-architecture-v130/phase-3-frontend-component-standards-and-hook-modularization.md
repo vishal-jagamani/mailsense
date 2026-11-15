@@ -8,7 +8,7 @@
 
 ## 1. Goal Description & Scope
 
-Phase 3 remediates architectural drift, oversized components, God hooks, and non-standard directory structures in the Frontend identified in the [v1.3.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md) and [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-hardening-and-architecture-v130/implementation-plan.md).
+Phase 3 remediates architectural drift, oversized components, God hooks, and non-standard directory structures in the Frontend identified in the [v1.3.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md) and [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/9. codebase-hardening-and-architecture-v130/implementation-plan.md).
 
 Specifically, this phase covers two architectural milestones:
 

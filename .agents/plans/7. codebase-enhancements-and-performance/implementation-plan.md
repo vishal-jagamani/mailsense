@@ -318,7 +318,7 @@ stateDiagram-v2
 
 ### 3.3 Data Models & Contracts
 
-Contract changes for `@mailsense/types` are centrally specified in [types-implementation-plan.md](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-enhancements-and-performance/types-implementation-plan.md). The backend directly consumes these contracts:
+Contract changes for `@mailsense/types` are centrally specified in [types-implementation-plan.md](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/7. codebase-enhancements-and-performance/types-implementation-plan.md). The backend directly consumes these contracts:
 
 ```typescript
 // Attachment Stream Result Model in Backend
@@ -411,7 +411,7 @@ export interface RateLimiterOptions {
 **Estimated Effort:** Low (1–2 hours)
 
 #### Tasks
-- [x] Task 1.1: Verify `@mailsense/types` contains `SYSTEM_EVENT.EMAIL_BATCH_SYNCED` and `EmailBatchSyncedPayload` as per [types-implementation-plan.md](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-enhancements-and-performance/types-implementation-plan.md). (Published in `@mailsense/types@1.5.0`)
+- [x] Task 1.1: Verify `@mailsense/types` contains `SYSTEM_EVENT.EMAIL_BATCH_SYNCED` and `EmailBatchSyncedPayload` as per [types-implementation-plan.md](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/7. codebase-enhancements-and-performance/types-implementation-plan.md). (Published in `@mailsense/types@1.5.0`)
 - [x] Task 1.2: Update [sync-account.processor.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/workers/processors/sync-account.processor.ts) to resolve ingested `emailIds` via `EmailRepository.getEmailIdsByProviderMessageIds` and publish `SYSTEM_EVENT.EMAIL_BATCH_SYNCED` on the `eventBus`.
 - [x] Task 1.3: Create foundation handler [email-batch-synced.handler.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/core/events/handlers/email-batch-synced.handler.ts) subscribing to `EMAIL_BATCH_SYNCED` with structured logging.
 

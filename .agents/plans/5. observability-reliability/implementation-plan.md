@@ -981,7 +981,7 @@ export interface IMonitoringProvider {
 - [x] Execute `pnpm type-check` ensuring zero TypeScript errors
 
 #### Files to Create
-- `mailsense/.agents/implementations/observability-reliability/phase-6-logger-migration-apm-bridge.md`
+- `mailsense/.agents/implementations/5. observability-reliability/phase-6-logger-migration-apm-bridge.md`
 - `Backend/src/workers/index.ts`
 
 #### Files to Modify

@@ -8,7 +8,7 @@
 
 ## 1. Goal Description & Scope
 
-Phase 2 remediates God classes, oversized services, legacy flat directory structures, and cyclomatic complexity hotspots across the Backend identified in the [v1.3.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md) and [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-hardening-and-architecture-v130/implementation-plan.md).
+Phase 2 remediates God classes, oversized services, legacy flat directory structures, and cyclomatic complexity hotspots across the Backend identified in the [v1.3.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md) and [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/9. codebase-hardening-and-architecture-v130/implementation-plan.md).
 
 Specifically, this phase accomplishes:
 

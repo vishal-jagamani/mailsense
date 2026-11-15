@@ -8,7 +8,7 @@
 
 ## 1. Goal Description & Scope
 
-Phase 2 operationalizes all backend structural, refactoring, and architectural items identified in the [v1.4.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md#140---2026-11-12) and detailed in the [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-hardening-and-architecture-v140/implementation-plan.md). It eliminates code bloat, removes dead code, prevents database index degradation, decomposes oversized services and utilities into focused single-responsibility classes, and reorganizes flat modules into standardized categorized subdirectories:
+Phase 2 operationalizes all backend structural, refactoring, and architectural items identified in the [v1.4.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md#140---2026-11-12) and detailed in the [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/10. codebase-hardening-and-architecture-v140/implementation-plan.md). It eliminates code bloat, removes dead code, prevents database index degradation, decomposes oversized services and utilities into focused single-responsibility classes, and reorganizes flat modules into standardized categorized subdirectories:
 
 1. **Orphan & Dead Code Deletion (`BUG-V14-05`, `STRUCT-V14-01`):**
    - Delete [`Backend/src/modules/emails/email.controller.ts`](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts) (289 lines of dead legacy controller code superseded by `email-query.controller.ts` and `email-mutation.controller.ts`).

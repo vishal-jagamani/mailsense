@@ -464,7 +464,7 @@ EmailSchema.index({ userId: 1, isRead: 1 });
 
 #### Tasks
 
-- [x] Apply shared types changes from [types-implementation-plan.md](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-hardening-and-stabilization/types-implementation-plan.md) (Completed & deployed in `@mailsense/types@1.4.1`).
+- [x] Apply shared types changes from [types-implementation-plan.md](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/6. codebase-hardening-and-stabilization/types-implementation-plan.md) (Completed & deployed in `@mailsense/types@1.4.1`).
 - [x] Fix BUG-03 / SEC-01: Attachment ownership validation in [email.service.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.service.ts) *(Note: Lines 479-482 temporarily commented out during local intermediate development; to be uncommented during full UI testing of this feature).*
 - [x] Fix BUG-06: Add `return` statement following 400 error in `searchEmails` in [email.controller.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/emails/email.controller.ts).
 - [x] Fix BUG-07: Add `return` statement following 404 response in `getAccountDetails` in [account.controller.ts](file:///Users/vishaljagamani/Projects/Projects/mailsense/Backend/src/modules/accounts/account.controller.ts).

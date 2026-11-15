@@ -8,7 +8,7 @@
 
 ## 1. Goal Description & Scope
 
-Phase 4 eliminates all remaining ESLint violations across both the Backend (34 errors) and Frontend (95 errors) codebases, establishing a permanent zero-error baseline (`0 errors, 0 warnings`) on `pnpm lint`. This addresses the type-safety debt and strict linting rules mandated in the [MailSense Coding Standards](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md), [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-hardening-and-architecture-v130/implementation-plan.md), and [v1.3.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md).
+Phase 4 eliminates all remaining ESLint violations across both the Backend (34 errors) and Frontend (95 errors) codebases, establishing a permanent zero-error baseline (`0 errors, 0 warnings`) on `pnpm lint`. This addresses the type-safety debt and strict linting rules mandated in the [MailSense Coding Standards](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/rules/coding-standards.md), [Implementation Plan](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/9. codebase-hardening-and-architecture-v130/implementation-plan.md), and [v1.3.0 Codebase Health Audit](file:///Users/vishaljagamani/Projects/Projects/mailsense/.agents/plans/codebase-health-audit-report.md).
 
 Specifically, this phase accomplishes:
 
