@@ -7,6 +7,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.6.1] - 2026-11-17
+
+### Changed
+
+- **User Profile Management:** Improved profile updates and metadata synchronization with authentication providers for seamless user account updates.
+- **Attachment Previewing:** Enhanced the attachment viewer to reliably display previews across local and cloud-stored image formats.
+- **Dashboard Analytics:** Improved daily metrics aggregation to ensure account activity snapshots and email counters update consistently.
+
+### Fixed
+
+- **Mailbox Filtering:** Fixed mailbox filter dialog rendering and selection handling when filtering messages by connected accounts and unread status.
+
 ## [3.6.0] - 2026-11-15
 
 ### Security

@@ -58,9 +58,9 @@ const FilterModal: React.FC<FilterModalProps> = ({ filter, onFilterChange, filte
                 <div className="flex w-full flex-col gap-2">
                     {filterOptions?.map((item) => {
                         return (
-                            <>
+                            <React.Fragment key={item.id}>
                                 {item.type === 'dropdown' && (
-                                    <div className="flex w-full flex-col" key={item.id}>
+                                    <div className="flex w-full flex-col">
                                         <p className="p-1 text-xs">{item.label}</p>
                                         <Select value={getSelectedValue(item.name)} onValueChange={(value) => handleValueChange(item.name, value)}>
                                             <SelectTrigger className="w-full text-xs">
@@ -84,18 +84,16 @@ const FilterModal: React.FC<FilterModalProps> = ({ filter, onFilterChange, filte
                                     </div>
                                 )}
                                 {item.type === 'toggle' && (
-                                    <>
-                                        <div className="flex items-center">
-                                            <p className="p-1 text-xs">{item.label}</p>
-                                            <Switch
-                                                id={item.name}
-                                                checked={localFilterObject?.unread}
-                                                onCheckedChange={(value) => handleValueChange(item.name, value)}
-                                            />
-                                        </div>
-                                    </>
+                                    <div className="flex items-center">
+                                        <p className="p-1 text-xs">{item.label}</p>
+                                        <Switch
+                                            id={item.name}
+                                            checked={localFilterObject?.unread}
+                                            onCheckedChange={(value) => handleValueChange(item.name, value)}
+                                        />
+                                    </div>
                                 )}
-                            </>
+                            </React.Fragment>
                         );
                     })}
                 </div>

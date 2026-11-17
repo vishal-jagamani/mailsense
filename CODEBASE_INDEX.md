@@ -11,7 +11,7 @@
 ### Runtime Entry
 
 - `Backend/src/server.ts`: starts app, connects MongoDB via enterprise `DatabaseConnectionManager`, listens on `PORT`, and manages graceful server shutdown
-- `Backend/src/core/database/connection.ts`: `DatabaseConnectionManager` encapsulating MongoDB connection initialization, connection pooling, reconnect monitoring, and graceful disconnection
+- `Backend/src/core/database/connection.ts`: `DatabaseConnectionManager` encapsulating MongoDB connection initialization, connection pooling, reconnect monitoring, explicit `dbName: DATABASE` binding, and graceful disconnection
 - `Backend/src/core/database/index.ts`: barrel export accessible via `@database` alias
 - `Backend/src/app.ts`: Express app wiring (CORS, body parsers, static, routes, Sentry, centralized error handler)
 - `Backend/src/routes.ts`: mounts module routes under `/api`
@@ -121,12 +121,14 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - Decomposed service layer architecture:
     - `AccountOAuthService` (`services/account-oauth.service.ts`): Specialized domain service handling OAuth connection URL generation (`getOAuthUrl`), authorization code exchange (`handleOAuthCallback`), provider profile retrieval, and initial sync.
     - `AccountSyncCoordinatorService` (`services/account-sync-coordinator.service.ts`): Specialized domain service managing BullMQ queue sync job submission, queue status checks, and sync job records.
-    - `AccountService` (`services/account.service.ts`): Account management, listing, deletion, settings updates, and sync triggers ($\le 250$ lines).
+    - `AccountsReadService` (`services/account-read.service.ts`): Account listing, details retrieval, and payload sanitization (`sanitizeAccount` emitting normalized `emailAddress`, `active`, `lastSyncedAt`, and `syncInterval`).
+    - `AccountsWriteService` (`services/account-write.service.ts`): Account deletion, activation/enable toggles, and sync settings updates.
+    - `AccountService` (`services/account.service.ts`): Composite facade delegating to read, write, and OAuth services ($\le 250$ lines).
   - Database layer (`database/`): `AccountModel` (`account.model.ts`), `SyncJobModel` (`sync-job.model.ts`), `AccountRepository` (`account.repository.ts`), `SyncJobRepository` (`sync-job.repository.ts`)
   - Connect/callback OAuth for Gmail/Outlook
   - Sync one/all accounts
   - Account list/details/delete
-  - Strips sensitive OAuth tokens (`accessToken`, `refreshToken`) on public account responses, returning `SanitizedAccountAttributes`
+  - Strips sensitive OAuth tokens (`accessToken`, `refreshToken`) on public account responses, returning normalized `SanitizedAccountAttributes` (`emailAddress`, `active`, `lastSyncedAt`, `syncInterval`)
   - Enforces caller `userId` verification on `deleteAccount`, `syncAccount`, and `enableAccount`
   - Account-level sync settings update endpoint for `syncEnabled`, `syncInterval`, and related scheduler refresh
   - Provider callback token exchange, profile fetch, and sync execution route through `EmailProviderFactory`
@@ -136,7 +138,7 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
 - Analytics (`Backend/src/modules/analytics/*`)
   - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`, `utils/`
   - Database layer (`Backend/src/modules/analytics/database/*`):
-    - `analytics.repository.ts`: Pure database query repository with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, and account breakdown
+    - `analytics.repository.ts`: Pure database query repository with MongoDB aggregation pipelines for overview metrics, volume trends, top senders, thread response turnaround times, account breakdown, and single-snapshot `upsertDailyAccountMetrics`
     - `analytics.queries.ts`: Specialized aggregation pipeline builders for time series and sender distributions
   - Modularized utility layer (`Backend/src/modules/analytics/utils/*`) with barrel export (`utils/index.ts`):
     - `analytics-formatters.ts`: Date bucketing, contiguous timeline backfilling, title formatting, and regex name/email extraction
@@ -201,6 +203,7 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - Folder sync and CRUD dispatch through shared provider strategy instances
 - Users (`Backend/src/modules/user/*`)
   - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`
+  - Validation schemas (`schema/user.schema.ts`): `updateUserSchema` (supporting `nickname`, `picture`, `email_verified`, `sub`, and `user_metadata`), `userMetadataSchema`, and `changePasswordSchema`
   - Session-scoped user/profile fetch/update
   - Change password via Auth0 Management API
   - User sync settings fetch/update endpoints for global account background-sync preferences
@@ -248,6 +251,9 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - `outlook.provider.ts`: adapts Outlook service capabilities to the shared provider contract, including access-token refresh
 - Auth0 (`Backend/src/integrations/auth0/*`)
   - Management API token + user/profile/password operations
+  - `auth0.client.ts`: `Auth0Api` handling Management API token acquisition, user details retrieval/updating, and password changes, wrapped in structured `AxiosApiError` error handling
+  - `auth0.utils.ts`: `buildAuth0UpdatePayload` to sanitize and strip undefined values before dispatching to Auth0 Management API
+  - `auth0.types.ts`: typed contracts including `Auth0UpdateUserPayload`, `Auth0UserDetailsResponse`, `Auth0AccessTokenResponse`, and `Auth0UserChangePassword`
 
 ### Data Models
 
@@ -270,13 +276,13 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
 ### Shared Types / Utils
 
 - `Backend/src/core/types/express.d.ts`: extends Express request typing for validated payloads and Auth0 JWT user context
-- Backend module and integration contracts are sourced from `@mailsense/types` (v1.6.0) with normalized `string[]` recipients for `to`, `cc`, and `bcc`
+- Backend module and integration contracts are sourced from `@mailsense/types` (v1.7.0) with normalized `string[]` recipients for `to`, `cc`, and `bcc`, and normalized `SanitizedAccountAttributes`
 - `Backend/src/shared/utils/index.ts`: barrel export for shared backend utilities
 - `Backend/src/shared/utils/common.ts`: reusable date-range helpers
 - `Backend/src/core/errors/AppError.ts`: base structured application error
 - `Backend/src/core/errors/AxiosApiError.ts`: wraps provider/API failures into consistent app errors
 - `Backend/src/core/types/*`: core type definitions with barrel export (`index.ts`):
-  - `database.types.ts`: `DatabaseConnectionOptions` for MongoDB connection configuration
+  - `database.types.ts`: `DatabaseConnectionOptions` for MongoDB connection configuration including explicit `dbName` binding
   - `event.types.ts`: `PublishEventPayload` for event bus summary logging
   - `middleware.types.ts`: `SchemaMap` for Zod request validation
   - `common.types.ts`: `GetDataRangeResponse` for standardized date range filtering
@@ -434,7 +440,8 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
 
 ### Shared UI / Types
 
-- `Frontend/src/shared/components/utils/FilterModal.tsx`: reusable filter modal component used in folders and inbox list views, including folder and unread filters for inbox
+- `Frontend/src/shared/components/utils/FilterModal.tsx`: reusable filter modal component wrapped in `React.Fragment` key reconciliation, used in folders and inbox list views, including folder and unread filters for inbox
+- `Frontend/src/features/emails/components/attachments/AttachmentPreview.tsx`: attachment preview modal using native `<img>` for blob and presigned image rendering
 - `Frontend/src/shared/ui/badge.tsx`: reusable recipient chip/badge UI used in compose flow
 - `Frontend/src/shared/types/sidebar.types.ts`: shared sidebar navigation item and project typing
 - `Frontend/src/shared/constants/sidebar.constants.ts`: base sidebar navigation configuration

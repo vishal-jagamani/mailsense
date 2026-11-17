@@ -7,6 +7,16 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.6.1] - 2026-11-17
+
+### Changed
+
+- **Attachment Image Preview Rendering:** Updated `AttachmentPreview.tsx` (`src/features/emails/components/attachments/AttachmentPreview.tsx`) to use native `<img>` with ESLint suppression instead of `next/image` to reliably render dynamic object blob URLs and remote presigned S3/R2 attachment URLs without domain whitelist constraints.
+
+### Fixed
+
+- **Filter Modal List Reconciliation:** Fixed adjacent JSX expression structure in `FilterModal.tsx` (`src/shared/components/utils/FilterModal.tsx`) by wrapping mapped items in `<React.Fragment key={item.id}>`, ensuring valid JSX and stable React key reconciliation.
+
 ## [3.6.0] - 2026-11-15
 
 ### Added

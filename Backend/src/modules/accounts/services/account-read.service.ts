@@ -29,12 +29,12 @@ export class AccountsReadService {
             return {
                 _id: String(account._id),
                 userId: account.userId,
-                email: account.emailAddress,
+                emailAddress: account.emailAddress,
                 provider: account.provider,
-                isEnabled: account.active,
-                lastSyncedAt: account.lastSyncedAt ? new Date(account.lastSyncedAt) : undefined,
+                active: account.active,
+                lastSyncedAt: account.lastSyncedAt,
                 lastSyncStatus: account.lastSyncStatus,
-                syncFrequency: String(account.syncInterval),
+                syncInterval: account.syncInterval,
                 createdAt: new Date(account.createdAt || ''),
                 updatedAt: new Date(account.updatedAt || ''),
             };

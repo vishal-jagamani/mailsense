@@ -37,7 +37,7 @@ describe('AccountsService — Token Sanitization (`BUG-V12-05`)', () => {
         const [sanitized] = accounts;
 
         expect(sanitized._id).toBe('acc-1');
-        expect(sanitized.email).toBe('test@gmail.com');
+        expect(sanitized.emailAddress).toBe('test@gmail.com');
         expect(sanitized.provider).toBe('gmail');
 
         // Tokens must be strictly undefined
