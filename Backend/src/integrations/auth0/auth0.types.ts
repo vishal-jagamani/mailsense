@@ -47,3 +47,14 @@ export interface Auth0UserChangePassword {
     password: string;
     connection: string;
 }
+
+export interface Auth0UpdateUserPayload {
+    name?: string;
+    nickname?: string;
+    picture?: string;
+    email?: string;
+    user_metadata?: {
+        phone_number?: string;
+    };
+    email_verified?: boolean;
+}

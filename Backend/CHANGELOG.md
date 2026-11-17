@@ -7,6 +7,20 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.6.1] - 2026-11-17
+
+### Added
+
+- **Auth0 Payload Sanitization & Typed Contracts:** Added `Auth0UpdateUserPayload` interface in `src/integrations/auth0/auth0.types.ts` and `buildAuth0UpdatePayload` helper in `src/integrations/auth0/auth0.utils.ts` to strip undefined fields and type-check user update payloads before sending to Auth0 Management API.
+- **External Auth0 Error Normalization:** Added structured `AxiosApiError` wrapping in `Auth0Api.updateUserDetails` and `changeUserPassword` to normalize external provider rejections into domain errors.
+
+### Changed
+
+- **Database Connection Manager Configuration:** Configured explicit `dbName: DATABASE` option in `DatabaseConnectionManager` (`src/core/database/connection.ts`) and `DatabaseConnectionOptions` (`src/core/types/database.types.ts`) ensuring MongoDB client explicitly binds to the target database.
+- **Account Sanitization Alignment:** Updated `AccountsReadService.sanitizeAccount` (`src/modules/accounts/services/account-read.service.ts`) and test suite `account-sanitization.test.ts` to emit `emailAddress`, `active`, `lastSyncedAt` (as timestamp), and `syncInterval` matching the updated `SanitizedAccountAttributes` contract.
+- **User Validation Schema Expansion:** Added `userMetadataSchema` and expanded `updateUserSchema` in `src/modules/user/schema/user.schema.ts` to validate `nickname`, `picture`, `email_verified`, `sub`, and `user_metadata`.
+- **Analytics Metric Upsert Snapshot:** Refactored `AnalyticsRepository.upsertDailyAccountMetrics` (`src/modules/analytics/database/analytics.repository.ts`) to upsert matching on `{ accountId }`, preventing duplicate daily metric entries and maintaining a consistent account metric snapshot.
+
 ## [3.6.0] - 2026-11-15
 
 ### Security

@@ -140,11 +140,8 @@ export class AnalyticsRepository {
         accountId: string,
         metrics: Partial<AccountMetricsAttributes>,
     ): Promise<AccountMetricsDocument | null> {
-        const startOfDay = new Date();
-        startOfDay.setHours(0, 0, 0, 0);
-
         return AccountMetrics.findOneAndUpdate(
-            { accountId, date: { $gte: startOfDay } },
+            { accountId },
             { $set: { ...metrics, accountId, date: new Date() } },
             { upsert: true, new: true },
         );

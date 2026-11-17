@@ -1,13 +1,15 @@
-import { AxiosRequestConfig } from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
 import { AUTH0_API_SECRETS } from '@config';
 import { LOGGER_MODULE } from '@constants';
+import { AxiosApiError } from '@errors';
 import { UserDetailsObject } from '@mailsense/types';
 import { UpdateUserSchema } from '@modules/user/schema/index.js';
 import { createLogger } from '@observability';
 import { apiRequest } from 'shared/utils/index.js';
 import { AUTH0_API_AUDIENCE, AUTH0_API_TOKEN_URI, AUTH0_APIs } from './auth0.constants.js';
 import { Auth0AccessTokenResponse, Auth0UserChangePassword, Auth0UserDetailsResponse } from './auth0.types.js';
+import { buildAuth0UpdatePayload } from './auth0.utils.js';
 
 const logger = createLogger(LOGGER_MODULE.AUTH0_CLIENT);
 
@@ -51,6 +53,9 @@ export class Auth0Api {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error in Auth0Api.getUserDetails: ${errorMessage}`, { error });
+            if (axios.isAxiosError(error)) {
+                throw new AxiosApiError(error, 'Auth0');
+            }
             throw error;
         }
     }
@@ -64,13 +69,16 @@ export class Auth0Api {
                 headers: {
                     Authorization: `Bearer ${accessToken.access_token}`,
                 },
-                data: user,
+                data: buildAuth0UpdatePayload(user),
             };
             const response = await apiRequest<UserDetailsObject>(options);
             return response;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error in Auth0Api.updateUserDetails: ${errorMessage}`, { error });
+            if (axios.isAxiosError(error)) {
+                throw new AxiosApiError(error, 'Auth0');
+            }
             throw error;
         }
     }
@@ -90,6 +98,9 @@ export class Auth0Api {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error in Auth0Api.getUserProfileDetails: ${errorMessage}`, { error });
+            if (axios.isAxiosError(error)) {
+                throw new AxiosApiError(error, 'Auth0');
+            }
             throw error;
         }
     }
@@ -110,6 +121,9 @@ export class Auth0Api {
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : String(error);
             logger.error(`Error in Auth0Api.changeUserPassword: ${errorMessage}`, { error });
+            if (axios.isAxiosError(error)) {
+                throw new AxiosApiError(error, 'Auth0');
+            }
             throw error;
         }
     }
