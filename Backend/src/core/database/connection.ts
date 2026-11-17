@@ -1,4 +1,4 @@
-import { MONGODB_URI } from '@config';
+import { DATABASE, MONGODB_URI } from '@config';
 import { LOGGER_MODULE } from '@constants';
 import { createLogger } from '@observability';
 import { DatabaseConnectionOptions } from '@types';
@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 const logger = createLogger(LOGGER_MODULE.SERVER);
 
 const DEFAULT_CONNECTION_OPTIONS: mongoose.ConnectOptions = {
+    dbName: DATABASE,
     maxPoolSize: 50,
     minPoolSize: 10,
     serverSelectionTimeoutMS: 5000,
@@ -44,6 +45,7 @@ export class DatabaseConnectionManager {
         }
 
         return {
+            dbName: options.dbName ?? DEFAULT_CONNECTION_OPTIONS.dbName,
             maxPoolSize: options.maxPoolSize ?? DEFAULT_CONNECTION_OPTIONS.maxPoolSize,
             minPoolSize: options.minPoolSize ?? DEFAULT_CONNECTION_OPTIONS.minPoolSize,
             serverSelectionTimeoutMS: options.serverSelectionTimeoutMS ?? DEFAULT_CONNECTION_OPTIONS.serverSelectionTimeoutMS,

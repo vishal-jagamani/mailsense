@@ -1,10 +1,19 @@
 import { ACCOUNT_SYNC_MODE } from '@mailsense/types';
 import z from 'zod';
 
+export const userMetadataSchema = z.object({
+    phone_number: z.string().optional(),
+});
+
 export const updateUserSchema = z.object({
     name: z.string().optional(),
     email: z.string().optional(),
     role: z.string().optional(),
+    nickname: z.string().optional(),
+    picture: z.string().optional(),
+    email_verified: z.boolean().optional(),
+    sub: z.string().optional(),
+    user_metadata: userMetadataSchema.optional(),
 });
 
 export const changePasswordSchema = z.object({
