@@ -7,6 +7,18 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- **AI Provider Strategy Pattern & Infrastructure (Phase 1):**
+    - Implemented `IAiProvider` interface and `AiProviderFactory` singleton strategy selector and cache supporting `gemini` and `noop` providers.
+    - Implemented `GeminiAiProvider` utilizing the modern `@google/genai` SDK with strict JSON schema constraints (`responseSchema`), 30-second `AbortController` timeouts, payload sanitization, and structured rate-limit (`RateLimitError`) error translation.
+    - Defaulted model to `gemini-3.6-flash` via `GOOGLE_GEMINI_MODEL` environment variable and `AI_CONFIG`.
+    - Implemented `NoopAiProvider` for offline development, local mock generation, and CI test environments.
+    - Added `ErrorCode.AI_PROCESSING_FAILED`, `AiProcessingErrorParams`, and `AiProcessingError` domain error carrying duration telemetry, trace ID, and operational metadata.
+    - Added `AI_PROVIDER`, `GOOGLE_GEMINI_API_KEY`, and `GOOGLE_GEMINI_MODEL` Zod schema validation in `env.schema.ts`, `env.config.ts`, and `app.config.ts`.
+    - Extended `LOGGER_MODULE` in `observability.constants.ts` with `GEMINI_PROVIDER`, `NOOP_AI_PROVIDER`, `AI_PROVIDER_FACTORY`, `AI_SERVICE`, `AI_CONTROLLER`, `AI_WORKER`, and `AI_PROCESSING_PROCESSOR`.
+    - Added unit test suites for `AiProcessingError`, `AiProviderFactory`, and `GeminiAiProvider`.
+
 ## [3.6.1] - 2026-11-17
 
 ### Added

@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- **AI-Powered Email Intelligence Foundation:** Built internal engine and model integration supporting automated email classification, priority triage, smart conversation thread summarization, and contextual suggested replies powered by Google Gemini 3.6 Flash.
+
 ## [3.6.1] - 2026-11-17
 
 ### Changed

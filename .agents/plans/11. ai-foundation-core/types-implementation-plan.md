@@ -1,8 +1,8 @@
 # AI Foundation & Core Features Types — Overview & Contract Changes
 
-> **Target Version:** `@mailsense/types` `v1.7.0`
+> **Target Version:** `@mailsense/types` `v1.8.0`
 > **Status:** READY FOR REVIEW & EXECUTION
-> **Created:** 2026-09-14 · **Last Updated:** 2026-11-15
+> **Created:** 2026-09-14 · **Last Updated:** 2026-11-19
 
 ---
 
@@ -22,7 +22,7 @@ Currently, `@mailsense/types` lacks domain enums, data contracts, and request/re
 
 ### Goals
 
-- Introduce domain enums: `EMAIL_AI_CATEGORY`, `EMAIL_AI_PRIORITY`, `AI_FEATURE_KEY`, and `AI_PROVIDER_NAME`.
+- Introduce domain enums: `EMAIL_AI_CATEGORY`, `EMAIL_AI_PRIORITY`, `AI_FEATURE_KEY`, `AI_PROVIDER_NAME`, `SUGGESTED_REPLY_TONE`, and `AI_PROCESSING_STATUS`.
 - Extend `EmailAttributes` and `EmailListDTO` with AI metadata fields (`aiCategory`, `aiPriority`, `aiSummary`, `aiTags`, `aiProcessedAt`, `aiProvider`).
 - Define BullMQ queue job contracts: `AIProcessingJobPayload` and `AIProcessingJobResult`.
 - Define AI provider strategy parameter and result interfaces: `AiClassifyEmailParams`, `AiClassifyEmailResult`, `AiSummarizeThreadParams`, `AiSummarizeThreadResult`, `AiSuggestedRepliesParams`, `AiSuggestedRepliesResult`.
@@ -63,6 +63,21 @@ export enum EMAIL_AI_PRIORITY {
 }
 ```
 
+#### [NEW] `SUGGESTED_REPLY_TONE` (Phase 4)
+
+```typescript
+// Tone variants for AI-generated suggested replies
+export enum SUGGESTED_REPLY_TONE {
+  FORMAL = "formal",
+  CASUAL = "casual",
+  CONCISE = "concise",
+}
+```
+
+---
+
+### 2.2 Component: `src/ai/ai.enums.ts` (NEW MODULE)
+
 #### [NEW] `AI_PROVIDER_NAME` (Phase 1)
 
 ```typescript
@@ -75,14 +90,39 @@ export enum AI_PROVIDER_NAME {
 }
 ```
 
+#### [NEW] `AI_FEATURE_KEY` (Phase 4)
+
+```typescript
+// Specific AI feature toggles
+export enum AI_FEATURE_KEY {
+  CATEGORIZATION = "categorization",
+  PRIORITY_SCORING = "priorityScoring",
+  SUMMARIZATION = "summarization",
+  SUGGESTED_REPLIES = "suggestedReplies",
+}
+```
+
+#### [NEW] `AI_PROCESSING_STATUS` (Phase 1)
+
+```typescript
+// Discriminated status for AI background processing job outcomes
+export enum AI_PROCESSING_STATUS {
+  SUCCESS = "success",
+  SKIPPED = "skipped",
+  FAILED = "failed",
+  RATE_LIMITED = "rateLimited",
+}
+```
+
 ---
 
-### 2.2 Component: `src/emails/emails.interfaces.ts`
+### 2.3 Component: `src/emails/emails.interfaces.ts`
 
 #### [NEW] `EmailAiMetadata` (Phases 1 & 2)
 
 ```typescript
 import { EMAIL_AI_CATEGORY, EMAIL_AI_PRIORITY } from "./emails.enums.js";
+import { AI_PROVIDER_NAME } from "../ai/ai.enums.js";
 
 // Structured AI analysis metadata for email documents
 export interface EmailAiMetadata {
@@ -91,8 +131,8 @@ export interface EmailAiMetadata {
   summary: string;
   tags: string[];
   confidence: number;
-  processedAt: number;
-  provider: string;
+  processedAt: Date;
+  provider: AI_PROVIDER_NAME;
 }
 ```
 
@@ -101,6 +141,7 @@ export interface EmailAiMetadata {
 ```typescript
 import { BaseEntity, DATE_RANGE, Filter } from "../common/index.js";
 import { EMAIL_AI_CATEGORY, EMAIL_AI_PRIORITY } from "./emails.enums.js";
+import { AI_PROVIDER_NAME } from "../ai/ai.enums.js";
 
 // DB entities
 export interface EmailAttributes extends BaseEntity {
@@ -126,7 +167,7 @@ export interface EmailAttributes extends BaseEntity {
   aiSummary?: string;
   aiTags?: string[];
   aiProcessedAt?: Date;
-  aiProvider?: string;
+  aiProvider?: AI_PROVIDER_NAME;
 }
 ```
 
@@ -134,23 +175,28 @@ export interface EmailAttributes extends BaseEntity {
 
 ```typescript
 // Lightweight Email summary DTO for list views
+// NOTE: Additive modification only — existing fields preserved as-is from current interface.
 export interface EmailListDTO extends BaseEntity {
-  subject?: string | undefined;
-  from?: string | undefined;
-  receivedAt?: Date | undefined;
-  isRead?: boolean | undefined;
-  providerMessageId?: string | undefined;
-  accountId?: string | undefined;
-  threadId?: string | undefined;
-  threadCount?: number | undefined;
-  attachmentCount?: number | undefined;
-  body?: string | undefined;
-  bodyHtml?: string | undefined;
-  bodyPlain?: string | undefined;
+  subject?: string;
+  from?: string;
+  receivedAt?: Date;
+  isRead?: boolean;
+  providerMessageId?: string;
+  accountId?: string;
+  threadId?: string;
+  threadCount?: number;
+  attachmentCount?: number;
+  body?: string;
+  bodyHtml?: string;
+  bodyPlain?: string;
+  to?: string[];
+  cc?: string[];
+  bcc?: string[];
+  hasAttachments?: boolean;
   // Phase 4: AI metadata for list views
-  aiCategory?: EMAIL_AI_CATEGORY | undefined;
-  aiPriority?: EMAIL_AI_PRIORITY | undefined;
-  aiSummary?: string | undefined;
+  aiCategory?: EMAIL_AI_CATEGORY;
+  aiPriority?: EMAIL_AI_PRIORITY;
+  aiSummary?: string;
 }
 ```
 
@@ -186,12 +232,14 @@ export interface GetEmailSummaryResponse {
 #### [NEW] `SuggestedReplyItem` (Phase 4)
 
 ```typescript
+import { SUGGESTED_REPLY_TONE } from "./emails.enums.js";
+
 // Individual suggested reply option
 export interface SuggestedReplyItem {
   id: string;
   title: string;
   body: string;
-  tone: "formal" | "casual" | "concise";
+  tone: SUGGESTED_REPLY_TONE;
 }
 ```
 
@@ -208,7 +256,7 @@ export interface GetSuggestedRepliesResponse {
 
 ---
 
-### 2.3 Component: `src/ai/ai.interfaces.ts` (NEW MODULE)
+### 2.4 Component: `src/ai/ai.interfaces.ts` (NEW MODULE)
 
 #### [NEW] Provider Strategy Contracts (Phase 1)
 
@@ -223,6 +271,7 @@ import { SuggestedReplyItem } from "../emails/emails.interfaces.js";
 export interface AiClassifyEmailParams {
   subject: string;
   from: string;
+  to: string[];
   bodyPlain: string;
   receivedAt: Date;
 }
@@ -260,8 +309,10 @@ export interface AiSummarizeThreadResult {
 export interface AiSuggestedRepliesParams {
   subject: string;
   from: string;
+  to: string[];
   bodyPlain: string;
   receivedAt: Date;
+  recentMessages?: AiThreadMessageInput[];
 }
 
 // Result of suggested replies
@@ -272,23 +323,25 @@ export interface AiSuggestedRepliesResult {
 
 ---
 
-### 2.4 Component: `src/user/user.enums.ts`
+### 2.5 Component: `src/ai/index.ts` (NEW MODULE BARREL)
 
-#### [NEW] `AI_FEATURE_KEY` (Phase 4)
+#### [NEW] Module Barrel Export (Phase 1)
 
 ```typescript
-// Specific AI feature toggles
-export enum AI_FEATURE_KEY {
-  CATEGORIZATION = "categorization",
-  PRIORITY_SCORING = "priorityScoring",
-  SUMMARIZATION = "summarization",
-  SUGGESTED_REPLIES = "suggestedReplies",
-}
+export * from "./ai.enums.js";
+export * from "./ai.interfaces.js";
 ```
+
+> [!IMPORTANT]
+> The root barrel export at `src/index.ts` MUST also be updated to include:
+>
+> ```typescript
+> export * from "./ai/index.js";
+> ```
 
 ---
 
-### 2.5 Component: `src/user/user.interfaces.ts`
+### 2.6 Component: `src/user/user.interfaces.ts`
 
 #### [NEW] `UserAIFeatureSettings` (Phase 4)
 
@@ -357,7 +410,7 @@ export interface GetUserAISettingsResponse {
 
 ---
 
-### 2.6 Component: `src/workers/workers.interfaces.ts`
+### 2.7 Component: `src/workers/workers.interfaces.ts`
 
 #### [NEW] `AIProcessingJobPayload` (Phase 1)
 
@@ -379,11 +432,12 @@ import {
   EMAIL_AI_CATEGORY,
   EMAIL_AI_PRIORITY,
 } from "../emails/emails.enums.js";
+import { AI_PROCESSING_STATUS } from "../ai/ai.enums.js";
 
 // Result returned upon completion of AI processing job
 export interface AIProcessingJobResult {
   emailId: string;
-  success: boolean;
+  status: AI_PROCESSING_STATUS;
   category?: EMAIL_AI_CATEGORY;
   priority?: EMAIL_AI_PRIORITY;
   hasSummary: boolean;
@@ -399,21 +453,23 @@ export interface AIProcessingJobResult {
 ### Package Version
 
 ```json
-"version": "1.7.0"
+"version": "1.8.0"
 ```
 
 ### `mailsense-types/CHANGELOG.md` Snippet
 
 ```markdown
-## [1.7.0] - 2026-11-15
+## [1.8.0] - 2026-11-19
 
 ### Added
 
 - `EMAIL_AI_CATEGORY` enum defining smart categorization classifications (`work`, `personal`, `finance`, `social`, `promotions`, `updates`, `general`).
 - `EMAIL_AI_PRIORITY` enum defining inbox triage priority levels (`critical`, `high`, `normal`, `low`).
+- `SUGGESTED_REPLY_TONE` enum defining tone variants for suggested replies (`formal`, `casual`, `concise`).
 - `AI_PROVIDER_NAME` enum defining pluggable AI strategies (`gemini`, `openai`, `anthropic`, `noop`).
-- `AI_FEATURE_KEY` enum defining granular sub-feature toggles.
-- Provider strategy contracts under `src/ai/`: `AiClassifyEmailParams`, `AiClassifyEmailResult`, `AiSummarizeThreadParams`, `AiSummarizeThreadResult`, `AiSuggestedRepliesParams`, and `AiSuggestedRepliesResult`.
+- `AI_FEATURE_KEY` enum defining granular sub-feature toggles (`categorization`, `priorityScoring`, `summarization`, `suggestedReplies`).
+- `AI_PROCESSING_STATUS` enum defining discriminated background job outcomes (`success`, `skipped`, `failed`, `rateLimited`).
+- Provider strategy contracts under `src/ai/`: `AiClassifyEmailParams`, `AiClassifyEmailResult`, `AiThreadMessageInput`, `AiSummarizeThreadParams`, `AiSummarizeThreadResult`, `AiSuggestedRepliesParams`, and `AiSuggestedRepliesResult`.
 - `EmailAiMetadata` interface containing unified classification, priority, summary, tags, and confidence metrics.
 - `GetEmailSummaryResponse` and `SuggestedReplyItem` / `GetSuggestedRepliesResponse` interfaces for on-demand AI endpoints.
 - `UserAIFeatureSettings`, `UserAISettings`, `UpdateUserAISettingsPayload`, and `GetUserAISettingsResponse` for AI settings and privacy management.
@@ -422,7 +478,7 @@ export interface AIProcessingJobResult {
 ### Changed
 
 - Extended `EmailAttributes` with optional `aiCategory`, `aiPriority`, `aiSummary`, `aiTags`, `aiProcessedAt`, and `aiProvider`.
-- Extended `EmailListDTO` with `aiCategory`, `aiPriority`, and `aiSummary` for list view rendering.
+- Additively extended `EmailListDTO` with `aiCategory`, `aiPriority`, and `aiSummary` for list view rendering while preserving all existing fields.
 - Extended `GetAllEmailsFilters` with `aiCategory` and `aiPriority` filter fields.
 - Extended `UserSettings` entity with `ai: UserAISettings` configuration.
 ```

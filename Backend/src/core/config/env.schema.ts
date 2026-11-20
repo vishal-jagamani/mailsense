@@ -1,3 +1,4 @@
+import { AI_PROVIDER_NAME } from '@mailsense/types';
 import z from 'zod';
 
 export const envSchemaObject = {
@@ -32,4 +33,8 @@ export const envSchemaObject = {
     R2_SECRET_ACCESS_KEY: z.string(),
     R2_BUCKET_NAME: z.string(),
     R2_REGION: z.string(),
+    // AI Configuration Secrets
+    AI_PROVIDER: z.enum(AI_PROVIDER_NAME).default(AI_PROVIDER_NAME.GEMINI),
+    GOOGLE_GEMINI_API_KEY: z.string().optional(),
+    GOOGLE_GEMINI_MODEL: z.string().default('gemini-3.6-flash'),
 };

@@ -19,8 +19,8 @@
 ### Config
 
 - `Backend/src/core/config/env.config.ts`: validates env via Zod
-- `Backend/src/core/config/env.schema.ts`: centralized Zod schema definitions (`envSchemaObject`) for environment variables
-- `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis)
+- `Backend/src/core/config/env.schema.ts`: centralized Zod schema definitions (`envSchemaObject`) for environment variables including AI settings (`AI_PROVIDER`, `GOOGLE_GEMINI_API_KEY`, `GOOGLE_GEMINI_MODEL`)
+- `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis, AI)
 - `Backend/src/core/config/logger.config.ts`: logger configuration
 - `Backend/src/core/config/app.config.ts`: exposes the backend Redis connection URL config used by BullMQ and `ioredis`
 - `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
@@ -101,9 +101,9 @@
 
 ### Error Infrastructure (`Backend/src/core/errors/*`)
 
-- `ErrorCodes.ts`: standardized `ErrorCode` string enum providing compiler-enforced error codes
+- `ErrorCodes.ts`: standardized `ErrorCode` string enum providing compiler-enforced error codes including `AI_PROCESSING_FAILED`
 - `AppError.ts`: base operational error class carrying `errorCode`, `httpStatus`, `traceId`, and typed context
-- `DomainErrors.ts`: 11 domain error subclasses (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`); all services, controllers, provider clients, and background workers are fully migrated from generic `new Error` to these domain error classes
+- `DomainErrors.ts`: 12 domain error subclasses (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`, `AiProcessingError`); all services, controllers, provider clients, and background workers are fully migrated from generic `new Error` to these domain error classes
 - `ErrorFactories.ts`: ergonomic helpers for domain error instantiation
 
 ### Health Probes & Readiness Checks (`Backend/src/core/health/*`)
@@ -254,6 +254,15 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - `auth0.client.ts`: `Auth0Api` handling Management API token acquisition, user details retrieval/updating, and password changes, wrapped in structured `AxiosApiError` error handling
   - `auth0.utils.ts`: `buildAuth0UpdatePayload` to sanitize and strip undefined values before dispatching to Auth0 Management API
   - `auth0.types.ts`: typed contracts including `Auth0UpdateUserPayload`, `Auth0UserDetailsResponse`, `Auth0AccessTokenResponse`, and `Auth0UserChangePassword`
+- AI Provider Strategy (`Backend/src/integrations/ai/*`)
+  - `ai.provider.ts`: `IAiProvider` interface defining core AI contracts (`classifyAndScoreEmail`, `summarizeEmailThread`, `generateSuggestedReplies`)
+  - `ai.provider.types.ts`: typed provider configuration contracts (`GeminiProviderConfig`, `SanitizedEmailContent`)
+  - `ai.provider.factory.ts`: singleton strategy provider selector and cache (`AiProviderFactory`), defaulting to Gemini or test-mode Noop
+  - `providers/gemini.provider.ts`: Google Gemini provider adapter utilizing `@google/genai` with `gemini-3.6-flash`, structured JSON response schema enforcement, 30s `AbortController` timeout, content sanitization, and `RateLimitError` detection
+  - `providers/noop.provider.ts`: deterministic mock AI provider for offline development and CI test environments
+  - `utils/gemini.utils.ts`: JSON schemas for classification, summarization, and suggested replies
+  - `index.ts`: unified barrel export accessible via `@integrations/ai`
+  - `__tests__/`: comprehensive unit tests for `AiProviderFactory` and `GeminiAiProvider`
 
 ### Data Models
 

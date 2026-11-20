@@ -57,3 +57,9 @@ export const R2_CONFIG = {
     bucketName: ENV.R2_BUCKET_NAME,
     region: ENV.R2_REGION,
 };
+
+export const AI_CONFIG = {
+    provider: ENV.AI_PROVIDER,
+    geminiApiKey: ENV.GOOGLE_GEMINI_API_KEY,
+    geminiModel: ENV.GOOGLE_GEMINI_MODEL,
+};

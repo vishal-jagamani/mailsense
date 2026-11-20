@@ -7,6 +7,10 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+### Added
+
+- **Shared AI Contract Integration:** Synchronized `@mailsense/types` v1.8.0 contracts for email AI classifications, priority triage levels, thread summarization, and suggested reply types in preparation for AI interface features.
+
 ## [3.6.1] - 2026-11-17
 
 ### Changed

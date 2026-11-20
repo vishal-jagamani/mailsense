@@ -3,13 +3,7 @@ import { SearchOtherContactsResponse, UpdateAPIResponse } from '@mailsense/types
 import { EmailDocument, EmailInput } from '@modules/emails/database/index.js';
 import { ComposeEmailBody } from '@modules/emails/schema/index.js';
 import { FolderInput } from '@modules/folders/database/index.js';
-import { AttachmentStreamResult, IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
-
-export interface SyncResult {
-    addedEmails: EmailInput[] | Partial<EmailInput>[];
-    deletedEmailIds: string[];
-    newCursor: string;
-}
+import { AttachmentStreamResult, EmailSyncResult, IEmailTAuthToken, IEmailTSendEmailResult, IEmailTUserProfile } from './email.provider.types.js';
 
 export interface IEmailProvider<TAuthToken = IEmailTAuthToken, TUserProfile = IEmailTUserProfile, TSendMailResult = IEmailTSendEmailResult> {
     // Auth & Profile
@@ -18,7 +12,7 @@ export interface IEmailProvider<TAuthToken = IEmailTAuthToken, TUserProfile = IE
     refreshAccessToken(accountId: string): Promise<string>;
 
     // Core Ingestion & Sync
-    fetchMessages(accountId: string, cursor?: string): Promise<SyncResult | null>;
+    fetchMessages(accountId: string, cursor?: string): Promise<EmailSyncResult | null>;
 
     // Email Operations
     getMessageDetails(accountId: string, emailId: string, dbEmail?: EmailDocument): Promise<EmailInput>;

@@ -1,4 +1,4 @@
-import { ProviderApiErrorParams, SyncErrorParams, ValidationDetail } from '@types';
+import { AiProcessingErrorParams, ProviderApiErrorParams, SyncErrorParams, ValidationDetail } from '@types';
 import { AppError } from './AppError.js';
 import { ErrorCode } from './ErrorCodes.js';
 
@@ -222,5 +222,31 @@ export class ConfigurationError extends AppError {
             context: configKey ? { resource: configKey } : undefined,
         });
         this.configKey = configKey;
+    }
+}
+
+export class AiProcessingError extends AppError {
+    public readonly provider: string;
+    public readonly model?: string;
+    public readonly processingDurationMs?: number;
+
+    constructor(params: AiProcessingErrorParams) {
+        super({
+            message: `[AI:${params.provider.toUpperCase()}] ${params.message}`,
+            httpStatus: 502,
+            errorCode: ErrorCode.AI_PROCESSING_FAILED,
+            isOperational: true,
+            description: params.description ?? `AI processing failed while calling provider '${params.provider}'.`,
+            suggestedAction: params.suggestedAction ?? 'The operation will be retried automatically or email marked as unclassified.',
+            traceId: params.traceId,
+            context: {
+                provider: params.provider,
+                ...(params.model ? { model: params.model } : {}),
+                ...(params.processingDurationMs !== undefined ? { processingDurationMs: params.processingDurationMs } : {}),
+            },
+        });
+        this.provider = params.provider;
+        this.model = params.model;
+        this.processingDurationMs = params.processingDurationMs;
     }
 }

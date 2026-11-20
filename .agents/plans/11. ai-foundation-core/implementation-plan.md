@@ -1,9 +1,9 @@
 # AI Foundation & Core Features — Implementation Plan
 
-> **Phase:** Sprint P8 (AI Foundation & Core Features) · **Release Target:** `Backend v3.7.0` / `Frontend v3.7.0` / `@mailsense/types v1.7.0`
+> **Phase:** Sprint P8 (AI Foundation & Core Features) · **Release Target:** `Backend v3.7.0` / `Frontend v3.7.0` / `@mailsense/types v1.8.0`
 > **Priority:** 🟡 HIGH — Core differentiator transforming MailSense from a multi-account aggregator into an intelligent, AI-augmented email workspace
 > **Status:** READY FOR REVIEW & EXECUTION
-> **Created:** 2026-09-14 · **Last Updated:** 2026-11-15
+> **Created:** 2026-09-14 · **Last Updated:** 2026-11-19
 
 ---
 
@@ -22,13 +22,14 @@ The event-driven foundation (Event Bus, BullMQ workers, and `EMAIL_CREATED` / `E
 
 ### Goals
 
-- **Configurable AI Provider / Strategy Design Pattern:** Architect a provider-agnostic AI subsystem (`IAiProvider`, `AiProviderFactory`) defaulting to Google Gemini (`gemini-2.5-flash`), with pluggable support for alternate providers (e.g., OpenAI, Anthropic, local LLMs) and a `NoopAiProvider` for offline testing.
-- **Asynchronous AI Worker Pipeline:** Integrate BullMQ queue (`ai-processing`) subscribing to `EMAIL_CREATED` events to perform background email classification and scoring without blocking sync ingestion or degrading user UI performance.
-- **Smart Categorization:** Automatically classify incoming emails into structured categories (`work`, `personal`, `finance`, `social`, `promotions`, `updates`, `general`) using structured JSON schema generation.
-- **Priority Scoring & Priority Inbox View:** Score emails into `critical`, `high`, `normal`, and `low` priority levels based on urgency, relationship context, and deadlines. Support a dedicated "Priority Inbox" view and visual warning indicators.
+- **Configurable AI Provider / Strategy Design Pattern:** Architect a provider-agnostic AI subsystem (`IAiProvider`, `AiProviderFactory`) defaulting to Google Gemini (`gemini-3.6-flash`), with pluggable support for alternate providers (e.g., OpenAI, Anthropic, local LLMs) and a `NoopAiProvider` for offline testing.
+- **Asynchronous AI Worker Pipeline:** Integrate BullMQ queue (`ai-processing`) subscribing to `EMAIL_CREATED` events with native worker rate limiting (`limiter`) and concurrency controls to perform background email classification and scoring without blocking sync ingestion or degrading UI performance.
+- **Smart Categorization:** Automatically classify incoming emails into structured categories (`work`, `personal`, `finance`, `social`, `promotions`, `updates`, `general`) using structured JSON schema generation (`responseMimeType: "application/json"`, `responseSchema`).
+- **Priority Scoring & Priority Inbox View:** Score emails into `critical`, `high`, `normal`, and `low` priority levels based on urgency, relationship context (including `to` recipient evaluation), and deadlines. Support a dedicated "Priority Inbox" view and visual warning indicators.
 - **Email & Thread Summarization:** Generate one-line TL;DR summaries during ingestion for instant list-view previews and provide on-demand multi-bullet thread summaries with key action items in the conversation view.
-- **Contextual Suggested Replies:** Generate 2–3 tone-adapted quick replies (e.g., Formal confirmation, Casual acknowledgment, Clarification request) that launch the compose modal pre-populated with context.
+- **Contextual Suggested Replies:** Generate 2–3 tone-adapted quick replies (`formal`, `casual`, `concise` via `SUGGESTED_REPLY_TONE`) that launch the compose modal pre-populated with context.
 - **AI Settings, Privacy Controls & Data Minimization:** Provide global, per-feature, and per-account AI toggles, coupled with explicit user consent tracking and strict prompt sanitization (HTML stripped, 4,000 char truncation, zero attachments/base64 sent to LLM).
+- **Resilience & Fault Isolation:** Protect against upstream 429 rate limits via BullMQ `job.rateLimit()`, use `AbortController` timeouts (30s) on LLM calls, and implement idempotency guards.
 - **Architecture & Standards Compliance:** Align with MailSense Coding Standards (categorized subdirectories, barrel exports, zero `any`, zero inline object types, boundary-based error handling).
 
 ### Non-Goals
@@ -55,16 +56,17 @@ Building on the Phase 3 Observability framework, all AI operations will carry di
 3. **FR-03 (Inbox Category Badges & Filtering):** The frontend email list MUST render color-coded category badges on email rows and support filtering by category in mailbox query filters.
 4. **FR-04 (Priority Inbox View):** Users MUST be able to filter by priority level or switch to a "Priority" view displaying Critical and High priority messages.
 5. **FR-05 (On-Demand Thread Summarization):** Users can click "Summarize" inside an email thread to trigger an on-demand API call returning bulleted key points and extracted action items.
-6. **FR-06 (Contextual Suggested Replies):** The email detail view MUST display 2–3 contextual reply chips. Clicking a chip opens the Compose modal pre-filled with the recipient, subject (`Re: ...`), and suggested reply text.
+6. **FR-06 (Contextual Suggested Replies):** The email detail view MUST display 2–3 contextual reply chips typed with `SUGGESTED_REPLY_TONE`. Clicking a chip opens the Compose modal pre-filled with the recipient, subject (`Re: ...`), and suggested reply text.
 7. **FR-07 (Granular Privacy & Account Controls):** Users MUST be able to toggle AI globally, toggle specific sub-features (`categorization`, `priorityScoring`, `summarization`, `suggestedReplies`), and disable AI for specific connected accounts. If AI is disabled for an account, incoming emails skip AI ingestion completely.
 
 ### Non-Functional Requirements
 
-- **NFR-01 (Latency & Performance):** Background email classification must complete within $\le 3$ seconds of queue pickup under standard load. On-demand summary and suggestion endpoints must return responses within $\le 2.5$ seconds.
-- **NFR-02 (Rate Limiting & Resilient Backoff):** The AI provider integration must enforce queue-level concurrency limits, exponential backoff (starting at 2s with up to 3 retries), and graceful degradation on 429 quota exhaustion.
-- **NFR-03 (Data Minimization & Privacy):** Prompts sent to AI providers MUST contain only essential text fields (`subject`, `from`, `receivedAt`, and sanitized `bodyPlain` truncated to 4,000 characters). Raw HTML, scripts, base64 payloads, and binary attachments must NEVER be sent to the LLM.
-- **NFR-04 (Strict Type Safety):** Zero tolerance for `any`, `never`, or `unknown` types across backend and frontend codebases. All domain enums, job payloads, and DTOs must be exported from `@mailsense/types v1.7.0`. Zero inline object types.
+- **NFR-01 (Latency & Performance):** Background email classification must complete within $\le 3$ seconds of queue pickup under standard load. On-demand summary and suggestion endpoints must return responses within $\le 2.5$ seconds. LLM calls must enforce a 30-second `AbortController` timeout.
+- **NFR-02 (Rate Limiting & Resilient Backoff):** The AI provider integration must enforce queue-level concurrency limits (`concurrency: 5`), BullMQ worker rate limiting (`limiter: { max: 50, duration: 60000 }`), exponential backoff (starting at 2s with up to 3 retries), and graceful pause via `job.rateLimit()` upon upstream 429 quota exhaustion.
+- **NFR-03 (Data Minimization & Privacy):** Prompts sent to AI providers MUST contain only essential text fields (`subject`, `from`, `to`, `receivedAt`, and sanitized `bodyPlain` truncated to 4,000 characters). Raw HTML, scripts, base64 payloads, and binary attachments must NEVER be sent to the LLM.
+- **NFR-04 (Strict Type Safety):** Zero tolerance for `any`, `never`, or `unknown` types across backend and frontend codebases. All domain enums, job payloads, and DTOs must be exported from `@mailsense/types v1.8.0`. Zero inline object types.
 - **NFR-05 (Fault Isolation):** Failures in the AI worker or upstream AI API must NEVER fail email synchronization or prevent users from reading, composing, or managing emails.
+- **NFR-06 (Idempotency):** The AI worker must inspect `aiProcessedAt` before dispatching LLM calls; already-processed emails must be skipped with `AI_PROCESSING_STATUS.SKIPPED` unless `forceReprocess: true`.
 
 ### Acceptance Criteria
 
@@ -79,9 +81,11 @@ Building on the Phase 3 Observability framework, all AI operations will carry di
 
 ---
 
-## 3. Architecture & Design Patterns
+## 3. Design
 
-### 3.1 High-Level Architecture Topology
+### 3.1 High-Level Design
+
+#### System Architecture Topology
 
 ```mermaid
 graph TD
@@ -105,7 +109,7 @@ graph TD
     EventBus -->|EMAIL_CREATED| EmailCreatedHandler[Email Created Handler]
     EmailCreatedHandler -->|Check AI Settings| QueueService[Queue Service]
     QueueService -->|Enqueue Job| BullMQ[BullMQ ai-processing Queue]
-    BullMQ -->|Consume Job| AIWorker[AI Processing Worker]
+    BullMQ -->|Consume Job with Limiter| AIWorker[AI Processing Worker]
     AIWorker --> AIService
     AIService -->|Update Metadata| EmailRepo
 ```
@@ -133,6 +137,7 @@ classDiagram
         +summarizeEmailThread(params: AiSummarizeThreadParams) Promise~AiSummarizeThreadResult~
         +generateSuggestedReplies(params: AiSuggestedRepliesParams) Promise~AiSuggestedRepliesResult~
         -sanitizeContent(bodyPlain: string) string
+        -generateWithTimeout(prompt: string, schema: object, timeoutMs: number) Promise~any~
     }
 
     class NoopAiProvider {
@@ -143,7 +148,7 @@ classDiagram
 
     class AiProviderFactory {
         -static IAiProvider cachedProvider
-        +static getProvider(providerName?: string) IAiProvider
+        +static getProvider(providerName?: AI_PROVIDER_NAME) IAiProvider
         +static reset() void
     }
 
@@ -151,7 +156,7 @@ classDiagram
         -AiProviderFactory factory
         -UserSettingsRepository userSettingsRepo
         -EmailRepository emailRepo
-        +processEmailIngestion(job: AIProcessingJobPayload) Promise~void~
+        +processEmailIngestion(job: AIProcessingJobPayload) Promise~AIProcessingJobResult~
         +summarizeThread(userId: string, emailId: string) Promise~GetEmailSummaryResponse~
         +getSuggestedReplies(userId: string, emailId: string) Promise~GetSuggestedRepliesResponse~
     }
@@ -192,16 +197,20 @@ sequenceDiagram
         Queue-->>Handler: bullJobId
     end
 
-    Queue->>Worker: processJob(job)
+    Queue->>Worker: processJob(job with rate limiter)
     Worker->>AIService: processEmailIngestion(job.data)
     AIService->>EmailRepo: getEmail(emailId, accountId)
-    AIService->>Factory: getProvider()
-    Factory-->>AIService: GeminiAiProvider instance
-    AIService->>Provider: classifyAndScoreEmail({ subject, from, bodyPlain, receivedAt })
-    Provider->>Provider: Truncate bodyPlain to 4000 chars & format JSON schema
-    Provider-->>AIService: { category, priority, summary, tags }
-    AIService->>EmailRepo: updateEmailAiMetadata(emailId, accountId, metadata)
-    AIService-->>Worker: Processing Success
+    alt Already processed and !forceReprocess
+        AIService-->>Worker: { status: SKIPPED, skippedReason: 'Already processed' }
+    else Needs Processing
+        AIService->>Factory: getProvider()
+        Factory-->>AIService: GeminiAiProvider instance
+        AIService->>Provider: classifyAndScoreEmail({ subject, from, to, bodyPlain, receivedAt })
+        Provider->>Provider: Truncate bodyPlain to 4000 chars & format JSON schema
+        Provider-->>AIService: { category, priority, summary, tags, confidence }
+        AIService->>EmailRepo: updateEmailAiMetadata(emailId, accountId, metadata)
+        AIService-->>Worker: { status: SUCCESS, category, priority }
+    end
     Worker-->>Queue: Job Completed
 ```
 
@@ -264,6 +273,7 @@ aiProcessedAt: {
 },
 aiProvider: {
     type: String,
+    enum: Object.values(AI_PROVIDER_NAME),
     default: null,
 },
 
@@ -293,7 +303,64 @@ const UserAISettingsSchema = new Schema<UserAISettings>(
 
 ---
 
-### 3.5 API Contracts
+### 3.5 BullMQ Worker Concurrency, Rate Limiting & Gemini Integration
+
+#### BullMQ Worker Configuration (`Backend/src/workers/ai.worker.ts`)
+
+```typescript
+const workerOptions: WorkerOptions = {
+  connection: connection as ConnectionOptions,
+  concurrency: 5, // I/O-bound LLM network operations
+  prefix,
+  lockDuration: 60000, // 60s lock for long-running AI operations
+  limiter: {
+    max: 50, // Maximum 50 requests per minute to match Gemini API rate limits
+    duration: 60000,
+  },
+};
+```
+
+#### Handling 429 Quota Exhaustion Gracefully
+
+```typescript
+// Inside AI worker processor:
+try {
+  return await aiService.processEmailIngestion(job.data);
+} catch (error) {
+  if (error instanceof RateLimitError) {
+    const retryAfterMs = error.retryAfterMs ?? 10000;
+    await job.rateLimit(retryAfterMs);
+    throw Worker.RateLimitError();
+  }
+  throw error;
+}
+```
+
+#### Gemini SDK Calling Pattern with Timeout (`@google/genai`)
+
+```typescript
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+try {
+  const response = await this.aiClient.models.generateContent({
+    model: this.modelName,
+    contents: prompt,
+    config: {
+      responseMimeType: "application/json",
+      responseSchema: classificationResponseSchema,
+      temperature: 0.1, // Deterministic classification
+    },
+  });
+  return JSON.parse(response.text!);
+} finally {
+  clearTimeout(timeoutId);
+}
+```
+
+---
+
+### 3.6 API Contracts
 
 Mounted under `/api/ai` and `/api/user/settings`:
 
@@ -307,76 +374,93 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 ---
 
-## 4. Component Overview & File Map
+## 4. Proposed Changes
 
-| Component                  | Target File                                                       | Action   | Purpose / Responsibilities                                                                    |
-| -------------------------- | ----------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------- |
-| **Shared Types**           | `@mailsense/types`                                                | [MODIFY] | Add domain enums (`EMAIL_AI_CATEGORY`, `EMAIL_AI_PRIORITY`), AI DTOs, job payloads            |
-| **Config**                 | `Backend/src/core/config/app.config.ts`                           | [MODIFY] | Add `ai: { provider, geminiApiKey, geminiModel }`                                             |
-| **Config**                 | `Backend/src/core/config/env.schema.ts`                           | [MODIFY] | Add Zod schema validations for `AI_PROVIDER`, `GEMINI_API_KEY`                                |
-| **AI Provider Contract**   | `Backend/src/integrations/ai/ai.provider.ts`                      | [NEW]    | Declare `IAiProvider` interface                                                               |
-| **AI Provider Types**      | `Backend/src/integrations/ai/ai.provider.types.ts`                | [NEW]    | Parameter and result contracts for AI strategy methods                                        |
-| **AI Provider Factory**    | `Backend/src/integrations/ai/ai.provider.factory.ts`              | [NEW]    | Strategy selector and singleton cache for AI providers                                        |
-| **Gemini AI Provider**     | `Backend/src/integrations/ai/providers/gemini.provider.ts`        | [NEW]    | Google GenAI SDK wrapper with structured JSON schema output                                   |
-| **Noop AI Provider**       | `Backend/src/integrations/ai/providers/noop.provider.ts`          | [NEW]    | Deterministic mock provider for unit tests & offline dev                                      |
-| **AI Integration Barrel**  | `Backend/src/integrations/ai/index.ts`                            | [NEW]    | Centralized export accessible via `@integrations/ai`                                          |
-| **Queue Config**           | `Backend/src/core/queue/queue.config.ts`                          | [MODIFY] | Register `AI_PROCESSING` BullMQ queue                                                         |
-| **Queue Service**          | `Backend/src/core/queue/queue.service.ts`                         | [MODIFY] | Add `enqueueAiProcessingJob` helper                                                           |
-| **AI Worker**              | `Backend/src/workers/ai.worker.ts`                                | [NEW]    | BullMQ worker consuming `ai-processing` jobs                                                  |
-| **AI Processor**           | `Backend/src/workers/processors/ai-processing.processor.ts`       | [NEW]    | Processor executing AI classification and persisting metadata                                 |
-| **Event Subscriber**       | `Backend/src/core/events/handlers/email-created.handler.ts`       | [MODIFY] | Check AI settings and enqueue job on `EMAIL_CREATED`                                          |
-| **Email Model**            | `Backend/src/modules/emails/database/email.model.ts`              | [MODIFY] | Add AI fields and compound indexes                                                            |
-| **Email Repository**       | `Backend/src/modules/emails/database/email.repository.ts`         | [MODIFY] | Add `updateEmailAiMetadata` and extend filter builders                                        |
-| **AI Module Subdirectory** | `Backend/src/modules/ai/...`                                      | [NEW]    | Categorized module: `controllers/`, `services/`, `routes/`, `schema/`, `types/`, `constants/` |
-| **Frontend Endpoints**     | `Frontend/src/shared/api/endpoints.ts`                            | [MODIFY] | Add `AI_API_ENDPOINTS` constants                                                              |
-| **Frontend API Client**    | `Frontend/src/features/emails/api/email-ai.api.ts`                | [NEW]    | Axios wrapper for summary and suggestions                                                     |
-| **Frontend React Query**   | `Frontend/src/features/emails/api/email-ai.queries.ts`            | [NEW]    | React Query hooks (`useGetEmailSummaryQuery`, `useGetSuggestedRepliesQuery`)                  |
-| **Frontend UI Badge**      | `Frontend/src/features/emails/components/CategoryBadge.tsx`       | [NEW]    | Visual color-coded category pill                                                              |
-| **Frontend UI Flag**       | `Frontend/src/features/emails/components/PriorityFlag.tsx`        | [NEW]    | Visual priority level indicator                                                               |
-| **Frontend Summary Card**  | `Frontend/src/features/emails/components/EmailAiSummaryCard.tsx`  | [NEW]    | Accordion card rendering key takeaways & action items                                         |
-| **Frontend Reply Chips**   | `Frontend/src/features/emails/components/SuggestedRepliesBar.tsx` | [NEW]    | Contextual reply chips with compose pre-fill integration                                      |
-| **Frontend Settings View** | `Frontend/src/features/settings/pages/ai/index.tsx`               | [NEW]    | AI Settings management tab (toggles, consent, overrides)                                      |
+| Component                  | Target File                                                       | Action   | Purpose / Responsibilities                                                                                                                                            |
+| -------------------------- | ----------------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Shared Types**           | `@mailsense/types`                                                | [MODIFY] | Add domain enums (`EMAIL_AI_CATEGORY`, `EMAIL_AI_PRIORITY`, `SUGGESTED_REPLY_TONE`, `AI_PROVIDER_NAME`, `AI_FEATURE_KEY`, `AI_PROCESSING_STATUS`), DTOs, job payloads |
+| **Config**                 | `Backend/src/core/config/app.config.ts`                           | [MODIFY] | Add `ai: { provider, geminiApiKey, geminiModel }`                                                                                                                     |
+| **Config**                 | `Backend/src/core/config/env.schema.ts`                           | [MODIFY] | Add Zod schema validations for `AI_PROVIDER`, `GEMINI_API_KEY`                                                                                                        |
+| **Observability**          | `Backend/src/core/constants/observability.constants.ts`           | [MODIFY] | Add `AI_SERVICE`, `AI_CONTROLLER`, `AI_WORKER`, `AI_PROCESSING_PROCESSOR`, `GEMINI_PROVIDER` to `LOGGER_MODULE`                                                       |
+| **Errors**                 | `Backend/src/core/errors/ErrorCodes.ts`                           | [MODIFY] | Add `ErrorCode.AI_PROCESSING_FAILED`                                                                                                                                  |
+| **Errors**                 | `Backend/src/core/errors/DomainErrors.ts`                         | [MODIFY] | Add `AiProcessingError` operational domain error class                                                                                                                |
+| **Queue Types**            | `Backend/src/core/queue/queue.types.ts`                           | [NEW]    | Dedicated types file for `SyncAccountPayload`, `RefreshTokenPayload`, `AIProcessingJobPayload` (Zero inline types)                                                    |
+| **Queue Config**           | `Backend/src/core/queue/queue.config.ts`                          | [MODIFY] | Register `AI_PROCESSING` BullMQ queue                                                                                                                                 |
+| **Queue Service**          | `Backend/src/core/queue/queue.service.ts`                         | [MODIFY] | Add `enqueueAiProcessingJob` helper, import types from `queue.types.ts`                                                                                               |
+| **AI Provider Contract**   | `Backend/src/integrations/ai/ai.provider.ts`                      | [NEW]    | Declare `IAiProvider` interface                                                                                                                                       |
+| **AI Provider Types**      | `Backend/src/integrations/ai/ai.provider.types.ts`                | [NEW]    | Parameter and result contracts for AI strategy methods                                                                                                                |
+| **AI Provider Factory**    | `Backend/src/integrations/ai/ai.provider.factory.ts`              | [NEW]    | Strategy selector and singleton cache for AI providers                                                                                                                |
+| **Gemini AI Provider**     | `Backend/src/integrations/ai/providers/gemini.provider.ts`        | [NEW]    | Google GenAI SDK wrapper with structured JSON schema output and AbortController timeout                                                                               |
+| **Noop AI Provider**       | `Backend/src/integrations/ai/providers/noop.provider.ts`          | [NEW]    | Deterministic mock provider for unit tests & offline dev                                                                                                              |
+| **AI Integration Barrel**  | `Backend/src/integrations/ai/index.ts`                            | [NEW]    | Centralized export accessible via `@integrations/ai`                                                                                                                  |
+| **AI Worker**              | `Backend/src/workers/ai.worker.ts`                                | [NEW]    | BullMQ worker consuming `ai-processing` jobs with rate limiting and concurrency controls                                                                              |
+| **AI Processor**           | `Backend/src/workers/processors/ai-processing.processor.ts`       | [NEW]    | Processor executing AI classification, idempotency check, and persisting metadata                                                                                     |
+| **Workers Barrel**         | `Backend/src/workers/index.ts`                                    | [MODIFY] | Re-export `AIProcessingWorker`                                                                                                                                        |
+| **Event Subscriber**       | `Backend/src/core/events/handlers/email-created.handler.ts`       | [MODIFY] | Check AI settings and enqueue job on `EMAIL_CREATED`                                                                                                                  |
+| **Email Model**            | `Backend/src/modules/emails/database/email.model.ts`              | [MODIFY] | Add AI fields and compound indexes                                                                                                                                    |
+| **Email Repository**       | `Backend/src/modules/emails/database/email.repository.ts`         | [MODIFY] | Add `updateEmailAiMetadata` and extend filter builders                                                                                                                |
+| **AI Module Subdirectory** | `Backend/src/modules/ai/...`                                      | [NEW]    | Categorized module: `controllers/`, `services/`, `routes/`, `schema/`, `types/`, `constants/`                                                                         |
+| **Frontend Endpoints**     | `Frontend/src/shared/api/endpoints.ts`                            | [MODIFY] | Add `AI_API_ENDPOINTS` constants                                                                                                                                      |
+| **Frontend API Client**    | `Frontend/src/features/emails/api/email-ai.api.ts`                | [NEW]    | Axios wrapper for summary and suggestions                                                                                                                             |
+| **Frontend React Query**   | `Frontend/src/features/emails/api/email-ai.queries.ts`            | [NEW]    | React Query hooks (`useGetEmailSummaryQuery`, `useGetSuggestedRepliesQuery`)                                                                                          |
+| **Frontend UI Badge**      | `Frontend/src/features/emails/components/CategoryBadge.tsx`       | [NEW]    | Visual color-coded category pill                                                                                                                                      |
+| **Frontend UI Flag**       | `Frontend/src/features/emails/components/PriorityFlag.tsx`        | [NEW]    | Visual priority level indicator                                                                                                                                       |
+| **Frontend Summary Card**  | `Frontend/src/features/emails/components/EmailAiSummaryCard.tsx`  | [NEW]    | Accordion card rendering key takeaways & action items                                                                                                                 |
+| **Frontend Reply Chips**   | `Frontend/src/features/emails/components/SuggestedRepliesBar.tsx` | [NEW]    | Contextual reply chips with compose pre-fill integration                                                                                                              |
+| **Frontend Settings View** | `Frontend/src/features/settings/components/AiSettingsTab.tsx`     | [NEW]    | AI Settings management tab (toggles, consent, overrides) matching PascalCase naming                                                                                   |
 
 ---
 
-## 5. Step-by-Step Implementation Phases
+## 5. Implementation Phases
 
 ### Phase 1: Shared Contracts & AI Provider Strategy Infrastructure
 
-**Objective:** Release `@mailsense/types v1.7.0`, install `@google/genai`, and implement the configurable Provider/Strategy pattern (`IAiProvider`, `AiProviderFactory`, `GeminiAiProvider`, `NoopAiProvider`).
+**Objective:** Release `@mailsense/types v1.8.0`, install `@google/genai`, and implement the configurable Provider/Strategy pattern (`IAiProvider`, `AiProviderFactory`, `GeminiAiProvider`, `NoopAiProvider`).
 **Estimated Effort:** 1.5 days · **Target:** Backend & `@mailsense/types`
 
 #### Tasks:
 
-1. Define shared contracts in `@mailsense/types`:
-   - Enums: `EMAIL_AI_CATEGORY`, `EMAIL_AI_PRIORITY`, `AI_PROVIDER_NAME`.
-   - DTOs: `AiClassifyEmailResult`, `AiSummarizeThreadResult`, `AiSuggestedRepliesResult`, `AIProcessingJobPayload`, `UserAISettings`.
-   - Build `@mailsense/types` and link in Backend and Frontend.
-2. Update Backend environment config (`env.schema.ts`, `app.config.ts`) to validate `AI_PROVIDER` and `GEMINI_API_KEY`.
-3. Create `Backend/src/integrations/ai/ai.provider.ts` declaring `IAiProvider`.
-4. Create `Backend/src/integrations/ai/providers/noop.provider.ts` for offline testing.
-5. Create `Backend/src/integrations/ai/providers/gemini.provider.ts` wrapping Google GenAI with structured JSON generation and error wrapping.
-6. Create `Backend/src/integrations/ai/ai.provider.factory.ts` resolving provider strategies with singleton caching.
-7. Write unit tests in `Backend/src/integrations/ai/__tests__/provider.factory.test.ts` and `gemini.provider.test.ts`.
+- [ ] Define shared contracts in `@mailsense/types`:
+  - [ ] Enums: `EMAIL_AI_CATEGORY`, `EMAIL_AI_PRIORITY`, `SUGGESTED_REPLY_TONE`, `AI_PROVIDER_NAME`, `AI_FEATURE_KEY`, `AI_PROCESSING_STATUS`.
+  - [ ] Interfaces: `EmailAiMetadata`, `AiClassifyEmailParams`, `AiClassifyEmailResult`, `AiThreadMessageInput`, `AiSummarizeThreadParams`, `AiSummarizeThreadResult`, `AiSuggestedRepliesParams`, `AiSuggestedRepliesResult`.
+  - [ ] DTOs & Job Payloads: `AIProcessingJobPayload`, `AIProcessingJobResult`, `GetEmailSummaryResponse`, `SuggestedReplyItem`, `GetSuggestedRepliesResponse`, `UserAIFeatureSettings`, `UserAISettings`, `UpdateUserAISettingsPayload`, `GetUserAISettingsResponse`.
+  - [ ] Additive extensions to `EmailAttributes`, `EmailListDTO`, `GetAllEmailsFilters`, `UserSettings`.
+  - [ ] Build `@mailsense/types` and link in Backend and Frontend.
+- [ ] Update Backend environment config (`env.schema.ts`, `app.config.ts`) to validate `AI_PROVIDER` and `GEMINI_API_KEY`.
+- [ ] Add AI logging module identifiers to `Backend/src/core/constants/observability.constants.ts` (`AI_SERVICE`, `AI_CONTROLLER`, `AI_WORKER`, `AI_PROCESSING_PROCESSOR`, `GEMINI_PROVIDER`).
+- [ ] Add `ErrorCode.AI_PROCESSING_FAILED` in `Backend/src/core/errors/ErrorCodes.ts` and `AiProcessingError` in `Backend/src/core/errors/DomainErrors.ts`.
+- [ ] Create `Backend/src/integrations/ai/ai.provider.ts` declaring `IAiProvider`.
+- [ ] Create `Backend/src/integrations/ai/providers/noop.provider.ts` for offline testing and deterministic CI/CD runs.
+- [ ] Create `Backend/src/integrations/ai/providers/gemini.provider.ts` wrapping Google GenAI (`@google/genai`) with structured JSON schema output (`responseMimeType: "application/json"`, `responseSchema`), temperature 0.1, 30s `AbortController` timeout, and domain error wrapping.
+- [ ] Create `Backend/src/integrations/ai/ai.provider.factory.ts` resolving provider strategies with singleton caching.
+- [ ] Export integration barrel at `Backend/src/integrations/ai/index.ts`.
+- [ ] Write unit tests in `Backend/src/integrations/ai/__tests__/provider.factory.test.ts` and `gemini.provider.test.ts`.
 
 ---
 
 ### Phase 2: Asynchronous AI Queue & Ingestion Pipeline
 
-**Objective:** Establish BullMQ `ai-processing` queue, implement `AIProcessingWorker`, update `EmailSchema`, and connect `EMAIL_CREATED` event dispatching.
+**Objective:** Establish BullMQ `ai-processing` queue with rate limiting and concurrency controls, implement `AIProcessingWorker`, update `EmailSchema`, and connect `EMAIL_CREATED` event dispatching.
 **Estimated Effort:** 1.5 days · **Target:** Backend Infrastructure & Database
 
 #### Tasks:
 
-1. Update `EmailSchema` and `EmailDocument` with AI fields (`aiCategory`, `aiPriority`, `aiSummary`, `aiTags`, `aiProcessedAt`, `aiProvider`) and compound indexes.
-2. Implement `EmailRepository.updateEmailAiMetadata` in `Backend/src/modules/emails/database/email.repository.ts`.
-3. Register `QUEUE_NAMES.AI_PROCESSING` in `Backend/src/core/queue/queue.config.ts`.
-4. Add `QueueService.enqueueAiProcessingJob` in `Backend/src/core/queue/queue.service.ts`.
-5. Implement `aiProcessingProcessor` in `Backend/src/workers/processors/ai-processing.processor.ts` with sanitized prompt trimming (max 4,000 chars) and error handling.
-6. Create `AIProcessingWorker` in `Backend/src/workers/ai.worker.ts` extending `BaseWorker`.
-7. Wire up `Backend/src/core/events/handlers/email-created.handler.ts` to inspect user AI settings and enqueue jobs.
-8. Wire worker startup and shutdown in `Backend/src/core/queue/index.ts`.
-9. Write worker unit tests in `Backend/src/workers/__tests__/ai.worker.test.ts`.
+- [ ] Update `EmailSchema` and `EmailDocument` in `Backend/src/modules/emails/database/email.model.ts` with AI fields (`aiCategory`, `aiPriority`, `aiSummary`, `aiTags`, `aiProcessedAt`, `aiProvider`) and compound indexes.
+- [ ] Implement `EmailRepository.updateEmailAiMetadata` in `Backend/src/modules/emails/database/email.repository.ts`.
+- [ ] Create `Backend/src/core/queue/queue.types.ts` for queue payload contracts (`SyncAccountPayload`, `RefreshTokenPayload`, `AIProcessingJobPayload`), eliminating pre-existing inline type declarations.
+- [ ] Register `QUEUE_NAMES.AI_PROCESSING` in `Backend/src/core/queue/queue.config.ts`.
+- [ ] Add `QueueService.enqueueAiProcessingJob` in `Backend/src/core/queue/queue.service.ts` importing types from `queue.types.ts`.
+- [ ] Implement `aiProcessingProcessor` in `Backend/src/workers/processors/ai-processing.processor.ts`:
+  - [ ] Add idempotency check: skip already-processed emails if `aiProcessedAt` exists and `!forceReprocess`.
+  - [ ] Sanitize prompt input: strip HTML tags and truncate `bodyPlain` to 4,000 characters.
+  - [ ] Invoke `AIService.processEmailIngestion` and return structured `AIProcessingJobResult`.
+- [ ] Create `AIProcessingWorker` in `Backend/src/workers/ai.worker.ts` extending `BaseWorker`:
+  - [ ] Configure `concurrency: 5` and `limiter: { max: 50, duration: 60000 }` to respect Gemini RPM.
+  - [ ] Handle HTTP 429 quota exhaustion via `job.rateLimit(retryAfterMs)` and `Worker.RateLimitError`.
+- [ ] Export `AIProcessingWorker` in `Backend/src/workers/index.ts`.
+- [ ] Wire up `Backend/src/core/events/handlers/email-created.handler.ts` to inspect user AI settings and enqueue jobs.
+- [ ] Wire worker startup and shutdown in `Backend/src/core/queue/index.ts`.
+- [ ] Write worker unit tests in `Backend/src/workers/__tests__/ai.worker.test.ts`.
 
 ---
 
@@ -387,16 +471,17 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 #### Tasks:
 
-1. Create `Backend/src/modules/ai/` organized into categorized subdirectories:
-   - `controllers/ai.controller.ts`: Handles `POST /summary/:emailId` and `GET /suggestions/:emailId` with caller tenant verification.
-   - `services/ai.service.ts`: Orchestrates email retrieval, thread assembly, provider delegation, and telemetry logging.
-   - `routes/ai.routes.ts`: Routes with Zod parameter validation schemas.
-   - `schema/ai.schema.ts`: Validation schemas for route parameters.
-   - `types/ai.types.ts`: Module-specific named interfaces.
-   - `constants/ai.constants.ts`: Module error codes and constants.
-2. Mount AI router under `/api/ai` in `Backend/src/routes.ts`.
-3. Extend `EmailQueryService` and `EmailRepository.getEmails` to support filtering by `aiCategory` and `aiPriority`.
-4. Add integration tests in `Backend/src/modules/ai/__tests__/ai.integration.test.ts`.
+- [ ] Create `Backend/src/modules/ai/` organized into categorized subdirectories:
+  - [ ] `controllers/ai.controller.ts`: Handles `POST /summary/:emailId` and `GET /suggestions/:emailId` with caller tenant verification.
+  - [ ] `services/ai.service.ts`: Orchestrates email retrieval, thread assembly, provider delegation, and telemetry logging via `LOGGER_MODULE.AI_SERVICE`.
+  - [ ] `routes/ai.routes.ts`: Routes with Zod parameter validation schemas.
+  - [ ] `schema/ai.schema.ts`: Validation schemas for route parameters.
+  - [ ] `types/ai.types.ts`: Module-specific named interfaces (strictly zero inline types).
+  - [ ] `constants/ai.constants.ts`: Module error codes and constants.
+  - [ ] `index.ts`: Clean barrel export for AI module.
+- [ ] Mount AI router under `/api/ai` in `Backend/src/routes.ts`.
+- [ ] Extend `EmailQueryService` and `EmailRepository.getEmails` to support filtering by `aiCategory` and `aiPriority`.
+- [ ] Add integration tests in `Backend/src/modules/ai/__tests__/ai.integration.test.ts`.
 
 ---
 
@@ -407,12 +492,12 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 #### Tasks:
 
-1. Extend `UserSettingsSchema` in `Backend/src/modules/user/database/user.model.ts` with `UserAISettingsSchema`.
-2. Add `getAiSettings` and `updateAiSettings` methods to `UserSettingsRepository`.
-3. Add `GET /api/user/settings/ai` and `PATCH /api/user/settings/ai` endpoints in `Backend/src/modules/user/`.
-4. Create Frontend API client and React Query hooks (`useGetAiSettingsQuery`, `useUpdateAiSettingsMutation`).
-5. Create `AiSettingsTab.tsx` in `Frontend/src/features/settings/components/` with global toggle, feature checkboxes, and per-account exclusion switches.
-6. Mount "AI Settings" tab in Settings page navigation.
+- [ ] Extend `UserSettingsSchema` in `Backend/src/modules/user/database/user.model.ts` with `UserAISettingsSchema`.
+- [ ] Add `getAiSettings` and `updateAiSettings` methods to `UserSettingsRepository`.
+- [ ] Add `GET /api/user/settings/ai` and `PATCH /api/user/settings/ai` endpoints in `Backend/src/modules/user/`.
+- [ ] Create Frontend API client in `Frontend/src/features/settings/api/ai-settings.api.ts` and React Query hooks (`useGetAiSettingsQuery`, `useUpdateAiSettingsMutation`).
+- [ ] Create `Frontend/src/features/settings/components/AiSettingsTab.tsx` with global toggle, feature checkboxes, and per-account exclusion switches.
+- [ ] Mount "AI Settings" tab in Settings page navigation.
 
 ---
 
@@ -423,14 +508,14 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 #### Tasks:
 
-1. Create `CategoryBadge.tsx` with semantic color mappings (Work: Indigo, Finance: Emerald, Personal: Sky, Social: Purple, Promotions: Pink, Updates: Amber, General: Slate).
-2. Create `PriorityFlag.tsx` with distinct icons (Critical: Red Alert, High: Orange Flag, Normal: Subtle, Low: Down Arrow).
-3. Integrate `CategoryBadge` and `PriorityFlag` into `EmailListTable.tsx` and `EmailCard.tsx`.
-4. Add "Priority Inbox" quick-filter button to `EmailListHeader.tsx` (`useInboxData` query synchronization).
-5. Add Category filter dropdown to inbox filter modal.
-6. Create `EmailAiSummaryCard.tsx` with loading skeleton, bulleted summary, and action items list in `ThreadView.tsx`.
-7. Create `SuggestedRepliesBar.tsx` rendering quick reply chips; clicking a chip opens the Compose modal with pre-filled content.
-8. Verify zero inline types and zero ESLint errors across all new components.
+- [ ] Create `CategoryBadge.tsx` with semantic color mappings (Work: Indigo, Finance: Emerald, Personal: Sky, Social: Purple, Promotions: Pink, Updates: Amber, General: Slate).
+- [ ] Create `PriorityFlag.tsx` with distinct icons (Critical: Red Alert, High: Orange Flag, Normal: Subtle, Low: Down Arrow).
+- [ ] Integrate `CategoryBadge` and `PriorityFlag` into `EmailListTable.tsx` and `EmailCard.tsx`.
+- [ ] Add "Priority Inbox" quick-filter button to `EmailListHeader.tsx` (`useInboxData` query synchronization).
+- [ ] Add Category filter dropdown to inbox filter modal (`FilterModal.tsx`).
+- [ ] Create `EmailAiSummaryCard.tsx` with loading skeleton, bulleted summary, and action items list in `ThreadView.tsx`.
+- [ ] Create `SuggestedRepliesBar.tsx` rendering quick reply chips typed with `SUGGESTED_REPLY_TONE`; clicking a chip opens the Compose modal with pre-filled content.
+- [ ] Verify zero inline types and zero ESLint errors across all new components.
 
 ---
 
@@ -441,25 +526,72 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 #### Tasks:
 
-1. Run backend unit and integration test suites: `cd Backend && npx jest` (all suites passing).
-2. Run backend and frontend linting: `pnpm lint` in both workspaces (0 errors, 0 warnings).
-3. Run frontend TypeScript checks: `npx tsc --noEmit` (0 errors).
-4. Run production builds: `pnpm build` in Backend and Frontend.
-5. Execute end-to-end QA:
-   - Ingest emails and verify background classification within $\le 3$s.
-   - Verify category badges and priority indicators in Unified and Account Inbox views.
-   - Verify on-demand thread summarization and suggested replies.
-   - Verify disabling AI for an account skips background job enqueueing.
-6. Update `CHANGELOG.md`, `CODEBASE_INDEX.md`, and Health Audit Report.
+- [ ] Run backend unit and integration test suites: `cd Backend && npx jest` (all suites passing).
+- [ ] Run backend and frontend linting: `pnpm lint` in both workspaces (0 errors, 0 warnings).
+- [ ] Run frontend TypeScript checks: `npx tsc --noEmit` (0 errors).
+- [ ] Run production builds: `pnpm build` in Backend and Frontend.
+- [ ] Execute end-to-end QA:
+  - [ ] Ingest emails and verify background classification within $\le 3$s.
+  - [ ] Verify category badges and priority indicators in Unified and Account Inbox views.
+  - [ ] Verify on-demand thread summarization and suggested replies.
+  - [ ] Verify disabling AI for an account skips background job enqueueing.
+- [ ] Update `CHANGELOG.md`, `CODEBASE_INDEX.md`, and Health Audit Report.
 
 ---
 
-## 6. Verification & Build Commands
+## 6. Dependencies & Constraints
+
+### New Dependencies
+
+| Package         | Version | Purpose                                                          |
+| :-------------- | :------ | :--------------------------------------------------------------- |
+| `@google/genai` | `^1.x`  | Official Google GenAI SDK for Gemini 2.5 Flash structured output |
+
+### Existing Dependencies (Leveraged)
+
+| Dependency         | Target Version | Notes                                                       |
+| :----------------- | :------------- | :---------------------------------------------------------- |
+| `@mailsense/types` | `^1.8.0`       | Shared contracts, domain enums, and DTOs                    |
+| `bullmq`           | `^5.x`         | Redis-backed background job queue with native rate limiting |
+| `ioredis`          | `^5.x`         | Shared Redis connection                                     |
+| `zod`              | `^3.x`         | Request validation schemas and environment variable parsing |
+
+### Infrastructure Requirements
+
+- **Redis:** Required for BullMQ `ai-processing` queue. Reuses the existing application Redis instance.
+- **Google AI Studio API Key:** `GEMINI_API_KEY` environment variable.
+
+### Constraints
+
+- **Gemini Free Tier Rate Limits:** 15 RPM / 1,500 RPD (Free) or 1,000+ RPM (Tier 1 Pay-as-you-go). Worker limiter is configured to `max: 50, duration: 60000` to prevent accidental quota exhaustion.
+- **Data Minimization:** No email HTML, scripts, attachments, or base64 data may be sent to the LLM. Only sanitized plain text truncated to 4,000 characters is permitted.
+- **Single-Process Memory:** Peak memory consumption must remain bounded during AI batch ingestion through concurrency limits (`concurrency: 5`).
+
+---
+
+## 7. Risk Assessment & Mitigation
+
+| Risk                                      | Impact | Likelihood | Mitigation                                                                                                                                                                                             |
+| :---------------------------------------- | :----- | :--------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Upstream Gemini 429 Rate Limiting**     | HIGH   | MEDIUM     | Queue worker rate limiting (`limiter: { max: 50, duration: 60000 }`), exponential backoff retries (3 attempts), and BullMQ `job.rateLimit(retryAfterMs)` pausing the worker without burning retries.   |
+| **LLM Call Hanging / Network Latency**    | HIGH   | MEDIUM     | Wrap all Gemini API requests with a 30-second `AbortController` timeout; abort and reject with `AiProcessingError`.                                                                                    |
+| **Large Email Body Token Exhaustion**     | MEDIUM | HIGH       | Input sanitizer strictly truncates `bodyPlain` to 4,000 characters; HTML tags, images, and attachments are stripped prior to LLM call.                                                                 |
+| **Inaccurate or Hallucinated Categories** | LOW    | LOW        | Enforce strict Gemini JSON Schema (`responseSchema`) with enum constraints (`EMAIL_AI_CATEGORY`), temperature 0.1 for deterministic classification.                                                    |
+| **User Privacy & Regulatory Exposure**    | HIGH   | LOW        | Explicit opt-in consent recorded (`consentGivenAt`); zero data sent to AI for accounts listed in `disabledAccountIds`; zero-retention enterprise API.                                                  |
+| **Provider Lock-in**                      | MEDIUM | LOW        | Provider / Strategy Pattern isolates all provider-specific logic inside `Backend/src/integrations/ai/providers/`. Switching to another LLM requires zero changes to workers, services, or controllers. |
+| **Duplicate Processing on Resync**        | LOW    | MEDIUM     | Worker processor checks `email.aiProcessedAt` before dispatching LLM calls; skips with `AI_PROCESSING_STATUS.SKIPPED` unless `forceReprocess: true`.                                                   |
+
+---
+
+## 8. Verification Plan
+
+### Automated Tests
 
 ```bash
 # 1. Shared Types Compilation
 cd /Users/vishaljagamani/Projects/Projects/mailsense-types
 pnpm build
+pnpm type-check
 
 # 2. Backend Verification
 cd /Users/vishaljagamani/Projects/Projects/mailsense/Backend
@@ -474,14 +606,52 @@ pnpm lint
 pnpm build
 ```
 
+#### Unit Test Cases
+
+| Feature                 | Test Case                          | Target Suite               | Expected Result                                               |
+| :---------------------- | :--------------------------------- | :------------------------- | :------------------------------------------------------------ |
+| **AI Provider Factory** | Resolve Gemini provider by enum    | `provider.factory.test.ts` | Returns `GeminiAiProvider` instance                           |
+| **AI Provider Factory** | Resolve Noop provider in test mode | `provider.factory.test.ts` | Returns `NoopAiProvider` instance                             |
+| **Gemini AI Provider**  | Structured classification parse    | `gemini.provider.test.ts`  | Correctly parses structured JSON matching schema              |
+| **Gemini AI Provider**  | Abort on 30s timeout               | `gemini.provider.test.ts`  | Throws `AiProcessingError` when aborted                       |
+| **AI Processor**        | Idempotency skip check             | `ai.worker.test.ts`        | Skips email when `aiProcessedAt` is set and `!forceReprocess` |
+| **AI Worker**           | 429 rate limit backoff             | `ai.worker.test.ts`        | Calls `job.rateLimit()` and pauses queue                      |
+| **AI Service**          | Thread summarization aggregation   | `ai.integration.test.ts`   | Returns summary with key points and action items              |
+
+### Manual Verification Checklist
+
+- [ ] Ingest new email via sync and verify category badge and priority flag appear in the inbox table.
+- [ ] Verify category filter dropdown in inbox filters emails by `EMAIL_AI_CATEGORY`.
+- [ ] Click "AI Summary" in thread view and verify summary card loads within 3s.
+- [ ] Click a suggested reply chip and verify compose modal opens with pre-filled content.
+- [ ] Toggle AI off globally in Settings $\to$ verify subsequent incoming emails skip AI queueing.
+- [ ] Exclude a specific connected account from AI in Settings $\to$ verify emails from that account skip AI queueing.
+
 ---
 
-## 7. Risk Assessment & Mitigation
+## 9. Open Questions & Decisions
 
-| Risk                                  | Impact | Likelihood | Mitigation                                                                                                                                                   |
-| ------------------------------------- | ------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Upstream Gemini 429 Rate Limiting     | HIGH   | MEDIUM     | Queue-level concurrency throttling, exponential backoff retries (3 attempts), and fallback to unclassified status without failing sync.                      |
-| Large Email Body Token Exhaustion     | MEDIUM | HIGH       | Strict input sanitizer truncating `bodyPlain` to 4,000 characters; HTML tags, images, and attachments stripped prior to LLM call.                            |
-| Inaccurate or Hallucinated Categories | LOW    | LOW        | Enforce strict Gemini JSON Schema (`responseSchema`) with enum constraints (`EMAIL_AI_CATEGORY`), temperature 0.1 for deterministic output.                  |
-| User Privacy Concerns                 | HIGH   | LOW        | Explicit opt-in consent recorded; zero data sent to AI for accounts added to `disabledAccountIds`; zero-retention enterprise API.                            |
-| Provider Lock-in                      | MEDIUM | LOW        | Provider / Strategy Pattern isolates all provider-specific code inside `integrations/ai/providers/`. Switching to another LLM requires zero service changes. |
+### Resolved Decisions
+
+| Decision                            | Resolution                                                           | Date       | Rationale                                                                                     |
+| :---------------------------------- | :------------------------------------------------------------------- | :--------- | :-------------------------------------------------------------------------------------------- |
+| **AI Provider Abstraction Pattern** | Provider / Strategy Pattern (`IAiProvider`, `AiProviderFactory`)     | 2026-09-14 | Aligns with existing `IEmailProvider` pattern for Gmail and Outlook; prevents vendor lock-in. |
+| **LLM Output Format Enforcement**   | Native Gemini JSON Schema (`responseSchema`) with `temperature: 0.1` | 2026-11-15 | Eliminates fragile prompt-based JSON parsing and regex matching.                              |
+| **Async vs Sync Ingestion**         | Asynchronous via BullMQ (`ai-processing` queue)                      | 2026-09-14 | Email sync must never block or degrade when LLM APIs experience latency.                      |
+| **Tone Representation**             | Named `SUGGESTED_REPLY_TONE` enum                                    | 2026-11-19 | Complies with zero inline types rule and prevents string typos.                               |
+
+### Open Decisions
+
+> [!NOTE]
+> **Q1: Gemini API Quota Tier**
+> What tier of Gemini API will be used in staging and production?
+>
+> - **Option A (Recommended):** Google AI Studio Tier 1 (Pay-as-you-go) — Provides 1,000+ RPM and zero data retention for enterprise compliance.
+> - **Option B:** Free Tier — Limited to 15 RPM; requires lowering worker limiter to `max: 15, duration: 60000`.
+
+> [!NOTE]
+> **Q2: Re-processing on AI Enablement**
+> When a user enables AI after having it disabled, should historical emails be processed?
+>
+> - **Option A (Recommended):** Forward-only — Process only new emails received after AI is enabled. Add a manual "Analyze Inbox" button in Settings for bulk historical triage.
+> - **Option B:** Automatic retroactive sync — Enqueue all unclassified emails from the last 7 days. (Higher initial token usage).

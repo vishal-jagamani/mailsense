@@ -36,6 +36,10 @@ class EnvConfig {
     public readonly R2_SECRET_ACCESS_KEY: string;
     public readonly R2_BUCKET_NAME: string;
     public readonly R2_REGION: string;
+    // AI Configuration Secrets
+    public readonly AI_PROVIDER: string;
+    public readonly GOOGLE_GEMINI_API_KEY: string | undefined;
+    public readonly GOOGLE_GEMINI_MODEL: string;
 
     constructor() {
         dotenv?.config();
@@ -95,6 +99,10 @@ class EnvConfig {
         this.R2_SECRET_ACCESS_KEY = data.R2_SECRET_ACCESS_KEY;
         this.R2_BUCKET_NAME = data.R2_BUCKET_NAME;
         this.R2_REGION = data.R2_REGION;
+        // AI Configuration Secrets
+        this.AI_PROVIDER = data.AI_PROVIDER;
+        this.GOOGLE_GEMINI_API_KEY = data.GOOGLE_GEMINI_API_KEY;
+        this.GOOGLE_GEMINI_MODEL = data.GOOGLE_GEMINI_MODEL;
     }
 }
 
