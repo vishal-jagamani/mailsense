@@ -9,8 +9,7 @@ import { EmailInput, EmailRepository } from '@modules/emails/database/index.js';
 import { FolderService } from '@modules/folders/services/index.js';
 import { monitoring } from '@monitoring';
 import { createLogger, setTraceContext } from '@observability';
-import { RefreshTokenPayload, SyncAccountPayload } from '@queue';
-import { ErrorWithStatus, SuccessStatusResponse } from '@types';
+import { ErrorWithStatus, RefreshTokenPayload, SuccessStatusResponse, SyncAccountPayload } from '@types';
 import { eventBus } from '../../core/events/index.js';
 import { refreshTokenProcessor } from './refresh-token.processor.js';
 

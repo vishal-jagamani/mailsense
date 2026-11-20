@@ -1,6 +1,6 @@
 import { LOGGER_MODULE } from '@constants';
 import { createLogger } from '@observability';
-import { SyncWorker, TokenRefreshWorker } from '@workers';
+import { AIProcessingWorker, SyncWorker, TokenRefreshWorker } from '@workers';
 import { initSystemEvents } from 'core/events/index.js';
 import { closeAllQueues, initQueueRegistry } from './queue.registry.js';
 import { closeRedisConnection } from './redis.connection.js';
@@ -10,6 +10,7 @@ const logger = createLogger(LOGGER_MODULE.QUEUE_SERVICE);
 
 let syncWorkerInstance: SyncWorker | null = null;
 let tokenRefreshWorkerInstance: TokenRefreshWorker | null = null;
+let aiProcessingWorkerInstance: AIProcessingWorker | null = null;
 
 /**
  * Startup hook for job queue infrastructure
@@ -28,6 +29,9 @@ export function initBackgroundJobs(): void {
 
     tokenRefreshWorkerInstance = new TokenRefreshWorker();
     tokenRefreshWorkerInstance.start();
+
+    aiProcessingWorkerInstance = new AIProcessingWorker();
+    aiProcessingWorkerInstance.start();
 
     // Initialize dynamic schedulers
     SchedulerService.init().catch((error) => {
@@ -54,6 +58,11 @@ export async function shutdownBackgroundJobs(): Promise<void> {
             await tokenRefreshWorkerInstance.shutdown();
             tokenRefreshWorkerInstance = null;
         }
+        if (aiProcessingWorkerInstance) {
+            logger.info('🛑 Stopping AI Processing Worker...');
+            await aiProcessingWorkerInstance.shutdown();
+            aiProcessingWorkerInstance = null;
+        }
         await closeAllQueues();
         await closeRedisConnection();
         logger.info('✅ Background Job Queue resources cleaned up');
@@ -68,4 +77,3 @@ export * from './queue.registry.js';
 export * from './queue.service.js';
 export * from './redis.connection.js';
 export * from './scheduler.service.js';
-

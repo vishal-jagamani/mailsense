@@ -2,12 +2,12 @@ import { LOGGER_MODULE } from '@constants';
 import { ACCOUNT_LAST_SYNC_STATUS, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
 import { AccountRepository, SyncJobRepository } from '@modules/accounts/database/index.js';
 import { createLogger } from '@observability';
+import { SyncAccountPayload } from '@types';
 import { Job } from 'bullmq';
 import { eventBus } from 'core/events/event-bus.js';
 import { QUEUE_NAMES } from 'core/queue/queue.config.js';
-import { SyncAccountPayload } from 'core/queue/queue.service.js';
-import { BaseWorker } from './base.worker.js';
-import { syncAccountProcessor } from './processors/sync-account.processor.js';
+import { BaseWorker } from '../base.worker.js';
+import { syncAccountProcessor } from '../processors/sync-account.processor.js';
 
 export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
     protected queueName = QUEUE_NAMES.SYNC_ACCOUNT;

@@ -1,3 +1,4 @@
+import { UserAISettings } from '@mailsense/types';
 import { UserSettingsDocument, UserSettingsInput, UserSettingsModel } from './user.model.js';
 
 export class UserSettingsRepository {
@@ -11,5 +12,10 @@ export class UserSettingsRepository {
 
     static async updateUserSettings(userId: string, data: UserSettingsInput): Promise<UserSettingsDocument | null> {
         return await UserSettingsModel.findOneAndUpdate({ userId }, data, { new: true });
+    }
+
+    static async getAiSettings(userId: string): Promise<UserAISettings | null> {
+        const settings = await UserSettingsModel.findOne({ userId }, { ai: 1 }).lean();
+        return settings?.ai ?? null;
     }
 }

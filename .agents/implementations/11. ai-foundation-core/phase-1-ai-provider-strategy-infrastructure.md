@@ -1,7 +1,7 @@
 # AI Foundation & Core Features - Phase 1 Implementation Details
 
 > **Feature:** 11. ai-foundation-core · **Phase:** 1 (Shared Contracts & AI Provider Strategy Infrastructure)
-> **Status:** READY FOR EXECUTION
+> **Status:** COMPLETED
 > **Created:** 2026-11-20 · **Last Updated:** 2026-11-20
 
 ---
@@ -1300,32 +1300,32 @@ sequenceDiagram
   - [x] Compile `mailsense-types` (`pnpm build && pnpm type-check`).
   - [x] Synchronize built artifacts to Backend and Frontend `node_modules/@mailsense/types/`.
 
-- [ ] **Task 2: Backend Dependencies & Environment Setup**
-  - [ ] Install `@google/genai ^1.x` in `Backend/package.json`.
-  - [ ] Update `env.schema.ts` with `AI_PROVIDER`, `GEMINI_API_KEY`, and `GEMINI_MODEL`.
-  - [ ] Update `app.config.ts` to export `AI_CONFIG`.
+- [x] **Task 2: Backend Dependencies & Environment Setup**
+  - [x] Install `@google/genai ^1.x` in `Backend/package.json`.
+  - [x] Update `env.schema.ts` with `AI_PROVIDER`, `GEMINI_API_KEY`, and `GEMINI_MODEL`.
+  - [x] Update `app.config.ts` to export `AI_CONFIG`.
 
-- [ ] **Task 3: Domain Error & Observability Infrastructure**
-  - [ ] Add `ErrorCode.AI_PROCESSING_FAILED` in `Backend/src/core/errors/ErrorCodes.ts`.
-  - [ ] Add `AiProcessingErrorParams` in `Backend/src/core/types/error.types.ts`.
-  - [ ] Implement `AiProcessingError` in `Backend/src/core/errors/DomainErrors.ts`.
-  - [ ] Add AI component modules in `Backend/src/core/constants/observability.constants.ts`.
+- [x] **Task 3: Domain Error & Observability Infrastructure**
+  - [x] Add `ErrorCode.AI_PROCESSING_FAILED` in `Backend/src/core/errors/ErrorCodes.ts`.
+  - [x] Add `AiProcessingErrorParams` in `Backend/src/core/types/error.types.ts`.
+  - [x] Implement `AiProcessingError` in `Backend/src/core/errors/DomainErrors.ts`.
+  - [x] Add AI component modules in `Backend/src/core/constants/observability.constants.ts`.
 
-- [ ] **Task 4: Provider Strategy Layer Implementation**
-  - [ ] Create `Backend/src/integrations/ai/ai.provider.ts` declaring `IAiProvider`.
-  - [ ] Create `Backend/src/integrations/ai/ai.provider.types.ts` for internal config types.
-  - [ ] Implement `NoopAiProvider` in `Backend/src/integrations/ai/providers/noop.provider.ts`.
-  - [ ] Implement `GeminiAiProvider` in `Backend/src/integrations/ai/providers/gemini.provider.ts`.
-  - [ ] Implement `AiProviderFactory` in `Backend/src/integrations/ai/ai.provider.factory.ts`.
-  - [ ] Create integration barrel export in `Backend/src/integrations/ai/index.ts`.
+- [x] **Task 4: Provider Strategy Layer Implementation**
+  - [x] Create `Backend/src/integrations/ai/ai.provider.ts` declaring `IAiProvider`.
+  - [x] Create `Backend/src/integrations/ai/ai.provider.types.ts` for internal config types.
+  - [x] Implement `NoopAiProvider` in `Backend/src/integrations/ai/providers/noop.provider.ts`.
+  - [x] Implement `GeminiAiProvider` in `Backend/src/integrations/ai/providers/gemini.provider.ts`.
+  - [x] Implement `AiProviderFactory` in `Backend/src/integrations/ai/ai.provider.factory.ts`.
+  - [x] Create integration barrel export in `Backend/src/integrations/ai/index.ts`.
 
-- [ ] **Task 5: Test Suites & Downstream Verification**
-  - [ ] Create `Backend/src/core/errors/__tests__/ai-processing-error.test.ts`.
-  - [ ] Create `Backend/src/integrations/ai/__tests__/provider.factory.test.ts`.
-  - [ ] Create `Backend/src/integrations/ai/__tests__/gemini.provider.test.ts`.
-  - [ ] Execute `npx jest` across Backend (100% test pass).
-  - [ ] Execute `pnpm build` across Backend (0 TypeScript errors).
-  - [ ] Execute `npx tsc --noEmit` across Frontend (0 TypeScript errors).
+- [x] **Task 5: Test Suites & Downstream Verification**
+  - [x] Create `Backend/src/core/errors/__tests__/ai-processing-error.test.ts`.
+  - [x] Create `Backend/src/integrations/ai/__tests__/provider.factory.test.ts`.
+  - [x] Create `Backend/src/integrations/ai/__tests__/gemini.provider.test.ts`.
+  - [x] Execute `npx jest` across Backend (100% test pass).
+  - [x] Execute `pnpm build` across Backend (0 TypeScript errors).
+  - [x] Execute `npx tsc --noEmit` across Frontend (0 TypeScript errors).
 
 ---
 

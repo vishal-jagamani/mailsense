@@ -18,6 +18,17 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
     - Added `AI_PROVIDER`, `GOOGLE_GEMINI_API_KEY`, and `GOOGLE_GEMINI_MODEL` Zod schema validation in `env.schema.ts`, `env.config.ts`, and `app.config.ts`.
     - Extended `LOGGER_MODULE` in `observability.constants.ts` with `GEMINI_PROVIDER`, `NOOP_AI_PROVIDER`, `AI_PROVIDER_FACTORY`, `AI_SERVICE`, `AI_CONTROLLER`, `AI_WORKER`, and `AI_PROCESSING_PROCESSOR`.
     - Added unit test suites for `AiProcessingError`, `AiProviderFactory`, and `GeminiAiProvider`.
+- **Asynchronous AI Queue & Ingestion Pipeline (Phase 2):**
+    - Extended `EmailSchema` with AI categorization, priority, tags, summary, provider, and timestamp attributes, along with compound query indexes (`accountId + aiCategory + receivedAt`, `accountId + aiPriority + receivedAt`).
+    - Added `EmailRepository.updateEmailAiMetadata` for updating email AI classification metadata without `try/catch`.
+    - Extended `UserSettingsSchema` and `UserSettingsRepository.getAiSettings` for user AI consent, feature flags, and per-account exclusion settings.
+    - Registered `QUEUE_NAMES.AI_PROCESSING` in `queue.config.ts` and created `QueueService.enqueueAiProcessingJob`.
+    - Created dedicated queue types in `src/core/types/queue.types.ts` (`SyncAccountPayload`, `RefreshTokenPayload`, `EnqueueJobOptions`).
+    - Implemented `AIProcessingWorker` in `src/workers/workers/ai.worker.ts` with `concurrency: 5` and `limiter: { max: 50, duration: 60000 }` (Gemini RPM rate limiter).
+    - Implemented `aiProcessingProcessor` in `src/workers/processors/ai-processing.processor.ts` with idempotency guards, user privacy verification, payload sanitization, and structured rate limit backoff via `queue.rateLimit()`.
+    - Connected `EMAIL_BATCH_SYNCED` event in `email-batch-synced.handler.ts` to automatically enqueue background AI jobs for newly ingested email batches.
+    - Added `AIProcessingWorker` lifecycle management in `initBackgroundJobs` and `shutdownBackgroundJobs`.
+    - Organized workers into categorized `src/workers/workers/` directory (`ai.worker.ts`, `sync.worker.ts`, `token-refresh.worker.ts`).
 
 ## [3.6.1] - 2026-11-17
 

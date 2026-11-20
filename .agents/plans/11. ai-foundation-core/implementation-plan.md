@@ -420,21 +420,21 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 #### Tasks:
 
-- [ ] Define shared contracts in `@mailsense/types`:
-  - [ ] Enums: `EMAIL_AI_CATEGORY`, `EMAIL_AI_PRIORITY`, `SUGGESTED_REPLY_TONE`, `AI_PROVIDER_NAME`, `AI_FEATURE_KEY`, `AI_PROCESSING_STATUS`.
-  - [ ] Interfaces: `EmailAiMetadata`, `AiClassifyEmailParams`, `AiClassifyEmailResult`, `AiThreadMessageInput`, `AiSummarizeThreadParams`, `AiSummarizeThreadResult`, `AiSuggestedRepliesParams`, `AiSuggestedRepliesResult`.
-  - [ ] DTOs & Job Payloads: `AIProcessingJobPayload`, `AIProcessingJobResult`, `GetEmailSummaryResponse`, `SuggestedReplyItem`, `GetSuggestedRepliesResponse`, `UserAIFeatureSettings`, `UserAISettings`, `UpdateUserAISettingsPayload`, `GetUserAISettingsResponse`.
-  - [ ] Additive extensions to `EmailAttributes`, `EmailListDTO`, `GetAllEmailsFilters`, `UserSettings`.
-  - [ ] Build `@mailsense/types` and link in Backend and Frontend.
-- [ ] Update Backend environment config (`env.schema.ts`, `app.config.ts`) to validate `AI_PROVIDER` and `GEMINI_API_KEY`.
-- [ ] Add AI logging module identifiers to `Backend/src/core/constants/observability.constants.ts` (`AI_SERVICE`, `AI_CONTROLLER`, `AI_WORKER`, `AI_PROCESSING_PROCESSOR`, `GEMINI_PROVIDER`).
-- [ ] Add `ErrorCode.AI_PROCESSING_FAILED` in `Backend/src/core/errors/ErrorCodes.ts` and `AiProcessingError` in `Backend/src/core/errors/DomainErrors.ts`.
-- [ ] Create `Backend/src/integrations/ai/ai.provider.ts` declaring `IAiProvider`.
-- [ ] Create `Backend/src/integrations/ai/providers/noop.provider.ts` for offline testing and deterministic CI/CD runs.
-- [ ] Create `Backend/src/integrations/ai/providers/gemini.provider.ts` wrapping Google GenAI (`@google/genai`) with structured JSON schema output (`responseMimeType: "application/json"`, `responseSchema`), temperature 0.1, 30s `AbortController` timeout, and domain error wrapping.
-- [ ] Create `Backend/src/integrations/ai/ai.provider.factory.ts` resolving provider strategies with singleton caching.
-- [ ] Export integration barrel at `Backend/src/integrations/ai/index.ts`.
-- [ ] Write unit tests in `Backend/src/integrations/ai/__tests__/provider.factory.test.ts` and `gemini.provider.test.ts`.
+- [x] Define shared contracts in `@mailsense/types`:
+  - [x] Enums: `EMAIL_AI_CATEGORY`, `EMAIL_AI_PRIORITY`, `SUGGESTED_REPLY_TONE`, `AI_PROVIDER_NAME`, `AI_FEATURE_KEY`, `AI_PROCESSING_STATUS`.
+  - [x] Interfaces: `EmailAiMetadata`, `AiClassifyEmailParams`, `AiClassifyEmailResult`, `AiThreadMessageInput`, `AiSummarizeThreadParams`, `AiSummarizeThreadResult`, `AiSuggestedRepliesParams`, `AiSuggestedRepliesResult`.
+  - [x] DTOs & Job Payloads: `AIProcessingJobPayload`, `AIProcessingJobResult`, `GetEmailSummaryResponse`, `SuggestedReplyItem`, `GetSuggestedRepliesResponse`, `UserAIFeatureSettings`, `UserAISettings`, `UpdateUserAISettingsPayload`, `GetUserAISettingsResponse`.
+  - [x] Additive extensions to `EmailAttributes`, `EmailListDTO`, `GetAllEmailsFilters`, `UserSettings`.
+  - [x] Build `@mailsense/types` and link in Backend and Frontend.
+- [x] Update Backend environment config (`env.schema.ts`, `app.config.ts`) to validate `AI_PROVIDER` and `GEMINI_API_KEY`.
+- [x] Add AI logging module identifiers to `Backend/src/core/constants/observability.constants.ts` (`AI_SERVICE`, `AI_CONTROLLER`, `AI_WORKER`, `AI_PROCESSING_PROCESSOR`, `GEMINI_PROVIDER`).
+- [x] Add `ErrorCode.AI_PROCESSING_FAILED` in `Backend/src/core/errors/ErrorCodes.ts` and `AiProcessingError` in `Backend/src/core/errors/DomainErrors.ts`.
+- [x] Create `Backend/src/integrations/ai/ai.provider.ts` declaring `IAiProvider`.
+- [x] Create `Backend/src/integrations/ai/providers/noop.provider.ts` for offline testing and deterministic CI/CD runs.
+- [x] Create `Backend/src/integrations/ai/providers/gemini.provider.ts` wrapping Google GenAI (`@google/genai`) with structured JSON schema output (`responseMimeType: "application/json"`, `responseSchema`), temperature 0.1, 30s `AbortController` timeout, and domain error wrapping.
+- [x] Create `Backend/src/integrations/ai/ai.provider.factory.ts` resolving provider strategies with singleton caching.
+- [x] Export integration barrel at `Backend/src/integrations/ai/index.ts`.
+- [x] Write unit tests in `Backend/src/integrations/ai/__tests__/provider.factory.test.ts` and `gemini.provider.test.ts`.
 
 ---
 
@@ -445,22 +445,22 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 #### Tasks:
 
-- [ ] Update `EmailSchema` and `EmailDocument` in `Backend/src/modules/emails/database/email.model.ts` with AI fields (`aiCategory`, `aiPriority`, `aiSummary`, `aiTags`, `aiProcessedAt`, `aiProvider`) and compound indexes.
-- [ ] Implement `EmailRepository.updateEmailAiMetadata` in `Backend/src/modules/emails/database/email.repository.ts`.
-- [ ] Create `Backend/src/core/queue/queue.types.ts` for queue payload contracts (`SyncAccountPayload`, `RefreshTokenPayload`, `AIProcessingJobPayload`), eliminating pre-existing inline type declarations.
-- [ ] Register `QUEUE_NAMES.AI_PROCESSING` in `Backend/src/core/queue/queue.config.ts`.
-- [ ] Add `QueueService.enqueueAiProcessingJob` in `Backend/src/core/queue/queue.service.ts` importing types from `queue.types.ts`.
-- [ ] Implement `aiProcessingProcessor` in `Backend/src/workers/processors/ai-processing.processor.ts`:
-  - [ ] Add idempotency check: skip already-processed emails if `aiProcessedAt` exists and `!forceReprocess`.
-  - [ ] Sanitize prompt input: strip HTML tags and truncate `bodyPlain` to 4,000 characters.
-  - [ ] Invoke `AIService.processEmailIngestion` and return structured `AIProcessingJobResult`.
-- [ ] Create `AIProcessingWorker` in `Backend/src/workers/ai.worker.ts` extending `BaseWorker`:
-  - [ ] Configure `concurrency: 5` and `limiter: { max: 50, duration: 60000 }` to respect Gemini RPM.
-  - [ ] Handle HTTP 429 quota exhaustion via `job.rateLimit(retryAfterMs)` and `Worker.RateLimitError`.
-- [ ] Export `AIProcessingWorker` in `Backend/src/workers/index.ts`.
-- [ ] Wire up `Backend/src/core/events/handlers/email-created.handler.ts` to inspect user AI settings and enqueue jobs.
-- [ ] Wire worker startup and shutdown in `Backend/src/core/queue/index.ts`.
-- [ ] Write worker unit tests in `Backend/src/workers/__tests__/ai.worker.test.ts`.
+- [x] Update `EmailSchema` and `EmailDocument` in `Backend/src/modules/emails/database/email.model.ts` with AI fields (`aiCategory`, `aiPriority`, `aiSummary`, `aiTags`, `aiProcessedAt`, `aiProvider`) and compound indexes.
+- [x] Implement `EmailRepository.updateEmailAiMetadata` in `Backend/src/modules/emails/database/email.repository.ts`.
+- [x] Create `Backend/src/core/queue/queue.types.ts` for queue payload contracts (`SyncAccountPayload`, `RefreshTokenPayload`, `AIProcessingJobPayload`), eliminating pre-existing inline type declarations.
+- [x] Register `QUEUE_NAMES.AI_PROCESSING` in `Backend/src/core/queue/queue.config.ts`.
+- [x] Add `QueueService.enqueueAiProcessingJob` in `Backend/src/core/queue/queue.service.ts` importing types from `queue.types.ts`.
+- [x] Implement `aiProcessingProcessor` in `Backend/src/workers/processors/ai-processing.processor.ts`:
+  - [x] Add idempotency check: skip already-processed emails if `aiProcessedAt` exists and `!forceReprocess`.
+  - [x] Sanitize prompt input: strip HTML tags and truncate `bodyPlain` to 4,000 characters.
+  - [x] Invoke `AIService.processEmailIngestion` and return structured `AIProcessingJobResult`.
+- [x] Create `AIProcessingWorker` in `Backend/src/workers/ai.worker.ts` extending `BaseWorker`:
+  - [x] Configure `concurrency: 5` and `limiter: { max: 50, duration: 60000 }` to respect Gemini RPM.
+  - [x] Handle HTTP 429 quota exhaustion via `job.rateLimit(retryAfterMs)` and `Worker.RateLimitError`.
+- [x] Export `AIProcessingWorker` in `Backend/src/workers/index.ts`.
+- [x] Wire up `Backend/src/core/events/handlers/email-created.handler.ts` to inspect user AI settings and enqueue jobs.
+- [x] Wire worker startup and shutdown in `Backend/src/core/queue/index.ts`.
+- [x] Write worker unit tests in `Backend/src/workers/__tests__/ai.worker.test.ts`.
 
 ---
 

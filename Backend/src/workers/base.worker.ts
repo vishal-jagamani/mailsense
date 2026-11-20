@@ -12,6 +12,10 @@ export abstract class BaseWorker<TData, TResult> {
     protected abstract processJob(job: Job<TData, TResult>): Promise<TResult>;
     protected workerLogger = createLogger(LOGGER_MODULE.BASE_WORKER);
 
+    protected getWorkerOptions(): Partial<WorkerOptions> {
+        return {};
+    }
+
     public start(): void {
         const connection = getRedisConnection();
         const prefix = process.env.NODE_ENV === 'test' ? 'bull-test' : process.env.BULL_PREFIX || 'bull';
@@ -21,6 +25,7 @@ export abstract class BaseWorker<TData, TResult> {
             concurrency: 2,
             prefix,
             lockDuration: 300000,
+            ...this.getWorkerOptions(),
         };
 
         this.worker = new Worker<TData, TResult>(

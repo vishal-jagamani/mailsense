@@ -1,4 +1,4 @@
-import { EmailAttributes } from '@mailsense/types';
+import { AI_PROVIDER_NAME, EMAIL_AI_CATEGORY, EMAIL_AI_PRIORITY, EmailAttributes } from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
 
 export type EmailInput = Omit<EmailAttributes, '_id' | 'createdAt' | 'updatedAt'>;
@@ -33,6 +33,12 @@ const EmailSchema = new Schema<EmailDocument>(
         isRead: { type: Boolean, required: true },
         folders: { type: [String], required: true },
         attachments: { type: [EmailAttachmentSchema], default: [] },
+        aiCategory: { type: String, enum: Object.values(EMAIL_AI_CATEGORY), required: false },
+        aiPriority: { type: String, enum: Object.values(EMAIL_AI_PRIORITY), required: false },
+        aiSummary: { type: String, required: false },
+        aiTags: { type: [String], default: [] },
+        aiProcessedAt: { type: Date, required: false },
+        aiProvider: { type: String, enum: Object.values(AI_PROVIDER_NAME), required: false },
     },
     { timestamps: true, versionKey: false },
 );
@@ -44,5 +50,8 @@ EmailSchema.index({ accountId: 1, folders: 1, receivedAt: -1 });
 EmailSchema.index({ accountId: 1, isRead: 1 });
 EmailSchema.index({ accountId: 1, from: 1 });
 EmailSchema.index({ accountId: 1, threadId: 1, receivedAt: 1 });
+// AI Filtering & Triage Compound Indexes
+EmailSchema.index({ accountId: 1, aiCategory: 1, receivedAt: -1 });
+EmailSchema.index({ accountId: 1, aiPriority: 1, receivedAt: -1 });
 
 export const Email = model<EmailDocument>('Email', EmailSchema);

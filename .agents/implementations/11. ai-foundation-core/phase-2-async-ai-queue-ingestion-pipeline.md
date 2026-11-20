@@ -1,7 +1,7 @@
 # AI Foundation & Core Features - Phase 2 Implementation Details
 
 > **Feature:** 11. ai-foundation-core · **Phase:** 2 (Asynchronous AI Queue & Ingestion Pipeline)
-> **Status:** READY FOR EXECUTION
+> **Status:** COMPLETED
 > **Created:** 2026-11-20 · **Last Updated:** 2026-11-20
 
 ---
@@ -595,39 +595,33 @@ Update `BaseWorker` to allow subclasses to override `WorkerOptions` (such as con
 
 ### 4.8 AI Processing Processor (`Backend/src/workers/processors/ai-processing.processor.ts`)
 
-Create `aiProcessingProcessor` handling idempotency, privacy checks, LLM execution, and rate limiting:
+Create `aiProcessingProcessor` handling idempotency, privacy checks, LLM execution, and rate limiting (refactored into focused helper functions adhering to strict line length, parameter count, and cyclomatic complexity limits):
 
 ```typescript
 import { LOGGER_MODULE } from "@constants";
 import { RateLimitError } from "@errors";
-import { AiProviderFactory } from "@integrations/ai";
+import { AiProviderFactory } from "@integrations/ai/ai.provider.factory.js";
 import {
   AI_PROCESSING_STATUS,
   AIProcessingJobPayload,
   AIProcessingJobResult,
   EmailAiMetadata,
 } from "@mailsense/types";
-import { EmailRepository } from "@modules/emails/database/index.js";
-import { UserSettingsRepository } from "@modules/user/database/index.js";
+import { EmailDocument } from "@modules/emails/database/email.model.js";
+import { EmailRepository } from "@modules/emails/database/email.repository.js";
+import { UserSettingsRepository } from "@modules/user/database/user-settings.repository.js";
 import { createLogger } from "@observability";
+import { getQueue, QUEUE_NAMES } from "@queue";
 import { Job } from "bullmq";
 
 const logger = createLogger(LOGGER_MODULE.AI_PROCESSING_PROCESSOR);
 
-export const aiProcessingProcessor = async (
-  job: Job<AIProcessingJobPayload, AIProcessingJobResult>,
-): Promise<AIProcessingJobResult> => {
-  const startTime = Date.now();
-  const { emailId, accountId, userId, forceReprocess } = job.data;
-
-  logger.info("Processing AI classification job for email", {
-    jobId: job.id,
-    emailId,
-    accountId,
-    userId,
-  });
-
-  // 1. User Privacy & AI Settings Check
+const checkUserPrivacyAndAISettings = async (
+  userId: string,
+  accountId: string,
+  emailId: string,
+  startTime: number,
+): Promise<AIProcessingJobResult | null> => {
   const userAiSettings = await UserSettingsRepository.getAiSettings(userId);
   if (userAiSettings) {
     if (!userAiSettings.enabled) {
@@ -658,9 +652,125 @@ export const aiProcessingProcessor = async (
       };
     }
   }
+  return null;
+};
+
+const executeAIProcessingAndStoreAiMetadata = async (
+  accountId: string,
+  emailId: string,
+  email: EmailDocument,
+  startTime: number,
+): Promise<AIProcessingJobResult> => {
+  const provider = AiProviderFactory.getProvider();
+  const classification = await provider.classifyAndScoreEmail({
+    subject: email.subject,
+    from: email.from,
+    to: email.to,
+    bodyPlain: email.bodyPlain,
+    receivedAt: email.receivedAt,
+  });
+
+  const metadata: EmailAiMetadata = {
+    category: classification.category,
+    priority: classification.priority,
+    summary: classification.summary,
+    tags: classification.tags,
+    confidence: classification.confidence,
+    processedAt: new Date(),
+    provider: provider.name,
+  };
+
+  await EmailRepository.updateEmailAiMetadata(emailId, accountId, metadata);
+
+  const durationMs = Date.now() - startTime;
+  logger.info("Email AI classification completed and persisted successfully", {
+    emailId,
+    category: classification.category,
+    priority: classification.priority,
+    durationMs,
+  });
+
+  return {
+    emailId,
+    status: AI_PROCESSING_STATUS.SUCCESS,
+    category: classification.category,
+    priority: classification.priority,
+    hasSummary: Boolean(classification.summary),
+    processingDurationMs: durationMs,
+  };
+};
+
+const handleAIProcessingError = async (
+  error: unknown,
+  emailId: string,
+  durationMs: number,
+): Promise<AIProcessingJobResult> => {
+  // Catch 429 Rate Limit from Gemini and trigger BullMQ native backoff
+  if (error instanceof RateLimitError) {
+    const retryAfterMs = error.retryAfterMs ?? 10000;
+    logger.warn(
+      `Gemini rate limit exceeded. Pausing queue via queue.rateLimit for ${retryAfterMs}ms`,
+      {
+        emailId,
+        retryAfterMs,
+      },
+    );
+    try {
+      const queue = getQueue(QUEUE_NAMES.AI_PROCESSING);
+      await queue.rateLimit(retryAfterMs);
+    } catch (err) {
+      logger.warn("Failed to pause queue rateLimit", { err });
+    }
+    return {
+      emailId,
+      status: AI_PROCESSING_STATUS.RATE_LIMITED,
+      hasSummary: false,
+      processingDurationMs: durationMs,
+      skippedReason: `Rate limit hit, delayed for ${retryAfterMs}ms`,
+    };
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  logger.error(`AI processing processor failed for email: ${emailId}`, {
+    error: message,
+    durationMs,
+  });
+
+  return {
+    emailId,
+    status: AI_PROCESSING_STATUS.FAILED,
+    hasSummary: false,
+    processingDurationMs: durationMs,
+    skippedReason: message,
+  };
+};
+
+export const aiProcessingProcessor = async (
+  job: Job<AIProcessingJobPayload, AIProcessingJobResult>,
+): Promise<AIProcessingJobResult> => {
+  const startTime = Date.now();
+  const { emailId, accountId, userId, forceReprocess } = job.data;
+
+  logger.info("Processing AI classification job for email", {
+    jobId: job.id,
+    emailId,
+    accountId,
+    userId,
+  });
+
+  // 1. User Privacy & AI Settings Check
+  const privacyCheckResult = await checkUserPrivacyAndAISettings(
+    userId,
+    accountId,
+    emailId,
+    startTime,
+  );
+  if (privacyCheckResult) {
+    return privacyCheckResult;
+  }
 
   // 2. Retrieve Email Document
-  const email = await EmailRepository.getEmail(emailId, accountId);
+  const email = await EmailRepository.getEmail(emailId);
   if (!email) {
     logger.warn("Email document not found for AI processing job; skipping", {
       emailId,
@@ -692,85 +802,21 @@ export const aiProcessingProcessor = async (
     };
   }
 
-  // 4. Execute AI Strategy via Provider Factory
+  // 4. Execute AI Strategy via Provider Factory and store the ai metadata
   try {
-    const provider = AiProviderFactory.getProvider();
-    const classification = await provider.classifyAndScoreEmail({
-      subject: email.subject,
-      from: email.from,
-      to: email.to,
-      bodyPlain: email.bodyPlain,
-      receivedAt: email.receivedAt,
-    });
-
-    // 5. Persist AI Metadata to Email Document
-    const metadata: EmailAiMetadata = {
-      category: classification.category,
-      priority: classification.priority,
-      summary: classification.summary,
-      tags: classification.tags,
-      confidence: classification.confidence,
-      processedAt: new Date(),
-      provider: provider.name,
-    };
-
-    await EmailRepository.updateEmailAiMetadata(emailId, accountId, metadata);
-
-    const durationMs = Date.now() - startTime;
-    logger.info(
-      "Email AI classification completed and persisted successfully",
-      {
-        emailId,
-        category: classification.category,
-        priority: classification.priority,
-        durationMs,
-      },
+    const result = await executeAIProcessingAndStoreAiMetadata(
+      accountId,
+      emailId,
+      email,
+      startTime,
     );
-
-    return {
-      emailId,
-      status: AI_PROCESSING_STATUS.SUCCESS,
-      category: classification.category,
-      priority: classification.priority,
-      hasSummary: Boolean(classification.summary),
-      processingDurationMs: durationMs,
-    };
+    return result;
   } catch (error) {
-    const durationMs = Date.now() - startTime;
-
-    // Catch 429 Rate Limit from Gemini and trigger BullMQ native backoff
-    if (error instanceof RateLimitError) {
-      const retryAfterMs = error.retryAfterMs ?? 10000;
-      logger.warn(
-        `Gemini rate limit exceeded. Pausing queue via job.rateLimit for ${retryAfterMs}ms`,
-        {
-          emailId,
-          retryAfterMs,
-        },
-      );
-      await job.rateLimit(retryAfterMs);
-      return {
-        emailId,
-        status: AI_PROCESSING_STATUS.RATE_LIMITED,
-        hasSummary: false,
-        processingDurationMs: durationMs,
-        skippedReason: `Rate limit hit, delayed for ${retryAfterMs}ms`,
-      };
-    }
-
-    const message = error instanceof Error ? error.message : String(error);
-    logger.error(`AI processing processor failed for email: ${emailId}`, {
-      error: message,
-      durationMs,
-    });
-
-    return {
+    return await handleAIProcessingError(
+      error,
       emailId,
-      status: AI_PROCESSING_STATUS.FAILED,
-      hasSummary: false,
-      processingDurationMs: durationMs,
-      skippedReason: message,
-    };
+      Date.now() - startTime,
+    );
   }
 };
 ```
@@ -1091,31 +1137,31 @@ sequenceDiagram
 
 ## 7. Step-by-Step Task Checklist
 
-- [ ] **Task 1: Queue Types & Configuration**
-  - [ ] Create `Backend/src/core/queue/queue.types.ts`.
-  - [ ] Register `QUEUE_NAMES.AI_PROCESSING` in `Backend/src/core/queue/queue.config.ts`.
-  - [ ] Add `QueueService.enqueueAiProcessingJob` in `Backend/src/core/queue/queue.service.ts`.
-- [ ] **Task 2: Database Schema & Repository Methods**
-  - [ ] Update `EmailSchema` and compound indexes in `Backend/src/modules/emails/database/email.model.ts`.
-  - [ ] Add `EmailRepository.updateEmailAiMetadata` in `Backend/src/modules/emails/database/email.repository.ts`.
-  - [ ] Update `UserSettingsSchema` in `Backend/src/modules/user/database/user.model.ts`.
-  - [ ] Add `UserSettingsRepository.getAiSettings` in `Backend/src/modules/user/database/user-settings.repository.ts`.
-- [ ] **Task 3: Worker & Processor Implementation**
-  - [ ] Update `BaseWorker` in `Backend/src/workers/base.worker.ts` with `getWorkerOptions()`.
-  - [ ] Implement `aiProcessingProcessor` in `Backend/src/workers/processors/ai-processing.processor.ts`.
-  - [ ] Implement `AIProcessingWorker` in `Backend/src/workers/ai.worker.ts`.
-  - [ ] Export worker and processor in `Backend/src/workers/index.ts`.
-- [ ] **Task 4: Event Handlers & Lifecycle Wiring**
-  - [ ] Update `Backend/src/core/events/handlers/email-batch-synced.handler.ts` to enqueue AI jobs.
-  - [ ] Update `Backend/src/core/events/handlers/email-created.handler.ts`.
-  - [ ] Update `Backend/src/core/queue/index.ts` to manage `AIProcessingWorker` startup and shutdown.
-- [ ] **Task 5: Unit Testing & Verification**
-  - [ ] Create `Backend/src/workers/processors/__tests__/ai-processing.processor.test.ts`.
-  - [ ] Create `Backend/src/workers/__tests__/ai.worker.test.ts`.
-  - [ ] Create `Backend/src/core/queue/__tests__/queue.service.test.ts`.
-  - [ ] Run `npx jest` across all new test suites (100% pass).
-  - [ ] Run `pnpm build` in Backend (0 TypeScript errors).
-  - [ ] Run `npx tsc --noEmit` in Frontend (0 TypeScript errors).
+- [x] **Task 1: Queue Types & Configuration**
+  - [x] Create `Backend/src/core/queue/queue.types.ts`.
+  - [x] Register `QUEUE_NAMES.AI_PROCESSING` in `Backend/src/core/queue/queue.config.ts`.
+  - [x] Add `QueueService.enqueueAiProcessingJob` in `Backend/src/core/queue/queue.service.ts`.
+- [x] **Task 2: Database Schema & Repository Methods**
+  - [x] Update `EmailSchema` and compound indexes in `Backend/src/modules/emails/database/email.model.ts`.
+  - [x] Add `EmailRepository.updateEmailAiMetadata` in `Backend/src/modules/emails/database/email.repository.ts`.
+  - [x] Update `UserSettingsSchema` in `Backend/src/modules/user/database/user.model.ts`.
+  - [x] Add `UserSettingsRepository.getAiSettings` in `Backend/src/modules/user/database/user-settings.repository.ts`.
+- [x] **Task 3: Worker & Processor Implementation**
+  - [x] Update `BaseWorker` in `Backend/src/workers/base.worker.ts` with `getWorkerOptions()`.
+  - [x] Implement `aiProcessingProcessor` in `Backend/src/workers/processors/ai-processing.processor.ts`.
+  - [x] Implement `AIProcessingWorker` in `Backend/src/workers/ai.worker.ts`.
+  - [x] Export worker and processor in `Backend/src/workers/index.ts`.
+- [x] **Task 4: Event Handlers & Lifecycle Wiring**
+  - [x] Update `Backend/src/core/events/handlers/email-batch-synced.handler.ts` to enqueue AI jobs.
+  - [x] Update `Backend/src/core/events/handlers/email-created.handler.ts`.
+  - [x] Update `Backend/src/core/queue/index.ts` to manage `AIProcessingWorker` startup and shutdown.
+- [x] **Task 5: Unit Testing & Verification**
+  - [x] Create `Backend/src/workers/processors/__tests__/ai-processing.processor.test.ts`.
+  - [x] Create `Backend/src/workers/__tests__/ai.worker.test.ts`.
+  - [x] Create `Backend/src/core/queue/__tests__/queue.service.test.ts`.
+  - [x] Run `npx jest` across all new test suites (100% pass).
+  - [x] Run `pnpm build` in Backend (0 TypeScript errors).
+  - [x] Run `npx tsc --noEmit` in Frontend (0 TypeScript errors).
 
 ---
 

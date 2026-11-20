@@ -1,4 +1,12 @@
-import { ACCOUNT_SYNC_MODE, CreateEntityInput, UserAccountSettings, UserAccountSyncSettings, UserSettings } from '@mailsense/types';
+import {
+    ACCOUNT_SYNC_MODE,
+    CreateEntityInput,
+    UserAccountSettings,
+    UserAccountSyncSettings,
+    UserAIFeatureSettings,
+    UserAISettings,
+    UserSettings,
+} from '@mailsense/types';
 import { Document, model, Schema } from 'mongoose';
 
 export interface User {
@@ -51,10 +59,31 @@ const UserAccountSettingsSchema = new Schema<UserAccountSettings>(
     { _id: false },
 );
 
+const UserAIFeatureSettingsSchema = new Schema<UserAIFeatureSettings>(
+    {
+        categorization: { type: Boolean, default: true },
+        priorityScoring: { type: Boolean, default: true },
+        summarization: { type: Boolean, default: true },
+        suggestedReplies: { type: Boolean, default: true },
+    },
+    { _id: false },
+);
+
+const UserAISettingsSchema = new Schema<UserAISettings>(
+    {
+        enabled: { type: Boolean, default: true },
+        features: { type: UserAIFeatureSettingsSchema, default: () => ({}) },
+        disabledAccountIds: { type: [String], default: [] },
+        consentGivenAt: { type: Date, default: () => new Date() },
+    },
+    { _id: false },
+);
+
 const UserSettingsSchema = new Schema<UserSettingsDocument>(
     {
         userId: { type: String, required: true },
         account: { type: UserAccountSettingsSchema, default: () => ({}) },
+        ai: { type: UserAISettingsSchema, default: () => ({}) },
     },
     { timestamps: true, versionKey: false },
 );

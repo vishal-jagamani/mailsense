@@ -1,24 +1,14 @@
 import { LOGGER_MODULE } from '@constants';
+import { AIProcessingJobPayload } from '@mailsense/types';
 import { createLogger } from '@observability';
+import { EnqueueJobOptions, RefreshTokenPayload, SyncAccountPayload } from '@types';
 import { QUEUE_NAMES } from './queue.config.js';
 import { getQueue } from './queue.registry.js';
 
 const logger = createLogger(LOGGER_MODULE.QUEUE_SERVICE);
 
-export interface SyncAccountPayload {
-    accountId: string;
-    userId: string;
-    force?: boolean;
-}
-
-export interface RefreshTokenPayload {
-    accountId: string;
-}
-
 export class QueueService {
-    /**
-     * Enqueues a sync job for a specific user email account
-     */
+    // Enqueues a sync job for a specific user email account
     public static async addSyncAccountJob(payload: SyncAccountPayload, priority: number = 2): Promise<string | undefined> {
         try {
             const queue = getQueue(QUEUE_NAMES.SYNC_ACCOUNT);
@@ -35,9 +25,7 @@ export class QueueService {
         }
     }
 
-    /**
-     * Enqueues a token refresh job
-     */
+    // Enqueues a token refresh job
     public static async addRefreshTokenJob(payload: RefreshTokenPayload): Promise<string | undefined> {
         try {
             const queue = getQueue(QUEUE_NAMES.REFRESH_TOKEN);
@@ -56,6 +44,38 @@ export class QueueService {
         } catch (error) {
             const msg = error instanceof Error ? error.message : String(error);
             logger.error(`❌ Failed to enqueue token refresh job: ${msg}`, { error, payload });
+            throw error;
+        }
+    }
+
+    // Enqueues an AI classification and triage job for an ingested email
+    public static async enqueueAiProcessingJob(payload: AIProcessingJobPayload, options?: EnqueueJobOptions): Promise<string | undefined> {
+        try {
+            const queue = getQueue(QUEUE_NAMES.AI_PROCESSING);
+            const jobName = `ai:${payload.emailId}`;
+
+            const job = await queue.add(jobName, payload, {
+                priority: options?.priority ?? 3,
+                delay: options?.delay ?? 0,
+                attempts: options?.attempts ?? 3,
+                backoff: {
+                    type: 'exponential',
+                    delay: 3000,
+                },
+            });
+
+            logger.info(`🤖 Job ${job.id} successfully added to queue ${QUEUE_NAMES.AI_PROCESSING}`, {
+                jobId: job.id,
+                emailId: payload.emailId,
+                accountId: payload.accountId,
+            });
+            return job.id;
+        } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            logger.error(`❌ Failed to enqueue AI processing job: ${msg}`, {
+                error,
+                payload,
+            });
             throw error;
         }
     }

@@ -46,12 +46,13 @@
 ### Queue Infrastructure
 
 - `Backend/src/core/queue/*`: BullMQ/Redis queue bootstrap, queue registry, queue service, and graceful shutdown handling
-  - `queue.config.ts`: queue names and default retry/backoff behavior, including token-refresh queue registration
+  - `queue.config.ts`: queue names (`SYNC_ACCOUNT`, `REFRESH_TOKEN`, `AI_PROCESSING`) and default retry/backoff behavior
   - `queue.registry.ts`: queue instance initialization/caching and cleanup
-  - `queue.service.ts`: job enqueue helpers for sync-account and refresh-token submission
+  - `queue.service.ts`: job enqueue helpers for sync-account, refresh-token, and AI processing jobs
   - `redis.connection.ts`: shared Redis connection for queue processing using `REDIS_URL` with `SERVICE_URI` fallback, reconnect handling, and graceful shutdown
   - `scheduler.service.ts`: synchronizes BullMQ repeatable sync schedules with active/sync-enabled account settings and user-level sync preferences
   - `index.ts`: queue startup/shutdown hooks used by the server lifecycle, including event bootstrap, worker startup, scheduler sync, and teardown
+- `Backend/src/core/types/queue.types.ts`: dedicated queue payload types (`SyncAccountPayload`, `RefreshTokenPayload`, `EnqueueJobOptions`, `AIProcessingJobPayload`)
 - `Backend/src/core/queue/__tests__/queue.service.test.ts`: queue integration coverage for sync job enqueue flow
 - `Backend/src/core/queue/__tests__/scheduler.service.test.ts`: scheduler coverage for repeatable sync job registration and cleanup
 
@@ -61,18 +62,22 @@
   - `event-bus.ts`: typed event emitter wrapper with safe subscriber execution and sanitized logging, now powered by shared event contracts from `@mailsense/types`
   - `handlers/email-created.handler.ts`: subscriber hook for newly indexed email events
   - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events; triggers `AnalyticsService.refreshAccountMetrics` to update daily account metrics snapshots
-  - `handlers/email-batch-synced.handler.ts`: subscriber hook for `EMAIL_BATCH_SYNCED` system events; provides foundational integration hook for Phase 4 AI ingestion queues
+  - `handlers/email-batch-synced.handler.ts`: subscriber hook for `EMAIL_BATCH_SYNCED` system events; enqueues ingested email batches into the `ai-processing` queue
   - `index.ts`: system-event initialization entry point used during background jobs startup
 - `Backend/src/core/events/__tests__/event-bus.test.ts`: event bus coverage for publish/subscribe behavior and subscriber error isolation
 - `Backend/src/core/events/__tests__/email-batch-synced.handler.test.ts`: unit tests for `EMAIL_BATCH_SYNCED` event subscriber and error containment
 
 ### Workers
 
-- `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, and lifecycle event hooks
-- `Backend/src/workers/sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
-- `Backend/src/workers/processors/sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs, refactored into focused private helper methods (`syncAccountFoldersStep`, `fetchEmailChangesStep`, `applyIncrementalSyncStep`, `applyFullSyncStep`) with cyclomatic complexity $\le 8$
-- `Backend/src/workers/token-refresh.worker.ts`: worker for refresh-token queue processing
-- `Backend/src/workers/processors/refresh-token.processor.ts`: refreshes provider access tokens with per-account Redis locking
+- `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, customizable worker options (`getWorkerOptions`), and lifecycle event hooks
+- Categorized worker architecture (`Backend/src/workers/workers/*`):
+  - `ai.worker.ts`: `AIProcessingWorker` with `concurrency: 5` and token bucket rate limiter `limiter: { max: 50, duration: 60000 }`
+  - `sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
+  - `token-refresh.worker.ts`: worker for refresh-token queue processing
+- Processors (`Backend/src/workers/processors/*`):
+  - `ai-processing.processor.ts`: email intelligence processor with idempotency checks, user privacy verification, LLM classification via `AiProviderFactory`, and structured rate-limit queue pausing via `queue.rateLimit()`
+  - `sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs, refactored into focused private helper methods (`syncAccountFoldersStep`, `fetchEmailChangesStep`, `applyIncrementalSyncStep`, `applyFullSyncStep`) with cyclomatic complexity $\le 8$
+  - `refresh-token.processor.ts`: refreshes provider access tokens with per-account Redis locking
 - `Backend/src/workers/worker.types.ts`: shared worker result types
 - `Backend/src/workers/__tests__/sync.worker.test.ts`: coverage for incremental and full background sync processor flows
 
@@ -273,14 +278,14 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
 - `Backend/src/modules/attachments/database/attachment.model.ts`
   - `StagedAttachment` with 24-hour TTL expiration index for Cloudflare R2 staging metadata
 - `Backend/src/modules/emails/database/email.model.ts`
-  - `Email` with deduplicated compound indexes on `(accountId, providerMessageId)`, `(accountId, receivedAt)`, `(accountId, folders, receivedAt)`, `(accountId, isRead)`, `(accountId, from)`, and `(accountId, threadId, receivedAt)`
+  - `Email` with compound indexes on `(accountId, providerMessageId)`, `(accountId, receivedAt)`, `(accountId, folders, receivedAt)`, `(accountId, isRead)`, `(accountId, from)`, `(accountId, threadId, receivedAt)`, `(accountId, aiCategory, receivedAt)`, and `(accountId, aiPriority, receivedAt)`
 - `Backend/src/modules/drafts/database/draft.model.ts`
   - `Draft` with compound indexes on `(userId, lastSavedAt)` and `(userId, accountId)`
 - `Backend/src/modules/folders/database/folder.model.ts`
   - `Folder` with provider folder identity + counts/role metadata
 - `Backend/src/modules/user/database/user.model.ts`
   - `User` indexed by `auth0UserId`
-  - `UserSettingsModel` for persisted account sync preferences per user
+  - `UserSettingsModel` for persisted account sync preferences and AI feature flags/privacy settings per user
 
 ### Shared Types / Utils
 

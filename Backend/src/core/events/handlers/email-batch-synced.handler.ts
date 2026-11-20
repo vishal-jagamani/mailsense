@@ -2,6 +2,7 @@ import { LOGGER_MODULE } from '@constants';
 import { EmailBatchSyncedPayload, SYSTEM_EVENT } from '@mailsense/types';
 import { createLogger } from '@observability';
 import { eventBus } from '../event-bus.js';
+import { QueueService } from '@queue';
 
 const logger = createLogger(LOGGER_MODULE.EMAIL_BATCH_SYNCED_HANDLER);
 
@@ -21,12 +22,14 @@ export function registerEmailBatchSyncedHandler(): void {
                     timestamp: payload.timestamp,
                 });
 
-                // NOTE: Phase 4 (AI Foundation) will enqueue this batch into the BullMQ AI queue:
-                // await QueueService.addAIBatchJob({
-                //     accountId: payload.accountId,
-                //     userId: payload.userId,
-                //     emailIds: payload.emailIds,
-                // });
+                for (const emailId of payload.emailIds) {
+                    await QueueService.enqueueAiProcessingJob({
+                        emailId,
+                        accountId: payload.accountId,
+                        userId: payload.userId,
+                        providerMessageId: emailId,
+                    });
+                }
             } catch (err) {
                 const errorMessage = err instanceof Error ? err.message : String(err);
                 logger.error('[EmailBatchSyncedHandler] Failed to process email batch sync event', {

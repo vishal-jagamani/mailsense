@@ -6,4 +6,5 @@ export * from './health.types.js';
 export * from './middleware.types.js';
 export * from './monitoring.types.js';
 export * from './observability.types.js';
+export * from './queue.types.js';
 export * from './worker.types.js';
