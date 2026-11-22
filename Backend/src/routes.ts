@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import accountsRoutes from '@modules/accounts/routes/index.js';
+import aiRoutes from '@modules/ai/routes/index.js';
 import analyticsRoutes from '@modules/analytics/routes/index.js';
 import attachmentRoutes from '@modules/attachments/routes/index.js';
 import draftRoutes from '@modules/drafts/routes/index.js';
@@ -27,5 +28,7 @@ router.use('/attachments', attachmentRoutes);
 router.use('/drafts', draftRoutes);
 
 router.use('/analytics', analyticsRoutes);
+
+router.use('/ai', aiRoutes);
 
 export default router;

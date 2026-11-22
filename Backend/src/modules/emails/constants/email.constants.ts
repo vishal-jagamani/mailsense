@@ -14,6 +14,9 @@ export const EMAIL_LIST_DB_FIELD_MAPPING: EmailListDBFieldMapping = {
             bodyPlain: 1,
             folders: 1,
             attachments: 1,
+            aiCategory: 1,
+            aiPriority: 1,
+            aiSummary: 1,
         },
     },
     SORT: {

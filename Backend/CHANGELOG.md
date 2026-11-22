@@ -29,6 +29,20 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
     - Connected `EMAIL_BATCH_SYNCED` event in `email-batch-synced.handler.ts` to automatically enqueue background AI jobs for newly ingested email batches.
     - Added `AIProcessingWorker` lifecycle management in `initBackgroundJobs` and `shutdownBackgroundJobs`.
     - Organized workers into categorized `src/workers/workers/` directory (`ai.worker.ts`, `sync.worker.ts`, `token-refresh.worker.ts`).
+- **Core AI REST API Module & Mailbox Filter Extensions (Phase 3):**
+    - Implemented categorized `Backend/src/modules/ai/` module (`constants/`, `types/`, `schema/`, `controllers/`, `services/`, `routes/`, `index.ts`).
+    - Implemented `GET /api/ai/summary/:emailId` for on-demand conversation thread summarization with full thread message aggregation, plain-text body decompression, and multi-tenant authorization checks.
+    - Implemented `GET /api/ai/suggestions/:emailId` for contextual suggested replies with multi-message context and tone variants.
+    - Extended `getAllEmailsSchema` with optional `aiCategory` and `aiPriority` filters.
+    - Extended `EMAIL_LIST_DB_FIELD_MAPPING` to project `aiCategory`, `aiPriority`, and `aiSummary` in mailbox list queries.
+    - Extended `EmailQueryService` to filter by `aiCategory` and `aiPriority` in MongoDB search query and map fields to `EmailListItem`.
+    - Mounted `/api/ai` router in `Backend/src/routes.ts`.
+- **AI Settings & Privacy Controls (Phase 4):**
+    - Added `updateAiSettings` atomic update method to `UserSettingsRepository` with `$set` on nested preference fields (`ai.enabled`, `ai.features`, `ai.disabledAccountIds`, `ai.consentGivenAt`).
+    - Added `getUserAiSettings` and `updateUserAiSettings` methods to `UserService` with default initialization, telemetry logging, and Sentry tracking.
+    - Added `userAiFeatureSettingsSchema` and `updateUserAiSettingsSchema` in `Backend/src/modules/user/schema/user.schema.ts`.
+    - Exposed `GET /users/settings/ai` and `PATCH /users/settings/ai` in `UserController` and `Backend/src/modules/user/routes/user.routes.ts`.
+    - Added unit test suite in `Backend/src/modules/user/__tests__/user-ai-settings.test.ts`.
 
 ## [3.6.1] - 2026-11-17
 

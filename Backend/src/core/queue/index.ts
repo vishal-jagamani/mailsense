@@ -72,6 +72,7 @@ export async function shutdownBackgroundJobs(): Promise<void> {
     }
 }
 
+export * from '../types/queue.types.js';
 export * from './queue.config.js';
 export * from './queue.registry.js';
 export * from './queue.service.js';

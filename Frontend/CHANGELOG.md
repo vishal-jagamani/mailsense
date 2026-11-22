@@ -10,6 +10,21 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 ### Added
 
 - **Shared AI Contract Integration:** Synchronized `@mailsense/types` v1.8.0 contracts for email AI classifications, priority triage levels, thread summarization, and suggested reply types in preparation for AI interface features.
+- **AI REST Client & React Query Hooks (Phase 3):**
+    - Added centralized AI endpoints in `Frontend/src/shared/api/endpoints.ts` (`AI_API_ENDPOINTS.SUMMARY`, `AI_API_ENDPOINTS.SUGGESTIONS`).
+    - Added query key factories in `Frontend/src/shared/api/query-keys.ts` (`AI_QUERY_KEYS`).
+    - Implemented `fetchEmailThreadSummary` and `fetchSuggestedReplies` in `Frontend/src/features/emails/api/ai.api.ts`.
+    - Implemented `useSummarizeThreadQuery` and `useSuggestedRepliesQuery` in `Frontend/src/features/emails/api/ai.queries.ts`.
+- **AI & Privacy Settings Management (Phase 4):**
+    - Centralized `SETTINGS_API_ENDPOINTS.USER_AI_SETTINGS` and `SETTINGS_QUERY_KEYS.USER_AI_SETTINGS`.
+    - Added `AI & Privacy` tab to `SETTINGS_OPTIONS` with `Sparkles` icon and `AI_FEATURE_ITEMS` metadata in `Frontend/src/shared/constants/settings.ts`.
+    - Centralized label and privacy copy in `USER_AI_SETTINGS_LABELS` (`Frontend/src/shared/constants/messages.ts`).
+    - Added `fetchUserAiSettings` and `updateUserAiSettings` in `Frontend/src/features/settings/api/settings.api.ts`.
+    - Added `useGetAiSettingsQuery` in `settings.queries.ts` and `useUpdateAiSettingsMutation` in `settings.mutation.ts`.
+    - Created dedicated TypeScript types in `Frontend/src/features/settings/types/ai-settings.types.ts`.
+    - Implemented `useAiSettings` custom hook managing optimistic toggles and multi-account exclusion state.
+    - Implemented modular, streamlined UI components in `Frontend/src/features/settings/components/ai/` (`GlobalAiToggleCard.tsx`, `AiFeatureTogglesCard.tsx`, `PerAccountAiExclusionCard.tsx`) using semantic div/p layout elements.
+    - Added AI settings page view in `Frontend/src/features/settings/pages/ai/index.tsx` and mounted in Settings tabs.
 
 ## [3.6.1] - 2026-11-17
 

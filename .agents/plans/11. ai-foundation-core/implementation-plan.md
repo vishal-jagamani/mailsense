@@ -227,7 +227,7 @@ sequenceDiagram
     participant Provider as IAiProvider
 
     User->>UI: Click "AI Summary" Button
-    UI->>Controller: POST /api/ai/summary/:emailId
+    UI->>Controller: GET /api/ai/summary/:emailId
     Controller->>Controller: Verify req.userId & extract params
     Controller->>AIService: summarizeThread(userId, emailId)
     AIService->>EmailRepo: getEmail(emailId)
@@ -366,7 +366,7 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 | Method  | Endpoint                       | Request Body                              | Response Shape                             | Description                                               |
 | :------ | :----------------------------- | :---------------------------------------- | :----------------------------------------- | :-------------------------------------------------------- |
-| `POST`  | `/api/ai/summary/:emailId`     | —                                         | `ApiResponse<GetEmailSummaryResponse>`     | On-demand comprehensive thread summarization              |
+| `GET`   | `/api/ai/summary/:emailId`     | —                                         | `ApiResponse<GetEmailSummaryResponse>`     | On-demand comprehensive thread summarization              |
 | `GET`   | `/api/ai/suggestions/:emailId` | —                                         | `ApiResponse<GetSuggestedRepliesResponse>` | 2–3 contextual quick reply suggestions                    |
 | `GET`   | `/api/user/settings/ai`        | —                                         | `ApiResponse<GetUserAISettingsResponse>`   | Fetch current user's AI settings & feature flags          |
 | `PATCH` | `/api/user/settings/ai`        | `UpdateUserAISettingsPayload`             | `ApiResponse<GetUserAISettingsResponse>`   | Update global/per-feature/per-account AI settings         |
@@ -471,17 +471,17 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 #### Tasks:
 
-- [ ] Create `Backend/src/modules/ai/` organized into categorized subdirectories:
-  - [ ] `controllers/ai.controller.ts`: Handles `POST /summary/:emailId` and `GET /suggestions/:emailId` with caller tenant verification.
-  - [ ] `services/ai.service.ts`: Orchestrates email retrieval, thread assembly, provider delegation, and telemetry logging via `LOGGER_MODULE.AI_SERVICE`.
-  - [ ] `routes/ai.routes.ts`: Routes with Zod parameter validation schemas.
-  - [ ] `schema/ai.schema.ts`: Validation schemas for route parameters.
-  - [ ] `types/ai.types.ts`: Module-specific named interfaces (strictly zero inline types).
-  - [ ] `constants/ai.constants.ts`: Module error codes and constants.
-  - [ ] `index.ts`: Clean barrel export for AI module.
-- [ ] Mount AI router under `/api/ai` in `Backend/src/routes.ts`.
-- [ ] Extend `EmailQueryService` and `EmailRepository.getEmails` to support filtering by `aiCategory` and `aiPriority`.
-- [ ] Add integration tests in `Backend/src/modules/ai/__tests__/ai.integration.test.ts`.
+- [x] Create `Backend/src/modules/ai/` organized into categorized subdirectories:
+  - [x] `controllers/ai.controller.ts`: Handles `GET /summary/:emailId` and `GET /suggestions/:emailId` with caller tenant verification.
+  - [x] `services/ai.service.ts`: Orchestrates email retrieval, thread assembly, provider delegation, and telemetry logging via `LOGGER_MODULE.AI_SERVICE`.
+  - [x] `routes/ai.routes.ts`: Routes with Zod parameter validation schemas.
+  - [x] `schema/ai.schema.ts`: Validation schemas for route parameters.
+  - [x] `types/ai.types.ts`: Module-specific named interfaces (strictly zero inline types).
+  - [x] `constants/ai.constants.ts`: Module error codes and constants.
+  - [x] `index.ts`: Clean barrel export for AI module.
+- [x] Mount AI router under `/api/ai` in `Backend/src/routes.ts`.
+- [x] Extend `EmailQueryService` and `EmailRepository.getEmails` to support filtering by `aiCategory` and `aiPriority`.
+- [x] Add integration tests in `Backend/src/modules/ai/__tests__/ai.controller.test.ts` and `Backend/src/modules/ai/__tests__/ai-security.test.ts`.
 
 ---
 
@@ -492,12 +492,12 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 #### Tasks:
 
-- [ ] Extend `UserSettingsSchema` in `Backend/src/modules/user/database/user.model.ts` with `UserAISettingsSchema`.
-- [ ] Add `getAiSettings` and `updateAiSettings` methods to `UserSettingsRepository`.
-- [ ] Add `GET /api/user/settings/ai` and `PATCH /api/user/settings/ai` endpoints in `Backend/src/modules/user/`.
-- [ ] Create Frontend API client in `Frontend/src/features/settings/api/ai-settings.api.ts` and React Query hooks (`useGetAiSettingsQuery`, `useUpdateAiSettingsMutation`).
-- [ ] Create `Frontend/src/features/settings/components/AiSettingsTab.tsx` with global toggle, feature checkboxes, and per-account exclusion switches.
-- [ ] Mount "AI Settings" tab in Settings page navigation.
+- [x] Extend `UserSettingsSchema` in `Backend/src/modules/user/database/user.model.ts` with `UserAISettingsSchema`.
+- [x] Add `getAiSettings` and `updateAiSettings` methods to `UserSettingsRepository`.
+- [x] Add `GET /users/settings/ai` and `PATCH /users/settings/ai` endpoints in `Backend/src/modules/user/`.
+- [x] Create Frontend API client in `Frontend/src/features/settings/api/settings.api.ts` and React Query hooks (`useGetAiSettingsQuery`, `useUpdateAiSettingsMutation`).
+- [x] Create modular AI settings components under `Frontend/src/features/settings/components/ai/` and page at `Frontend/src/features/settings/pages/ai/index.tsx`.
+- [x] Mount "AI & Privacy" tab in Settings page navigation.
 
 ---
 

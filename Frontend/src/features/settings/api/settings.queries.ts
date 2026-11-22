@@ -1,8 +1,9 @@
-import { APIResponse, ProfileSettingsDataObject, UserSettings } from '@mailsense/types';
-import { QUERY_KEYS } from '@shared/api';
+import { APIResponse, GetUserAISettingsResponse, ProfileSettingsDataObject, UserSettings } from '@mailsense/types';
+import { QUERY_KEYS, SETTINGS_QUERY_KEYS } from '@shared/api';
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import { UseGetAiSettingsQueryOptions } from '../types/ai-settings.types';
 import { UseGetUseSettingsQueryOptions } from '../types/settings-api.types';
-import { getUserProfileSettings, getUserSettings } from './settings.api';
+import { fetchUserAiSettings, getUserProfileSettings, getUserSettings } from './settings.api';
 
 export const useGetProfileQuery = (enabled: boolean) => {
     return useQuery<APIResponse<ProfileSettingsDataObject>>({
@@ -17,6 +18,15 @@ export const useGetUserSettingsQuery = (userId?: string, options?: UseGetUseSett
         queryKey: [QUERY_KEYS.USER_SYNC_SETTINGS],
         queryFn: () => getUserSettings(),
         enabled: !!userId,
+        ...options,
+    });
+};
+
+export const useGetAiSettingsQuery = (options?: Partial<UseGetAiSettingsQueryOptions>) => {
+    return useQuery<GetUserAISettingsResponse, Error, GetUserAISettingsResponse, typeof SETTINGS_QUERY_KEYS.USER_AI_SETTINGS>({
+        queryKey: SETTINGS_QUERY_KEYS.USER_AI_SETTINGS,
+        queryFn: fetchUserAiSettings,
+        staleTime: 60 * 1000,
         ...options,
     });
 };

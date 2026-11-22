@@ -1,12 +1,22 @@
+import { AI_CONFIG } from '@config';
 import { LOGGER_MODULE } from '@constants';
 import { NotFoundError } from '@errors';
-import { ACCOUNT_SYNC_MODE, APIResponse, UpdateAPIResponse, UserDetailsObject, UserSettings } from '@mailsense/types';
+import {
+    ACCOUNT_SYNC_MODE,
+    AI_PROVIDER_NAME,
+    APIResponse,
+    GetUserAISettingsResponse,
+    UpdateAPIResponse,
+    UpdateUserAISettingsPayload,
+    UserAISettings,
+    UserDetailsObject,
+    UserSettings,
+} from '@mailsense/types';
 import { createLogger } from '@observability';
 import { Auth0Service } from 'integrations/auth0/auth0.service.js';
 import { Auth0UserDetailsResponse } from 'integrations/auth0/auth0.types.js';
 import { decrypt } from 'shared/utils/index.js';
-import { UserDocument, UserInput, UserRepository, UserSettingsDocument } from '../database/index.js';
-import { UserSettingsRepository } from '../database/index.js';
+import { UserDocument, UserInput, UserRepository, UserSettingsDocument, UserSettingsRepository } from '../database/index.js';
 import { ChangePasswordSchema, UpdateUserSchema } from '../schema/index.js';
 
 const logger = createLogger(LOGGER_MODULE.USER_SERVICE);
@@ -120,6 +130,76 @@ export class UserService {
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);
             logger.error(`Error in UserService.updateUserSettings: ${errorMessage}`, { auth0UserId, data, error: err });
+            throw err;
+        }
+    }
+
+    public async getUserAiSettings(auth0UserId: string): Promise<APIResponse<GetUserAISettingsResponse>> {
+        try {
+            logger.info('Fetching user AI settings', { auth0UserId });
+            const globalFeatureFlag = AI_CONFIG.provider !== AI_PROVIDER_NAME.NOOP;
+            let aiSettings = await UserSettingsRepository.getAiSettings(auth0UserId);
+
+            if (!aiSettings) {
+                const defaultAiSettings: UserAISettings = {
+                    enabled: true,
+                    features: {
+                        categorization: true,
+                        priorityScoring: true,
+                        summarization: true,
+                        suggestedReplies: true,
+                    },
+                    disabledAccountIds: [],
+                    consentGivenAt: new Date(),
+                };
+                const userDoc = await UserSettingsRepository.updateAiSettings(auth0UserId, defaultAiSettings);
+                aiSettings = userDoc?.ai ?? defaultAiSettings;
+            }
+
+            return {
+                status: true,
+                message: 'User AI settings fetched successfully',
+                data: {
+                    settings: aiSettings,
+                    globalFeatureFlag,
+                },
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in UserService.getUserAiSettings: ${errorMessage}`, { auth0UserId, error: err });
+            throw err;
+        }
+    }
+
+    public async updateUserAiSettings(auth0UserId: string, payload: UpdateUserAISettingsPayload): Promise<APIResponse<GetUserAISettingsResponse>> {
+        try {
+            logger.info('Updating user AI settings', { auth0UserId, payload });
+            const updatedDoc = await UserSettingsRepository.updateAiSettings(auth0UserId, payload);
+            const globalFeatureFlag = AI_CONFIG.provider !== AI_PROVIDER_NAME.NOOP;
+
+            const aiSettings: UserAISettings = updatedDoc?.ai ?? {
+                enabled: payload.enabled ?? true,
+                features: {
+                    categorization: payload.features?.categorization ?? true,
+                    priorityScoring: payload.features?.priorityScoring ?? true,
+                    summarization: payload.features?.summarization ?? true,
+                    suggestedReplies: payload.features?.suggestedReplies ?? true,
+                },
+                disabledAccountIds: payload.disabledAccountIds ?? [],
+                consentGivenAt: new Date(),
+            };
+
+            return {
+                status: true,
+                message: 'User AI settings updated successfully',
+                data: {
+                    settings: aiSettings,
+                    globalFeatureFlag,
+                },
+            };
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            logger.error(`Error in UserService.updateUserAiSettings: ${errorMessage}`, { auth0UserId, payload, error: err });
             throw err;
         }
     }

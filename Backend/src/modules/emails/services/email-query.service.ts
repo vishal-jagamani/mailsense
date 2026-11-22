@@ -39,7 +39,7 @@ export class EmailQueryService {
         filters: GetAllEmailsFilters,
         computedDateRange?: GetDataRangeResponse,
     ): FilterQuery<EmailDocument> {
-        const { searchText, unread } = filters;
+        const { searchText, unread, aiCategory, aiPriority } = filters;
         const query: FilterQuery<EmailDocument> = {
             accountId: { $in: targetAccountIds },
             folders: targetFolders ? { $in: targetFolders } : { $nin: [GMAIL_LABELS.TRASH, GMAIL_LABELS.SPAM, GMAIL_LABELS.SENT, ...folderIds] },
@@ -53,6 +53,12 @@ export class EmailQueryService {
         }
         if (unread) {
             query.isRead = false;
+        }
+        if (aiCategory) {
+            query.aiCategory = aiCategory;
+        }
+        if (aiPriority) {
+            query.aiPriority = aiPriority;
         }
 
         return query;
@@ -71,6 +77,9 @@ export class EmailQueryService {
             threadCount: email.threadCount || 1,
             attachments: email.attachments || [],
             hasAttachments: Boolean(email.attachments && email.attachments.length > 0),
+            ...(email.aiCategory && { aiCategory: email.aiCategory }),
+            ...(email.aiPriority && { aiPriority: email.aiPriority }),
+            ...(email.aiSummary && { aiSummary: email.aiSummary }),
             ...(email.bodyPlain && { bodyPlain: decompressString(email.bodyPlain) }),
         };
     }

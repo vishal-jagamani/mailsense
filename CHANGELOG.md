@@ -11,7 +11,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - **AI-Powered Email Intelligence Foundation:** Built internal engine and model integration supporting automated email classification, priority triage, smart conversation thread summarization, and contextual suggested replies powered by Google Gemini 3.6 Flash.
 - **Automated Background Email Intelligence Pipeline:** Incoming emails are now automatically categorized into smart labels, scored for priority urgency, and summarized in the background upon inbox synchronization.
-- **AI Privacy & Preference Controls:** Added account-level and global privacy preferences allowing users to customize AI feature engagement and disable automated processing per account.
+- **AI & Privacy Settings Management:** Added a dedicated "AI & Privacy" tab in Settings (`/settings/ai`) allowing users to toggle global AI enablement, configure individual AI features (Categorization, Priority Scoring, Summaries, Suggested Replies), review privacy policies, and exclude specific connected email accounts from AI processing.
+- **On-Demand Conversation Thread Summaries:** Added instant thread summarization delivering an executive overview, bulleted key points, and next action items for multi-message email conversations.
+- **Contextual Suggested Replies:** Added AI-suggested quick reply chips with formal, casual, and concise tone variations ready for one-click composing.
+- **AI Category & Priority Mailbox Filtering:** Enhanced email filtering to view and organize mail by smart categories (Work, Personal, Finance, Social, Promotions, Updates) and triage priority levels.
 
 ## [3.6.1] - 2026-11-17
 

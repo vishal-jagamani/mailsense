@@ -1,4 +1,4 @@
-import { DATE_RANGE } from '@mailsense/types';
+import { DATE_RANGE, EMAIL_AI_CATEGORY, EMAIL_AI_PRIORITY } from '@mailsense/types';
 import z from 'zod';
 
 export const getAllEmailsSchema = z.object({
@@ -11,6 +11,8 @@ export const getAllEmailsSchema = z.object({
             dateRange: z.enum(Object.values(DATE_RANGE) as [string, ...string[]]).optional(),
             folders: z.array(z.string()).optional(),
             unread: z.boolean().optional().default(false),
+            aiCategory: z.enum(Object.values(EMAIL_AI_CATEGORY) as [string, ...string[]]).optional(),
+            aiPriority: z.enum(Object.values(EMAIL_AI_PRIORITY) as [string, ...string[]]).optional(),
         })
         .optional(),
 });
