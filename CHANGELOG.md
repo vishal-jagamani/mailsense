@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-11-24
+
 ### Added
 
 - **AI-Powered Email Intelligence Foundation:** Built internal engine and model integration supporting automated email classification, priority triage, smart conversation thread summarization, and contextual suggested replies powered by Google Gemini 3.6 Flash.
@@ -15,6 +17,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - **On-Demand Conversation Thread Summaries:** Added instant thread summarization delivering an executive overview, bulleted key points, and next action items for multi-message email conversations.
 - **Contextual Suggested Replies:** Added AI-suggested quick reply chips with formal, casual, and concise tone variations ready for one-click composing.
 - **AI Category & Priority Mailbox Filtering:** Enhanced email filtering to view and organize mail by smart categories (Work, Personal, Finance, Social, Promotions, Updates) and triage priority levels.
+- **Visual Category & Priority Badges:** Smart category labels and priority urgency indicators now display directly on messages in desktop inbox tables and mobile card views.
+- **Priority Inbox Quick Filter:** Added a single-click "Priority" filter button in the mailbox header to instantly isolate urgent correspondence.
+- **Interactive Thread Summaries & Quick Replies in Conversation View:** Collapsible AI-generated executive summaries and clickable suggested reply chips are now seamlessly integrated at the top of multi-message email conversations and single emails.
 
 ## [3.6.1] - 2026-11-17
 

@@ -7,6 +7,8 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-11-24
+
 ### Added
 
 - **Shared AI Contract Integration:** Synchronized `@mailsense/types` v1.8.0 contracts for email AI classifications, priority triage levels, thread summarization, and suggested reply types in preparation for AI interface features.
@@ -25,6 +27,18 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
     - Implemented `useAiSettings` custom hook managing optimistic toggles and multi-account exclusion state.
     - Implemented modular, streamlined UI components in `Frontend/src/features/settings/components/ai/` (`GlobalAiToggleCard.tsx`, `AiFeatureTogglesCard.tsx`, `PerAccountAiExclusionCard.tsx`) using semantic div/p layout elements.
     - Added AI settings page view in `Frontend/src/features/settings/pages/ai/index.tsx` and mounted in Settings tabs.
+- **AI Inbox & Conversation Thread UI Integration (Phase 5):**
+    - Created smart visual indicators in `Frontend/src/features/emails/components/ai/`:
+        - `CategoryBadge.tsx`: Displays color-coded category labels (Work, Personal, Finance, Social, Promotions, Updates, General) with dark mode border styling.
+        - `PriorityFlag.tsx`: Visual priority indicator flagging Critical, High, and Low urgency levels with semantic alert colors.
+    - Defined `CATEGORY_STYLES` palette mapping in `Frontend/src/shared/constants/email.ts`.
+    - Integrated `CategoryBadge` and `PriorityFlag` into `EmailListTable.tsx` across desktop table columns and mobile card views.
+    - Added one-click "Priority" inbox quick filter button in `EmailListHeader.tsx` to instantly isolate urgent correspondence.
+    - Added AI Category and AI Priority dropdown options into `useInboxPageFilters.ts` and integrated into `useInboxPageData.ts`.
+    - Implemented interactive AI conversation components in `Frontend/src/features/emails/components/ai/`:
+        - `EmailAiSummaryCard.tsx`: Collapsible summary card rendering executive summary, key takeaways, and action items with on-demand regenerate triggers.
+        - `SuggestedRepliesBar.tsx`: Contextual reply chip selector with formal, casual, and concise tone badges and single-click composer prefill.
+    - Integrated `EmailAiSummaryCard` and `SuggestedRepliesBar` into `ThreadView` and single-message `EmailPage`.
 
 ## [3.6.1] - 2026-11-17
 

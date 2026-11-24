@@ -1,8 +1,9 @@
 'use client';
 
-import { Keyboard } from 'lucide-react';
+import { Flag, Keyboard } from 'lucide-react';
 import React from 'react';
 
+import { EMAIL_AI_PRIORITY } from '@mailsense/types';
 import SearchHeader from '@shared/components/inputs/SearchHeader';
 import FilterModal from '@shared/components/utils/FilterModal';
 import { UI_CONSTANTS } from '@shared/constants';
@@ -75,6 +76,18 @@ const EmailListHeader: React.FC<EmailListHeaderProps> = (props) => {
                         onResetSelection={handleResetSelection}
                         onResetPage={handleResetPage}
                     />
+                    <Button
+                        variant={filter?.aiPriority === EMAIL_AI_PRIORITY.HIGH ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => {
+                            const nextPriority = filter?.aiPriority === EMAIL_AI_PRIORITY.HIGH ? undefined : EMAIL_AI_PRIORITY.HIGH;
+                            setFilter(filter ? { ...filter, aiPriority: nextPriority } : { aiPriority: nextPriority });
+                        }}
+                        className="h-9 cursor-pointer gap-1.5 text-xs"
+                    >
+                        <Flag className="size-3.5 fill-amber-500/20 text-amber-500" />
+                        <span>Priority</span>
+                    </Button>
                     {onOpenShortcutsModal && (
                         <Tooltip>
                             <TooltipTrigger asChild>

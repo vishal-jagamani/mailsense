@@ -58,7 +58,7 @@ describe('SchedulerService', () => {
             // Should add repeatable sync for acc3 and acc4
             expect(mockQueue.add).toHaveBeenCalledWith(
                 'sync:acc3',
-                { accountId: 'acc3', userId: 'user3', force: false },
+                { accountId: 'acc3', userId: 'user3', force: false, triggerType: 'SCHEDULED' },
                 {
                     repeat: { every: 300000 },
                     jobId: 'repeat:acc3',
@@ -67,7 +67,7 @@ describe('SchedulerService', () => {
             );
             expect(mockQueue.add).toHaveBeenCalledWith(
                 'sync:acc4',
-                { accountId: 'acc4', userId: 'user4', force: false },
+                { accountId: 'acc4', userId: 'user4', force: false, triggerType: 'SCHEDULED' },
                 {
                     repeat: { every: 600000 },
                     jobId: 'repeat:acc4',
@@ -87,7 +87,7 @@ describe('SchedulerService', () => {
 
             expect(mockQueue.add).toHaveBeenCalledWith(
                 'sync:acc1',
-                { accountId: 'acc1', userId: 'user1', force: false },
+                { accountId: 'acc1', userId: 'user1', force: false, triggerType: 'SCHEDULED' },
                 {
                     repeat: { every: 900000 },
                     jobId: 'repeat:acc1',

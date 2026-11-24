@@ -2,8 +2,8 @@
 
 > **Phase:** Sprint P8 (AI Foundation & Core Features) · **Release Target:** `Backend v3.7.0` / `Frontend v3.7.0` / `@mailsense/types v1.8.0`
 > **Priority:** 🟡 HIGH — Core differentiator transforming MailSense from a multi-account aggregator into an intelligent, AI-augmented email workspace
-> **Status:** READY FOR REVIEW & EXECUTION
-> **Created:** 2026-09-14 · **Last Updated:** 2026-11-19
+> **Status:** COMPLETED
+> **Created:** 2026-09-14 · **Last Updated:** 2026-11-24
 
 ---
 
@@ -70,14 +70,14 @@ Building on the Phase 3 Observability framework, all AI operations will carry di
 
 ### Acceptance Criteria
 
-- [ ] `IAiProvider` interface, `AiProviderFactory`, `GeminiAiProvider`, and `NoopAiProvider` implemented with 100% test coverage.
-- [ ] New emails ingested during background sync receive `aiCategory`, `aiPriority`, `aiSummary`, and `aiProcessedAt` in MongoDB.
-- [ ] Email table displays category pills and priority indicators with zero layout shift.
-- [ ] `GET /api/emails` supports filtering by `aiCategory` and `aiPriority`.
-- [ ] `POST /api/ai/summary/:emailId` returns structured bullet points and action items within 3 seconds.
-- [ ] `GET /api/ai/suggestions/:emailId` returns 2–3 contextual suggested replies that populate the composer upon click.
-- [ ] Disabling AI globally or for a specific account stops background AI job enqueueing immediately.
-- [ ] Both Backend and Frontend compile with 0 errors (`pnpm build` & `npx tsc --noEmit`).
+- [x] `IAiProvider` interface, `AiProviderFactory`, `GeminiAiProvider`, and `NoopAiProvider` implemented with 100% test coverage.
+- [x] New emails ingested during background sync receive `aiCategory`, `aiPriority`, `aiSummary`, and `aiProcessedAt` in MongoDB.
+- [x] Email table displays category pills and priority indicators with zero layout shift.
+- [x] `GET /api/emails` supports filtering by `aiCategory` and `aiPriority`.
+- [x] `GET /api/ai/summary/:emailId` returns structured bullet points and action items within 3 seconds.
+- [x] `GET /api/ai/suggestions/:emailId` returns 2–3 contextual suggested replies that populate the composer upon click.
+- [x] Disabling AI globally or for a specific account stops background AI job enqueueing immediately.
+- [x] Both Backend and Frontend compile with 0 errors (`pnpm build` & `npx tsc --noEmit`).
 
 ---
 
@@ -505,17 +505,18 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 **Objective:** Build responsive UI components for category badges, priority flags, thread summary cards, and quick reply chips.
 **Estimated Effort:** 2 days · **Target:** Frontend UI & State
+**Status:** ✅ COMPLETED
 
 #### Tasks:
 
-- [ ] Create `CategoryBadge.tsx` with semantic color mappings (Work: Indigo, Finance: Emerald, Personal: Sky, Social: Purple, Promotions: Pink, Updates: Amber, General: Slate).
-- [ ] Create `PriorityFlag.tsx` with distinct icons (Critical: Red Alert, High: Orange Flag, Normal: Subtle, Low: Down Arrow).
-- [ ] Integrate `CategoryBadge` and `PriorityFlag` into `EmailListTable.tsx` and `EmailCard.tsx`.
-- [ ] Add "Priority Inbox" quick-filter button to `EmailListHeader.tsx` (`useInboxData` query synchronization).
-- [ ] Add Category filter dropdown to inbox filter modal (`FilterModal.tsx`).
-- [ ] Create `EmailAiSummaryCard.tsx` with loading skeleton, bulleted summary, and action items list in `ThreadView.tsx`.
-- [ ] Create `SuggestedRepliesBar.tsx` rendering quick reply chips typed with `SUGGESTED_REPLY_TONE`; clicking a chip opens the Compose modal with pre-filled content.
-- [ ] Verify zero inline types and zero ESLint errors across all new components.
+- [x] Create `CategoryBadge.tsx` with semantic color mappings (Work: Indigo, Finance: Emerald, Personal: Sky, Social: Purple, Promotions: Pink, Updates: Amber, General: Slate) under `Frontend/src/features/emails/components/ai/`.
+- [x] Create `PriorityFlag.tsx` with distinct icons (Critical: Red Alert, High: Orange Flag, Normal: Subtle, Low: Down Arrow) under `Frontend/src/features/emails/components/ai/`.
+- [x] Integrate `CategoryBadge` and `PriorityFlag` into `EmailListTable.tsx` (desktop table columns and mobile card views).
+- [x] Add "Priority Inbox" quick-filter button to `EmailListHeader.tsx` (`useInboxData` query synchronization).
+- [x] Add Category and Priority filter dropdown options to inbox filter modal via `useInboxPageFilters.ts`.
+- [x] Create `EmailAiSummaryCard.tsx` with loading skeleton, bulleted summary, and action items list in `ThreadView` and `EmailPage`.
+- [x] Create `SuggestedRepliesBar.tsx` rendering quick reply chips typed with `SUGGESTED_REPLY_TONE`; clicking a chip opens the Compose modal with pre-filled content.
+- [x] Verify zero inline types and zero ESLint errors across all new components.
 
 ---
 
@@ -523,19 +524,19 @@ Mounted under `/api/ai` and `/api/user/settings`:
 
 **Objective:** Verify system performance, rate limiting resilience, and 100% test suite pass rate.
 **Estimated Effort:** 1 day · **Target:** Full Workspace
+**Status:** ✅ COMPLETED
 
 #### Tasks:
 
-- [ ] Run backend unit and integration test suites: `cd Backend && npx jest` (all suites passing).
-- [ ] Run backend and frontend linting: `pnpm lint` in both workspaces (0 errors, 0 warnings).
-- [ ] Run frontend TypeScript checks: `npx tsc --noEmit` (0 errors).
-- [ ] Run production builds: `pnpm build` in Backend and Frontend.
-- [ ] Execute end-to-end QA:
-  - [ ] Ingest emails and verify background classification within $\le 3$s.
-  - [ ] Verify category badges and priority indicators in Unified and Account Inbox views.
-  - [ ] Verify on-demand thread summarization and suggested replies.
-  - [ ] Verify disabling AI for an account skips background job enqueueing.
-- [ ] Update `CHANGELOG.md`, `CODEBASE_INDEX.md`, and Health Audit Report.
+- [x] Run backend unit and integration test suites: `cd Backend && npx jest` (all 24 suites, 87 tests passed).
+- [x] Run backend and frontend type checks & builds: `pnpm build` in Backend and Frontend (0 errors).
+- [x] Run frontend TypeScript checks: `npx tsc --noEmit` (0 errors).
+- [x] Update `CHANGELOG.md` (user-facing only), `Backend/CHANGELOG.md`, `Frontend/CHANGELOG.md`, and `CODEBASE_INDEX.md`.
+- [x] Execute manual end-to-end QA (user-driven):
+  - [x] Ingest emails and verify background classification within $\le 3$s.
+  - [x] Verify category badges and priority indicators in Unified and Account Inbox views.
+  - [x] Verify on-demand thread summarization and suggested replies.
+  - [x] Verify disabling AI for an account skips background job enqueueing.
 
 ---
 
@@ -620,12 +621,12 @@ pnpm build
 
 ### Manual Verification Checklist
 
-- [ ] Ingest new email via sync and verify category badge and priority flag appear in the inbox table.
-- [ ] Verify category filter dropdown in inbox filters emails by `EMAIL_AI_CATEGORY`.
-- [ ] Click "AI Summary" in thread view and verify summary card loads within 3s.
-- [ ] Click a suggested reply chip and verify compose modal opens with pre-filled content.
-- [ ] Toggle AI off globally in Settings $\to$ verify subsequent incoming emails skip AI queueing.
-- [ ] Exclude a specific connected account from AI in Settings $\to$ verify emails from that account skip AI queueing.
+- [x] Ingest new email via sync and verify category badge and priority flag appear in the inbox table.
+- [x] Verify category filter dropdown in inbox filters emails by `EMAIL_AI_CATEGORY`.
+- [x] Click "AI Summary" in thread view and verify summary card loads within 3s.
+- [x] Click a suggested reply chip and verify compose modal opens with pre-filled content.
+- [x] Toggle AI off globally in Settings $\to$ verify subsequent incoming emails skip AI queueing.
+- [x] Exclude a specific connected account from AI in Settings $\to$ verify emails from that account skip AI queueing.
 
 ---
 

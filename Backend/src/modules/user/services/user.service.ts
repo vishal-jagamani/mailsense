@@ -176,18 +176,7 @@ export class UserService {
             logger.info('Updating user AI settings', { auth0UserId, payload });
             const updatedDoc = await UserSettingsRepository.updateAiSettings(auth0UserId, payload);
             const globalFeatureFlag = AI_CONFIG.provider !== AI_PROVIDER_NAME.NOOP;
-
-            const aiSettings: UserAISettings = updatedDoc?.ai ?? {
-                enabled: payload.enabled ?? true,
-                features: {
-                    categorization: payload.features?.categorization ?? true,
-                    priorityScoring: payload.features?.priorityScoring ?? true,
-                    summarization: payload.features?.summarization ?? true,
-                    suggestedReplies: payload.features?.suggestedReplies ?? true,
-                },
-                disabledAccountIds: payload.disabledAccountIds ?? [],
-                consentGivenAt: new Date(),
-            };
+            const aiSettings = this.resolveAiSettings(updatedDoc, payload);
 
             return {
                 status: true,
@@ -202,5 +191,30 @@ export class UserService {
             logger.error(`Error in UserService.updateUserAiSettings: ${errorMessage}`, { auth0UserId, payload, error: err });
             throw err;
         }
+    }
+
+    private resolveAiSettings(updatedDoc: UserSettingsDocument | null, payload: UpdateUserAISettingsPayload): UserAISettings {
+        if (updatedDoc?.ai) {
+            return updatedDoc.ai;
+        }
+        return this.createDefaultAiSettings(payload);
+    }
+
+    private resolveAiFeatures(features?: UpdateUserAISettingsPayload['features']): UserAISettings['features'] {
+        return {
+            categorization: features?.categorization ?? true,
+            priorityScoring: features?.priorityScoring ?? true,
+            summarization: features?.summarization ?? true,
+            suggestedReplies: features?.suggestedReplies ?? true,
+        };
+    }
+
+    private createDefaultAiSettings(payload: UpdateUserAISettingsPayload): UserAISettings {
+        return {
+            enabled: payload.enabled ?? true,
+            features: this.resolveAiFeatures(payload.features),
+            disabledAccountIds: payload.disabledAccountIds ?? [],
+            consentGivenAt: new Date(),
+        };
     }
 }

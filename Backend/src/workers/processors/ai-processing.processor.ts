@@ -7,6 +7,7 @@ import { EmailRepository } from '@modules/emails/database/email.repository.js';
 import { UserSettingsRepository } from '@modules/user/database/user-settings.repository.js';
 import { createLogger } from '@observability';
 import { getQueue, QUEUE_NAMES } from '@queue';
+import { decompressString } from '@utils';
 import { Job } from 'bullmq';
 
 const logger = createLogger(LOGGER_MODULE.AI_PROCESSING_PROCESSOR);
@@ -55,7 +56,7 @@ const executeAIProcessingAndStoreAiMetadata = async (
         subject: email.subject,
         from: email.from,
         to: email.to,
-        bodyPlain: email.bodyPlain,
+        bodyPlain: decompressString(email.bodyPlain),
         receivedAt: email.receivedAt,
     });
 

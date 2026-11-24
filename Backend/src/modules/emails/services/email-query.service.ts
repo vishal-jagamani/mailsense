@@ -77,6 +77,7 @@ export class EmailQueryService {
             threadCount: email.threadCount || 1,
             attachments: email.attachments || [],
             hasAttachments: Boolean(email.attachments && email.attachments.length > 0),
+            folders: email.folders,
             ...(email.aiCategory && { aiCategory: email.aiCategory }),
             ...(email.aiPriority && { aiPriority: email.aiPriority }),
             ...(email.aiSummary && { aiSummary: email.aiSummary }),

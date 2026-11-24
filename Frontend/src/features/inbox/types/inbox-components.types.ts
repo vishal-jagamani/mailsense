@@ -4,7 +4,7 @@ export interface EmailListHeaderProps {
     searchValue: string;
     setSearchValue: (value: string) => void;
     filter: Filter | null;
-    setFilter: (value: Filter) => void;
+    setFilter: (value: Filter | null) => void;
     selectedEmails: string[];
     allEmails?: EmailAttributes[];
     handleResetSelection: () => void;

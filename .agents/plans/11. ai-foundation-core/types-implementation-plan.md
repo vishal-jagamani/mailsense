@@ -1,8 +1,8 @@
 # AI Foundation & Core Features Types — Overview & Contract Changes
 
 > **Target Version:** `@mailsense/types` `v1.8.0`
-> **Status:** READY FOR REVIEW & EXECUTION
-> **Created:** 2026-09-14 · **Last Updated:** 2026-11-19
+> **Status:** COMPLETED
+> **Created:** 2026-09-14 · **Last Updated:** 2026-11-24
 
 ---
 
@@ -446,6 +446,23 @@ export interface AIProcessingJobResult {
 }
 ```
 
+### 2.6 Component: `src/common/common.interfaces.ts`
+
+#### [MODIFY] `Filter` (Phase 5)
+
+```typescript
+// Shared search and filter options interface used across frontend & backend
+export interface Filter {
+  searchText?: string | undefined;
+  accountId?: string[] | undefined;
+  dateRange?: DATE_RANGE | undefined;
+  folders?: string[] | undefined;
+  unread?: boolean | undefined;
+  aiCategory?: EMAIL_AI_CATEGORY | undefined;
+  aiPriority?: EMAIL_AI_PRIORITY | undefined;
+}
+```
+
 ---
 
 ## 3. Package Version & CHANGELOG.md Update
@@ -459,7 +476,7 @@ export interface AIProcessingJobResult {
 ### `mailsense-types/CHANGELOG.md` Snippet
 
 ```markdown
-## [1.8.0] - 2026-11-19
+## [1.8.0] - 2026-11-24
 
 ### Added
 
@@ -479,7 +496,7 @@ export interface AIProcessingJobResult {
 
 - Extended `EmailAttributes` with optional `aiCategory`, `aiPriority`, `aiSummary`, `aiTags`, `aiProcessedAt`, and `aiProvider`.
 - Additively extended `EmailListDTO` with `aiCategory`, `aiPriority`, and `aiSummary` for list view rendering while preserving all existing fields.
-- Extended `GetAllEmailsFilters` with `aiCategory` and `aiPriority` filter fields.
+- Extended `Filter` and `GetAllEmailsFilters` with `aiCategory` and `aiPriority` filter fields.
 - Extended `UserSettings` entity with `ai: UserAISettings` configuration.
 ```
 

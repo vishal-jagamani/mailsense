@@ -1,5 +1,5 @@
 import { useFetchEmailFilters } from '@features/inbox/api/inbox.queries';
-import { FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
+import { EMAIL_AI_CATEGORY, EMAIL_AI_PRIORITY, FILTER_OPTION_TYPE, FilterOption } from '@mailsense/types';
 import { DATE_RANGE_DROPDOWN_OPTIONS } from '@shared/constants';
 import { useMemo } from 'react';
 
@@ -58,6 +58,30 @@ export const useInboxPageFilterOptions = (accountId?: string) => {
                 label: 'Unread',
                 type: FILTER_OPTION_TYPE.TOGGLE,
                 data: { id: 'unread', name: 'unread', label: 'Unread', selectedValue: false },
+            },
+            {
+                id: 5,
+                name: 'aiCategory',
+                label: 'AI Category',
+                type: FILTER_OPTION_TYPE.DROPDOWN,
+                data: Object.values(EMAIL_AI_CATEGORY).map((cat) => ({
+                    id: cat,
+                    name: cat,
+                    label: cat.charAt(0).toUpperCase() + cat.slice(1),
+                    selectedValue: '',
+                })),
+            },
+            {
+                id: 6,
+                name: 'aiPriority',
+                label: 'AI Priority',
+                type: FILTER_OPTION_TYPE.DROPDOWN,
+                data: Object.values(EMAIL_AI_PRIORITY).map((prio) => ({
+                    id: prio,
+                    name: prio,
+                    label: prio.charAt(0).toUpperCase() + prio.slice(1),
+                    selectedValue: '',
+                })),
             },
         ];
     }, [emailFilters, accountId]);

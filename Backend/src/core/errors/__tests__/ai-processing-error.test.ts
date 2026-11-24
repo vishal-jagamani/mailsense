@@ -27,7 +27,7 @@ describe('AiProcessingError', () => {
             message: 'Operation failed',
         });
 
-        expect(error.description).toContain("provider 'noop'");
+        expect(error.description).toContain('provider \'noop\'');
         expect(error.suggestedAction).toBeDefined();
     });
 });

@@ -7,6 +7,8 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-11-24
+
 ### Added
 
 - **AI Provider Strategy Pattern & Infrastructure (Phase 1):**
@@ -43,6 +45,10 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
     - Added `userAiFeatureSettingsSchema` and `updateUserAiSettingsSchema` in `Backend/src/modules/user/schema/user.schema.ts`.
     - Exposed `GET /users/settings/ai` and `PATCH /users/settings/ai` in `UserController` and `Backend/src/modules/user/routes/user.routes.ts`.
     - Added unit test suite in `Backend/src/modules/user/__tests__/user-ai-settings.test.ts`.
+- **AI Processing Ingestion & Pipeline Refinements (Phase 5):**
+    - Enhanced `aiProcessingProcessor` to decompress compressed plain-text email bodies using `decompressString(email.bodyPlain)` prior to prompt construction and tokenization.
+    - Added `upsertSyncJob` in `SyncJobRepository` and tracked `triggerType` (`SCHEDULED` vs `MANUAL`) for background sync jobs.
+    - Refactored `EnvConfig.loadDotenv` method extraction and `UserService` helper methods (`resolveAiSettings`, `resolveAiFeatures`, `createDefaultAiSettings`) to satisfy strict code size & function limits.
 
 ## [3.6.1] - 2026-11-17
 

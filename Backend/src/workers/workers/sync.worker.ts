@@ -19,23 +19,15 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
 
     protected async onActive(job: Job<SyncAccountPayload, SyncJobResult>): Promise<void> {
         try {
-            const { accountId } = job.data;
+            const { accountId, triggerType } = job.data;
             if (job.id) {
-                const existingJob = await SyncJobRepository.getSyncJobByBullId(job.id);
-                if (!existingJob) {
-                    await SyncJobRepository.createSyncJob({
-                        accountId: accountId,
-                        bullJobId: job.id,
-                        status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
-                        triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.SCHEDULED,
-                        startedAt: Date.now(),
-                    });
-                } else {
-                    await SyncJobRepository.updateSyncJob(job.id, {
-                        status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
-                        startedAt: Date.now(),
-                    });
-                }
+                await SyncJobRepository.upsertSyncJob(job.id, {
+                    accountId,
+                    bullJobId: job.id,
+                    status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
+                    triggerType: triggerType ?? ACCOUNT_SYNC_JOB_TRIGGER_TYPE.SCHEDULED,
+                    startedAt: Date.now(),
+                });
             }
             await AccountRepository.updateAccount(accountId, {
                 syncInProgress: true,
