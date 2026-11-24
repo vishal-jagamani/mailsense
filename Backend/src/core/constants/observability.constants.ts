@@ -44,4 +44,12 @@ export enum LOGGER_MODULE {
     SYNC_ACCOUNT_PROCESSOR = 'SyncAccountProcessor',
     REFRESH_TOKEN_PROCESSOR = 'RefreshTokenProcessor',
     AUTH_MIDDLEWARE = 'AuthMiddleware',
+    // AI Observability
+    AI_SERVICE = 'AiService',
+    AI_CONTROLLER = 'AiController',
+    AI_WORKER = 'AiWorker',
+    AI_PROCESSING_PROCESSOR = 'AiProcessingProcessor',
+    GEMINI_PROVIDER = 'GeminiProvider',
+    NOOP_AI_PROVIDER = 'NoopAiProvider',
+    AI_PROVIDER_FACTORY = 'AiProviderFactory',
 }

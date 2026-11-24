@@ -1,5 +1,5 @@
 import { NotFoundError } from '@errors';
-import { AttachmentStreamResult, IEmailProvider, SyncResult } from '@integrations/email/index.js';
+import { AttachmentStreamResult, EmailSyncResult, IEmailProvider } from '@integrations/email/index.js';
 import {
     GmailMessageObjectFull,
     GmailOAuthAccessTokenResponse,
@@ -45,7 +45,7 @@ export class GmailProvider implements IEmailProvider<GmailOAuthAccessTokenRespon
         return this.gmailAuthService.getUserProfileFromAccessToken(accessToken);
     }
 
-    async fetchMessages(accountId: string, cursor?: string): Promise<SyncResult | null> {
+    async fetchMessages(accountId: string, cursor?: string): Promise<EmailSyncResult | null> {
         if (cursor) {
             const historyDetails = await this.gmailMessageReadService.getMessagesAfterLastHistory(accountId, cursor);
             if (!historyDetails) return null;

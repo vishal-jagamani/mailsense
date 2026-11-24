@@ -6,6 +6,8 @@ import React, { useEffect } from 'react';
 import { toast } from 'sonner';
 
 import AttachmentBadge from '@features/emails/components/AttachmentBadge';
+import CategoryBadge from '@features/emails/components/ai/CategoryBadge';
+import PriorityFlag from '@features/emails/components/ai/PriorityFlag';
 import { EmailAttributes } from '@mailsense/types';
 import { useIsMobile } from '@shared/hooks';
 import { Checkbox } from '@shared/ui/checkbox';
@@ -128,15 +130,26 @@ const EmailListTable: React.FC<EmailListTableProps> = ({
                                         />
                                     </TableCell>
                                     {isMobile ? (
-                                        <TableCell className="flex max-w-64 flex-col">
-                                            <p className="truncate">{email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}</p>
-                                            <p className="truncate">{email.subject}</p>
-                                            <p className="text-muted-foreground line-clamp-2 truncate">{email.bodyPlain}</p>
-                                        </TableCell>
+                                        <>
+                                            <TableCell className="flex max-w-64 flex-col gap-0.5">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-1.5 truncate">
+                                                        <PriorityFlag priority={email.aiPriority} />
+                                                        <p className="truncate font-medium">
+                                                            {email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}
+                                                        </p>
+                                                    </div>
+                                                    <CategoryBadge category={email.aiCategory} />
+                                                </div>
+                                                <p className="truncate text-xs">{email.subject}</p>
+                                                <p className="text-muted-foreground line-clamp-2 truncate text-[11px]">{email.bodyPlain}</p>
+                                            </TableCell>
+                                        </>
                                     ) : (
                                         <>
                                             <TableCell className="w-44">
                                                 <div className="flex items-center gap-1.5 truncate">
+                                                    <PriorityFlag priority={email.aiPriority} />
                                                     <span className="truncate">
                                                         {email.from.includes('no-reply') ? 'no-reply' : email.from?.split('<')[0]}
                                                     </span>
@@ -149,7 +162,12 @@ const EmailListTable: React.FC<EmailListTableProps> = ({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="max-w-60 truncate">
-                                                {email.subject} - <span className="text-muted-foreground">{email.bodyPlain}</span>
+                                                <div className="flex items-center gap-2 truncate">
+                                                    <CategoryBadge category={email.aiCategory} />
+                                                    <span className="truncate">
+                                                        {email.subject} - <span className="text-muted-foreground">{email.bodyPlain}</span>
+                                                    </span>
+                                                </div>
                                             </TableCell>
                                         </>
                                     )}

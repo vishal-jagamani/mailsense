@@ -2,10 +2,13 @@ import {
     AccountAttributes,
     APIResponse,
     ComposeEmailRequestBody,
+    EMAIL_AI_CATEGORY,
+    EMAIL_AI_PRIORITY,
     EmailAttachment,
     EmailAttributes,
     FolderAttributes,
     SearchOtherContactsResponse,
+    SuggestedReplyItem,
 } from '@mailsense/types';
 
 export interface EmailHeaderProps {
@@ -115,4 +118,32 @@ export interface EmailMenuBarOptionsProps {
     accountId: string;
     emailId: string;
     onManualUnreadOperation?: () => void;
+}
+
+export interface CategoryBadgeProps {
+    category?: EMAIL_AI_CATEGORY | string | null;
+    className?: string;
+}
+
+export interface CategoryStyle {
+    label: string;
+    className: string;
+}
+
+export interface PriorityFlagProps {
+    priority?: EMAIL_AI_PRIORITY | string | null;
+    className?: string;
+    showNormal?: boolean;
+}
+
+export interface EmailAiSummaryCardProps {
+    emailId: string;
+    initialSummary?: string | null;
+    className?: string;
+}
+
+export interface SuggestedRepliesBarProps {
+    emailId: string;
+    onSelectReply: (reply: SuggestedReplyItem) => void;
+    className?: string;
 }

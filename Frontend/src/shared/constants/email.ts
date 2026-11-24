@@ -1,4 +1,5 @@
-import { DATE_RANGE, KEYBOARD_SHORTCUT_ACTION, KeyboardShortcutGroup } from '@mailsense/types';
+import { CategoryStyle } from '@features/emails/types';
+import { DATE_RANGE, EMAIL_AI_CATEGORY, KEYBOARD_SHORTCUT_ACTION, KeyboardShortcutGroup } from '@mailsense/types';
 import { DateRangeOption } from '@shared/types';
 
 export const EMAILS_PAGE_SIZE = 20;
@@ -108,3 +109,34 @@ export const DEFAULT_KEYBOARD_SHORTCUT_GROUPS: KeyboardShortcutGroup[] = [
         ],
     },
 ] as const;
+
+export const CATEGORY_STYLES: Record<string, CategoryStyle> = {
+    [EMAIL_AI_CATEGORY.WORK]: {
+        label: 'Work',
+        className: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border-indigo-200/80 dark:border-indigo-800/40',
+    },
+    [EMAIL_AI_CATEGORY.PERSONAL]: {
+        label: 'Personal',
+        className: 'bg-sky-50 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300 border-sky-200/80 dark:border-sky-800/40',
+    },
+    [EMAIL_AI_CATEGORY.FINANCE]: {
+        label: 'Finance',
+        className: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/40',
+    },
+    [EMAIL_AI_CATEGORY.SOCIAL]: {
+        label: 'Social',
+        className: 'bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border-purple-200/80 dark:border-purple-800/40',
+    },
+    [EMAIL_AI_CATEGORY.PROMOTIONS]: {
+        label: 'Promotions',
+        className: 'bg-pink-50 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border-pink-200/80 dark:border-pink-800/40',
+    },
+    [EMAIL_AI_CATEGORY.UPDATES]: {
+        label: 'Updates',
+        className: 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/80 dark:border-amber-800/40',
+    },
+    [EMAIL_AI_CATEGORY.GENERAL]: {
+        label: 'General',
+        className: 'bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300 border-slate-200 dark:border-slate-700/40',
+    },
+} as const;

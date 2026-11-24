@@ -36,23 +36,13 @@ class EnvConfig {
     public readonly R2_SECRET_ACCESS_KEY: string;
     public readonly R2_BUCKET_NAME: string;
     public readonly R2_REGION: string;
+    // AI Configuration Secrets
+    public readonly AI_PROVIDER: string;
+    public readonly GOOGLE_GEMINI_API_KEY: string | undefined;
+    public readonly GOOGLE_GEMINI_MODEL: string;
 
     constructor() {
-        dotenv?.config();
-        if (process.env.NODE_ENV) {
-            const envFilePath = path.resolve(process.cwd(), `.env.${process.env.NODE_ENV}`);
-            if (fs.existsSync(envFilePath)) {
-                dotenv.config({ path: envFilePath });
-            } else if (process.env.NODE_ENV === 'test') {
-                const fallbackPath = path.resolve(process.cwd(), '.env.local');
-                dotenv.config({ path: fallbackPath });
-            } else {
-                dotenv.config({ path: envFilePath });
-            }
-        } else {
-            const envFilePath = path.resolve(process.cwd(), `.env.local`);
-            dotenv.config({ path: envFilePath });
-        }
+        this.loadDotenv();
 
         const schema = z.object(envSchemaObject);
 
@@ -95,6 +85,27 @@ class EnvConfig {
         this.R2_SECRET_ACCESS_KEY = data.R2_SECRET_ACCESS_KEY;
         this.R2_BUCKET_NAME = data.R2_BUCKET_NAME;
         this.R2_REGION = data.R2_REGION;
+        // AI Configuration Secrets
+        this.AI_PROVIDER = data.AI_PROVIDER;
+        this.GOOGLE_GEMINI_API_KEY = data.GOOGLE_GEMINI_API_KEY;
+        this.GOOGLE_GEMINI_MODEL = data.GOOGLE_GEMINI_MODEL;
+    }
+
+    private loadDotenv(): void {
+        dotenv?.config();
+        const nodeEnv = process.env.NODE_ENV;
+        if (nodeEnv) {
+            const envFilePath = path.resolve(process.cwd(), `.env.${nodeEnv}`);
+            if (fs.existsSync(envFilePath)) {
+                dotenv.config({ path: envFilePath });
+            } else if (nodeEnv === 'test') {
+                dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+            } else {
+                dotenv.config({ path: envFilePath });
+            }
+        } else {
+            dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
+        }
     }
 }
 

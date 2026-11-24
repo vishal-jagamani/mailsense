@@ -6,6 +6,10 @@ export class SyncJobRepository {
         return SyncJob.create(data);
     }
 
+    public static async upsertSyncJob(bullJobId: string, data: Partial<SyncJobInput>): Promise<SyncJobDocument | null> {
+        return SyncJob.findOneAndUpdate({ bullJobId }, { $set: data }, { upsert: true, new: true, setDefaultsOnInsert: true });
+    }
+
     public static async updateSyncJob(bullJobId: string, data: Partial<SyncJobInput>): Promise<SyncJobDocument | null> {
         return SyncJob.findOneAndUpdate({ bullJobId }, data, { new: true });
     }

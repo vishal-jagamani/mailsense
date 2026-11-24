@@ -2,15 +2,14 @@ import { Job } from 'bullmq';
 
 import { LOGGER_MODULE } from '@constants';
 import { NotFoundError, SyncError } from '@errors';
-import { EmailProviderFactory, IEmailProvider, SyncResult } from '@integrations/email/index.js';
+import { EmailProviderFactory, EmailSyncResult, IEmailProvider } from '@integrations/email/index.js';
 import { ACCOUNT_PROVIDER, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
 import { AccountDocument, AccountRepository } from '@modules/accounts/database/index.js';
 import { EmailInput, EmailRepository } from '@modules/emails/database/index.js';
 import { FolderService } from '@modules/folders/services/index.js';
 import { monitoring } from '@monitoring';
 import { createLogger, setTraceContext } from '@observability';
-import { RefreshTokenPayload, SyncAccountPayload } from '@queue';
-import { ErrorWithStatus, SuccessStatusResponse } from '@types';
+import { ErrorWithStatus, RefreshTokenPayload, SuccessStatusResponse, SyncAccountPayload } from '@types';
 import { eventBus } from '../../core/events/index.js';
 import { refreshTokenProcessor } from './refresh-token.processor.js';
 
@@ -48,7 +47,7 @@ function validateAccountForSync(account: AccountDocument, accountId: string): bo
     return true;
 }
 
-async function fetchMessagesWithRetry(emailProvider: IEmailProvider, accountId: string, cursor?: string): Promise<SyncResult | null> {
+async function fetchMessagesWithRetry(emailProvider: IEmailProvider, accountId: string, cursor?: string): Promise<EmailSyncResult | null> {
     try {
         return cursor !== undefined ? await emailProvider.fetchMessages(accountId, cursor) : await emailProvider.fetchMessages(accountId);
     } catch (error) {
@@ -107,7 +106,7 @@ async function upsertAccountNewEmailsAndPublishEvent(
     }
 }
 
-async function upsertAccountSyncData(userId: string, accountId: string, syncResult: SyncResult, fullSync: boolean): Promise<SyncJobResult> {
+async function upsertAccountSyncData(userId: string, accountId: string, syncResult: EmailSyncResult, fullSync: boolean): Promise<SyncJobResult> {
     let addedEmailsCount = 0;
     let deletedEmailsCount = 0;
     const { addedEmails, deletedEmailIds, newCursor } = syncResult;
@@ -173,7 +172,7 @@ export const syncAccountProcessor = async (job: Job<SyncAccountPayload, SyncJobR
     // 2. Sync Emails (Incremental vs Full Sync)
     logger.info(`Fetching email updates for account: ${accountId} (Cursor: ${account.lastSyncCursor || 'None'})`);
 
-    let syncResult: SyncResult | null = await fetchMessagesWithRetry(emailProvider, accountId, account.lastSyncCursor);
+    let syncResult: EmailSyncResult | null = await fetchMessagesWithRetry(emailProvider, accountId, account.lastSyncCursor);
     let isFullSync = false;
 
     // Fallback to full sync if incremental sync returned null (or cursor was null/expired)

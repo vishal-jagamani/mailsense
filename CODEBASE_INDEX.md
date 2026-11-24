@@ -19,14 +19,14 @@
 ### Config
 
 - `Backend/src/core/config/env.config.ts`: validates env via Zod
-- `Backend/src/core/config/env.schema.ts`: centralized Zod schema definitions (`envSchemaObject`) for environment variables
-- `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis)
+- `Backend/src/core/config/env.schema.ts`: centralized Zod schema definitions (`envSchemaObject`) for environment variables including AI settings (`AI_PROVIDER`, `GOOGLE_GEMINI_API_KEY`, `GOOGLE_GEMINI_MODEL`)
+- `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis, AI)
 - `Backend/src/core/config/logger.config.ts`: logger configuration
 - `Backend/src/core/config/app.config.ts`: exposes the backend Redis connection URL config used by BullMQ and `ioredis`
 - `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
 - `Backend/src/core/config/env.config.ts`: validates queue/runtime Redis configuration through `REDIS_URL`
-- `Backend/package.json`: backend package metadata currently uses version `3.6.0` with `pnpm@9.15.9`
-- `Frontend/package.json`: frontend package metadata currently uses version `3.6.0`
+- `Backend/package.json`: backend package metadata currently uses version `3.7.0` with `pnpm@9.15.9`
+- `Frontend/package.json`: frontend package metadata currently uses version `3.7.0`
 
 ### Security
 
@@ -46,12 +46,13 @@
 ### Queue Infrastructure
 
 - `Backend/src/core/queue/*`: BullMQ/Redis queue bootstrap, queue registry, queue service, and graceful shutdown handling
-  - `queue.config.ts`: queue names and default retry/backoff behavior, including token-refresh queue registration
+  - `queue.config.ts`: queue names (`SYNC_ACCOUNT`, `REFRESH_TOKEN`, `AI_PROCESSING`) and default retry/backoff behavior
   - `queue.registry.ts`: queue instance initialization/caching and cleanup
-  - `queue.service.ts`: job enqueue helpers for sync-account and refresh-token submission
+  - `queue.service.ts`: job enqueue helpers for sync-account, refresh-token, and AI processing jobs
   - `redis.connection.ts`: shared Redis connection for queue processing using `REDIS_URL` with `SERVICE_URI` fallback, reconnect handling, and graceful shutdown
   - `scheduler.service.ts`: synchronizes BullMQ repeatable sync schedules with active/sync-enabled account settings and user-level sync preferences
   - `index.ts`: queue startup/shutdown hooks used by the server lifecycle, including event bootstrap, worker startup, scheduler sync, and teardown
+- `Backend/src/core/types/queue.types.ts`: dedicated queue payload types (`SyncAccountPayload`, `RefreshTokenPayload`, `EnqueueJobOptions`, `AIProcessingJobPayload`)
 - `Backend/src/core/queue/__tests__/queue.service.test.ts`: queue integration coverage for sync job enqueue flow
 - `Backend/src/core/queue/__tests__/scheduler.service.test.ts`: scheduler coverage for repeatable sync job registration and cleanup
 
@@ -61,18 +62,22 @@
   - `event-bus.ts`: typed event emitter wrapper with safe subscriber execution and sanitized logging, now powered by shared event contracts from `@mailsense/types`
   - `handlers/email-created.handler.ts`: subscriber hook for newly indexed email events
   - `handlers/sync-completed.handler.ts`: subscriber hook for sync completion events; triggers `AnalyticsService.refreshAccountMetrics` to update daily account metrics snapshots
-  - `handlers/email-batch-synced.handler.ts`: subscriber hook for `EMAIL_BATCH_SYNCED` system events; provides foundational integration hook for Phase 4 AI ingestion queues
+  - `handlers/email-batch-synced.handler.ts`: subscriber hook for `EMAIL_BATCH_SYNCED` system events; enqueues ingested email batches into the `ai-processing` queue
   - `index.ts`: system-event initialization entry point used during background jobs startup
 - `Backend/src/core/events/__tests__/event-bus.test.ts`: event bus coverage for publish/subscribe behavior and subscriber error isolation
 - `Backend/src/core/events/__tests__/email-batch-synced.handler.test.ts`: unit tests for `EMAIL_BATCH_SYNCED` event subscriber and error containment
 
 ### Workers
 
-- `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, and lifecycle event hooks
-- `Backend/src/workers/sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
-- `Backend/src/workers/processors/sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs, refactored into focused private helper methods (`syncAccountFoldersStep`, `fetchEmailChangesStep`, `applyIncrementalSyncStep`, `applyFullSyncStep`) with cyclomatic complexity $\le 8$
-- `Backend/src/workers/token-refresh.worker.ts`: worker for refresh-token queue processing
-- `Backend/src/workers/processors/refresh-token.processor.ts`: refreshes provider access tokens with per-account Redis locking
+- `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, customizable worker options (`getWorkerOptions`), and lifecycle event hooks
+- Categorized worker architecture (`Backend/src/workers/workers/*`):
+  - `ai.worker.ts`: `AIProcessingWorker` with `concurrency: 5` and token bucket rate limiter `limiter: { max: 50, duration: 60000 }`
+  - `sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
+  - `token-refresh.worker.ts`: worker for refresh-token queue processing
+- Processors (`Backend/src/workers/processors/*`):
+  - `ai-processing.processor.ts`: email intelligence processor with idempotency checks, user privacy verification, LLM classification via `AiProviderFactory`, and structured rate-limit queue pausing via `queue.rateLimit()`
+  - `sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs, refactored into focused private helper methods (`syncAccountFoldersStep`, `fetchEmailChangesStep`, `applyIncrementalSyncStep`, `applyFullSyncStep`) with cyclomatic complexity $\le 8$
+  - `refresh-token.processor.ts`: refreshes provider access tokens with per-account Redis locking
 - `Backend/src/workers/worker.types.ts`: shared worker result types
 - `Backend/src/workers/__tests__/sync.worker.test.ts`: coverage for incremental and full background sync processor flows
 
@@ -101,9 +106,9 @@
 
 ### Error Infrastructure (`Backend/src/core/errors/*`)
 
-- `ErrorCodes.ts`: standardized `ErrorCode` string enum providing compiler-enforced error codes
+- `ErrorCodes.ts`: standardized `ErrorCode` string enum providing compiler-enforced error codes including `AI_PROCESSING_FAILED`
 - `AppError.ts`: base operational error class carrying `errorCode`, `httpStatus`, `traceId`, and typed context
-- `DomainErrors.ts`: 11 domain error subclasses (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`); all services, controllers, provider clients, and background workers are fully migrated from generic `new Error` to these domain error classes
+- `DomainErrors.ts`: 12 domain error subclasses (`NotFoundError`, `BadRequestError`, `UnauthorizedError`, `ForbiddenError`, `ConflictError`, `ValidationError`, `ProviderApiError`, `TokenExpiredError`, `RateLimitError`, `SyncError`, `ExternalServiceError`, `AiProcessingError`); all services, controllers, provider clients, and background workers are fully migrated from generic `new Error` to these domain error classes
 - `ErrorFactories.ts`: ergonomic helpers for domain error instantiation
 
 ### Health Probes & Readiness Checks (`Backend/src/core/health/*`)
@@ -114,7 +119,7 @@
 
 ### Modules
 
-All 7 backend feature modules adhere to the standardized categorized subdirectory architecture (`constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`) with clean barrel exports (`index.ts`) per Rule 5.5.
+All 8 backend feature modules adhere to the standardized categorized subdirectory architecture (`constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`) with clean barrel exports (`index.ts`) per Rule 5.5.
 
 - Accounts (`Backend/src/modules/accounts/*`)
   - Categorized architecture with barrel exports: `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`, `constants/`
@@ -135,6 +140,14 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - Sync requests enqueue background jobs and persist sync-job tracking records
   - Account activation, deactivation, creation, and deletion synchronize repeatable background sync schedules
   - Dedicated types in `types/account.types.ts`: `OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`
+- AI (`Backend/src/modules/ai/*`)
+  - Categorized architecture with barrel exports: `constants/`, `controllers/`, `routes/`, `schema/`, `services/`, `types/`
+  - Controller layer (`controllers/ai.controller.ts`): endpoints for retrieving thread summaries (`getThreadSummary`) and generating suggested replies (`getSuggestedReplies`) with caller `userId` multi-tenant validation
+  - Service layer (`services/ai.service.ts`): orchestrates on-demand thread summarization and suggested reply generation via `AiProviderFactory`, verifies caller email ownership, sanitizes thread bodies, and throws typed domain errors (`NotFoundError`, `ForbiddenError`, `AiProcessingError`)
+  - Validation schema (`schema/ai.schema.ts`): Zod schemas for email ID route parameters (`emailIdParamSchema`)
+  - Route definitions (`routes/ai.routes.ts`): mounted at `/api/ai` (`GET /summary/:emailId`, `GET /suggestions/:emailId`)
+  - Dedicated types (`types/ai.types.ts`): `EmailIdParam`
+  - Centralized constants (`constants/ai.constants.ts`): `AI_ROUTES`
 - Analytics (`Backend/src/modules/analytics/*`)
   - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`, `utils/`
   - Database layer (`Backend/src/modules/analytics/database/*`):
@@ -203,11 +216,13 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - Folder sync and CRUD dispatch through shared provider strategy instances
 - Users (`Backend/src/modules/user/*`)
   - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`
-  - Validation schemas (`schema/user.schema.ts`): `updateUserSchema` (supporting `nickname`, `picture`, `email_verified`, `sub`, and `user_metadata`), `userMetadataSchema`, and `changePasswordSchema`
+  - Validation schemas (`schema/user.schema.ts`): `updateUserSchema` (supporting `nickname`, `picture`, `email_verified`, `sub`, and `user_metadata`), `userMetadataSchema`, `changePasswordSchema`, `userAiFeatureSettingsSchema`, and `updateUserAiSettingsSchema`
   - Session-scoped user/profile fetch/update
   - Change password via Auth0 Management API
   - User sync settings fetch/update endpoints for global account background-sync preferences
-  - All 6 service methods wrapped in explicit `try / catch` blocks with structured module logging via `LOGGER_MODULE.USER_SERVICE` and typed `NotFoundError` throws
+  - User AI settings fetch/update endpoints (`GET /users/settings/ai`, `PATCH /users/settings/ai`) for global AI engine toggle, granular feature flags, per-account exclusions, and consent timestamps
+  - Database layer (`database/`): `UserSettingsRepository.getAiSettings` and `updateAiSettings` with atomic `$set` updates on nested AI preferences
+  - All 8 service methods wrapped in explicit `try / catch` blocks with structured module logging via `LOGGER_MODULE.USER_SERVICE` and typed `NotFoundError` throws
 
 ### Integrations
 
@@ -254,6 +269,15 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - `auth0.client.ts`: `Auth0Api` handling Management API token acquisition, user details retrieval/updating, and password changes, wrapped in structured `AxiosApiError` error handling
   - `auth0.utils.ts`: `buildAuth0UpdatePayload` to sanitize and strip undefined values before dispatching to Auth0 Management API
   - `auth0.types.ts`: typed contracts including `Auth0UpdateUserPayload`, `Auth0UserDetailsResponse`, `Auth0AccessTokenResponse`, and `Auth0UserChangePassword`
+- AI Provider Strategy (`Backend/src/integrations/ai/*`)
+  - `ai.provider.ts`: `IAiProvider` interface defining core AI contracts (`classifyAndScoreEmail`, `summarizeEmailThread`, `generateSuggestedReplies`)
+  - `ai.provider.types.ts`: typed provider configuration contracts (`GeminiProviderConfig`, `SanitizedEmailContent`)
+  - `ai.provider.factory.ts`: singleton strategy provider selector and cache (`AiProviderFactory`), defaulting to Gemini or test-mode Noop
+  - `providers/gemini.provider.ts`: Google Gemini provider adapter utilizing `@google/genai` with `gemini-3.6-flash`, structured JSON response schema enforcement, 30s `AbortController` timeout, content sanitization, and `RateLimitError` detection
+  - `providers/noop.provider.ts`: deterministic mock AI provider for offline development and CI test environments
+  - `utils/gemini.utils.ts`: JSON schemas for classification, summarization, and suggested replies
+  - `index.ts`: unified barrel export accessible via `@integrations/ai`
+  - `__tests__/`: comprehensive unit tests for `AiProviderFactory` and `GeminiAiProvider`
 
 ### Data Models
 
@@ -264,14 +288,14 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
 - `Backend/src/modules/attachments/database/attachment.model.ts`
   - `StagedAttachment` with 24-hour TTL expiration index for Cloudflare R2 staging metadata
 - `Backend/src/modules/emails/database/email.model.ts`
-  - `Email` with deduplicated compound indexes on `(accountId, providerMessageId)`, `(accountId, receivedAt)`, `(accountId, folders, receivedAt)`, `(accountId, isRead)`, `(accountId, from)`, and `(accountId, threadId, receivedAt)`
+  - `Email` with compound indexes on `(accountId, providerMessageId)`, `(accountId, receivedAt)`, `(accountId, folders, receivedAt)`, `(accountId, isRead)`, `(accountId, from)`, `(accountId, threadId, receivedAt)`, `(accountId, aiCategory, receivedAt)`, and `(accountId, aiPriority, receivedAt)`
 - `Backend/src/modules/drafts/database/draft.model.ts`
   - `Draft` with compound indexes on `(userId, lastSavedAt)` and `(userId, accountId)`
 - `Backend/src/modules/folders/database/folder.model.ts`
   - `Folder` with provider folder identity + counts/role metadata
 - `Backend/src/modules/user/database/user.model.ts`
   - `User` indexed by `auth0UserId`
-  - `UserSettingsModel` for persisted account sync preferences per user
+  - `UserSettingsModel` for persisted account sync preferences and AI feature flags/privacy settings per user
 
 ### Shared Types / Utils
 
@@ -305,6 +329,8 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - `PATCH /users/change-password`
   - `GET /users/settings`
   - `PATCH /users/settings`
+  - `GET /users/settings/ai`
+  - `PATCH /users/settings/ai`
 - Accounts:
   - `GET /accounts/providers/list`
   - `GET /accounts/list/all`
@@ -349,6 +375,9 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - `GET /folders/list/:accountId`
 - Analytics:
   - `GET /analytics/dashboard`
+- AI:
+  - `GET /ai/summary/:emailId`
+  - `GET /ai/suggestions/:emailId`
 
 ## Frontend Index (`/Frontend`)
 
@@ -387,10 +416,10 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), composite state orchestration hook (`useDashboardPage.ts`), UI components (`DashboardHeader`, `OverviewKpiCards`, `EmailVolumeChart`, `AccountDistributionPieChart`, `ResponseTimeCard`, `TopSendersCard`, `AccountActivityGrid`, `DashboardSkeleton`, `DashboardEmptyState`), and primary dashboard page view (`pages/index.tsx`)
   - `features/auth/*`: login page and profile fetch query
   - `features/compose-email/*`: compose popup modal and rich-text editing controls organized in standardized kebab-case directory (`Frontend/src/features/compose-email/`)
-  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), `FormatEmailFromString` component, decomposed action hooks (`use-email-actions/`), compose hooks (`use-compose-email/`), keyboard navigation engine (`use-email-keyboard-shortcuts/` with `KEY_ACTIONS` dictionary lookup in `useEvaluateKeyPress`), move-to-folder dropdown (`use-move-to-folder-dropdown/` with extracted `useFolderFilterState`), keyboard shortcuts modal (`KeyboardShortcutsModal`), input guard utilities (`isInputElement`), and email API mutations decomposed into specialized mutation files (`email-status.mutations.ts`, `email-folder.mutations.ts`, `email-write.mutations.ts`) with composite barrel re-export (`email.mutations.ts`) featuring React Query cache snapshotting and optimistic rollbacks; query layer (`email.queries.ts`) features resilient retry suppression on 403/404 client errors for `useGetThreadQuery`; API client (`email.api.ts`) provides binary blob streaming via `downloadAttachment`; dedicated type definitions in `email-api.types.ts`, `email-component.types.ts`, `email-hooks.types.ts`, and `email-ui.types.ts` eliminate inline object types with unified barrel export in `types/index.ts`; strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
+  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), `FormatEmailFromString` component, decomposed action hooks (`use-email-actions/`), compose hooks (`use-compose-email/`), keyboard navigation engine (`use-email-keyboard-shortcuts/` with `KEY_ACTIONS` dictionary lookup in `useEvaluateKeyPress`), move-to-folder dropdown (`use-move-to-folder-dropdown/` with extracted `useFolderFilterState`), keyboard shortcuts modal (`KeyboardShortcutsModal`), input guard utilities (`isInputElement`), and email API mutations decomposed into specialized mutation files (`email-status.mutations.ts`, `email-folder.mutations.ts`, `email-write.mutations.ts`) with composite barrel re-export (`email.mutations.ts`) featuring React Query cache snapshotting and optimistic rollbacks; query layer (`email.queries.ts`) features resilient retry suppression on 403/404 client errors for `useGetThreadQuery`; AI API client (`ai.api.ts`) and queries (`ai.queries.ts`) providing on-demand thread summaries (`useSummarizeThreadQuery`) and reply suggestions (`useSuggestedRepliesQuery`); AI UI components in `components/ai/` (`CategoryBadge`, `PriorityFlag`, `EmailAiSummaryCard`, `SuggestedRepliesBar`); `CATEGORY_STYLES` palette mapping in `@shared/constants/email.ts`; API client (`email.api.ts`) provides binary blob streaming via `downloadAttachment`; dedicated type definitions in `email-api.types.ts`, `email-component.types.ts`, `email-hooks.types.ts`, and `email-ui.types.ts` eliminate inline object types with unified barrel export in `types/index.ts`; strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
   - `features/folders/*`: folders overview, folder email list (`useFolderEmailListPage` delegating actions to `useEmailActions` with keyboard shortcuts and modal), modular folder card components (`FolderCardHeader`, `FolderCardActions`, `FolderCard`), folder API layer with `syncAccountFolders` and strongly-typed `getFolderDetails`, dedicated mutation typing via `UpdateFolderMutationVariables` in `folders.types.ts` and `folders-components.types.ts`, folder action hooks, and explicitly named `FolderEmailListHeader.tsx` (eliminating anonymous `index.tsx`); strictly references canonical MongoDB `_id` (`folder._id`) across all UI operations
-  - `features/inbox/*`: unified inbox, account inbox, shared inbox header (`EmailListHeader` with shortcuts button), inbox filters/actions/table (`EmailListTable` with `focusedIndex` active keyboard cursor styling `ring-2 ring-primary ring-inset` and auto-scroll), inbox API layer, clean 104-line modern inbox page hook (`use-inbox-page/index.ts`) coordinating decomposed sub-hooks (`useInboxData`, `useInboxRefresh`) with zero ESLint suppression comments, menubar options under `use-inbox-email-menubar-options/` with sync-aware refresh behavior and keyboard shortcuts integration, and dedicated query/mutation and component types (`types/`: `inbox-components.types.ts`, `SearchEmailPayload`, `DeleteEmailPayload`); strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
-  - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, password modal, account-deletion UI, settings API layer, and dedicated mutation and component types (`types/`: `settings-api.types.ts`, `settings-component.types.ts`, `ChangePasswordPayload`)
+  - `features/inbox/*`: unified inbox, account inbox, shared inbox header (`EmailListHeader` with shortcuts button and single-click Priority quick filter), inbox filters (including AI Category and AI Priority dropdowns via `useInboxPageFilters`), inbox table (`EmailListTable` with integrated `CategoryBadge` and `PriorityFlag` across desktop table and mobile card views, `focusedIndex` active keyboard cursor styling `ring-2 ring-primary ring-inset` and auto-scroll), inbox API layer, clean modern inbox page hook (`use-inbox-page/index.ts`) coordinating decomposed sub-hooks (`useInboxPageData`, `useInboxPageFilters`) with zero ESLint suppression comments, menubar options under `use-inbox-email-menubar-options/` with sync-aware refresh behavior and keyboard shortcuts integration, and dedicated query/mutation and component types (`types/`: `inbox-components.types.ts`, `SearchEmailPayload`, `DeleteEmailPayload`); strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
+  - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, AI & Privacy tab view (`pages/ai/index.tsx`), modular AI setting cards (`components/ai/`: `GlobalAiToggleCard`, `AiFeatureTogglesCard`, `PerAccountAiExclusionCard`), custom hook `useAiSettings`, React Query hooks (`useGetAiSettingsQuery`, `useUpdateAiSettingsMutation`), password modal, account-deletion UI, settings API layer (`settings.api.ts`), and dedicated mutation and component types (`types/`: `settings-api.types.ts`, `settings-component.types.ts`, `ai-settings.types.ts`, `ChangePasswordPayload`)
 - `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`), and error parsing (`errors.ts` extracting domain errors and HTTP 429 rate limit retry guidance)
 - `Frontend/src/shared/monitoring/*`: client observability and action tracking
   - `frontend.manager.ts`: `FrontendMonitoringManager` singleton and `trackUserAction` helper
@@ -421,7 +450,7 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
   - `Frontend/src/shared/types/settings.types.ts` shared profile/settings response types
 - React Query:
   - query keys in `Frontend/src/shared/api/query-keys.ts`
-  - includes `USER_SYNC_SETTINGS` for account background-sync preferences and `ANALYTICS_QUERY_KEYS` for dashboard query caching
+  - includes `USER_SYNC_SETTINGS` for account background-sync preferences, `SETTINGS_QUERY_KEYS.USER_AI_SETTINGS` for AI preferences, `ANALYTICS_QUERY_KEYS` for dashboard query caching, and `AI_QUERY_KEYS` for on-demand summaries and suggestion caching
   - feature-level queries and mutations under `features/*/api/*.queries.ts`, `features/*/api/*.mutation.ts`, and `features/*/api/*.mutations.ts`
 - Axios clients:
   - `Frontend/src/shared/api/client.ts`
@@ -431,12 +460,13 @@ All 7 backend feature modules adhere to the standardized categorized subdirector
 ### Backend API Endpoint Constants in Frontend
 
 - Accounts: `Frontend/src/shared/api/endpoints.ts`
+- AI: `Frontend/src/shared/api/endpoints.ts` (`AI_API_ENDPOINTS.SUMMARY`, `AI_API_ENDPOINTS.SUGGESTIONS`)
 - Analytics: `Frontend/src/shared/api/endpoints.ts`
 - Auth: `Frontend/src/shared/api/endpoints.ts`
 - Emails: `Frontend/src/shared/api/endpoints.ts`
 - Folders: `Frontend/src/shared/api/endpoints.ts`
 - Inbox search/list actions: `Frontend/src/shared/api/endpoints.ts`
-- Settings: `Frontend/src/shared/api/endpoints.ts`
+- Settings: `Frontend/src/shared/api/endpoints.ts` (`SETTINGS_API_ENDPOINTS.USER_SETTINGS`, `SETTINGS_API_ENDPOINTS.USER_AI_SETTINGS`)
 
 ### Shared UI / Types
 

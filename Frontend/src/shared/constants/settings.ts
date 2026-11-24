@@ -1,5 +1,5 @@
 import { SettingOption } from '@shared/types';
-import { Info, User } from 'lucide-react';
+import { CheckSquare, FileText, Flag, Info, MessageSquare, Sparkles, User } from 'lucide-react';
 
 export const SETTINGS_OPTIONS: SettingOption[] = [
     {
@@ -16,20 +16,13 @@ export const SETTINGS_OPTIONS: SettingOption[] = [
         link: '/settings/account',
         icon: User,
     },
-    // {
-    //     id: 3,
-    //     name: 'appearance',
-    //     title: 'Appearance',
-    //     link: '/settings/appearance',
-    //     icon: Palette,
-    // },
-    // {
-    //     id: 4,
-    //     name: 'privacy',
-    //     title: 'Privacy & Data',
-    //     link: '/settings/privacy',
-    //     icon: Lock,
-    // },
+    {
+        id: 3,
+        name: 'ai',
+        title: 'AI & Privacy',
+        link: '/settings/ai',
+        icon: Sparkles,
+    },
     {
         id: 5,
         name: 'about',
@@ -38,6 +31,33 @@ export const SETTINGS_OPTIONS: SettingOption[] = [
         icon: Info,
     },
 ] as const;
+
+export const AI_FEATURE_ITEMS = [
+    {
+        key: 'categorization' as const,
+        title: 'Smart Categorization',
+        description: 'Automatically classifies inbound messages into Work, Finance, Social, and Promotions.',
+        icon: CheckSquare,
+    },
+    {
+        key: 'priorityScoring' as const,
+        title: 'Priority Inbox Scoring',
+        description: 'Highlights critical and high-urgency emails requiring your direct attention.',
+        icon: Flag,
+    },
+    {
+        key: 'summarization' as const,
+        title: 'Conversation Summarization',
+        description: 'Generates concise executive takeaways and action item checklists on demand.',
+        icon: FileText,
+    },
+    {
+        key: 'suggestedReplies' as const,
+        title: 'Suggested Quick Replies',
+        description: 'Recommends 2-3 contextual responses matching formal, casual, or concise tones.',
+        icon: MessageSquare,
+    },
+];
 
 export const SYNC_INTERVAL_OPTIONS = [
     { label: 'Every 5 minutes', value: 5 },

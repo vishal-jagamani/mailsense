@@ -2,6 +2,7 @@ import { AnyBulkWriteOperation, FilterQuery, FlattenMaps, ProjectionType, SortOr
 import { GroupedEmailThreadItem, ThreadSummaryItem } from '../types/index.js';
 import { Email, EmailDocument, EmailInput } from './email.model.js';
 import { GROUPED_EMAILS_QUERY } from './email.queries.js';
+import { EmailAiMetadata } from '@mailsense/types';
 
 export class EmailRepository {
     public static async upsertEmailsInBulk(emails: Partial<EmailInput>[]) {
@@ -171,5 +172,26 @@ export class EmailRepository {
         }
 
         return modifiedCount;
+    }
+
+    public static async updateEmailAiMetadata(
+        emailId: string,
+        accountId: string,
+        metadata: EmailAiMetadata,
+    ): Promise<FlattenMaps<EmailDocument | null>> {
+        return Email.findOneAndUpdate(
+            { _id: emailId, accountId },
+            {
+                $set: {
+                    aiCategory: metadata.category,
+                    aiPriority: metadata.priority,
+                    aiSummary: metadata.summary,
+                    aiTags: metadata.tags,
+                    aiProcessedAt: new Date(),
+                    aiProvider: metadata.provider,
+                },
+            },
+            { new: true },
+        ).lean();
     }
 }

@@ -1,4 +1,12 @@
-import { APIResponse, ProfileSettingsDataObject, UpdateAPIResponse, UpdateUserProfileSettingsResponse, UserSettings } from '@mailsense/types';
+import {
+    APIResponse,
+    GetUserAISettingsResponse,
+    ProfileSettingsDataObject,
+    UpdateAPIResponse,
+    UpdateUserAISettingsPayload,
+    UpdateUserProfileSettingsResponse,
+    UserSettings,
+} from '@mailsense/types';
 import { axiosClient, SETTINGS_API_ENDPOINTS } from '@shared/api';
 import { ChangePasswordPayload } from '../types';
 
@@ -24,5 +32,15 @@ export const getUserSettings = async (): Promise<UserSettings> => {
 
 export const updateUserSettings = async (payload: Partial<UserSettings>): Promise<UserSettings> => {
     const response = await axiosClient.patch<APIResponse<UserSettings>>(SETTINGS_API_ENDPOINTS.USER_SETTINGS, payload);
+    return response.data.data;
+};
+
+export const fetchUserAiSettings = async (): Promise<GetUserAISettingsResponse> => {
+    const response = await axiosClient.get<APIResponse<GetUserAISettingsResponse>>(SETTINGS_API_ENDPOINTS.USER_AI_SETTINGS);
+    return response.data.data;
+};
+
+export const updateUserAiSettings = async (payload: UpdateUserAISettingsPayload): Promise<GetUserAISettingsResponse> => {
+    const response = await axiosClient.patch<APIResponse<GetUserAISettingsResponse>>(SETTINGS_API_ENDPOINTS.USER_AI_SETTINGS, payload);
     return response.data.data;
 };

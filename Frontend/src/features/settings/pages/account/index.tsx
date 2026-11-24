@@ -20,7 +20,7 @@ const AccountSettings: React.FC = () => {
     }
 
     return (
-        <div className="space-y-2 select-none">
+        <div className="space-y-3 select-none">
             {/* Global Settings Card */}
             <GlobalBackgroundSyncSettings
                 syncSettings={syncSettings}

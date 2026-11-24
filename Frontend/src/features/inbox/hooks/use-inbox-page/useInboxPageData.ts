@@ -41,6 +41,8 @@ export const useInboxPageData = (accountId?: string) => {
                 folders: pagination.filter?.folders,
                 dateRange: pagination.filter?.dateRange,
                 unread: pagination.filter?.unread,
+                aiCategory: pagination.filter?.aiCategory,
+                aiPriority: pagination.filter?.aiPriority,
             },
         });
     }, [user, pagination.page, pagination.pageSize, pagination.debouncedSearchValue, pagination.filter, accountId, refetchEmails]);

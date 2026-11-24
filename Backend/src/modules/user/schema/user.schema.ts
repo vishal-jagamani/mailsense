@@ -35,6 +35,20 @@ export const updateUserSettingsSchema = z.object({
         .optional(),
 });
 
+export const userAiFeatureSettingsSchema = z.object({
+    categorization: z.boolean().optional(),
+    priorityScoring: z.boolean().optional(),
+    summarization: z.boolean().optional(),
+    suggestedReplies: z.boolean().optional(),
+});
+
+export const updateUserAiSettingsSchema = z.object({
+    enabled: z.boolean().optional(),
+    features: userAiFeatureSettingsSchema.optional(),
+    disabledAccountIds: z.array(z.string()).optional(),
+});
+
 export type UpdateUserSchema = z.infer<typeof updateUserSchema>;
 export type ChangePasswordSchema = z.infer<typeof changePasswordSchema>;
 export type UpdateUserSettingsSchema = z.infer<typeof updateUserSettingsSchema>;
+export type UpdateUserAiSettingsSchema = z.infer<typeof updateUserAiSettingsSchema>;

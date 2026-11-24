@@ -7,6 +7,39 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-11-24
+
+### Added
+
+- **Shared AI Contract Integration:** Synchronized `@mailsense/types` v1.8.0 contracts for email AI classifications, priority triage levels, thread summarization, and suggested reply types in preparation for AI interface features.
+- **AI REST Client & React Query Hooks (Phase 3):**
+    - Added centralized AI endpoints in `Frontend/src/shared/api/endpoints.ts` (`AI_API_ENDPOINTS.SUMMARY`, `AI_API_ENDPOINTS.SUGGESTIONS`).
+    - Added query key factories in `Frontend/src/shared/api/query-keys.ts` (`AI_QUERY_KEYS`).
+    - Implemented `fetchEmailThreadSummary` and `fetchSuggestedReplies` in `Frontend/src/features/emails/api/ai.api.ts`.
+    - Implemented `useSummarizeThreadQuery` and `useSuggestedRepliesQuery` in `Frontend/src/features/emails/api/ai.queries.ts`.
+- **AI & Privacy Settings Management (Phase 4):**
+    - Centralized `SETTINGS_API_ENDPOINTS.USER_AI_SETTINGS` and `SETTINGS_QUERY_KEYS.USER_AI_SETTINGS`.
+    - Added `AI & Privacy` tab to `SETTINGS_OPTIONS` with `Sparkles` icon and `AI_FEATURE_ITEMS` metadata in `Frontend/src/shared/constants/settings.ts`.
+    - Centralized label and privacy copy in `USER_AI_SETTINGS_LABELS` (`Frontend/src/shared/constants/messages.ts`).
+    - Added `fetchUserAiSettings` and `updateUserAiSettings` in `Frontend/src/features/settings/api/settings.api.ts`.
+    - Added `useGetAiSettingsQuery` in `settings.queries.ts` and `useUpdateAiSettingsMutation` in `settings.mutation.ts`.
+    - Created dedicated TypeScript types in `Frontend/src/features/settings/types/ai-settings.types.ts`.
+    - Implemented `useAiSettings` custom hook managing optimistic toggles and multi-account exclusion state.
+    - Implemented modular, streamlined UI components in `Frontend/src/features/settings/components/ai/` (`GlobalAiToggleCard.tsx`, `AiFeatureTogglesCard.tsx`, `PerAccountAiExclusionCard.tsx`) using semantic div/p layout elements.
+    - Added AI settings page view in `Frontend/src/features/settings/pages/ai/index.tsx` and mounted in Settings tabs.
+- **AI Inbox & Conversation Thread UI Integration (Phase 5):**
+    - Created smart visual indicators in `Frontend/src/features/emails/components/ai/`:
+        - `CategoryBadge.tsx`: Displays color-coded category labels (Work, Personal, Finance, Social, Promotions, Updates, General) with dark mode border styling.
+        - `PriorityFlag.tsx`: Visual priority indicator flagging Critical, High, and Low urgency levels with semantic alert colors.
+    - Defined `CATEGORY_STYLES` palette mapping in `Frontend/src/shared/constants/email.ts`.
+    - Integrated `CategoryBadge` and `PriorityFlag` into `EmailListTable.tsx` across desktop table columns and mobile card views.
+    - Added one-click "Priority" inbox quick filter button in `EmailListHeader.tsx` to instantly isolate urgent correspondence.
+    - Added AI Category and AI Priority dropdown options into `useInboxPageFilters.ts` and integrated into `useInboxPageData.ts`.
+    - Implemented interactive AI conversation components in `Frontend/src/features/emails/components/ai/`:
+        - `EmailAiSummaryCard.tsx`: Collapsible summary card rendering executive summary, key takeaways, and action items with on-demand regenerate triggers.
+        - `SuggestedRepliesBar.tsx`: Contextual reply chip selector with formal, casual, and concise tone badges and single-click composer prefill.
+    - Integrated `EmailAiSummaryCard` and `SuggestedRepliesBar` into `ThreadView` and single-message `EmailPage`.
+
 ## [3.6.1] - 2026-11-17
 
 ### Changed

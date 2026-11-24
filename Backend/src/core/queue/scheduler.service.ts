@@ -1,5 +1,5 @@
 import { LOGGER_MODULE } from '@constants';
-import { ACCOUNT_SYNC_MODE, UserAccountSyncSettings } from '@mailsense/types';
+import { ACCOUNT_SYNC_JOB_TRIGGER_TYPE, ACCOUNT_SYNC_MODE, UserAccountSyncSettings } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/database/index.js';
 import { UserSettingsRepository } from '@modules/user/database/index.js';
 import { createLogger } from '@observability';
@@ -91,7 +91,7 @@ export class SchedulerService {
             const queue = getQueue(QUEUE_NAMES.SYNC_ACCOUNT);
             await queue.add(
                 `sync:${accountId}`,
-                { accountId, userId: account.userId, force: false },
+                { accountId, userId: account.userId, force: false, triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.SCHEDULED },
                 {
                     repeat: { every: intervalMs },
                     jobId: `repeat:${accountId}`,

@@ -46,6 +46,7 @@ export const SETTINGS_API_ENDPOINTS = {
     USERS: '/users',
     CHANGE_PASSWORD: '/users/change-password',
     USER_SETTINGS: '/users/settings',
+    USER_AI_SETTINGS: '/users/settings/ai',
 } as const;
 
 export const DRAFTS_API_ENDPOINTS = {
@@ -58,4 +59,9 @@ export const DRAFTS_API_ENDPOINTS = {
 export const ANALYTICS_API_ENDPOINTS = {
     BASE: '/analytics',
     DASHBOARD: '/analytics/dashboard',
+} as const;
+
+export const AI_API_ENDPOINTS = {
+    SUMMARY: (emailId: string) => `/ai/summary/${emailId}`,
+    SUGGESTIONS: (emailId: string) => `/ai/suggestions/${emailId}`,
 } as const;

@@ -7,6 +7,49 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-11-24
+
+### Added
+
+- **AI Provider Strategy Pattern & Infrastructure (Phase 1):**
+    - Implemented `IAiProvider` interface and `AiProviderFactory` singleton strategy selector and cache supporting `gemini` and `noop` providers.
+    - Implemented `GeminiAiProvider` utilizing the modern `@google/genai` SDK with strict JSON schema constraints (`responseSchema`), 30-second `AbortController` timeouts, payload sanitization, and structured rate-limit (`RateLimitError`) error translation.
+    - Defaulted model to `gemini-3.6-flash` via `GOOGLE_GEMINI_MODEL` environment variable and `AI_CONFIG`.
+    - Implemented `NoopAiProvider` for offline development, local mock generation, and CI test environments.
+    - Added `ErrorCode.AI_PROCESSING_FAILED`, `AiProcessingErrorParams`, and `AiProcessingError` domain error carrying duration telemetry, trace ID, and operational metadata.
+    - Added `AI_PROVIDER`, `GOOGLE_GEMINI_API_KEY`, and `GOOGLE_GEMINI_MODEL` Zod schema validation in `env.schema.ts`, `env.config.ts`, and `app.config.ts`.
+    - Extended `LOGGER_MODULE` in `observability.constants.ts` with `GEMINI_PROVIDER`, `NOOP_AI_PROVIDER`, `AI_PROVIDER_FACTORY`, `AI_SERVICE`, `AI_CONTROLLER`, `AI_WORKER`, and `AI_PROCESSING_PROCESSOR`.
+    - Added unit test suites for `AiProcessingError`, `AiProviderFactory`, and `GeminiAiProvider`.
+- **Asynchronous AI Queue & Ingestion Pipeline (Phase 2):**
+    - Extended `EmailSchema` with AI categorization, priority, tags, summary, provider, and timestamp attributes, along with compound query indexes (`accountId + aiCategory + receivedAt`, `accountId + aiPriority + receivedAt`).
+    - Added `EmailRepository.updateEmailAiMetadata` for updating email AI classification metadata without `try/catch`.
+    - Extended `UserSettingsSchema` and `UserSettingsRepository.getAiSettings` for user AI consent, feature flags, and per-account exclusion settings.
+    - Registered `QUEUE_NAMES.AI_PROCESSING` in `queue.config.ts` and created `QueueService.enqueueAiProcessingJob`.
+    - Created dedicated queue types in `src/core/types/queue.types.ts` (`SyncAccountPayload`, `RefreshTokenPayload`, `EnqueueJobOptions`).
+    - Implemented `AIProcessingWorker` in `src/workers/workers/ai.worker.ts` with `concurrency: 5` and `limiter: { max: 50, duration: 60000 }` (Gemini RPM rate limiter).
+    - Implemented `aiProcessingProcessor` in `src/workers/processors/ai-processing.processor.ts` with idempotency guards, user privacy verification, payload sanitization, and structured rate limit backoff via `queue.rateLimit()`.
+    - Connected `EMAIL_BATCH_SYNCED` event in `email-batch-synced.handler.ts` to automatically enqueue background AI jobs for newly ingested email batches.
+    - Added `AIProcessingWorker` lifecycle management in `initBackgroundJobs` and `shutdownBackgroundJobs`.
+    - Organized workers into categorized `src/workers/workers/` directory (`ai.worker.ts`, `sync.worker.ts`, `token-refresh.worker.ts`).
+- **Core AI REST API Module & Mailbox Filter Extensions (Phase 3):**
+    - Implemented categorized `Backend/src/modules/ai/` module (`constants/`, `types/`, `schema/`, `controllers/`, `services/`, `routes/`, `index.ts`).
+    - Implemented `GET /api/ai/summary/:emailId` for on-demand conversation thread summarization with full thread message aggregation, plain-text body decompression, and multi-tenant authorization checks.
+    - Implemented `GET /api/ai/suggestions/:emailId` for contextual suggested replies with multi-message context and tone variants.
+    - Extended `getAllEmailsSchema` with optional `aiCategory` and `aiPriority` filters.
+    - Extended `EMAIL_LIST_DB_FIELD_MAPPING` to project `aiCategory`, `aiPriority`, and `aiSummary` in mailbox list queries.
+    - Extended `EmailQueryService` to filter by `aiCategory` and `aiPriority` in MongoDB search query and map fields to `EmailListItem`.
+    - Mounted `/api/ai` router in `Backend/src/routes.ts`.
+- **AI Settings & Privacy Controls (Phase 4):**
+    - Added `updateAiSettings` atomic update method to `UserSettingsRepository` with `$set` on nested preference fields (`ai.enabled`, `ai.features`, `ai.disabledAccountIds`, `ai.consentGivenAt`).
+    - Added `getUserAiSettings` and `updateUserAiSettings` methods to `UserService` with default initialization, telemetry logging, and Sentry tracking.
+    - Added `userAiFeatureSettingsSchema` and `updateUserAiSettingsSchema` in `Backend/src/modules/user/schema/user.schema.ts`.
+    - Exposed `GET /users/settings/ai` and `PATCH /users/settings/ai` in `UserController` and `Backend/src/modules/user/routes/user.routes.ts`.
+    - Added unit test suite in `Backend/src/modules/user/__tests__/user-ai-settings.test.ts`.
+- **AI Processing Ingestion & Pipeline Refinements (Phase 5):**
+    - Enhanced `aiProcessingProcessor` to decompress compressed plain-text email bodies using `decompressString(email.bodyPlain)` prior to prompt construction and tokenization.
+    - Added `upsertSyncJob` in `SyncJobRepository` and tracked `triggerType` (`SCHEDULED` vs `MANUAL`) for background sync jobs.
+    - Refactored `EnvConfig.loadDotenv` method extraction and `UserService` helper methods (`resolveAiSettings`, `resolveAiFeatures`, `createDefaultAiSettings`) to satisfy strict code size & function limits.
+
 ## [3.6.1] - 2026-11-17
 
 ### Added

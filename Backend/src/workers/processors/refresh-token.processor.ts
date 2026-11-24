@@ -7,8 +7,8 @@ import { ACCOUNT_PROVIDER } from '@mailsense/types';
 import { AccountRepository } from '@modules/accounts/database/index.js';
 import { monitoring } from '@monitoring';
 import { createLogger, setTraceContext } from '@observability';
-import { getRedisConnection, RefreshTokenPayload } from '@queue';
-import { SuccessStatusResponse } from '@types';
+import { getRedisConnection } from '@queue';
+import { RefreshTokenPayload, SuccessStatusResponse } from '@types';
 
 const logger = createLogger(LOGGER_MODULE.REFRESH_TOKEN_PROCESSOR);
 
