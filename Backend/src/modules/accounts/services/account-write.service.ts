@@ -1,12 +1,12 @@
 import { LOGGER_MODULE } from '@constants';
 import { BadRequestError, ForbiddenError, NotFoundError } from '@errors';
-import { ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, UpdateAPIResponse } from '@mailsense/types';
+import { ACCOUNT_SYNC_JOB_TRIGGER_TYPE, UpdateAPIResponse } from '@mailsense/types';
 import { EmailRepository } from '@modules/emails/database/index.js';
 import { createLogger } from '@observability';
 import { QueueService, SchedulerService } from '@queue';
+import { AccountRepository } from '../database/index.js';
 import { UpdateAccountSettingsSchema } from '../schema/index.js';
 import { SyncAccountJobResponse, SyncAccountsResponse } from '../types/index.js';
-import { AccountRepository, SyncJobRepository } from '../database/index.js';
 
 const logger = createLogger(LOGGER_MODULE.ACCOUNT_SERVICE);
 
@@ -145,19 +145,11 @@ export class AccountsWriteService {
                     accountId,
                     userId,
                     force: false,
+                    triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
                 },
                 1,
             );
 
-            if (jobId) {
-                await SyncJobRepository.createSyncJob({
-                    accountId,
-                    bullJobId: jobId,
-                    status: ACCOUNT_SYNC_JOB_STATUS.PENDING,
-                    triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.MANUAL,
-                    startedAt: Date.now(),
-                });
-            }
             return jobId;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : String(err);

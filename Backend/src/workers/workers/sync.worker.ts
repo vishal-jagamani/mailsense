@@ -2,12 +2,12 @@ import { LOGGER_MODULE } from '@constants';
 import { ACCOUNT_LAST_SYNC_STATUS, ACCOUNT_SYNC_JOB_STATUS, ACCOUNT_SYNC_JOB_TRIGGER_TYPE, SyncJobResult, SYSTEM_EVENT } from '@mailsense/types';
 import { AccountRepository, SyncJobRepository } from '@modules/accounts/database/index.js';
 import { createLogger } from '@observability';
+import { SyncAccountPayload } from '@types';
 import { Job } from 'bullmq';
 import { eventBus } from 'core/events/event-bus.js';
 import { QUEUE_NAMES } from 'core/queue/queue.config.js';
-import { SyncAccountPayload } from 'core/queue/queue.service.js';
-import { BaseWorker } from './base.worker.js';
-import { syncAccountProcessor } from './processors/sync-account.processor.js';
+import { BaseWorker } from '../base.worker.js';
+import { syncAccountProcessor } from '../processors/sync-account.processor.js';
 
 export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
     protected queueName = QUEUE_NAMES.SYNC_ACCOUNT;
@@ -19,23 +19,15 @@ export class SyncWorker extends BaseWorker<SyncAccountPayload, SyncJobResult> {
 
     protected async onActive(job: Job<SyncAccountPayload, SyncJobResult>): Promise<void> {
         try {
-            const { accountId } = job.data;
+            const { accountId, triggerType } = job.data;
             if (job.id) {
-                const existingJob = await SyncJobRepository.getSyncJobByBullId(job.id);
-                if (!existingJob) {
-                    await SyncJobRepository.createSyncJob({
-                        accountId: accountId,
-                        bullJobId: job.id,
-                        status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
-                        triggerType: ACCOUNT_SYNC_JOB_TRIGGER_TYPE.SCHEDULED,
-                        startedAt: Date.now(),
-                    });
-                } else {
-                    await SyncJobRepository.updateSyncJob(job.id, {
-                        status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
-                        startedAt: Date.now(),
-                    });
-                }
+                await SyncJobRepository.upsertSyncJob(job.id, {
+                    accountId,
+                    bullJobId: job.id,
+                    status: ACCOUNT_SYNC_JOB_STATUS.RUNNING,
+                    triggerType: triggerType ?? ACCOUNT_SYNC_JOB_TRIGGER_TYPE.SCHEDULED,
+                    startedAt: Date.now(),
+                });
             }
             await AccountRepository.updateAccount(accountId, {
                 syncInProgress: true,

@@ -1,5 +1,5 @@
 import { UnauthorizedError } from '@errors';
-import { UserSettings } from '@mailsense/types';
+import { UpdateUserAISettingsPayload, UserSettings } from '@mailsense/types';
 import { NextFunction, Request, Response } from 'express';
 import { ChangePasswordSchema, UpdateUserSchema, UpdateUserSettingsSchema } from '../schema/index.js';
 import { UserService } from '../services/index.js';
@@ -96,6 +96,36 @@ export class UserController {
                 throw new UnauthorizedError('User ID is required');
             }
             const response = await this.userService.updateUserSettings(userId, req.body as UserSettings);
+            res.status(200).send(response);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public getUserAiSettings = async (req: Request<object, object, object>, res: Response, next: NextFunction): Promise<void> => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            const response = await this.userService.getUserAiSettings(userId);
+            res.status(200).send(response);
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    public updateUserAiSettings = async (
+        req: Request<object, object, UpdateUserAISettingsPayload>,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> => {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                throw new UnauthorizedError('User ID is required');
+            }
+            const response = await this.userService.updateUserAiSettings(userId, req.body);
             res.status(200).send(response);
         } catch (error) {
             next(error);

@@ -1,6 +1,6 @@
 {
     "name": "mailsense-backend",
-    "version": "3.6.0",
+    "version": "3.7.0",
     "type": "module",
     "description": "",
     "main": "index.js",
@@ -25,7 +25,8 @@
     "packageManager": "pnpm@9.15.9",
     "dependencies": {
         "@aws-sdk/client-s3": "^3.1113.0",
-        "@mailsense/types": "^1.7.1",
+        "@google/genai": "^3.6.1",
+        "@mailsense/types": "^1.8.0",
         "@sentry/node": "^10.70.0",
         "@types/cors": "^2.8.19",
         "@types/express": "^5.0.6",

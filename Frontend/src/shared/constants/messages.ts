@@ -81,3 +81,21 @@ export const EMAIL_LABELS = {
         DESCRIPTION: 'Press these shortcut keys anywhere in your mailbox to trigger quick actions.',
     },
 } as const;
+
+export const USER_AI_SETTINGS_LABELS = {
+    GLOBAL_AI_TOGGLE: {
+        LABEL: 'MailSense AI Engine',
+        DESCRIPTION: 'Power smart categorization, priority inbox scoring, and automated thread summaries.',
+        PRIVACY_POLICY:
+            'Privacy Guaranteed: Email content is processed ephemerally using Google Gemini 3.6 Flash. No email data is stored by LLMs or used for model training.',
+    },
+    AI_FEATURES_TOGGLES: {
+        LABEL: 'Granular AI Capabilities',
+        DESCRIPTION: 'Customize which AI features execute during synchronization and conversation view.',
+    },
+    PER_ACCOUNT_AI_EXCLUSION: {
+        LABEL: 'Connected Account Controls',
+        DESCRIPTION: 'Exclude specific accounts (e.g. sensitive internal or compliance mailboxes) from AI processing.',
+        DISABLED_ACCOUNTS: (no: number) => `${no} account(s) excluded: Inbound emails to these accounts bypass AI ingestion completely.`,
+    },
+} as const;

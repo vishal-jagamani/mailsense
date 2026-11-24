@@ -34,3 +34,14 @@ export const ANALYTICS_QUERY_KEYS = {
     all: ['analytics'] as const,
     dashboard: (params?: AnalyticsQueryParams) => [...ANALYTICS_QUERY_KEYS.all, 'dashboard', params] as const,
 } as const;
+
+export const SETTINGS_QUERY_KEYS = {
+    USER_SETTINGS: ['user-settings'] as const,
+    USER_AI_SETTINGS: ['user-ai-settings'] as const,
+} as const;
+
+export const AI_QUERY_KEYS = {
+    all: ['ai'] as const,
+    summary: (emailId: string) => [...AI_QUERY_KEYS.all, 'summary', emailId] as const,
+    suggestions: (emailId: string) => [...AI_QUERY_KEYS.all, 'suggestions', emailId] as const,
+};

@@ -84,3 +84,13 @@ export interface ParsedErrorDetails {
     statusCode: number;
     originalError?: Record<string, string | number | boolean>;
 }
+
+export interface AiProcessingErrorParams {
+    provider: string;
+    message: string;
+    model?: string;
+    description?: string;
+    suggestedAction?: string;
+    traceId?: string;
+    processingDurationMs?: number;
+}

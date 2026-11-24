@@ -27,6 +27,7 @@ export interface AttachmentMetadata {
 
 export interface EmailListItem extends EmailListDTO {
     attachments?: EmailAttachment[];
+    folders: string[];
 }
 
 export interface ThreadSummaryItem {

@@ -92,18 +92,18 @@ trigger: always_on
 ##### **7. AI Features (Gemini Integration)**
 
 ##### Core AI (MVP)
-- **Smart Categorization**
-    - Work, Personal, Finance, etc.
-    - Visible as labels
-- **Priority Scoring**
-    - Important vs low priority
-    - Priority inbox view
-- **Summarization**
-    - Thread/email summary
-    - Inline preview
-- **Suggested Replies**
-    - 2–3 quick replies
-    - Editable before send
+- **Smart Categorization** - done
+    - Work, Personal, Finance, etc. - done
+    - Visible as labels - done
+- **Priority Scoring** - done
+    - Important vs low priority - done
+    - Priority inbox view - done
+- **Summarization** - done
+    - Thread/email summary - done
+    - Inline preview - done
+- **Suggested Replies** - done
+    - 2–3 quick replies - done
+    - Editable before send - done
 - **Natural Language Search**
     - Example: “Invoices from last month”
 
@@ -161,8 +161,8 @@ trigger: always_on
         
 
 ##### AI Settings
-- Enable/disable AI globally
-- Per-account AI toggle
+- Enable/disable AI globally - done
+- Per-account AI toggle - done
 
 ##### Custom Rules (VERY IMPORTANT FEATURE)
 

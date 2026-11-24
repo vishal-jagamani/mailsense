@@ -3,7 +3,7 @@ import { Router } from 'express';
 import { authMiddleware, validate } from '@middlewares';
 import { handleRequest } from '@utils';
 import { userController } from '../controllers/index.js';
-import { changePasswordSchema, updateUserSchema, updateUserSettingsSchema } from '../schema/index.js';
+import { changePasswordSchema, updateUserAiSettingsSchema, updateUserSchema, updateUserSettingsSchema } from '../schema/index.js';
 
 const router = Router();
 
@@ -22,5 +22,9 @@ router.patch('/change-password', validate({ body: changePasswordSchema }), handl
 router.get('/settings', handleRequest(userController.getUserSettings));
 
 router.patch('/settings', validate({ body: updateUserSettingsSchema }), handleRequest(userController.updateUserSettings));
+
+router.get('/settings/ai', handleRequest(userController.getUserAiSettings));
+
+router.patch('/settings/ai', validate({ body: updateUserAiSettingsSchema }), handleRequest(userController.updateUserAiSettings));
 
 export default router;

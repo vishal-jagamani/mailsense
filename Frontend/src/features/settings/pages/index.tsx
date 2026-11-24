@@ -1,13 +1,14 @@
 'use client';
 
+import { Loader } from 'lucide-react';
 import React, { Suspense, useEffect } from 'react';
 
 import { ROUTES, SETTINGS_OPTIONS } from '@shared/constants';
 import { useBreadcrumbStore } from '@shared/store';
 import { SettingsPageProps } from '@shared/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@shared/ui/tabs';
-import { Loader } from 'lucide-react';
 import AccountSettings from './account';
+import AiSettings from './ai';
 import ProfileSettings from './profile';
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ setting }) => {
@@ -33,6 +34,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ setting }) => {
                 </TabsContent>
                 <TabsContent value="account">
                     <AccountSettings />
+                </TabsContent>
+                <TabsContent value="ai">
+                    <AiSettings />
                 </TabsContent>
             </Tabs>
             {/* <ProfileSettings /> */}
