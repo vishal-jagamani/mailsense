@@ -1,4 +1,6 @@
 import { LOGGER_MODULE } from '@constants';
+import { ERROR_LOG_SEVERITY, ERROR_LOG_SOURCE } from '@mailsense/types';
+import { ObservabilityService } from '@modules/observability/services/index.js';
 import { monitoring } from '@monitoring';
 import { createLogger, runWithTrace } from '@observability';
 import { getRedisConnection } from '@queue';
@@ -10,7 +12,7 @@ export abstract class BaseWorker<TData, TResult> {
     protected worker!: Worker<TData, TResult>;
     protected abstract queueName: string;
     protected abstract processJob(job: Job<TData, TResult>): Promise<TResult>;
-    protected workerLogger = createLogger(LOGGER_MODULE.BASE_WORKER);
+    protected workerLogger = createLogger(LOGGER_MODULE.BASE_WORKER, { forwardToMonitoring: false });
 
     protected getWorkerOptions(): Partial<WorkerOptions> {
         return {};
@@ -78,6 +80,8 @@ export abstract class BaseWorker<TData, TResult> {
 
     private async runWithTraceContext(job: Job, traceContext: TraceStore) {
         const { traceId, userId, userEmail, userName, accountId } = traceContext;
+        const observabilityService = new ObservabilityService();
+
         return await runWithTrace({ traceId, userId, userEmail, userName, accountId }, async () => {
             if (userId) {
                 monitoring.setUser({ id: userId, email: userEmail, username: userName });
@@ -103,6 +107,22 @@ export abstract class BaseWorker<TData, TResult> {
                     jobId: String(job.id),
                     jobName: job.name,
                     traceId,
+                });
+
+                void observabilityService.recordAndAlertError({
+                    source: ERROR_LOG_SOURCE.BACKEND_WORKER,
+                    severity: ERROR_LOG_SEVERITY.ERROR,
+                    module: this.queueName,
+                    errorCode: 'WORKER_JOB_FAILED',
+                    message: err.message,
+                    stack: err.stack,
+                    traceId,
+                    context: {
+                        userId: traceContext.userId,
+                        accountId: traceContext.accountId,
+                        jobId: String(job.id),
+                        queueName: this.queueName,
+                    },
                 });
 
                 throw err;

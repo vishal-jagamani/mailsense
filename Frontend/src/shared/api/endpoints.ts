@@ -65,3 +65,7 @@ export const AI_API_ENDPOINTS = {
     SUMMARY: (emailId: string) => `/ai/summary/${emailId}`,
     SUGGESTIONS: (emailId: string) => `/ai/suggestions/${emailId}`,
 } as const;
+
+export const OBSERVABILITY_API_ENDPOINTS = {
+    CLIENT_ERRORS: '/observability/client-errors',
+} as const;

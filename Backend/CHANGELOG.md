@@ -7,6 +7,35 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- **Transactional Mailer Strategy (`Backend/src/integrations/mailer/`):**
+    - Implemented `ITransactionalMailer` contract (`mailer.types.ts`), `MailerFactory` singleton strategy selector (`RESEND`, `SMTP`, `NOOP`), and centralized Resend endpoint constants (`mailer.constants.ts`).
+    - Implemented `ResendMailerProvider` using shared `apiRequest` HTTP client, `SmtpMailerProvider` using `nodemailer` with timeout options, and `NoopMailerProvider` for offline/CI runs.
+    - Added `nodemailer` and `@types/nodemailer` dependencies in `Backend/package.json`.
+- **Persistent Error Logging & Throttled Email Alerting (`Backend/src/modules/observability/`):**
+    - Added categorized `observability` module (`constants/`, `controllers/`, `database/`, `routes/`, `schemas/`, `services/`, `types/`, `utils/`, `index.ts`).
+    - Implemented `ErrorLog` Mongoose model (`database/error-log.model.ts`) implementing `ErrorLogAttributes` (`@mailsense/types v1.9.0`) with deduplicated `fingerprint` unique index and 90-day TTL retention index (`expireAfterSeconds: 7776000`).
+    - Implemented pure `ErrorLogRepository` (`upsertErrorLog`, `countUnresolved`) without `try/catch` blocks.
+    - Implemented `ObservabilityService` with singleton `observabilityService`, non-PII `sanitizeContext`, SHA-256 `computeFingerprint`, HTML-escaped alert email formatting (`ALERT_EMAIL_TEXT`, `ALERT_EMAIL_HTML`), Redis alert cooldown locking (`SET alert:cooldown:<fingerprint> 1 EX <seconds> NX`) with bounded in-memory fallback map, and non-blocking DB error containment.
+    - Added public-compatible, Zod-validated `POST /api/observability/client-errors` route protected by `clientErrorRateLimiter` (`20 requests / 15m` in `rate-limit.config.ts`).
+- **Observability Configuration & Unit Tests:**
+    - Extended `env.schema.ts`, `env.config.ts`, and `app.config.ts` with `APP_VERSION`, `MAILER_CONFIG`, `ALERTING_CONFIG`, and boolean parsing for `EMAIL_ALERT_EMAIL_ENABLED`.
+    - Extended `LOGGER_MODULE` in `observability.constants.ts` with observability and mailer module tags.
+    - Added unit tests in `Backend/src/integrations/mailer/__tests__/mailer.factory.test.ts` and `Backend/src/modules/observability/__tests__/observability.service.test.ts`.
+
+### Changed
+
+- **Boundary Error Wiring & Sentry Deduplication:** Wired `observabilityService.recordAndAlertError` into `errorHandler` (`error.handler.ts`, via extracted `reportUnhandledException` helper keeping cyclomatic complexity compliant) and `BaseWorker` (`base.worker.ts`), configuring boundary loggers with `{ forwardToMonitoring: false }` to eliminate duplicate Sentry events and prevent logging recursion.
+- **Type Safety & Release Tag Hygiene (Phase 1):** Removed prohibited `: unknown` and `: never` usages in `gemini.provider.ts`, `ai-processing.processor.ts`, `AxiosApiError.ts`, `error.handler.ts`, and `observability.types.ts` via `CaughtError`, `GeminiRawApiError`, and `LoggableValue`; updated `MonitoringManager` fallback release tag to `'3.8.0'`.
+- **Workspace Contract Linking:** Configured `@mailsense/types` workspace linking (`link:../../mailsense-types`) in `Backend/package.json` synced to `v1.9.0` contracts.
+
+### Security & Removed
+
+- **Staged Attachment IDOR Enforcement:** Restored caller `userId` and `accountId` verification in `EmailWriteService.resolveStagedAttachments`, passing `attachment-security.test.ts`.
+- **Alert Email XSS Hardening:** Added `escapeHtml` sanitization in `observability.utils.ts` for rendered fields inside `ALERT_EMAIL_HTML`.
+- **Debug Leftover Cleanup (Phase 1):** Removed `/testEndpoint` route from `app.ts` and `HEALTH_PROBES_API_ENDPOINTS` (`observability.constants.ts`), and removed dead test URL from `app.config.ts`.
+
 ## [3.7.0] - 2026-11-24
 
 ### Added

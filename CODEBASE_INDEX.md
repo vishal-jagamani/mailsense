@@ -4,7 +4,7 @@
 
 - `Backend/`: Node.js + Express + TypeScript + MongoDB
 - `Frontend/`: Next.js App Router + React + TypeScript + React Query + Auth0 + Zustand
-- Shared contracts are sourced from `@mailsense/types`, with local workspace/package-manager config present in both `Backend/` and `Frontend/`.
+- Shared contracts are sourced from `@mailsense/types` (`v1.9.0`), linked locally via `link:../../mailsense-types` in both `Backend/package.json` and `Frontend/package.json`.
 
 ## Backend Index (`/Backend`)
 
@@ -13,26 +13,26 @@
 - `Backend/src/server.ts`: starts app, connects MongoDB via enterprise `DatabaseConnectionManager`, listens on `PORT`, and manages graceful server shutdown
 - `Backend/src/core/database/connection.ts`: `DatabaseConnectionManager` encapsulating MongoDB connection initialization, connection pooling, reconnect monitoring, explicit `dbName: DATABASE` binding, and graceful disconnection
 - `Backend/src/core/database/index.ts`: barrel export accessible via `@database` alias
-- `Backend/src/app.ts`: Express app wiring (CORS, body parsers, static, routes, Sentry, centralized error handler)
-- `Backend/src/routes.ts`: mounts module routes under `/api`
+- `Backend/src/app.ts`: Express app wiring (CORS, body parsers, static, routes, Sentry, centralized error handler); `/testEndpoint` debug route removed
+- `Backend/src/routes.ts`: mounts module routes under `/api` including `/observability`
 
 ### Config
 
-- `Backend/src/core/config/env.config.ts`: validates env via Zod
-- `Backend/src/core/config/env.schema.ts`: centralized Zod schema definitions (`envSchemaObject`) for environment variables including AI settings (`AI_PROVIDER`, `GOOGLE_GEMINI_API_KEY`, `GOOGLE_GEMINI_MODEL`)
-- `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis, AI)
+- `Backend/src/core/config/env.config.ts`: validates env via Zod and parses boolean flags (`ENABLE_AUTH`, `EMAIL_ALERT_EMAIL_ENABLED`)
+- `Backend/src/core/config/env.schema.ts`: centralized Zod schema definitions (`envSchemaObject`) for environment variables including AI settings (`AI_PROVIDER`, `GOOGLE_GEMINI_API_KEY`, `GOOGLE_GEMINI_MODEL`), `APP_VERSION`, and transactional mailer/alerting settings (`EMAIL_ALERT_*`)
+- `Backend/src/core/config/app.config.ts`: exports typed app secrets/config (Auth0, Gmail, Outlook, Mongo, Redis, AI, `APP_VERSION`, `MAILER_CONFIG`, `ALERTING_CONFIG`)
 - `Backend/src/core/config/logger.config.ts`: logger configuration
 - `Backend/src/core/config/app.config.ts`: exposes the backend Redis connection URL config used by BullMQ and `ioredis`
 - `Backend/src/core/config/env.config.ts`: falls back to `.env.local` during tests when `.env.test` is not available
 - `Backend/src/core/config/env.config.ts`: validates queue/runtime Redis configuration through `REDIS_URL`
-- `Backend/package.json`: backend package metadata currently uses version `3.7.0` with `pnpm@9.15.9`
-- `Frontend/package.json`: frontend package metadata currently uses version `3.7.0`
+- `Backend/package.json`: backend package metadata (includes `nodemailer`, `@types/nodemailer`, and linked `@mailsense/types`)
+- `Frontend/package.json`: frontend package metadata with linked `@mailsense/types`
 
 ### Security
 
 - `Backend/src/core/security/*`: HTTP security headers, Content Security Policy, and API rate limiting infrastructure
   - `helmet.config.ts`: Helmet middleware configuration with strict CSP, frame-guard (`DENY`), and HSTS
-  - `rate-limit.config.ts`: route-level rate limiters (`defaultApiRateLimiter`, `syncRateLimiter`, `composeRateLimiter`, `authRateLimiter`) with standard `RateLimitError` responses
+  - `rate-limit.config.ts`: route-level rate limiters (`defaultApiRateLimiter`, `syncRateLimiter`, `composeRateLimiter`, `authRateLimiter`, `clientErrorRateLimiter`) with standard `RateLimitError` responses
   - `index.ts`: security module exports accessible via `@security` alias
 - `Backend/src/core/security/__tests__/rate-limit.test.ts`: test coverage for rate limit enforcement and 429 status payload format
 - `Backend/src/core/security/__tests__/helmet.test.ts`: test coverage for Helmet HTTP security headers and CSP presence
@@ -69,7 +69,7 @@
 
 ### Workers
 
-- `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, customizable worker options (`getWorkerOptions`), and lifecycle event hooks
+- `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, customizable worker options (`getWorkerOptions`), lifecycle hooks, `{ forwardToMonitoring: false }` boundary logger, and non-blocking `observabilityService.recordAndAlertError` persistence on worker failures
 - Categorized worker architecture (`Backend/src/workers/workers/*`):
   - `ai.worker.ts`: `AIProcessingWorker` with `concurrency: 5` and token bucket rate limiter `limiter: { max: 50, duration: 60000 }`
   - `sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
@@ -86,7 +86,7 @@
 - `Backend/src/core/middlewares/index.ts`: barrel export for core backend middleware accessible via `@middlewares` alias
 - `Backend/src/core/middlewares/auth.ts`: JWT validation via Auth0 bearer-token middleware; populates `req.user`/`req.auth`, binds user context to `TraceStore`, and registers `monitoring.setUser()`
 - `Backend/src/core/middlewares/validator.ts`: Zod request validation (`headers`, `params`, `query`, `body`)
-- `Backend/src/core/middlewares/error.handler.ts`: centralized structured error responses with `traceId` correlation and APM exception dispatch
+- `Backend/src/core/middlewares/error.handler.ts`: centralized structured error responses with `traceId` correlation, extracted `reportUnhandledException` helper bridging Sentry once, and `observabilityService.recordAndAlertError` persistence + throttled admin alerts
 - `Backend/src/shared/utils/request.handler.ts`: async wrapper for controllers
 
 ### Observability & Tracing (`Backend/src/core/observability/*`)
@@ -94,11 +94,11 @@
 - `trace.ts`: Node.js `AsyncLocalStorage`-backed distributed tracing store capturing `traceId`, `userId`, `userEmail`, `userName`, and `accountId` across async call chains; provides `traceMiddleware`, `runWithTrace`, `getTraceStore`, and `setTraceContext`
 - `logger.factory.ts`: `createLogger(moduleName, options)` returning module-scoped child Pino loggers with automatic non-blocking APM bridging (`addBreadcrumb`, `captureException`), recursion guards, and `withTiming` helper
 - `request-logger.middleware.ts`: Express middleware logging inbound/outbound HTTP transactions with latency timing, auto-skipping health check probes
-- `Backend/src/core/constants/observability.constants.ts`: centralizes `LOGGER_MODULE` enum and health probe endpoint paths
+- `Backend/src/core/constants/observability.constants.ts`: centralizes `LOGGER_MODULE` enum (including AI, observability, and mailer tags) and health probe endpoint paths (`HEALTH_PROBES_API_ENDPOINTS`)
 
 ### Monitoring Infrastructure (`Backend/src/core/monitoring/*`)
 
-- `monitoring.manager.ts`: singleton APM orchestrator supporting pluggable providers via `MONITORING_PROVIDER` environment variable
+- `monitoring.manager.ts`: singleton APM orchestrator supporting pluggable providers via `MONITORING_PROVIDER` environment variable (default release fallback `'3.8.0'`)
 - `providers/sentry.provider.ts`: Sentry provider supporting Sentry Native Structured Logging (`enableLogs: true`, `Sentry.logger.*`), breadcrumbs, worker error reporting, and canonical user modeling (`user.id`, `user.email`, `user.username`)
 - `providers/sentry.utils.ts`: user extraction and breadcrumb data sanitizer helpers (`extractUserId`, `extractUserEmail`, `extractUserUsername`, `extractUserIp`, `omitUserKeys`)
 - `providers/noop.provider.ts`: silent fallback provider for development and testing environments
@@ -119,7 +119,15 @@
 
 ### Modules
 
-All 8 backend feature modules adhere to the standardized categorized subdirectory architecture (`constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`) with clean barrel exports (`index.ts`) per Rule 5.5.
+All 9 backend feature modules adhere to the standardized categorized subdirectory architecture (`constants/`, `controllers/`, `database/`, `routes/`, `schema/` or `schemas/`, `services/`, `types/`, `utils/`) with clean barrel exports (`index.ts`) per Rule 5.5.
+
+- Observability (`Backend/src/modules/observability/*`)
+  - Categorized architecture with barrel exports (`index.ts`): `constants/`, `controllers/`, `database/`, `routes/`, `schemas/`, `services/`, `types/`, `utils/`
+  - Database layer (`database/`): `ErrorLog` model (`error-log.model.ts`) with deduplicated `fingerprint` unique index and 90-day TTL retention (`expireAfterSeconds: 7776000`), and pure `ErrorLogRepository` (`upsertErrorLog`, `countUnresolved`) without `try/catch`
+  - Service layer (`services/observability.service.ts`): exports `ObservabilityService` and `observabilityService` singleton implementing `recordAndAlertError`, `recordClientError`, Redis cooldown throttling (`SET alert:cooldown:<fingerprint> 1 EX <cooldown> NX`) with bounded in-memory fallback map, and maintainer alert email dispatch via `MailerFactory`
+  - Utils & constants: `observability.utils.ts` (`computeFingerprint`, `sanitizeContext`, `escapeHtml`) and `observability.constants.ts` (`ALERT_EMAIL_TEXT`, HTML-escaped `ALERT_EMAIL_HTML`)
+  - Controller, Zod validation & route (`controllers/observability.controller.ts`, `schemas/observability.schema.ts`, `routes/observability.routes.ts`): mounts rate-limited (`clientErrorRateLimiter`) `POST /api/observability/client-errors`
+  - Unit tests (`__tests__/observability.service.test.ts`): verifies fingerprint deduplication, context redaction, Redis & memory cooldown throttling, and non-blocking DB failure handling
 
 - Accounts (`Backend/src/modules/accounts/*`)
   - Categorized architecture with barrel exports: `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`, `constants/`
@@ -278,8 +286,18 @@ All 8 backend feature modules adhere to the standardized categorized subdirector
   - `utils/gemini.utils.ts`: JSON schemas for classification, summarization, and suggested replies
   - `index.ts`: unified barrel export accessible via `@integrations/ai`
   - `__tests__/`: comprehensive unit tests for `AiProviderFactory` and `GeminiAiProvider`
+- Transactional Mailer Strategy (`Backend/src/integrations/mailer/*`)
+  - `mailer.types.ts`: `ITransactionalMailer` contract, `MailerStrategyConfig`, and `ResendEmailRequestPayload`
+  - `mailer.constants.ts`: centralized Resend endpoint (`RESEND_API_BASE_URL`, `RESEND_APIs`) and `MAILER_TIMEOUT_MS`
+  - `mailer.factory.ts`: singleton strategy selector (`RESEND`, `SMTP`, `NOOP`) falling back safely to `NoopMailerProvider` in `test` or when credentials are absent
+  - `providers/`: `ResendMailerProvider` (REST over shared `apiRequest`), `SmtpMailerProvider` (`nodemailer` transport with timeout config), `NoopMailerProvider` (safe log-only mock)
+  - `index.ts`: unified barrel export accessible via `@integrations/mailer`
+  - `__tests__/mailer.factory.test.ts`: unit coverage for factory resolution, missing credential fallback, Resend payload formatting, and non-blocking error containment
 
 ### Data Models
+
+- `Backend/src/modules/observability/database/error-log.model.ts`
+  - `ErrorLog` for deduplicated API, worker, and frontend crash persistence with 90-day TTL expiration index
 
 - `Backend/src/modules/accounts/database/account.model.ts`
   - `Account`, `AccountMetrics` (with `unreadCount`, `sentCount`, `totalEmails`, `totalThreads`)
@@ -378,14 +396,18 @@ All 8 backend feature modules adhere to the standardized categorized subdirector
 - AI:
   - `GET /ai/summary/:emailId`
   - `GET /ai/suggestions/:emailId`
+- Observability:
+  - `POST /observability/client-errors`
 
 ## Frontend Index (`/Frontend`)
 
 ### Runtime Entry
 
-- `Frontend/src/app/layout.tsx`: root layout + providers
+- `Frontend/src/app/layout.tsx`: root layout + providers + centralized SEO metadata (`shared/constants/seo.ts`)
+- `Frontend/src/app/global-error.tsx`: Next.js App Router root error boundary capturing fatal layout crashes to Sentry and `reportClientError`
+- `Frontend/src/instrumentation-client.ts`: Next.js App Router client Sentry initialization (`release: '3.8.0'`), replacing deprecated `sentry.client.config.ts`
 - `Frontend/src/shared/providers/index.tsx`: Centralized application providers wrapper (ErrorBoundary root wrapper, Auth0, custom AuthProvider, React Query, theme, toaster)
-- `Frontend/src/shared/components/ErrorBoundary.tsx`: Functional React Error Boundary with user-friendly error card, stack disclosure, retry action, and single-click "Copy Trace ID" button
+- `Frontend/src/shared/components/ErrorBoundary.tsx`: Functional React Error Boundary with `dispatchClientErrorReport` bridging unhandled errors/rejections to backend observability alongside user-friendly fallback UI and "Copy Trace ID" action
 - `Frontend/src/middleware.ts`: route protection via Auth0 session (redirect unauthenticated to `/get_started`)
 - `Frontend/src/app/(home)/layout.tsx`: authenticated shell with sidebar, breadcrumb, and global compose-email popup
 
@@ -393,11 +415,14 @@ All 8 backend feature modules adhere to the standardized categorized subdirector
 
 - `Frontend/src/shared/monitoring/index.ts`: barrel export for `frontendMonitoring` singleton and `sessionTracker`
 - `Frontend/src/shared/monitoring/frontend-monitoring.interfaces.ts`: `IMonitoringProvider` strategy interface and frontend user context contracts
-- `Frontend/src/shared/monitoring/providers/sentry-frontend.provider.ts`: Sentry browser SDK integration with performance tracing, session replay, and privacy masking for rich-text editors and email bodies
+- `Frontend/src/shared/monitoring/providers/sentry-frontend.provider.ts`: Sentry browser SDK integration (`release: '3.8.0'`) with performance tracing, session replay, and privacy masking for rich-text editors and email bodies
 - `Frontend/src/shared/monitoring/session.tracker.ts`: tracks client route changes, user actions, breadcrumbs, and API mutation failures
 
 ### App Router Pages
 
+- `Frontend/src/app/robots.ts`: Next.js SEO crawler directives
+- `Frontend/src/app/sitemap.ts`: Next.js XML sitemap
+- `Frontend/src/app/opengraph-image.png`: social media sharing preview banner (1200x630)
 - `Frontend/src/app/(home)/page.tsx`: redirects to `/inbox`
 - `Frontend/src/app/(home)/inbox/page.tsx`: unified inbox page
 - `Frontend/src/app/(home)/inbox/[account]/page.tsx`: account inbox page
@@ -416,18 +441,17 @@ All 8 backend feature modules adhere to the standardized categorized subdirector
   - `features/analytics/*`: dashboard feature types (`types/index.ts`), API client wrapper (`analytics.api.ts`), React Query hook (`analytics.queries.ts`), composite state orchestration hook (`useDashboardPage.ts`), UI components (`DashboardHeader`, `OverviewKpiCards`, `EmailVolumeChart`, `AccountDistributionPieChart`, `ResponseTimeCard`, `TopSendersCard`, `AccountActivityGrid`, `DashboardSkeleton`, `DashboardEmptyState`), and primary dashboard page view (`pages/index.tsx`)
   - `features/auth/*`: login page and profile fetch query
   - `features/compose-email/*`: compose popup modal and rich-text editing controls organized in standardized kebab-case directory (`Frontend/src/features/compose-email/`)
-  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), `FormatEmailFromString` component, decomposed action hooks (`use-email-actions/`), compose hooks (`use-compose-email/`), keyboard navigation engine (`use-email-keyboard-shortcuts/` with `KEY_ACTIONS` dictionary lookup in `useEvaluateKeyPress`), move-to-folder dropdown (`use-move-to-folder-dropdown/` with extracted `useFolderFilterState`), keyboard shortcuts modal (`KeyboardShortcutsModal`), input guard utilities (`isInputElement`), and email API mutations decomposed into specialized mutation files (`email-status.mutations.ts`, `email-folder.mutations.ts`, `email-write.mutations.ts`) with composite barrel re-export (`email.mutations.ts`) featuring React Query cache snapshotting and optimistic rollbacks; query layer (`email.queries.ts`) features resilient retry suppression on 403/404 client errors for `useGetThreadQuery`; AI API client (`ai.api.ts`) and queries (`ai.queries.ts`) providing on-demand thread summaries (`useSummarizeThreadQuery`) and reply suggestions (`useSuggestedRepliesQuery`); AI UI components in `components/ai/` (`CategoryBadge`, `PriorityFlag`, `EmailAiSummaryCard`, `SuggestedRepliesBar`); `CATEGORY_STYLES` palette mapping in `@shared/constants/email.ts`; API client (`email.api.ts`) provides binary blob streaming via `downloadAttachment`; dedicated type definitions in `email-api.types.ts`, `email-component.types.ts`, `email-hooks.types.ts`, and `email-ui.types.ts` eliminate inline object types with unified barrel export in `types/index.ts`; strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
+  - `features/emails/*`: email details page, thread view, attachment list/preview, compose flow, rich-text editor, delete modal, email actions, toolbar (`EmailMenuBarOptions`), `FormatEmailFromString` component, decomposed action hooks (`use-email-actions/`), compose hooks (`use-compose-email/`), keyboard navigation engine (`use-email-keyboard-shortcuts/` with `KEY_ACTIONS` dictionary lookup in `useEvaluateKeyPress`), move-to-folder dropdown (`use-move-to-folder-dropdown/` with extracted `useFolderFilterState`), keyboard shortcuts modal (`KeyboardShortcutsModal`), input guard utilities (`isInputElement`), attachment staging API/mutations (`attachment.api.ts`, `attachment.mutations.ts`), and email API mutations decomposed into specialized mutation files (`email-status.mutations.ts`, `email-folder.mutations.ts`, `email-write.mutations.ts`) with composite barrel re-export (`email.mutations.ts`) featuring React Query cache snapshotting and optimistic rollbacks; query layer (`email.queries.ts`) features resilient retry suppression on 403/404 client errors for `useGetThreadQuery`; AI API client (`ai.api.ts`) and queries (`ai.queries.ts`) providing on-demand thread summaries (`useSummarizeThreadQuery`) and reply suggestions (`useSuggestedRepliesQuery`); AI UI components in `components/ai/` (`CategoryBadge`, `PriorityFlag`, `EmailAiSummaryCard`, `SuggestedRepliesBar`); `CATEGORY_STYLES` palette mapping in `@shared/constants/email.ts`; API client (`email.api.ts`) provides binary blob streaming via `downloadAttachment`; dedicated type definitions in `email-api.types.ts`, `email-component.types.ts`, `email-hooks.types.ts`, and `email-ui.types.ts` eliminate inline object types with unified barrel export in `types/index.ts`; strictly references canonical MongoDB `_id` (`email._id`) across all selection and detail views
   - `features/folders/*`: folders overview, folder email list (`useFolderEmailListPage` delegating actions to `useEmailActions` with keyboard shortcuts and modal), modular folder card components (`FolderCardHeader`, `FolderCardActions`, `FolderCard`), folder API layer with `syncAccountFolders` and strongly-typed `getFolderDetails`, dedicated mutation typing via `UpdateFolderMutationVariables` in `folders.types.ts` and `folders-components.types.ts`, folder action hooks, and explicitly named `FolderEmailListHeader.tsx` (eliminating anonymous `index.tsx`); strictly references canonical MongoDB `_id` (`folder._id`) across all UI operations
   - `features/inbox/*`: unified inbox, account inbox, shared inbox header (`EmailListHeader` with shortcuts button and single-click Priority quick filter), inbox filters (including AI Category and AI Priority dropdowns via `useInboxPageFilters`), inbox table (`EmailListTable` with integrated `CategoryBadge` and `PriorityFlag` across desktop table and mobile card views, `focusedIndex` active keyboard cursor styling `ring-2 ring-primary ring-inset` and auto-scroll), inbox API layer, clean modern inbox page hook (`use-inbox-page/index.ts`) coordinating decomposed sub-hooks (`useInboxPageData`, `useInboxPageFilters`) with zero ESLint suppression comments, menubar options under `use-inbox-email-menubar-options/` with sync-aware refresh behavior and keyboard shortcuts integration, and dedicated query/mutation and component types (`types/`: `inbox-components.types.ts`, `SearchEmailPayload`, `DeleteEmailPayload`); strictly uses `email._id` for selection state, checkboxes, trash actions, and DOM IDs, and `folder.id` for folder filter dropdowns
-  - `features/settings/*`: settings page tabs, profile page/form, account sync settings page, AI & Privacy tab view (`pages/ai/index.tsx`), modular AI setting cards (`components/ai/`: `GlobalAiToggleCard`, `AiFeatureTogglesCard`, `PerAccountAiExclusionCard`), custom hook `useAiSettings`, React Query hooks (`useGetAiSettingsQuery`, `useUpdateAiSettingsMutation`), password modal, account-deletion UI, settings API layer (`settings.api.ts`), and dedicated mutation and component types (`types/`: `settings-api.types.ts`, `settings-component.types.ts`, `ai-settings.types.ts`, `ChangePasswordPayload`)
-- `Frontend/src/shared/api/*`: centralized Axios clients, API endpoint constants, query keys (`ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`), and error parsing (`errors.ts` extracting domain errors and HTTP 429 rate limit retry guidance)
+  - `features/settings/*`: settings page tabs (honoring route `setting` param via `value={activeTab}`), profile page/form, account sync settings page, AI & Privacy tab view (`pages/ai/index.tsx`), initial `AboutSettingsStub` (`components/about/AboutSettingsStub.tsx`), modular AI setting cards (`components/ai/`: `GlobalAiToggleCard`, `AiFeatureTogglesCard`, `PerAccountAiExclusionCard`), custom hook `useAiSettings`, React Query hooks (`useGetAiSettingsQuery`, `useUpdateAiSettingsMutation`), password modal, account-deletion UI, settings API layer (`settings.api.ts`), and dedicated mutation and component types (`types/`: `settings-api.types.ts`, `settings-component.types.ts`, `ai-settings.types.ts`, `ChangePasswordPayload`)
+- `Frontend/src/shared/api/*`: centralized Axios clients, isolated `reportClientError` client (`observability.api.ts`), API endpoint constants (`OBSERVABILITY_API_ENDPOINTS`, `ANALYTICS_QUERY_KEYS`, `DRAFT_QUERY_KEYS`), and error parsing (`errors.ts` extracting domain errors and HTTP 429 rate limit retry guidance)
 - `Frontend/src/shared/monitoring/*`: client observability and action tracking
-  - `frontend.manager.ts`: `FrontendMonitoringManager` singleton and `trackUserAction` helper
-  - `providers/sentry-frontend.provider.ts`: `SentryFrontendProvider` integrating `@sentry/nextjs` for client error capture, user identity mapping (`setUser`), distributed `traceId` correlation, and typed breadcrumbs (Session Replay omitted to avoid paid tier costs)
+  - `frontend.manager.ts`: `FrontendMonitoringManager` singleton (`'3.8.0'`) and `trackUserAction` helper
+  - `providers/sentry-frontend.provider.ts`: `SentryFrontendProvider` integrating `@sentry/nextjs` (`'3.8.0'`) for client error capture, user identity mapping (`setUser`), distributed `traceId` correlation, and typed breadcrumbs (Session Replay omitted to avoid paid tier costs)
   - `providers/console-frontend.provider.ts`: `ConsoleFrontendProvider` for structured local console logging
   - `session.tracker.ts`: in-memory rolling action ring buffer (FIFO 50 items) with strict privacy masking for rich-text editors, inputs, and email content
-- `Frontend/src/shared/components/ErrorBoundary.tsx`: React Error Boundary with user-friendly recovery UI and "Copy Trace ID" action
-- `Frontend/sentry.client.config.ts`: Next.js client-side Sentry initialization file configuring error tracking and trace sampling (`tracesSampleRate: 1.0`)
+- `Frontend/src/shared/components/ErrorBoundary.tsx`: React Error Boundary dispatching crashes to backend `ErrorLog` (`dispatchClientErrorReport`) alongside user-friendly recovery UI and "Copy Trace ID" action
 - `Frontend/next.config.ts`: wraps Next.js build with `withSentryConfig` and transpiles the shared `@mailsense/types` package
 - `Frontend/pnpm-workspace.yaml`: links `@mailsense/types` from the local workspace and permits `@sentry/cli` builds
 

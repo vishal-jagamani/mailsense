@@ -1,6 +1,7 @@
 'use client';
 
 import * as Sentry from '@sentry/nextjs';
+import { reportClientError } from '@shared/api';
 import { GlobalErrorProps } from '@shared/types';
 import { Button } from '@shared/ui/button';
 import { useEffect, useState } from 'react';
@@ -11,6 +12,13 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
     useEffect(() => {
         Sentry.captureException(error, {
             tags: { boundary: 'app-global-error', traceId },
+        });
+        void reportClientError({
+            message: error.message || 'Fatal global layout error',
+            stack: error.stack,
+            traceId,
+            pageUrl: typeof window !== 'undefined' ? window.location.pathname : '/',
+            appVersion: process.env.NEXT_PUBLIC_APP_VERSION || '3.8.0',
         });
     }, [error, traceId]);
 

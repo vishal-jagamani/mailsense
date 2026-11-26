@@ -4,6 +4,8 @@ export const NODE_ENV = ENV.NODE_ENV;
 
 export const PORT: number = ENV.PORT;
 
+export const APP_VERSION = ENV.APP_VERSION;
+
 export const ENABLE_AUTH: boolean = ENV.ENABLE_AUTH;
 
 export const LOG_LEVEL = ENV.LOG_LEVEL;
@@ -57,4 +59,18 @@ export const AI_CONFIG = {
     provider: ENV.AI_PROVIDER,
     geminiApiKey: ENV.GOOGLE_GEMINI_API_KEY,
     geminiModel: ENV.GOOGLE_GEMINI_MODEL,
+};
+
+export const MAILER_CONFIG = {
+    provider: ENV.EMAIL_ALERT_PROVIDER,
+    resendApiKey: ENV.EMAIL_RESEND_API_KEY,
+    smtpUrl: ENV.EMAIL_SMTP_URL,
+    fromEmail: ENV.EMAIL_ALERT_FROM_EMAIL,
+};
+
+export const ALERTING_CONFIG = {
+    enabled: ENV.EMAIL_ALERT_EMAIL_ENABLED,
+    adminAlertEmail: ENV.EMAIL_ADMIN_ALERT_EMAIL,
+    supportEmail: ENV.EMAIL_SUPPORT_EMAIL,
+    cooldownSeconds: ENV.EMAIL_ALERT_COOLDOWN_SECONDS,
 };

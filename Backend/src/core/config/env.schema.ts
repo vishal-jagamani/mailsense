@@ -1,4 +1,4 @@
-import { AI_PROVIDER_NAME } from '@mailsense/types';
+import { AI_PROVIDER_NAME, TRANSACTIONAL_MAILER_PROVIDER } from '@mailsense/types';
 import z from 'zod';
 
 export const envSchemaObject = {
@@ -37,4 +37,15 @@ export const envSchemaObject = {
     AI_PROVIDER: z.enum(AI_PROVIDER_NAME).default(AI_PROVIDER_NAME.GEMINI),
     GOOGLE_GEMINI_API_KEY: z.string().optional(),
     GOOGLE_GEMINI_MODEL: z.string().default('gemini-3.6-flash'),
+
+    APP_VERSION: z.string().default('3.8.0'),
+    // Transactional Mailer & Error Alerting Secrets
+    EMAIL_ALERT_PROVIDER: z.enum(TRANSACTIONAL_MAILER_PROVIDER).default(TRANSACTIONAL_MAILER_PROVIDER.NOOP),
+    EMAIL_RESEND_API_KEY: z.string().optional(),
+    EMAIL_SMTP_URL: z.string().optional(),
+    EMAIL_ALERT_FROM_EMAIL: z.string().default('MailSense Alerts <alerts@mailsense.app>'),
+    EMAIL_ADMIN_ALERT_EMAIL: z.string().optional(),
+    EMAIL_SUPPORT_EMAIL: z.string().optional(),
+    EMAIL_ALERT_EMAIL_ENABLED: z.enum(['true', 'false']).default('false'),
+    EMAIL_ALERT_COOLDOWN_SECONDS: z.coerce.number().int().min(60).default(900),
 };

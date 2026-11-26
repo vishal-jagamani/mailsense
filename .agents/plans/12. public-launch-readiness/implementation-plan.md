@@ -2,7 +2,7 @@
 
 > **Phase:** Sprint P9 (Pre-Launch Validation, Hardened Observability, Telemetry & Public Release) · **Release Target:** `Backend v3.8.0` / `Frontend v3.8.0` / `@mailsense/types v1.9.0`
 > **Priority:** 🔴 HIGH — Mandatory production hardening, legal compliance, observability, and end-to-end validation prior to public open-source launch
-> **Status:** IN PROGRESS (Phase 1 Completed — Ready for Phase 2)
+> **Status:** IN PROGRESS (Phase 1 & Phase 2 Completed — Ready for Phase 3)
 > **Created:** 2026-11-25 · **Last Updated:** 2026-11-26
 
 ---
@@ -666,48 +666,66 @@ export const Feedback = model<FeedbackDocument>("Feedback", FeedbackSchema);
 
 #### Tasks
 
-- [ ] Implement `ITransactionalMailer` strategy (`ResendMailerProvider`, `SmtpMailerProvider`, `NoopMailerProvider`, `MailerFactory`) under `Backend/src/integrations/mailer/`.
-- [ ] Add mailer & alerting env vars to `env.schema.ts`, `app.config.ts`, and `LOGGER_MODULE` identifiers to `observability.constants.ts`.
-- [ ] Create `ErrorLog` model (with 90-day TTL index) & `ErrorLogRepository` (`upsertErrorLog` incrementing `occurrenceCount`).
-- [ ] Implement `ObservabilityService` with PII scrubbing, SHA-256 error fingerprinting, non-blocking DB write, and Redis cooldown (`alert:cooldown:<fingerprint>`).
-- [ ] Wire `ObservabilityService` into `errorHandler` and `BaseWorker` (eliminating duplicate Sentry calls when errors rethrow).
-- [ ] Create `POST /api/observability/client-errors` endpoint with rate limiter and connect `ErrorBoundary.tsx` and `global-error.tsx`.
+- [x] Implement `ITransactionalMailer` strategy (`ResendMailerProvider`, `SmtpMailerProvider`, `NoopMailerProvider`, `MailerFactory`) under `Backend/src/integrations/mailer/`.
+- [x] Add mailer & alerting env vars to `env.schema.ts`, `env.config.ts`, `app.config.ts`, and `LOGGER_MODULE` identifiers to `observability.constants.ts`.
+- [x] Create `ErrorLog` model (with 90-day TTL index) & `ErrorLogRepository` (`upsertErrorLog` incrementing `occurrenceCount`).
+- [x] Implement `ObservabilityService` with PII scrubbing, SHA-256 error fingerprinting, non-blocking DB write, HTML-escaped email alerts, and Redis cooldown (`alert:cooldown:<fingerprint>`).
+- [x] Wire `observabilityService` singleton into `errorHandler` and `BaseWorker` (eliminating duplicate Sentry calls via `forwardToMonitoring: false`).
+- [x] Create `POST /api/observability/client-errors` endpoint with rate limiter and connect `ErrorBoundary.tsx` and `global-error.tsx`.
 
 #### Files to Create
 
-- `Backend/src/integrations/mailer/mailer.interface.ts`
+- `Backend/src/integrations/mailer/mailer.constants.ts`
+- `Backend/src/integrations/mailer/mailer.types.ts`
 - `Backend/src/integrations/mailer/providers/resend-mailer.provider.ts`
 - `Backend/src/integrations/mailer/providers/smtp-mailer.provider.ts`
 - `Backend/src/integrations/mailer/providers/noop-mailer.provider.ts`
 - `Backend/src/integrations/mailer/mailer.factory.ts`
 - `Backend/src/integrations/mailer/index.ts`
+- `Backend/src/integrations/mailer/__tests__/mailer.factory.test.ts`
+- `Backend/src/modules/observability/constants/` (`observability.constants.ts`, `index.ts`)
 - `Backend/src/modules/observability/database/error-log.model.ts`
 - `Backend/src/modules/observability/database/error-log.repository.ts`
+- `Backend/src/modules/observability/database/index.ts`
 - `Backend/src/modules/observability/services/observability.service.ts`
+- `Backend/src/modules/observability/services/index.ts`
 - `Backend/src/modules/observability/controllers/observability.controller.ts`
-- `Backend/src/modules/observability/schema/observability.schema.ts`
+- `Backend/src/modules/observability/controllers/index.ts`
+- `Backend/src/modules/observability/schemas/observability.schema.ts`
+- `Backend/src/modules/observability/schemas/index.ts`
 - `Backend/src/modules/observability/routes/observability.routes.ts`
+- `Backend/src/modules/observability/routes/index.ts`
+- `Backend/src/modules/observability/types/observability.types.ts`
+- `Backend/src/modules/observability/types/index.ts`
+- `Backend/src/modules/observability/utils/observability.utils.ts`
+- `Backend/src/modules/observability/utils/index.ts`
 - `Backend/src/modules/observability/index.ts`
+- `Backend/src/modules/observability/__tests__/observability.service.test.ts`
+- `Frontend/src/shared/api/observability.api.ts`
 
 #### Files to Modify
 
+- `Backend/package.json`
 - `Backend/src/core/config/env.schema.ts`
+- `Backend/src/core/config/env.config.ts`
 - `Backend/src/core/config/app.config.ts`
 - `Backend/src/core/constants/observability.constants.ts`
 - `Backend/src/core/middlewares/error.handler.ts`
-- `Backend/src/core/observability/logger.factory.ts`
 - `Backend/src/core/security/rate-limit.config.ts`
 - `Backend/src/workers/base.worker.ts`
 - `Backend/src/routes.ts`
+- `Backend/src/modules/emails/services/email-write.service.ts`
+- `Frontend/package.json`
 - `Frontend/src/shared/api/endpoints.ts`
+- `Frontend/src/shared/api/index.ts`
 - `Frontend/src/shared/components/ErrorBoundary.tsx`
 - `Frontend/src/app/global-error.tsx`
 
 #### Acceptance Criteria
 
-1. Triggering an unhandled 500 error, worker exception, or client ErrorBoundary crash stores a sanitized record in MongoDB `error_logs` and dispatches 1 email within the cooldown window.
-2. Repeated identical errors within 15 minutes increment `occurrenceCount` without sending duplicate emails.
-3. Database or mailer outage never crashes or blocks HTTP responses.
+1. [x] Triggering an unhandled 500 error, worker exception, or client ErrorBoundary crash stores a sanitized record in MongoDB `error_logs` and dispatches 1 email within the cooldown window.
+2. [x] Repeated identical errors within 15 minutes increment `occurrenceCount` without sending duplicate emails.
+3. [x] Database or mailer outage never crashes or blocks HTTP responses.
 
 ---
 

@@ -7,6 +7,7 @@ import attachmentRoutes from '@modules/attachments/routes/index.js';
 import draftRoutes from '@modules/drafts/routes/index.js';
 import emailsRoutes from '@modules/emails/routes/index.js';
 import foldersRoutes from '@modules/folders/routes/index.js';
+import observabilityRoutes from '@modules/observability/routes/index.js';
 import usersRoutes from '@modules/user/routes/index.js';
 
 const router = Router();
@@ -30,5 +31,7 @@ router.use('/drafts', draftRoutes);
 router.use('/analytics', analyticsRoutes);
 
 router.use('/ai', aiRoutes);
+
+router.use('/observability', observabilityRoutes);
 
 export default router;

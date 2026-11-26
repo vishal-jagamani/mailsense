@@ -1,12 +1,14 @@
 import { NODE_ENV } from '@config';
 import { LOGGER_MODULE } from '@constants';
 import { AppError, AxiosApiError, ErrorCode } from '@errors';
+import { ERROR_LOG_SEVERITY, ERROR_LOG_SOURCE } from '@mailsense/types';
+import { ObservabilityService } from '@modules/observability/services/index.js';
 import { monitoring } from '@monitoring';
 import { createLogger } from '@observability';
 import { CaughtError, ErrorResponsePayload } from '@types';
 import { NextFunction, Request, Response } from 'express';
 
-const logger = createLogger(LOGGER_MODULE.SERVER);
+const logger = createLogger(LOGGER_MODULE.SERVER, { forwardToMonitoring: false });
 
 const normalizeAppError = (err: CaughtError): AppError => {
     let appError: AppError;
@@ -33,7 +35,7 @@ const normalizeAppError = (err: CaughtError): AppError => {
     return appError;
 };
 
-const captureNonOperationalErrors = (appError: AppError, statusCode: number, req: Request) => {
+const captureNonOperationalErrors = (appError: AppError, statusCode: number, req: Request): void => {
     monitoring.captureException(appError, {
         traceId: appError.traceId,
         httpStatus: statusCode,
@@ -46,6 +48,33 @@ const captureNonOperationalErrors = (appError: AppError, statusCode: number, req
         extra: {
             url: req.originalUrl,
             query: JSON.stringify(req.query),
+        },
+    });
+};
+
+const reportUnhandledException = (appError: AppError, statusCode: number, req: Request): void => {
+    if (appError.isOperational && statusCode < 500) {
+        return;
+    }
+
+    captureNonOperationalErrors(appError, statusCode, req);
+    const severity = statusCode >= 500 && !appError.isOperational ? ERROR_LOG_SEVERITY.CRITICAL : ERROR_LOG_SEVERITY.ERROR;
+
+    const observabilityService = new ObservabilityService();
+
+    void observabilityService.recordAndAlertError({
+        source: ERROR_LOG_SOURCE.BACKEND_API,
+        severity,
+        module: LOGGER_MODULE.SERVER,
+        errorCode: appError.errorCode,
+        httpStatus: statusCode,
+        message: appError.message,
+        stack: appError.stack,
+        traceId: appError.traceId,
+        context: {
+            userId: req.user?.id,
+            method: req.method,
+            path: req.path,
         },
     });
 };
@@ -63,9 +92,7 @@ export const errorHandler = (err: CaughtError, req: Request, res: Response, _nex
             stack: appError.stack,
         });
 
-        if (!appError.isOperational || statusCode >= 500) {
-            captureNonOperationalErrors(appError, statusCode, req);
-        }
+        reportUnhandledException(appError, statusCode, req);
 
         const errorPayload: ErrorResponsePayload = appError.toJSON(isDev);
         if (isDev && appError instanceof AxiosApiError && appError.originalError) {

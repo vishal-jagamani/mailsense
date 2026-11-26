@@ -7,6 +7,25 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- **System Reliability & Error Diagnostics:** Added persistent runtime error logging and automated administrator alert notifications so unexpected server, background worker, or client application issues are captured and resolved rapidly without interrupting active user sessions.
+- **Application Crash Recovery Boundary:** Added a root-level application error recovery boundary that catches unexpected layout crashes gracefully and displays a trace identifier for fast issue resolution.
+
+### Changed
+
+- **Search Engine & Social Sharing Readiness:** Added public page metadata, search engine indexing rules, sitemap discovery, and OpenGraph social preview banners across application entry points.
+- **Settings Deep-Linking & Navigation Branding:** Fixed settings route deep-linking so direct tab URLs open to the requested section, introduced an initial About & Privacy overview section, and replaced placeholder navigation labels with MailSense branding.
+
+### Fixed
+
+- **Error Diagnostics Consistency:** Consolidated frontend and backend error reporting paths to eliminate duplicate telemetry events and ensure smooth recovery from transient failures.
+
+### Security
+
+- **Staged Attachment Access Validation:** Enforced strict user and account ownership verification when composing emails with staged attachments.
+- **Diagnostic Route Decommissioning:** Removed leftover internal test endpoints from public application routing.
+
 ## [3.7.0] - 2026-11-24
 
 ### Added

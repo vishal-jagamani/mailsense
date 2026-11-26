@@ -78,3 +78,15 @@ export const authRateLimiter: RateLimitRequestHandler = rateLimit({
     keyGenerator: resolveClientKey,
     handler: createRateLimitHandler('Authentication', 60),
 });
+
+/**
+ * Client Error Bridge Limiter: 20 requests per 15 minutes per client
+ */
+export const clientErrorRateLimiter: RateLimitRequestHandler = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    standardHeaders: 'draft-7',
+    legacyHeaders: false,
+    keyGenerator: resolveClientKey,
+    handler: createRateLimitHandler('ClientErrorReport', 900),
+});

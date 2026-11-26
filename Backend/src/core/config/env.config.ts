@@ -8,6 +8,7 @@ class EnvConfig {
     public readonly PORT: number;
     public readonly ENABLE_AUTH: boolean;
     public readonly NODE_ENV: string;
+    public readonly APP_VERSION: string;
     public readonly MONGODB_URI: string;
     public readonly DATABASE: string;
     public readonly LOG_LEVEL: string;
@@ -40,6 +41,15 @@ class EnvConfig {
     public readonly AI_PROVIDER: string;
     public readonly GOOGLE_GEMINI_API_KEY: string | undefined;
     public readonly GOOGLE_GEMINI_MODEL: string;
+    // Transactional Mailer & Error Alerting Secrets
+    public readonly EMAIL_ALERT_PROVIDER: string;
+    public readonly EMAIL_RESEND_API_KEY: string | undefined;
+    public readonly EMAIL_SMTP_URL: string | undefined;
+    public readonly EMAIL_ALERT_FROM_EMAIL: string;
+    public readonly EMAIL_ADMIN_ALERT_EMAIL: string | undefined;
+    public readonly EMAIL_SUPPORT_EMAIL: string | undefined;
+    public readonly EMAIL_ALERT_EMAIL_ENABLED: boolean;
+    public readonly EMAIL_ALERT_COOLDOWN_SECONDS: number;
 
     constructor() {
         this.loadDotenv();
@@ -89,6 +99,16 @@ class EnvConfig {
         this.AI_PROVIDER = data.AI_PROVIDER;
         this.GOOGLE_GEMINI_API_KEY = data.GOOGLE_GEMINI_API_KEY;
         this.GOOGLE_GEMINI_MODEL = data.GOOGLE_GEMINI_MODEL;
+        this.APP_VERSION = data.APP_VERSION;
+        // Transactional Mailer & Error Alerting Secrets
+        this.EMAIL_ALERT_PROVIDER = data.EMAIL_ALERT_PROVIDER;
+        this.EMAIL_RESEND_API_KEY = data.EMAIL_RESEND_API_KEY;
+        this.EMAIL_SMTP_URL = data.EMAIL_SMTP_URL;
+        this.EMAIL_ALERT_FROM_EMAIL = data.EMAIL_ALERT_FROM_EMAIL;
+        this.EMAIL_ADMIN_ALERT_EMAIL = data.EMAIL_ADMIN_ALERT_EMAIL;
+        this.EMAIL_SUPPORT_EMAIL = data.EMAIL_SUPPORT_EMAIL;
+        this.EMAIL_ALERT_EMAIL_ENABLED = data.EMAIL_ALERT_EMAIL_ENABLED === 'true';
+        this.EMAIL_ALERT_COOLDOWN_SECONDS = data.EMAIL_ALERT_COOLDOWN_SECONDS;
     }
 
     private loadDotenv(): void {

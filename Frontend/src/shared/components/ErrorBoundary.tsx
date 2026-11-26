@@ -1,13 +1,25 @@
 'use client';
 
+import { reportClientError } from '@shared/api';
 import { frontendMonitoring, trackUserAction } from '@shared/monitoring';
 import { ErrorBoundaryContextValue, ErrorBoundaryFallbackProps, ErrorBoundaryInternalState, ErrorBoundaryProps } from '@shared/types';
-import React, { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { ErrorFallback } from './ErrorFallback';
 
-export type { ErrorBoundaryFallbackProps, ErrorBoundaryProps, ErrorBoundaryContextValue };
+export type { ErrorBoundaryContextValue, ErrorBoundaryFallbackProps, ErrorBoundaryProps };
 
 const ErrorBoundaryContext = createContext<ErrorBoundaryContextValue | null>(null);
+
+const dispatchClientErrorReport = (error: Error, traceId: string): void => {
+    const pageUrl = typeof window !== 'undefined' ? window.location.pathname : 'unknown';
+    void reportClientError({
+        message: error.message || 'Unhandled frontend crash',
+        stack: error.stack,
+        traceId,
+        pageUrl,
+        appVersion: process.env.NEXT_PUBLIC_APP_VERSION || '3.8.0',
+    });
+};
 
 /**
  * Hook allowing any child component or hook to trigger the ErrorBoundary
@@ -70,6 +82,7 @@ export function ErrorBoundary({ children, fallbackRender, onError }: ErrorBounda
                     traceId,
                     route: typeof window !== 'undefined' ? window.location.pathname : undefined,
                 });
+                dispatchClientErrorReport(error, traceId);
 
                 if (onError) {
                     onError(error, traceId);
@@ -93,6 +106,7 @@ export function ErrorBoundary({ children, fallbackRender, onError }: ErrorBounda
                     traceId,
                     route: typeof window !== 'undefined' ? window.location.pathname : undefined,
                 });
+                dispatchClientErrorReport(error, traceId);
 
                 if (onError) {
                     onError(error, traceId);
@@ -114,6 +128,7 @@ export function ErrorBoundary({ children, fallbackRender, onError }: ErrorBounda
                     traceId,
                     route: typeof window !== 'undefined' ? window.location.pathname : undefined,
                 });
+                dispatchClientErrorReport(error, traceId);
 
                 if (onError) {
                     onError(error, traceId);

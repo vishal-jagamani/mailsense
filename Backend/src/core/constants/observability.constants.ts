@@ -52,4 +52,11 @@ export enum LOGGER_MODULE {
     GEMINI_PROVIDER = 'GeminiProvider',
     NOOP_AI_PROVIDER = 'NoopAiProvider',
     AI_PROVIDER_FACTORY = 'AiProviderFactory',
+    // Transactional Mailer & Persistent Observability
+    OBSERVABILITY_SERVICE = 'ObservabilityService',
+    OBSERVABILITY_CONTROLLER = 'ObservabilityController',
+    MAILER_FACTORY = 'MailerFactory',
+    RESEND_MAILER = 'ResendMailer',
+    SMTP_MAILER = 'SmtpMailer',
+    NOOP_MAILER = 'NoopMailer',
 }

@@ -7,6 +7,26 @@ and this frontend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.h
 
 ## [Unreleased]
 
+### Added
+
+- **Root Global Error Boundary & Client Crash Bridge:**
+    - Added Next.js App Router `Frontend/src/app/global-error.tsx` capturing fatal root layout errors to Sentry and backend observability storage with `traceId`.
+    - Added isolated `reportClientError` Axios helper (`Frontend/src/shared/api/observability.api.ts`, re-exported via `shared/api/index.ts`) and centralized `OBSERVABILITY_API_ENDPOINTS.CLIENT_ERRORS` (`shared/api/endpoints.ts`) without Auth0 token coupling so unauthenticated/pre-login errors report reliably.
+    - Wired `dispatchClientErrorReport` in `Frontend/src/shared/components/ErrorBoundary.tsx` across `showBoundary`, `handleError`, and `handleRejection`.
+- **SEO, Social Preview & Robots Infrastructure (Phase 1):**
+    - Added centralized SEO metadata constants (`Frontend/src/shared/constants/seo.ts`) wired into `Frontend/src/app/layout.tsx`.
+    - Added `Frontend/src/app/robots.ts`, `Frontend/src/app/sitemap.ts`, and social preview asset `Frontend/src/app/opengraph-image.png`.
+- **Attachment Staging Client & Settings About Slot (Phase 1):**
+    - Added `Frontend/src/features/emails/api/attachment.api.ts` and `attachment.mutations.ts` separating attachment upload/delete network calls cleanly from hooks.
+    - Added `AboutSettingsStub.tsx` (`Frontend/src/features/settings/components/about/AboutSettingsStub.tsx`) and `about` tab slot in Settings.
+
+### Changed
+
+- **Client Sentry Instrumentation Migration & Release Sync (Phase 1):** Migrated `Frontend/sentry.client.config.ts` to Next.js App Router `Frontend/src/instrumentation-client.ts`, updating release tags from `'3.2.0'` to `'3.8.0'` across `instrumentation-client.ts`, `frontend.manager.ts`, and `sentry-frontend.provider.ts`.
+- **Settings Deep-Linking & Sidebar Cleanup (Phase 1):** Fixed `/settings/[setting]` tab routing in `Frontend/src/features/settings/pages/index.tsx` to honor active route params (`value={activeTab}`), and replaced placeholder `'shadcn'`/`'CN'` labels and removed commented JSX blocks in `sidebar.constants.ts` and `nav-user.tsx`.
+- **Custom Hook Boundary Hygiene (Phase 1):** Removed prohibited `try/catch` blocks in `useDashboardPage.ts`, `useDraftsPage.ts`, and `useComposeEmailAttachments.ts`; replaced `console.error` calls with `trackUserAction` in `use-email-keyboard-shortcuts/index.ts` and `PageHeader.tsx`.
+- **Workspace Contract Linking:** Configured `@mailsense/types` workspace linking (`link:../../mailsense-types`) in `Frontend/package.json`.
+
 ## [3.7.0] - 2026-11-24
 
 ### Added
