@@ -1,7 +1,7 @@
 import { AI_CONFIG } from '@config';
 import { LOGGER_MODULE } from '@constants';
 import { AiProcessingError, AppError, ConfigurationError, RateLimitError } from '@errors';
-import { GoogleGenAI } from '@google/genai';
+import { GenerateContentResponseUsageMetadata, GoogleGenAI } from '@google/genai';
 import {
     AI_PROVIDER_NAME,
     AiClassifyEmailParams,
@@ -10,11 +10,12 @@ import {
     AiSuggestedRepliesResult,
     AiSummarizeThreadParams,
     AiSummarizeThreadResult,
+    AiTokenUsage,
 } from '@mailsense/types';
 import { createLogger } from '@observability';
 import { CaughtError } from '@types';
 import { IAiProvider } from '../ai.provider.js';
-import { GeminiProviderConfig, GeminiRawApiError } from '../ai.provider.types.js';
+import { GeminiProviderConfig, GeminiRawApiError, GeminiStructuredGenerationResult } from '../ai.provider.types.js';
 import {
     geminiClassifyAndScoreAiResponseSchema,
     geminiGenerateSuggestedRepliesAiResponseSchema,
@@ -62,13 +63,17 @@ export class GeminiAiProvider implements IAiProvider {
         const schema = geminiClassifyAndScoreAiResponseSchema();
 
         try {
-            const parsed = await this.generateWithSchema<AiClassifyEmailResult>(prompt, schema);
+            const generated = await this.generateWithSchema<AiClassifyEmailResult>(prompt, schema);
             logger.info('Email classified successfully by Gemini', {
-                category: parsed.category,
-                priority: parsed.priority,
+                category: generated.data.category,
+                priority: generated.data.priority,
                 durationMs: Date.now() - startTime,
             });
-            return parsed;
+            return {
+                ...generated.data,
+                tokenUsage: generated.tokenUsage,
+                modelName: generated.modelName,
+            };
         } catch (error) {
             const caughtError: CaughtError = error instanceof Error || (typeof error === 'object' && error !== null) ? error : String(error);
             throw this.buildProviderError(caughtError, 'classifyAndScoreEmail', Date.now() - startTime);
@@ -91,13 +96,17 @@ export class GeminiAiProvider implements IAiProvider {
         ].join('\n');
 
         try {
-            const parsed = await this.generateWithSchema<AiSummarizeThreadResult>(prompt, geminiSummarizeEmailThreadAiResponseSchema());
+            const generated = await this.generateWithSchema<AiSummarizeThreadResult>(prompt, geminiSummarizeEmailThreadAiResponseSchema());
             logger.info('Thread summarized successfully by Gemini', {
-                keyPointsCount: parsed.keyPoints.length,
-                actionItemsCount: parsed.actionItems.length,
+                keyPointsCount: generated.data.keyPoints.length,
+                actionItemsCount: generated.data.actionItems.length,
                 durationMs: Date.now() - startTime,
             });
-            return parsed;
+            return {
+                ...generated.data,
+                tokenUsage: generated.tokenUsage,
+                modelName: generated.modelName,
+            };
         } catch (error) {
             const caughtError: CaughtError = error instanceof Error || (typeof error === 'object' && error !== null) ? error : String(error);
             throw this.buildProviderError(caughtError, 'summarizeEmailThread', Date.now() - startTime);
@@ -122,19 +131,23 @@ export class GeminiAiProvider implements IAiProvider {
         ].join('\n');
 
         try {
-            const parsed = await this.generateWithSchema<AiSuggestedRepliesResult>(prompt, geminiGenerateSuggestedRepliesAiResponseSchema());
+            const generated = await this.generateWithSchema<AiSuggestedRepliesResult>(prompt, geminiGenerateSuggestedRepliesAiResponseSchema());
             logger.info('Suggested replies generated successfully by Gemini', {
-                suggestionCount: parsed.suggestions.length,
+                suggestionCount: generated.data.suggestions.length,
                 durationMs: Date.now() - startTime,
             });
-            return parsed;
+            return {
+                ...generated.data,
+                tokenUsage: generated.tokenUsage,
+                modelName: generated.modelName,
+            };
         } catch (error) {
             const caughtError: CaughtError = error instanceof Error || (typeof error === 'object' && error !== null) ? error : String(error);
             throw this.buildProviderError(caughtError, 'generateSuggestedReplies', Date.now() - startTime);
         }
     }
 
-    private async generateWithSchema<T>(prompt: string, schema: object): Promise<T> {
+    private async generateWithSchema<T>(prompt: string, schema: object): Promise<GeminiStructuredGenerationResult<T>> {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -158,10 +171,30 @@ export class GeminiAiProvider implements IAiProvider {
                     message: 'Gemini API returned an empty text payload.',
                 });
             }
-            return JSON.parse(text) as T;
+            return {
+                data: JSON.parse(text) as T,
+                tokenUsage: this.extractTokenUsage(response.usageMetadata),
+                modelName: this.modelName,
+            };
         } finally {
             clearTimeout(timeoutId);
         }
+    }
+
+    private extractTokenUsage(metadata?: GenerateContentResponseUsageMetadata): AiTokenUsage | undefined {
+        if (!metadata) {
+            return undefined;
+        }
+        const inputTokens = metadata.promptTokenCount ?? 0;
+        const outputTokens = metadata.candidatesTokenCount ?? 0;
+        const totalTokens = metadata.totalTokenCount ?? inputTokens + outputTokens;
+
+        return {
+            inputTokens,
+            outputTokens,
+            totalTokens,
+            ...(metadata.cachedContentTokenCount !== undefined ? { cachedTokens: metadata.cachedContentTokenCount } : {}),
+        };
     }
 
     private sanitizeText(raw: string): string {

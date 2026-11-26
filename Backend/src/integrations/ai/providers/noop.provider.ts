@@ -34,6 +34,8 @@ export class NoopAiProvider implements IAiProvider {
             summary: `Summary of: ${params.subject.slice(0, 50)}`,
             tags: ['general', 'inbox'],
             confidence: 1.0,
+            tokenUsage: { inputTokens: 120, outputTokens: 45, totalTokens: 165 },
+            modelName: 'noop-mock',
         };
     }
 
@@ -46,6 +48,8 @@ export class NoopAiProvider implements IAiProvider {
             summary: `Automated summary for thread: ${params.threadSubject}`,
             keyPoints: ['Noop key point: Thread conversation reviewed.', 'No critical blockers identified.'],
             actionItems: ['No immediate action required.'],
+            tokenUsage: { inputTokens: 200, outputTokens: 80, totalTokens: 280 },
+            modelName: 'noop-mock',
         };
     }
 
@@ -74,6 +78,8 @@ export class NoopAiProvider implements IAiProvider {
                     tone: SUGGESTED_REPLY_TONE.CONCISE,
                 },
             ],
+            tokenUsage: { inputTokens: 160, outputTokens: 90, totalTokens: 250 },
+            modelName: 'noop-mock',
         };
     }
 }

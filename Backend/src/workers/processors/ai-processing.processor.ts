@@ -88,6 +88,8 @@ const executeAIProcessingAndStoreAiMetadata = async (
         priority: classification.priority,
         hasSummary: Boolean(classification.summary),
         processingDurationMs: durationMs,
+        tokenUsage: classification.tokenUsage,
+        modelName: classification.modelName,
     };
 };
 

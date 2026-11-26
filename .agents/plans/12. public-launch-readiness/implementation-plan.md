@@ -2,7 +2,7 @@
 
 > **Phase:** Sprint P9 (Pre-Launch Validation, Hardened Observability, Telemetry & Public Release) · **Release Target:** `Backend v3.8.0` / `Frontend v3.8.0` / `@mailsense/types v1.9.0`
 > **Priority:** 🔴 HIGH — Mandatory production hardening, legal compliance, observability, and end-to-end validation prior to public open-source launch
-> **Status:** IN PROGRESS (Phase 1 & Phase 2 Completed — Ready for Phase 3)
+> **Status:** IN PROGRESS (Phases 1–3 Completed — Ready for Phase 4)
 > **Created:** 2026-11-25 · **Last Updated:** 2026-11-26
 
 ---
@@ -736,12 +736,12 @@ export const Feedback = model<FeedbackDocument>("Feedback", FeedbackSchema);
 
 #### Tasks
 
-- [ ] Update `GeminiAiProvider.generateWithSchema` to parse `response.usageMetadata` (`promptTokenCount`, `candidatesTokenCount`, `totalTokenCount`, `cachedContentTokenCount`) and attach `tokenUsage` and `modelName` to results.
-- [ ] Create `AiJob` model & `AiJobRepository` under `Backend/src/modules/ai/database/`.
-- [ ] Add `onActive`, `onCompleted`, `onFailed` lifecycle hooks to `AIProcessingWorker` persisting `AiJob` status, duration, and token metrics.
-- [ ] Update `aiProcessingProcessor` to forward `tokenUsage` and `modelName` in `AIProcessingJobResult`.
-- [ ] Update `AIService.summarizeThread` and `AIService.getSuggestedReplies` to record `ON_DEMAND_SUMMARY` and `ON_DEMAND_SUGGESTIONS` jobs safely.
-- [ ] Add unit tests verifying `usageMetadata` extraction and `AiJobRepository` persistence.
+- [x] Update `GeminiAiProvider.generateWithSchema` to parse `response.usageMetadata` (`promptTokenCount`, `candidatesTokenCount`, `totalTokenCount`, `cachedContentTokenCount`) and attach `tokenUsage` and `modelName` to results (`GeminiStructuredGenerationResult<T>`), plus deterministic telemetry in `NoopAiProvider`.
+- [x] Create `AiJob` model & `AiJobRepository` under `Backend/src/modules/ai/database/` with zero `try/catch` and Phase 4 cascade delete helpers.
+- [x] Add `onActive`, `onCompleted`, `onFailed` lifecycle hooks to `AIProcessingWorker` persisting `AiJob` status, duration, and token metrics (importing strictly from `@modules/ai/database/index.js`).
+- [x] Update `aiProcessingProcessor` to forward `tokenUsage` and `modelName` in `AIProcessingJobResult`.
+- [x] Update `AIService.summarizeThread` and `AIService.getSuggestedReplies` to record `ON_DEMAND_SUMMARY` and `ON_DEMAND_SUGGESTIONS` jobs safely.
+- [x] Add unit tests verifying `usageMetadata` extraction and `AiJobRepository` persistence (`ai-job-tracking.test.ts`).
 
 #### Files to Create
 
@@ -752,16 +752,19 @@ export const Feedback = model<FeedbackDocument>("Feedback", FeedbackSchema);
 
 #### Files to Modify
 
+- `Backend/src/integrations/ai/ai.provider.types.ts`
 - `Backend/src/integrations/ai/providers/gemini.provider.ts`
+- `Backend/src/integrations/ai/providers/noop.provider.ts`
 - `Backend/src/workers/workers/ai.worker.ts`
 - `Backend/src/workers/processors/ai-processing.processor.ts`
+- `Backend/src/modules/ai/types/ai.types.ts`
 - `Backend/src/modules/ai/services/ai.service.ts`
-- `Backend/src/core/constants/observability.constants.ts`
+- `Backend/src/modules/ai/index.ts`
 
 #### Acceptance Criteria
 
-1. Syncing emails writes `AiJob` documents matching `SyncJob` ergonomics with accurate `inputTokens`, `outputTokens`, `totalTokens`, and `modelName`.
-2. On-demand Thread Summary and Suggested Replies invocations log corresponding token spend documents.
+1. [x] Syncing emails writes `AiJob` documents matching `SyncJob` ergonomics with accurate `inputTokens`, `outputTokens`, `totalTokens`, and `modelName`.
+2. [x] On-demand Thread Summary and Suggested Replies invocations log corresponding token spend documents cleanly.
 
 ---
 

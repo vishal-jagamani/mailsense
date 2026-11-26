@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **AI Processing Reliability & Resource Telemetry:** Added persistent execution tracking for background and on-demand AI features to monitor latency, reliability, and token usage cleanly without affecting inbox workflows.
 - **System Reliability & Error Diagnostics:** Added persistent runtime error logging and automated administrator alert notifications so unexpected server, background worker, or client application issues are captured and resolved rapidly without interrupting active user sessions.
 - **Application Crash Recovery Boundary:** Added a root-level application error recovery boundary that catches unexpected layout crashes gracefully and displays a trace identifier for fast issue resolution.
 

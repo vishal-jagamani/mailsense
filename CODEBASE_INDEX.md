@@ -71,11 +71,11 @@
 
 - `Backend/src/workers/base.worker.ts`: reusable BullMQ worker base with startup, shutdown, customizable worker options (`getWorkerOptions`), lifecycle hooks, `{ forwardToMonitoring: false }` boundary logger, and non-blocking `observabilityService.recordAndAlertError` persistence on worker failures
 - Categorized worker architecture (`Backend/src/workers/workers/*`):
-  - `ai.worker.ts`: `AIProcessingWorker` with `concurrency: 5` and token bucket rate limiter `limiter: { max: 50, duration: 60000 }`
+  - `ai.worker.ts`: `AIProcessingWorker` with `concurrency: 5`, token bucket rate limiter `limiter: { max: 50, duration: 60000 }`, and `onActive`/`onCompleted`/`onFailed` lifecycle hooks persisting `AiJob` telemetry via `@modules/ai/database/index.js`
   - `sync.worker.ts`: sync-account queue worker that updates sync-job/account status on active, completed, and failed events
   - `token-refresh.worker.ts`: worker for refresh-token queue processing
 - Processors (`Backend/src/workers/processors/*`):
-  - `ai-processing.processor.ts`: email intelligence processor with idempotency checks, user privacy verification, LLM classification via `AiProviderFactory`, and structured rate-limit queue pausing via `queue.rateLimit()`
+  - `ai-processing.processor.ts`: email intelligence processor with idempotency checks, user privacy verification, LLM classification via `AiProviderFactory`, `tokenUsage`/`modelName` result forwarding, and structured rate-limit queue pausing via `queue.rateLimit()`
   - `sync-account.processor.ts`: executes provider-based folder sync and incremental/full email sync inside background jobs, refactored into focused private helper methods (`syncAccountFoldersStep`, `fetchEmailChangesStep`, `applyIncrementalSyncStep`, `applyFullSyncStep`) with cyclomatic complexity $\le 8$
   - `refresh-token.processor.ts`: refreshes provider access tokens with per-account Redis locking
 - `Backend/src/workers/worker.types.ts`: shared worker result types
@@ -149,13 +149,15 @@ All 9 backend feature modules adhere to the standardized categorized subdirector
   - Account activation, deactivation, creation, and deletion synchronize repeatable background sync schedules
   - Dedicated types in `types/account.types.ts`: `OAuthConnectResponse`, `OAuthCallbackParams`, `SyncAccountsResponse`, `SyncAccountJobResponse`
 - AI (`Backend/src/modules/ai/*`)
-  - Categorized architecture with barrel exports: `constants/`, `controllers/`, `routes/`, `schema/`, `services/`, `types/`
+  - Categorized architecture with barrel exports (`index.ts`): `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`
+  - Database layer (`database/`): `AiJob` Mongoose model (`ai-job.model.ts`) with compound `(userId, operationType, startedAt)` and `(status, startedAt)` indexes, and pure `AiJobRepository` (`ai-job.repository.ts`) without `try/catch` for background and on-demand AI telemetry persistence
   - Controller layer (`controllers/ai.controller.ts`): endpoints for retrieving thread summaries (`getThreadSummary`) and generating suggested replies (`getSuggestedReplies`) with caller `userId` multi-tenant validation
-  - Service layer (`services/ai.service.ts`): orchestrates on-demand thread summarization and suggested reply generation via `AiProviderFactory`, verifies caller email ownership, sanitizes thread bodies, and throws typed domain errors (`NotFoundError`, `ForbiddenError`, `AiProcessingError`)
+  - Service layer (`services/ai.service.ts`): orchestrates on-demand thread summarization and suggested reply generation via `AiProviderFactory`, records `ON_DEMAND_SUMMARY` and `ON_DEMAND_SUGGESTIONS` `AiJob` telemetry non-blockingly (`recordOnDemandAiJob`, `recordFailedOnDemandAiJob`), verifies caller email ownership, sanitizes thread bodies, and throws typed domain errors (`NotFoundError`, `ForbiddenError`, `AiProcessingError`)
   - Validation schema (`schema/ai.schema.ts`): Zod schemas for email ID route parameters (`emailIdParamSchema`)
   - Route definitions (`routes/ai.routes.ts`): mounted at `/api/ai` (`GET /summary/:emailId`, `GET /suggestions/:emailId`)
-  - Dedicated types (`types/ai.types.ts`): `EmailIdParam`
+  - Dedicated types (`types/ai.types.ts`): `EmailIdParam`, `AiJobInput`, `OnDemandAiTelemetryContext`, `OnDemandAiTelemetryParams`, `SuggestedRepliesTelemetryBundle`
   - Centralized constants (`constants/ai.constants.ts`): `AI_ROUTES`
+  - Unit tests (`__tests__/ai-job-tracking.test.ts`): verifies Gemini `usageMetadata` extraction and `AiJobRepository` persistence
 - Analytics (`Backend/src/modules/analytics/*`)
   - Categorized architecture with barrel exports: `constants/`, `controllers/`, `database/`, `routes/`, `schema/`, `services/`, `types/`, `utils/`
   - Database layer (`Backend/src/modules/analytics/database/*`):
@@ -279,10 +281,10 @@ All 9 backend feature modules adhere to the standardized categorized subdirector
   - `auth0.types.ts`: typed contracts including `Auth0UpdateUserPayload`, `Auth0UserDetailsResponse`, `Auth0AccessTokenResponse`, and `Auth0UserChangePassword`
 - AI Provider Strategy (`Backend/src/integrations/ai/*`)
   - `ai.provider.ts`: `IAiProvider` interface defining core AI contracts (`classifyAndScoreEmail`, `summarizeEmailThread`, `generateSuggestedReplies`)
-  - `ai.provider.types.ts`: typed provider configuration contracts (`GeminiProviderConfig`, `SanitizedEmailContent`)
+  - `ai.provider.types.ts`: typed provider configuration contracts (`GeminiProviderConfig`, `SanitizedEmailContent`, `GeminiStructuredGenerationResult<T>`)
   - `ai.provider.factory.ts`: singleton strategy provider selector and cache (`AiProviderFactory`), defaulting to Gemini or test-mode Noop
-  - `providers/gemini.provider.ts`: Google Gemini provider adapter utilizing `@google/genai` with `gemini-3.6-flash`, structured JSON response schema enforcement, 30s `AbortController` timeout, content sanitization, and `RateLimitError` detection
-  - `providers/noop.provider.ts`: deterministic mock AI provider for offline development and CI test environments
+  - `providers/gemini.provider.ts`: Google Gemini provider adapter utilizing `@google/genai` with `gemini-3.6-flash`, structured JSON response schema enforcement, `extractTokenUsage(response.usageMetadata)` token spend parsing, 30s `AbortController` timeout, content sanitization, and `RateLimitError` detection
+  - `providers/noop.provider.ts`: deterministic mock AI provider emitting synthetic `tokenUsage` and `modelName` telemetry for offline development and CI test environments
   - `utils/gemini.utils.ts`: JSON schemas for classification, summarization, and suggested replies
   - `index.ts`: unified barrel export accessible via `@integrations/ai`
   - `__tests__/`: comprehensive unit tests for `AiProviderFactory` and `GeminiAiProvider`
@@ -296,6 +298,8 @@ All 9 backend feature modules adhere to the standardized categorized subdirector
 
 ### Data Models
 
+- `Backend/src/modules/ai/database/ai-job.model.ts`
+  - `AiJob` for background & on-demand AI execution status, duration, and token spend tracking
 - `Backend/src/modules/observability/database/error-log.model.ts`
   - `ErrorLog` for deduplicated API, worker, and frontend crash persistence with 90-day TTL expiration index
 

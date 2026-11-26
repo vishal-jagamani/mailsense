@@ -1,3 +1,5 @@
+import { AiTokenUsage } from '@mailsense/types';
+
 export interface GeminiProviderConfig {
     apiKey?: string;
     modelName?: string;
@@ -21,4 +23,10 @@ export interface GeminiRawApiError {
     statusCode?: number;
     message?: string;
     headers?: GeminiErrorHeaders;
+}
+
+export interface GeminiStructuredGenerationResult<T> {
+    data: T;
+    tokenUsage?: AiTokenUsage;
+    modelName: string;
 }

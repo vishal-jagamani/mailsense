@@ -9,6 +9,10 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- **AI Job Telemetry & Token Usage Persistence (`Backend/src/modules/ai/database/`):**
+    - Implemented `AiJob` Mongoose model (`ai-job.model.ts`) implementing `AiProcessingJobAttributes` (`@mailsense/types v1.9.0`) with nested `AiTokenUsageSchema`, sparse unique `bullJobId`, and compound indexes on `(userId, operationType, startedAt)` and `(status, startedAt)`.
+    - Implemented pure `AiJobRepository` (`ai-job.repository.ts`) without `try/catch` blocks providing `upsertBackgroundJob`, `updateBackgroundJob`, `createOnDemandJob`, `getJobByBullId`, `getLatestJobsByUser`, and Phase 4 cascade helpers (`deleteJobsByAccountId`, `deleteJobsByUserId`), re-exported via `database/index.ts` and `modules/ai/index.ts`.
+    - Added unit test suite in `Backend/src/modules/ai/__tests__/ai-job-tracking.test.ts` verifying Gemini `usageMetadata` extraction and `AiJobRepository` persistence.
 - **Transactional Mailer Strategy (`Backend/src/integrations/mailer/`):**
     - Implemented `ITransactionalMailer` contract (`mailer.types.ts`), `MailerFactory` singleton strategy selector (`RESEND`, `SMTP`, `NOOP`), and centralized Resend endpoint constants (`mailer.constants.ts`).
     - Implemented `ResendMailerProvider` using shared `apiRequest` HTTP client, `SmtpMailerProvider` using `nodemailer` with timeout options, and `NoopMailerProvider` for offline/CI runs.
@@ -26,6 +30,9 @@ and this backend follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- **Gemini & Noop Token Telemetry Extraction (`Backend/src/integrations/ai/`):** Extended `ai.provider.types.ts` with `GeminiStructuredGenerationResult<T>`, updated `GeminiAiProvider.generateWithSchema` to parse `response.usageMetadata` (`inputTokens`, `outputTokens`, `totalTokens`, `cachedTokens`) via `extractTokenUsage`, and updated `NoopAiProvider` to return deterministic `tokenUsage` and `modelName` telemetry.
+- **AI Worker Lifecycle & Processor Wiring (`Backend/src/workers/`):** Forwarded `tokenUsage` and `modelName` inside `aiProcessingProcessor`, and implemented `onActive`, `onCompleted` (`STATUS_MAP` mapping `SUCCESS`, `SKIPPED`, `RATE_LIMITED`, `FAILED`), and `onFailed` hooks in `AIProcessingWorker` importing strictly from `@modules/ai/database/index.js` to avoid circular route/middleware dependencies.
+- **On-Demand AI Service Telemetry (`Backend/src/modules/ai/services/ai.service.ts`):** Updated `AIService.summarizeThread` and `AIService.getSuggestedReplies` (with dedicated types `AiJobInput`, `OnDemandAiTelemetryContext`, `OnDemandAiTelemetryParams`, `SuggestedRepliesTelemetryBundle` in `ai.types.ts`) to record `ON_DEMAND_SUMMARY` and `ON_DEMAND_SUGGESTIONS` `AiJob` documents inside a non-blocking `try / catch` telemetry boundary.
 - **Boundary Error Wiring & Sentry Deduplication:** Wired `observabilityService.recordAndAlertError` into `errorHandler` (`error.handler.ts`, via extracted `reportUnhandledException` helper keeping cyclomatic complexity compliant) and `BaseWorker` (`base.worker.ts`), configuring boundary loggers with `{ forwardToMonitoring: false }` to eliminate duplicate Sentry events and prevent logging recursion.
 - **Type Safety & Release Tag Hygiene (Phase 1):** Removed prohibited `: unknown` and `: never` usages in `gemini.provider.ts`, `ai-processing.processor.ts`, `AxiosApiError.ts`, `error.handler.ts`, and `observability.types.ts` via `CaughtError`, `GeminiRawApiError`, and `LoggableValue`; updated `MonitoringManager` fallback release tag to `'3.8.0'`.
 - **Workspace Contract Linking:** Configured `@mailsense/types` workspace linking (`link:../../mailsense-types`) in `Backend/package.json` synced to `v1.9.0` contracts.
