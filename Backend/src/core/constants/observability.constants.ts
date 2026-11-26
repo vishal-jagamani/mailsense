@@ -1,4 +1,4 @@
-export const HEALTH_PROBES_API_ENDPOINTS = ['/health', '/health/ready', '/testEndpoint', '/api/health', '/api/health/ready'] as const;
+export const HEALTH_PROBES_API_ENDPOINTS = ['/health', '/health/ready', '/api/health', '/api/health/ready'] as const;
 
 /**
  * Standardized module identifiers for structured application logging.

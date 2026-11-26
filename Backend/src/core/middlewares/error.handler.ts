@@ -1,15 +1,15 @@
 import { NODE_ENV } from '@config';
+import { LOGGER_MODULE } from '@constants';
 import { AppError, AxiosApiError, ErrorCode } from '@errors';
 import { monitoring } from '@monitoring';
-import { ErrorResponsePayload } from '@types';
-import { LOGGER_MODULE } from '@constants';
 import { createLogger } from '@observability';
+import { CaughtError, ErrorResponsePayload } from '@types';
 import { NextFunction, Request, Response } from 'express';
 
 const logger = createLogger(LOGGER_MODULE.SERVER);
 
-const normalizeAppError = (err: unknown): AppError => {
-    let appError;
+const normalizeAppError = (err: CaughtError): AppError => {
+    let appError: AppError;
     if (err instanceof AppError) {
         appError = err;
     } else if (err instanceof Error) {
@@ -50,10 +50,9 @@ const captureNonOperationalErrors = (appError: AppError, statusCode: number, req
     });
 };
 
-export const errorHandler = (err: unknown, req: Request, res: Response, _next: NextFunction): void => {
+export const errorHandler = (err: CaughtError, req: Request, res: Response, _next: NextFunction): void => {
     try {
         const appError = normalizeAppError(err);
-
         const statusCode = appError.httpStatus || 500;
         const isDev = NODE_ENV === 'local' || NODE_ENV === 'development';
 
@@ -64,14 +63,11 @@ export const errorHandler = (err: unknown, req: Request, res: Response, _next: N
             stack: appError.stack,
         });
 
-        // Transmit non-operational or 5xx server errors to the active monitoring provider
         if (!appError.isOperational || statusCode >= 500) {
             captureNonOperationalErrors(appError, statusCode, req);
         }
 
         const errorPayload: ErrorResponsePayload = appError.toJSON(isDev);
-
-        // Safely extract typed original error if present in AxiosApiError during development
         if (isDev && appError instanceof AxiosApiError && appError.originalError) {
             errorPayload.error.external = appError.originalError;
         }

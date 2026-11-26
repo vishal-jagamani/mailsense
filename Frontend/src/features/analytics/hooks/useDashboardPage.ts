@@ -76,13 +76,14 @@ export const useDashboardPage = (params?: UseDashboardParams): UseDashboardPageR
     };
 
     const handleRefresh = async (): Promise<void> => {
-        try {
-            await refetchAnalytics();
-            toast.success('Dashboard analytics refreshed');
-        } catch (refreshError) {
-            trackUserAction('api.error', `Failed to refresh dashboard analytics: ${refreshError}`);
+        const result = await refetchAnalytics();
+        if (result.isError) {
+            const msg = result.error instanceof Error ? result.error.message : String(result.error);
+            trackUserAction('api.error', `Failed to refresh dashboard analytics: ${msg}`);
             toast.error('Failed to refresh analytics');
+            return;
         }
+        toast.success('Dashboard analytics refreshed');
     };
 
     return {

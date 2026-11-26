@@ -44,10 +44,6 @@ export class App {
         this.expressApp.use(healthRoutes);
         this.expressApp.use('/api', healthRoutes);
 
-        this.expressApp.get('/testEndpoint', (_req: Request, res: Response) => {
-            res.send(`MailSense Backend Test Endpoint`);
-        });
-
         this.expressApp.use('/api', defaultApiRateLimiter, indexRoutes);
     }
 

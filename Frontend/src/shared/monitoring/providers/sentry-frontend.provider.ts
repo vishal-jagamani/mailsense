@@ -31,7 +31,7 @@ export class SentryFrontendProvider implements IFrontendMonitoringProvider {
                 Sentry.init({
                     dsn,
                     environment: config.environment || process.env.NODE_ENV || 'development',
-                    release: config.release || '3.2.0',
+                    release: config.release || process.env.NEXT_PUBLIC_APP_VERSION || '3.8.0',
                 });
             }
 

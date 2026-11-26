@@ -24,6 +24,14 @@ export function NavUser({ user }: NavUserProps) {
     const { theme, setTheme } = useTheme();
     const router = useRouter();
 
+    const initials = (name: string): string => {
+        const trimmed = name.trim();
+        if (!trimmed) return 'MS';
+        const parts = trimmed.split(/\s+/);
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    };
+
     return (
         <SidebarMenu>
             <SidebarMenuItem>
@@ -32,7 +40,7 @@ export function NavUser({ user }: NavUserProps) {
                         <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
                             <Avatar className="h-8 w-8 rounded-lg">
                                 <AvatarImage src={user.avatar} alt={user.name} />
-                                <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                                <AvatarFallback className="rounded-lg">{initials(user.name)}</AvatarFallback>
                             </Avatar>
                             <div className="grid flex-1 text-left text-sm leading-tight">
                                 <span className="truncate font-medium">{user.name}</span>
@@ -51,7 +59,7 @@ export function NavUser({ user }: NavUserProps) {
                             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                                 <Avatar className="h-8 w-8 rounded-lg">
                                     <AvatarImage src={user.avatar} alt={user.name} />
-                                    <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                                    <AvatarFallback className="rounded-lg">{initials(user.name)}</AvatarFallback>
                                 </Avatar>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-medium">{user.name}</span>
@@ -60,24 +68,7 @@ export function NavUser({ user }: NavUserProps) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {/* <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <User />
-                                Profile
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/accounts" className="flex items-center gap-2">
-                                    <CircleUser />
-                                    <span>Connected Accounts</span>
-                                </Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator /> */}
                         <DropdownMenuGroup>
-                            {/* <DropdownMenuItem>
-                                <Bell />
-                                Notifcations
-                            </DropdownMenuItem> */}
                             <DropdownMenuItem
                                 className="cursor-pointer"
                                 onClick={(e) => {

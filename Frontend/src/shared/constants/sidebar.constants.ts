@@ -4,9 +4,9 @@ import { HOME_ROUTES, ROUTES } from './routes';
 
 export const SIDEBAR_DATA: SidebarData = {
     user: {
-        name: 'shadcn',
-        email: 'm@example.com',
-        avatar: '/avatars/shadcn.jpg',
+        name: 'MailSense User',
+        email: '',
+        avatar: '',
     },
     navMain: [
         {

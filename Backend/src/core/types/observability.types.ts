@@ -12,6 +12,8 @@ export interface CreateLoggerOptions {
     forwardToMonitoring?: boolean;
 }
 
+export type LoggableValue = string | number | boolean | Error | object | unknown | undefined;
+
 export interface LogContext {
     traceId?: string;
     userId?: string;
@@ -29,9 +31,9 @@ export interface LogContext {
     jobId?: string;
     queueName?: string;
     jobName?: string;
-    error?: unknown;
+    error?: LoggableValue;
     stack?: string;
-    [key: string]: string | number | boolean | unknown | undefined;
+    [key: string]: LoggableValue;
 }
 
 export interface ModuleLogger {
@@ -41,10 +43,19 @@ export interface ModuleLogger {
     debug(msg: string, ctx?: LogContext): void;
 }
 
+export interface TelemetryBreadcrumb {
+    category: string;
+    message: string;
+    level: LOG_LEVELS;
+    data?: Record<string, string | number | boolean>;
+}
+
+export interface TelemetryExceptionContext {
+    tags?: Record<string, string | number | boolean>;
+    extra?: Record<string, string | number | boolean>;
+}
+
 export interface ITelemetrySink {
-    addBreadcrumb(breadcrumb: { category: string; message: string; level: LOG_LEVELS; data?: Record<string, string | number | boolean> }): void;
-    captureException(
-        error: Error,
-        context?: { tags?: Record<string, string | number | boolean>; extra?: Record<string, string | number | boolean> },
-    ): void;
+    addBreadcrumb(breadcrumb: TelemetryBreadcrumb): void;
+    captureException(error: Error, context?: TelemetryExceptionContext): void;
 }

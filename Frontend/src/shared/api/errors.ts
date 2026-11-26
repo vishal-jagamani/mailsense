@@ -1,7 +1,7 @@
-import { ApiErrorResponse, FormattedClientError } from '@shared/types';
+import { ApiErrorResponse, ClientCaughtError, FormattedClientError } from '@shared/types';
 import axios, { AxiosError } from 'axios';
 
-const DefaultError = (err: unknown): FormattedClientError => ({
+const DefaultError = (err: ClientCaughtError): FormattedClientError => ({
     message: String(err),
     errorCode: 'UNKNOWN_ERROR',
     traceId: '',
@@ -24,7 +24,7 @@ const ErrorInstance = (error: Error): FormattedClientError => ({
  * Pure data transformation without try/catch overhead.
  */
 
-export function extractApiError(error: unknown): FormattedClientError {
+export function extractApiError(error: ClientCaughtError): FormattedClientError {
     if (axios.isAxiosError(error)) {
         const axiosError = error as AxiosError<ApiErrorResponse>;
         const responseData = axiosError.response?.data;

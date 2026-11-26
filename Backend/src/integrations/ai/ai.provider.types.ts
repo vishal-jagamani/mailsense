@@ -11,3 +11,14 @@ export interface SanitizedEmailContent {
     sanitizedBody: string;
     receivedAt: Date;
 }
+
+export interface GeminiErrorHeaders {
+    'retry-after'?: string;
+}
+
+export interface GeminiRawApiError {
+    status?: number;
+    statusCode?: number;
+    message?: string;
+    headers?: GeminiErrorHeaders;
+}

@@ -94,3 +94,5 @@ export interface AiProcessingErrorParams {
     traceId?: string;
     processingDurationMs?: number;
 }
+
+export type CaughtError = Error | ErrorWithStatus | string | number | boolean | object | null | undefined;

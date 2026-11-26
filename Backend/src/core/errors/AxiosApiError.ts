@@ -1,4 +1,4 @@
-import { ParsedErrorDetails, ProviderErrorResponse } from '@types';
+import { CaughtError, ParsedErrorDetails, ProviderErrorResponse } from '@types';
 import axios, { AxiosError } from 'axios';
 import { ProviderApiError } from './DomainErrors.js';
 
@@ -27,7 +27,7 @@ function parseAxiosError(error: AxiosError<ProviderErrorResponse>): ParsedErrorD
     return { message, statusCode, originalError };
 }
 
-function parseGenericError(error: unknown): ParsedErrorDetails {
+function parseGenericError(error: CaughtError): ParsedErrorDetails {
     const message = error instanceof Error ? error.message : String(error);
     return {
         message,
@@ -36,7 +36,7 @@ function parseGenericError(error: unknown): ParsedErrorDetails {
     };
 }
 
-function resolveErrorDetails(error: unknown): ParsedErrorDetails {
+function resolveErrorDetails(error: CaughtError): ParsedErrorDetails {
     if (axios.isAxiosError(error)) {
         return parseAxiosError(error as AxiosError<ProviderErrorResponse>);
     }
@@ -46,7 +46,7 @@ function resolveErrorDetails(error: unknown): ParsedErrorDetails {
 export class AxiosApiError extends ProviderApiError {
     public readonly originalError?: Record<string, string | number | boolean>;
 
-    constructor(error: unknown, providerName = 'ExternalAPI', traceId?: string) {
+    constructor(error: CaughtError, providerName = 'ExternalAPI', traceId?: string) {
         const details = resolveErrorDetails(error);
 
         super({

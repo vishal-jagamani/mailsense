@@ -18,11 +18,6 @@ export const DATABASE = ENV.DATABASE;
 
 export const SENTRY_DSN = ENV.SENTRY_DSN;
 
-export const config = {
-    url: 'https://catfact.ninja',
-    nodeEnv: ENV.NODE_ENV,
-};
-
 export const AUTH0_SECRETS = {
     audience: ENV.AUTH0_AUDIENCE,
     issuerBaseURL: ENV.AUTH0_ISSUER_BASE_URL,

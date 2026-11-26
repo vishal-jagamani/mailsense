@@ -1,6 +1,8 @@
 import { DraftAttributes, SaveDraftRequestBody, SuccessAPIResponse } from '@mailsense/types';
 import { DRAFT_QUERY_KEYS, EMAIL_QUERY_KEYS } from '@shared/api';
+import { trackUserAction } from '@shared/monitoring';
 import { useMutation, UseMutationResult, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { deleteDraft, saveDraft, sendDraft } from './draft.api';
 
 export const useSaveDraftMutation = (): UseMutationResult<DraftAttributes, Error, SaveDraftRequestBody> => {
@@ -19,6 +21,10 @@ export const useDeleteDraftMutation = (): UseMutationResult<SuccessAPIResponse, 
         mutationFn: (draftId) => deleteDraft(draftId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: DRAFT_QUERY_KEYS.all });
+        },
+        onError: (error) => {
+            trackUserAction('ui.click', `Error deleting draft: ${error.message}`, 'error');
+            toast.error('Error deleting draft');
         },
     });
 };

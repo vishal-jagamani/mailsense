@@ -55,3 +55,14 @@ export interface ErrorFallbackProps {
     readonly traceId: string;
     readonly resetErrorBoundary: () => void;
 }
+
+export type ClientCaughtError = Error | string | number | boolean | object | null | undefined;
+
+export interface NextJsRuntimeError extends Error {
+    readonly digest?: string;
+}
+
+export interface GlobalErrorProps {
+    readonly error: NextJsRuntimeError;
+    readonly reset: () => void;
+}

@@ -27,36 +27,31 @@ export const useEmailKeyboardShortcuts = (params: UseEmailKeyboardShortcutsParam
         }
 
         const handleKeyDown = (event: KeyboardEvent): void => {
-            try {
-                if (isInputElement(event.target)) {
-                    return;
-                }
-
-                if (event.ctrlKey || event.altKey || event.metaKey) {
-                    return;
-                }
-
-                const currentEmail = emails[selectedIndex];
-
-                evaluateKeyPress({
-                    event,
-                    emails,
-                    selectedIndex,
-                    selectedEmails,
-                    currentEmail,
-                    onSelectIndex,
-                    onOpenEmail,
-                    onStarEmail,
-                    onMarkUnread,
-                    onArchiveEmail,
-                    onDeleteEmail,
-                    onOpenCompose,
-                    onOpenShortcutsModal,
-                });
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : String(error);
-                console.error('Error handling keyboard navigation shortcut:', errorMessage);
+            if (isInputElement(event.target)) {
+                return;
             }
+
+            if (event.ctrlKey || event.altKey || event.metaKey) {
+                return;
+            }
+
+            const currentEmail = emails[selectedIndex];
+
+            evaluateKeyPress({
+                event,
+                emails,
+                selectedIndex,
+                selectedEmails,
+                currentEmail,
+                onSelectIndex,
+                onOpenEmail,
+                onStarEmail,
+                onMarkUnread,
+                onArchiveEmail,
+                onDeleteEmail,
+                onOpenCompose,
+                onOpenShortcutsModal,
+            });
         };
 
         window.addEventListener('keydown', handleKeyDown);

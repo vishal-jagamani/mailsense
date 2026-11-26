@@ -52,7 +52,7 @@ export class FrontendMonitoringManager implements IFrontendMonitoringProvider {
             const effectiveConfig: FrontendMonitoringConfig = {
                 provider: this.provider.name,
                 environment: config?.environment ?? process.env.NODE_ENV ?? 'development',
-                release: config?.release ?? '3.2.0',
+                release: config?.release ?? (process.env.NEXT_PUBLIC_APP_VERSION || '3.8.0'),
                 dsn: config?.dsn ?? process.env.NEXT_PUBLIC_SENTRY_DSN,
                 maxBreadcrumbs: config?.maxBreadcrumbs ?? 50,
             };

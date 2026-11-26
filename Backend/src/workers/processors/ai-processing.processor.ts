@@ -7,6 +7,7 @@ import { EmailRepository } from '@modules/emails/database/email.repository.js';
 import { UserSettingsRepository } from '@modules/user/database/user-settings.repository.js';
 import { createLogger } from '@observability';
 import { getQueue, QUEUE_NAMES } from '@queue';
+import { CaughtError } from '@types';
 import { decompressString } from '@utils';
 import { Job } from 'bullmq';
 
@@ -90,7 +91,7 @@ const executeAIProcessingAndStoreAiMetadata = async (
     };
 };
 
-const handleAIProcessingError = async (error: unknown, emailId: string, durationMs: number): Promise<AIProcessingJobResult> => {
+const handleAIProcessingError = async (error: CaughtError, emailId: string, durationMs: number): Promise<AIProcessingJobResult> => {
     // Catch 429 Rate Limit from Gemini and trigger BullMQ native backoff
     if (error instanceof RateLimitError) {
         const retryAfterMs = error.retryAfterMs ?? 10000;
@@ -180,6 +181,7 @@ export const aiProcessingProcessor = async (job: Job<AIProcessingJobPayload, AIP
         const result = await executeAIProcessingAndStoreAiMetadata(accountId, emailId, email, startTime);
         return result;
     } catch (error) {
-        return await handleAIProcessingError(error, emailId, Date.now() - startTime);
+        const caughtError: CaughtError = error instanceof Error ? error : String(error);
+        return await handleAIProcessingError(caughtError, emailId, Date.now() - startTime);
     }
 };

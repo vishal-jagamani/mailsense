@@ -3,7 +3,6 @@ import { toast } from 'sonner';
 
 import { EMAILS_PAGE_SIZE, HOME_ROUTES } from '@shared/constants';
 import { UseDebounceQuery } from '@shared/hooks';
-import { trackUserAction } from '@shared/monitoring';
 import { useBreadcrumbStore, useComposeEmailPopupStore } from '@shared/store';
 import { useDeleteDraftMutation } from '../api/draft.mutations';
 import { useGetUserDraftsQuery } from '../api/draft.queries';
@@ -11,7 +10,7 @@ import { UseDraftsPageResult } from '../types';
 
 export const useDraftsPage = (): UseDraftsPageResult => {
     const { data: userDraftsData, isLoading: userDraftsLoading, isError: userDraftsError, refetch } = useGetUserDraftsQuery();
-    const { mutateAsync: deleteDraftMutate, isPending: isDeleting } = useDeleteDraftMutation();
+    const { mutate: deleteDraft, mutateAsync: deleteDraftAsync, isPending: isDeleting } = useDeleteDraftMutation();
     const { openWithDraft } = useComposeEmailPopupStore();
 
     const [page, setPage] = useState<number>(1);
@@ -58,34 +57,32 @@ export const useDraftsPage = (): UseDraftsPageResult => {
     };
 
     const handleDeleteDraft = async (draftId: string): Promise<void> => {
-        try {
-            const res = await deleteDraftMutate(draftId);
-            if (res && res.status) {
-                toast.success('Draft deleted successfully');
-                setSelectedDrafts((prev) => prev.filter((id) => id !== draftId));
-                refetch();
-            } else {
+        deleteDraft(draftId, {
+            onSuccess: (res) => {
+                if (res?.status) {
+                    toast.success('Draft deleted successfully');
+                    setSelectedDrafts((prev) => prev.filter((id) => id !== draftId));
+                    refetch();
+                    return;
+                }
                 toast.error('Failed to delete draft');
-            }
-        } catch (error) {
-            trackUserAction('ui.click', `Error deleting draft: ${error}`, 'error');
-            toast.error('Error deleting draft');
-        }
+            },
+        });
     };
 
     const handleBulkDelete = async (): Promise<void> => {
-        try {
-            if (selectedDrafts.length === 0) return;
-            for (const draftId of selectedDrafts) {
-                await deleteDraftMutate(draftId);
-            }
+        if (selectedDrafts.length === 0) return;
+
+        const results = await Promise.allSettled(selectedDrafts.map((draftId) => deleteDraftAsync(draftId)));
+        const failedCount = results.filter((r) => r.status === 'rejected').length;
+
+        if (failedCount === 0) {
             toast.success(`${selectedDrafts.length} drafts deleted successfully`);
             setSelectedDrafts([]);
-            refetch();
-        } catch (error) {
-            trackUserAction('ui.click', `Error in bulk draft deletion: ${error}`, 'error');
-            toast.error('Failed to delete selected drafts');
+        } else {
+            toast.error(`Failed to delete ${failedCount} of ${selectedDrafts.length} selected drafts`);
         }
+        refetch();
     };
 
     const handleOpenDraft = (draftId: string) => {

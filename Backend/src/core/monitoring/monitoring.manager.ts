@@ -1,4 +1,4 @@
-import { NODE_ENV } from '@config';
+import { NODE_ENV, SENTRY_DSN } from '@config';
 import { LOGGER_MODULE, MONITORING_PROVIDERS } from '@constants';
 import { createLogger, registerTelemetrySink } from '@observability';
 import {
@@ -55,7 +55,7 @@ export class MonitoringManager implements IMonitoringProvider {
                     return new NoopMonitoringProvider();
                 default:
                     // If Sentry DSN is present, default to Sentry; otherwise Noop
-                    if (process.env.SENTRY_DSN) {
+                    if (SENTRY_DSN) {
                         return new SentryMonitoringProvider();
                     }
                     return new NoopMonitoringProvider();
@@ -69,9 +69,9 @@ export class MonitoringManager implements IMonitoringProvider {
 
     private getDefaultConfig(): DefaultMonitoringConfig {
         return {
-            dsn: process.env.SENTRY_DSN,
+            dsn: SENTRY_DSN,
             environment: NODE_ENV || 'development',
-            release: process.env.APP_VERSION || '3.2.0',
+            release: process.env.APP_VERSION || '3.8.0',
             sampleRate: 1.0,
             sendDefaultPii: true,
             debug: false,

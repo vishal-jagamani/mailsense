@@ -1,6 +1,6 @@
 import { AI_CONFIG } from '@config';
 import { LOGGER_MODULE } from '@constants';
-import { AiProcessingError, ConfigurationError, RateLimitError } from '@errors';
+import { AiProcessingError, AppError, ConfigurationError, RateLimitError } from '@errors';
 import { GoogleGenAI } from '@google/genai';
 import {
     AI_PROVIDER_NAME,
@@ -12,8 +12,9 @@ import {
     AiSummarizeThreadResult,
 } from '@mailsense/types';
 import { createLogger } from '@observability';
+import { CaughtError } from '@types';
 import { IAiProvider } from '../ai.provider.js';
-import { GeminiProviderConfig } from '../ai.provider.types.js';
+import { GeminiProviderConfig, GeminiRawApiError } from '../ai.provider.types.js';
 import {
     geminiClassifyAndScoreAiResponseSchema,
     geminiGenerateSuggestedRepliesAiResponseSchema,
@@ -41,7 +42,7 @@ export class GeminiAiProvider implements IAiProvider {
             );
         }
         this.client = new GoogleGenAI({ apiKey });
-        this.modelName = config?.modelName ?? AI_CONFIG.geminiModel ?? 'gemini-2.5-flash';
+        this.modelName = config?.modelName ?? AI_CONFIG.geminiModel;
         this.timeoutMs = config?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
     }
 
@@ -69,7 +70,8 @@ export class GeminiAiProvider implements IAiProvider {
             });
             return parsed;
         } catch (error) {
-            this.handleProviderError(error, 'classifyAndScoreEmail', Date.now() - startTime);
+            const caughtError: CaughtError = error instanceof Error || (typeof error === 'object' && error !== null) ? error : String(error);
+            throw this.buildProviderError(caughtError, 'classifyAndScoreEmail', Date.now() - startTime);
         }
     }
 
@@ -97,7 +99,8 @@ export class GeminiAiProvider implements IAiProvider {
             });
             return parsed;
         } catch (error) {
-            this.handleProviderError(error, 'summarizeEmailThread', Date.now() - startTime);
+            const caughtError: CaughtError = error instanceof Error || (typeof error === 'object' && error !== null) ? error : String(error);
+            throw this.buildProviderError(caughtError, 'summarizeEmailThread', Date.now() - startTime);
         }
     }
 
@@ -126,7 +129,8 @@ export class GeminiAiProvider implements IAiProvider {
             });
             return parsed;
         } catch (error) {
-            this.handleProviderError(error, 'generateSuggestedReplies', Date.now() - startTime);
+            const caughtError: CaughtError = error instanceof Error || (typeof error === 'object' && error !== null) ? error : String(error);
+            throw this.buildProviderError(caughtError, 'generateSuggestedReplies', Date.now() - startTime);
         }
     }
 
@@ -148,7 +152,11 @@ export class GeminiAiProvider implements IAiProvider {
 
             const text = response.text;
             if (!text) {
-                throw new Error('Gemini API returned an empty text payload.');
+                throw new AiProcessingError({
+                    provider: 'gemini',
+                    model: this.modelName,
+                    message: 'Gemini API returned an empty text payload.',
+                });
             }
             return JSON.parse(text) as T;
         } finally {
@@ -165,7 +173,7 @@ export class GeminiAiProvider implements IAiProvider {
         return stripped.slice(0, MAX_BODY_CHARACTERS);
     }
 
-    private handleProviderError(error: unknown, operation: string, durationMs: number): never {
+    private buildProviderError(error: CaughtError, operation: string, durationMs: number): AppError {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(`Gemini AI operation failed: ${operation}`, {
             error: message,
@@ -174,10 +182,10 @@ export class GeminiAiProvider implements IAiProvider {
 
         if (this.isRateLimitError(error)) {
             const retryAfterMs = this.extractRetryAfterMs(error) ?? 10000;
-            throw new RateLimitError('gemini', retryAfterMs);
+            return new RateLimitError('gemini', retryAfterMs);
         }
 
-        throw new AiProcessingError({
+        return new AiProcessingError({
             provider: 'gemini',
             model: this.modelName,
             message: `Failed during ${operation}: ${message}`,
@@ -185,26 +193,28 @@ export class GeminiAiProvider implements IAiProvider {
         });
     }
 
-    private isRateLimitError(error: unknown): boolean {
-        if (typeof error === 'object' && error !== null) {
-            const err = error as Record<string, unknown>;
-            if (err.status === 429 || err.statusCode === 429) return true;
-            const message = String(err.message ?? '');
-            return message.includes('RESOURCE_EXHAUSTED') || message.includes('429');
+    private isRateLimitError(error: CaughtError): boolean {
+        if (typeof error !== 'object' || error === null) {
+            return false;
         }
-        return false;
+        const err = error as GeminiRawApiError;
+        if (err.status === 429 || err.statusCode === 429) {
+            return true;
+        }
+        const message = String(err.message ?? '');
+        return message.includes('RESOURCE_EXHAUSTED') || message.includes('429');
     }
 
-    private extractRetryAfterMs(error: unknown): number | undefined {
-        if (typeof error === 'object' && error !== null) {
-            const err = error as Record<string, unknown>;
-            const headers = err.headers as Record<string, string> | undefined;
-            const retryHeader = headers?.['retry-after'];
-            if (retryHeader) {
-                const parsed = parseInt(retryHeader, 10);
-                if (!isNaN(parsed)) return parsed * 1000;
-            }
+    private extractRetryAfterMs(error: CaughtError): number | undefined {
+        if (typeof error !== 'object' || error === null) {
+            return undefined;
         }
-        return undefined;
+        const err = error as GeminiRawApiError;
+        const retryHeader = err.headers?.['retry-after'];
+        if (!retryHeader) {
+            return undefined;
+        }
+        const parsed = parseInt(retryHeader, 10);
+        return isNaN(parsed) ? undefined : parsed * 1000;
     }
 }

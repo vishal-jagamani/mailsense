@@ -53,7 +53,7 @@ const startServer = async () => {
         // Capture termination signals
         process.on('SIGINT', () => gracefulShutdown('SIGINT'));
         process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-    } catch (error: unknown) {
+    } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         logger.error(`❌ Failed to start server: ${errorMessage}`, { error });
         process.exit(1);

@@ -4,6 +4,7 @@ export * from './email';
 export * from './messages';
 export * from './monitoring.constants';
 export * from './routes';
+export * from './seo';
 export * from './settings';
 export * from './sidebar.constants';
 export * from './ui';
